@@ -3,7 +3,6 @@ import { Project } from '../src/project'
 import { Run } from '../src/run'
 import { Task } from '../src/task'
 import { expect } from 'chai'
-import { inspect } from 'util'
 
 describe('Run', () => {
   const task1: Task = { run() {} } as any
@@ -21,10 +20,6 @@ describe('Run', () => {
 
     expect(run1.tasks[0]).to.equal(task1)
     expect(run2.tasks[0]).to.equal(task2)
-
-    expect(run0.id).to.not.equal(run1.id)
-    expect(run0.id).to.not.equal(run2.id)
-    expect(run1.id).to.not.equal(run2.id)
 
     expect(() => run0.fail())
         .to.throw(/^Build failed$/)
@@ -56,14 +51,6 @@ describe('Run', () => {
     expect(run1.tasks[0]).to.equal(task1)
     expect(run2.tasks[0]).to.equal(task1)
     expect(run2.tasks[1]).to.equal(task2)
-
-    expect(run1.id).to.equal(run2.id)
-  })
-
-  it('should have nice run ids', () => {
-    const run = new Run(project)
-    expect(run.id.toString()).to.match(/^[a-f0-9]{16}$/)
-    expect((<any>run.id)[inspect.custom]()).to.match(/^[a-f0-9]{16}$/)
   })
 
   it('should prepare and cache logs', () => {

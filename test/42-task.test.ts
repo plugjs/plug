@@ -13,12 +13,10 @@ describe('Plug Tasks', () => {
 
   it('should construct a task and run it once', async () => {
     let counter = 0
-    let runid: any = undefined
 
     const pipe = init((run) => {
       expect(run.tasks).to.have.length(1)
       expect(run.tasks[0]).to.equal(task1.task)
-      runid = run.id
       counter ++
       return undefined as any
     })
@@ -34,29 +32,23 @@ describe('Plug Tasks', () => {
     // Initial run
     await task1.task.run(run1)
     expect(counter).to.equal(1)
-    expect(runid).to.equal(run1.id)
-    runid = undefined
 
     // No run, cached output
     await task1.task.run(run1)
     expect(counter).to.equal(1)
-    expect(runid).to.be.undefined // does not run again!
 
     // New "run", should run again
     const run2 = mock('/foo').run
     await task1.task.run(run2)
     expect(counter).to.equal(2)
-    expect(runid).to.equal(run2.id)
   })
 
   it('should cache also when a task fails', async () => {
     let counter = 0
-    let runid: any = undefined
 
     const pipe = init((run) => {
       expect(run.tasks).to.have.length(1)
       expect(run.tasks[0]).to.equal(task1.task)
-      runid = run.id
       counter ++
       throw new Error('Foo!')
     })
@@ -67,14 +59,11 @@ describe('Plug Tasks', () => {
     const error1 = await expect(task1.task.run(run1))
         .to.be.rejectedWith(Error, 'Foo!')
     expect(counter).to.equal(1)
-    expect(runid).to.equal(run1.id)
-    runid = undefined
 
     // No run, cached error
     const error2 = await expect(task1.task.run(run1))
         .to.be.rejectedWith(Error, 'Foo!')
     expect(counter).to.equal(1)
-    expect(runid).to.be.undefined // does not run again!
 
     // Same error
     expect(error1).to.equal(error2)

@@ -1,6 +1,5 @@
 import { Project } from './project'
 import { makeLog } from './utils/log'
-import { randomBytes } from 'crypto'
 
 import type { Files } from './files'
 import type { Log } from './utils/log'
@@ -34,7 +33,6 @@ export class Run {
   #task?: Task
 
   // Run ID and project for root runs
-  id: RunId
   project: Project
   tasks: readonly Task[]
   directory: DirectoryPath
@@ -52,14 +50,12 @@ export class Run {
       this.#task = task
       this.#caches = run.#caches
 
-      this.id = run.id
       this.project = run.project
       this.directory = run.directory
       this.tasks = Object.freeze([ ...run.tasks, task! ])
     } else {
       this.#caches = new Map()
 
-      this.id = new RunId()
       this.project = project
       this.directory = project.directory
       this.tasks = Object.freeze([])
@@ -106,21 +102,4 @@ export class Run {
 /** The `Runnable` interface defines a way to produce `Files` for a `Run` */
 export interface Runnable {
   run(run: Run): Files | Promise<Files>
-}
-
-// A run id, as an object for weak maps
-class RunId {
-  #id = randomBytes(8).toString('hex')
-
-  constructor() {
-    Object.freeze(this) // not taking any chances...
-  }
-
-  toString(): string {
-    return this.#id
-  }
-
-  [Symbol.for('nodejs.util.inspect.custom')](): string {
-    return this.#id
-  }
 }
