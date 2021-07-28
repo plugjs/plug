@@ -12,6 +12,7 @@ import type { MochaOptions as Options } from 'mocha'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
 import type { FilterOptions } from '../utils/filter'
+import type { CoverageMapData } from 'istanbul-lib-coverage'
 
 /* ========================================================================== *
  * MOCHA PLUG                                                                 *
@@ -20,6 +21,12 @@ import type { FilterOptions } from '../utils/filter'
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
     mocha: PlugExtension<P, typeof MochaPlug>
+  }
+}
+
+declare module '../task' {
+  interface TaskCache {
+    'istanbul.coverage': CoverageMapData
   }
 }
 
@@ -82,8 +89,11 @@ export class MochaPlug implements Plug {
       for (const [ path, contents ] of outputs) files.set(path, contents)
     })
 
-    // Let's prep our mocha run
-    const { failures } = await this.runMocha({ files: files, tests, options: this.#options })
+    // Let mocha run, and capture failures and coverage data
+    const { failures, coverage } = await this.runMocha({ files: files, tests, options: this.#options })
+
+    // Keep coverage data in our task cache
+    run.cache['istanbul.coverage'] = coverage
 
     // Check for failures
     if (failures) run.fail(`Mocha detected ${failures} test ${failures > 1 ? 'failures' : 'failure'}`)

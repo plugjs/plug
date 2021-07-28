@@ -12,10 +12,17 @@ import { parallelize } from '../utils/parallelize'
 import { RawSourceMap } from 'source-map'
 import { extname } from 'path/posix'
 import { FilterOptions } from '../utils/filter'
+import { FilePath } from '../utils/paths'
 
 declare module '../pipe' {
   interface Pipe<P extends Pipe<P>> {
     instrument: PlugExtension<P, typeof InstrumentPlug>
+  }
+}
+
+declare module '../task' {
+  interface TaskCache {
+    'istanbul.instrumented': FilePath[]
   }
 }
 
@@ -72,6 +79,10 @@ export class InstrumentPlug implements Plug {
   async process(input: Files, run: Run, log: Log): Promise<Files> {
     const time = log.start()
     const output = input.fork()
+    const instrumented: FilePath[] = []
+
+    // Remember the list of instrumented files in our cache
+    run.cache['istanbul.instrumented'] = instrumented
 
     // Note to self: I tried to implement worker pools (using "piscina") but
     // the even with a pre-allocated 8-worker pool, the savings were not that
@@ -92,6 +103,7 @@ export class InstrumentPlug implements Plug {
           const originalFile = file.originalFile
           const sourceMap: RawSourceMap = instrumenter.lastSourceMap() as any
           output.add(path, { contents, sourceMap, originalFile })
+          instrumented.push(path)
           resolve()
         }, rawSourceMap as any)
       })

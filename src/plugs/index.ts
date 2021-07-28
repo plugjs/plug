@@ -1,6 +1,7 @@
 export { compile } from './compile'
 export { filter } from './filter'
 export { instrument } from './instrument'
+export { istanbul } from './istanbul'
 export { mocha } from './mocha'
 export { sourcemaps } from './sourcemaps'
 export { write } from './write'
