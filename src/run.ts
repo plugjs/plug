@@ -7,6 +7,10 @@ import type { Log } from './utils/log'
 import type { Plug } from './pipe'
 import type { Task } from './task'
 
+import assert from 'assert'
+
+const caches = new WeakMap<RunId, WeakMap<Task, Map<string, any>>>()
+
 /** An `Error` representing a build failure */
 class Failure extends Error {
   constructor(taskName?: string, message?: string) {
@@ -74,6 +78,19 @@ export class Run {
     const task = this.tasks[this.tasks.length - 1]
     const taskName = task ? this.project.getTaskName(task) : undefined
     throw new Failure(taskName, message)
+  }
+
+  get taskCache(): Map<string, any> {
+    const task = this.tasks[this.tasks.length - 1]
+    assert(task, 'No current task available')
+
+    let cache = caches.get(this.id)
+    if (! cache) caches.set(this.id, cache = new WeakMap())
+
+    let map = cache.get(task)
+    if (! map) cache.set(task, map = new Map())
+
+    return map
   }
 }
 

@@ -31,9 +31,6 @@ export interface Task extends Runnable {
  * INTERNALS                                                                  *
  * ========================================================================== */
 
-// Our caches [ run -> task -> list ] using weak maps
-const caches = new WeakMap<Run['id'], WeakMap<Task, Promise<Files>>>()
-
 // Task implementation, caching and running task only once
 abstract class AbstractTask {
   readonly description?: string
@@ -43,17 +40,13 @@ abstract class AbstractTask {
   }
 
   run(run: Run): Promise<Files> {
-    // If we don't have a cache for this run, create one
-    let cache = caches.get(run.id)
-    if (! cache) caches.set(run.id, cache = new WeakMap())
-
-    // If we have something cached, return it
-    const cached = cache.get(this)
-    if (cached) return cached
-
     // Contextualize this run
     run = run.for(this)
     const log = run.log()
+
+    // If we have something cached, return it
+    const cached = run.taskCache.get('plug.files')
+    if (cached) return cached
 
     // Run this task and log
     const time = log.start()
@@ -67,7 +60,7 @@ abstract class AbstractTask {
         })
 
     // Cache the result and return it
-    cache.set(this, result)
+    run.taskCache.set('plug.files', result)
     return result
   }
 
