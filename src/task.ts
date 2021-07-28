@@ -51,6 +51,7 @@ abstract class AbstractTask {
     // If we have something cached, return it
     if ('plug.files' in run.cache) {
       const cached = run.cache['plug.files']
+      // istanbul ignore else
       if (cached) return cached
     }
 
