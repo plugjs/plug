@@ -27,6 +27,10 @@ export interface Task extends Runnable {
   run(run: Run, log?: Log): Files | Promise<Files>
 }
 
+export interface TaskCache {
+  'plug.files': Promise<Files>
+}
+
 /* ========================================================================== *
  * INTERNALS                                                                  *
  * ========================================================================== */
@@ -45,8 +49,10 @@ abstract class AbstractTask {
     const log = run.log()
 
     // If we have something cached, return it
-    const cached = run.taskCache.get('plug.files')
-    if (cached) return cached
+    if ('plug.files' in run.taskCache) {
+      const cached = run.taskCache['plug.files']
+      if (cached) return cached
+    }
 
     // Run this task and log
     const time = log.start()
@@ -60,7 +66,7 @@ abstract class AbstractTask {
         })
 
     // Cache the result and return it
-    run.taskCache.set('plug.files', result)
+    run.taskCache['plug.files'] = result
     return result
   }
 

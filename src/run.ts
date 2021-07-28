@@ -5,11 +5,9 @@ import { randomBytes } from 'crypto'
 import type { Files } from './files'
 import type { Log } from './utils/log'
 import type { Plug } from './pipe'
-import type { Task } from './task'
+import type { Task, TaskCache } from './task'
 
-import assert from 'assert'
-
-const caches = new WeakMap<RunId, WeakMap<Task, Map<string, any>>>()
+import { DirectoryPath } from './utils/paths'
 
 /** An `Error` representing a build failure */
 class Failure extends Error {
@@ -26,11 +24,20 @@ class Failure extends Error {
  */
 export class Run {
   #logs = new WeakMap<Plug, Log>()
+
+  #caches: Map<Task | undefined, Partial<TaskCache>>
+  #cache?: Partial<TaskCache>
   #log?: Log
 
-  readonly id!: RunId
-  readonly tasks!: readonly Task[]
-  readonly project!: Project
+  // Parent run and current task for derived runs
+  #parent?: Run
+  #task?: Task
+
+  // Run ID and project for root runs
+  id: RunId
+  project: Project
+  tasks: readonly Task[]
+  directory: DirectoryPath
 
   constructor(project: Project)
   constructor(run: Run, task: Task)
@@ -40,25 +47,41 @@ export class Run {
             { project: first.project, run: first } :
             { project: first, run: undefined }
 
-    // Run is inherited from any previous instance, as it's the key to caching
-    const id = run ? run.id : new RunId()
+    if (run) {
+      this.#parent = run
+      this.#task = task
+      this.#caches = run.#caches
 
-    // The list of tasks is copied over from the wrapping run or is empty,
-    // then we add our task, and freeze the whole thing (no chances!)
-    const tasks = run ? [ ...run.tasks ] : []
-    if (task) tasks.push(task)
-    Object.freeze(tasks)
+      this.id = run.id
+      this.project = run.project
+      this.directory = run.directory
+      this.tasks = Object.freeze([ ...run.tasks, task! ])
+    } else {
+      this.#caches = new Map()
 
-    Object.defineProperties(this, {
-      'directory': { value: project.directory, enumerable: true },
-      'id': { value: id, enumerable: true },
-      // non-enumerable...
-      'project': { value: project },
-      'tasks': { value: tasks },
-    })
+      this.id = new RunId()
+      this.project = project
+      this.directory = project.directory
+      this.tasks = Object.freeze([])
+    }
 
-    // Better be safe than sorry...
     Object.freeze(this)
+  }
+
+  get taskCache(): Partial<TaskCache> {
+    if (this.#cache) return this.#cache
+
+    let taskCache = this.#caches.get(this.#task)
+    if (! taskCache) this.#caches.set(this.#task, taskCache = {})
+
+    if (! this.#parent) return this.#cache = taskCache
+
+    const parentCache: Record<string, any> = this.#parent.taskCache
+    return this.#cache = new Proxy(taskCache, {
+      has: (target, key: string) => key in target,
+      get: (target, key: keyof TaskCache) => target[key] || parentCache[key],
+      set: (target, key: keyof TaskCache, value) => target[key] = value,
+    })
   }
 
   log(): Log
@@ -75,22 +98,8 @@ export class Run {
   }
 
   fail(message?: string): never {
-    const task = this.tasks[this.tasks.length - 1]
-    const taskName = task ? this.project.getTaskName(task) : undefined
+    const taskName = this.#task ? this.project.getTaskName(this.#task) : undefined
     throw new Failure(taskName, message)
-  }
-
-  get taskCache(): Map<string, any> {
-    const task = this.tasks[this.tasks.length - 1]
-    assert(task, 'No current task available')
-
-    let cache = caches.get(this.id)
-    if (! cache) caches.set(this.id, cache = new WeakMap())
-
-    let map = cache.get(task)
-    if (! map) cache.set(task, map = new Map())
-
-    return map
   }
 }
 
