@@ -49,8 +49,8 @@ abstract class AbstractTask {
     const log = run.log()
 
     // If we have something cached, return it
-    if ('plug.files' in run.taskCache) {
-      const cached = run.taskCache['plug.files']
+    if ('plug.files' in run.cache) {
+      const cached = run.cache['plug.files']
       if (cached) return cached
     }
 
@@ -66,7 +66,7 @@ abstract class AbstractTask {
         })
 
     // Cache the result and return it
-    run.taskCache['plug.files'] = result
+    run.cache['plug.files'] = result
     return result
   }
 

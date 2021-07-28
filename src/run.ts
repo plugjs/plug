@@ -68,7 +68,7 @@ export class Run {
     Object.freeze(this)
   }
 
-  get taskCache(): Partial<TaskCache> {
+  get cache(): Partial<TaskCache> {
     if (this.#cache) return this.#cache
 
     let taskCache = this.#caches.get(this.#task)
@@ -76,7 +76,7 @@ export class Run {
 
     if (! this.#parent) return this.#cache = taskCache
 
-    const parentCache: Record<string, any> = this.#parent.taskCache
+    const parentCache: Record<string, any> = this.#parent.cache
     return this.#cache = new Proxy(taskCache, {
       has: (target, key: string) => key in target,
       get: (target, key: keyof TaskCache) => target[key] || parentCache[key],
