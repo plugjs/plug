@@ -73,4 +73,62 @@ describe('Run', () => {
     expect(plugLog1A).to.be.a('function')
     expect(plugLog2A).to.be.a('function')
   })
+
+  it('should correctly cache objects in runs', () => {
+    const taskX: Task = { run() {} } as any
+
+    const run = new Run(project)
+    const run1 = run.for(task1)
+    const run2 = run.for(task2)
+    const runX = run1.for(taskX)
+
+    const cache: any = run.cache
+    const cache1: any = run1.cache
+    const cache2: any = run2.cache
+    const cacheX: any = runX.cache
+
+    cache['A'] = 'AA'
+    cache1['B'] = 'BB'
+    cache2['A'] = 'YY' // override from "cache"
+    cache2['C'] = 'CC'
+    cacheX['D'] = 'DD'
+
+    expect('A' in cache).to.be.true
+    expect('B' in cache).to.be.false
+    expect('C' in cache).to.be.false
+    expect('D' in cache).to.be.false
+    expect(cache['A']).to.equal('AA')
+    expect(cache['B']).to.be.undefined
+    expect(cache['C']).to.be.undefined
+    expect(cache['D']).to.be.undefined
+
+    expect('A' in cache1).to.be.false
+    expect('B' in cache1).to.be.true
+    expect('C' in cache1).to.be.false
+    expect('D' in cache1).to.be.false
+    expect(cache1['A']).to.equal('AA') // inheruted
+    expect(cache1['B']).to.equal('BB')
+    expect(cache1['C']).to.be.undefined
+    expect(cache1['D']).to.be.undefined
+
+    expect('A' in cache2).to.be.true
+    expect('B' in cache2).to.be.false
+    expect('C' in cache2).to.be.true
+    expect('D' in cache2).to.be.false
+
+    expect(cache2['A']).to.equal('YY') // overridden
+    expect(cache2['B']).to.be.undefined
+    expect(cache2['C']).to.equal('CC')
+    expect(cache2['D']).to.be.undefined
+
+    expect('A' in cacheX).to.be.false
+    expect('B' in cacheX).to.be.false
+    expect('C' in cacheX).to.be.false
+    expect('D' in cacheX).to.be.true
+
+    expect(cacheX['A']).to.equal('AA') // not overridden
+    expect(cacheX['B']).to.equal('BB')
+    expect(cacheX['C']).to.be.undefined
+    expect(cacheX['D']).to.equal('DD') // from cacheX
+  })
 })

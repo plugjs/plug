@@ -5,6 +5,7 @@ import { LogLevel, log, logOptions } from '../utils/log'
 import { fork } from 'child_process'
 import { setupLoader } from '../utils/loader'
 
+import type { CoverageMapData } from 'istanbul-lib-coverage'
 import type { FilePath, DirectoryPath } from '../utils/paths'
 import type { LogOptions } from '../utils/log'
 import type { MochaOptions } from 'mocha'
@@ -16,7 +17,6 @@ class NullReporter extends Mocha.reporters.Base {
 }
 
 if (require.main === module) {
-  // istanbul ignore next - can't test for this...
   const timeout = setTimeout(() => {
     log.error('Mocha child timeout waiting for message')
     process.exit(2)
@@ -49,8 +49,21 @@ if (require.main === module) {
 
       // Run mocha and report back failures
       const runner = mocha.run(() => {
-        process.send?.(runner.stats)
-        process.exit(0)
+        try {
+          const coverage: CoverageMapData = (<any> globalThis).__coverage__
+          process.send!({ ...runner.stats, coverage }, (error: any) => {
+            if (error) {
+              log.error('Error sending Mocha results', error)
+              process.exitCode = 1
+            } else {
+              process.exitCode = 0
+            }
+            process.disconnect()
+          })
+        } catch (error) {
+          log.error('Error sending Mocha results', error)
+          process.exit(1)
+        }
       })
     } catch (error) {
       log.error('Error starting mocha', error)
@@ -72,9 +85,13 @@ export interface MochaRun {
   tests: Set<FilePath>,
 }
 
-export function runMocha(run: MochaRun, coverageDir?: DirectoryPath): Promise<Mocha.Stats> {
-  return new Promise<Mocha.Stats>((resolve, reject) => {
-    let stats: (Mocha.Stats | undefined)
+export interface MochaResults extends Mocha.Stats {
+  coverage?: CoverageMapData,
+}
+
+export function runMocha(run: MochaRun, coverageDir?: DirectoryPath): Promise<MochaResults> {
+  return new Promise<MochaResults>((resolve, reject) => {
+    let results: MochaResults | undefined
 
     const message: MochaMessage = {
       log: {
@@ -95,13 +112,12 @@ export function runMocha(run: MochaRun, coverageDir?: DirectoryPath): Promise<Mo
       ...process.env,
     } })
 
-    child.on('message', (message: Mocha.Stats) => stats = message)
+    child.on('message', (message: MochaResults) => results = message)
     child.on('spawn', () => child.send(message))
-    // istanbul ignore next - we test the basics, not all message paths
     child.on('close', (code, signal) => {
       if (code === 0) {
-        if (!stats) return reject(new Error('Mocha produced no stats'))
-        return resolve(stats)
+        if (!results) return reject(new Error('Mocha produced no results'))
+        return resolve(results)
       }
       if (signal) reject(new Error(`Mocha exited due to signal ${signal}`))
       else reject(new Error(`Mocha failed with error code ${code || -1}`))
