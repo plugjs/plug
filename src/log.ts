@@ -102,7 +102,7 @@ let logColor = !! process.stderr.isTTY
  * SPINNER                                                                    *
  * ========================================================================== */
 
-const blips = [
+const spins = [
   '\u2809', // ⠉ - 14
   '\u2819', // ⠙ - 145
   '\u2818', // ⠘ - 45
@@ -117,13 +117,13 @@ const blips = [
   '\u280b', // ⠋ - 124
 ]
 
-let nextBlip = 0
+let nextSpin = 0
 
 setInterval(() => {
   if (! logColor) return
   if (! runningTasks.length) return
 
-  const blip = `${red}${blips[(nextBlip ++) % blips.length]}${gry}`
+  const spin = `${red}${spins[(nextSpin ++) % spins.length]}${gry}`
 
   const tasks = runningTasks
     .map((task) => `${taskColor(task)}${task}`)
@@ -131,10 +131,8 @@ setInterval(() => {
 
   const count = `${red}${runningTasks.length}${gry}`
 
-  process.stderr.write(`${zap}  ${blip} Running ${count} tasks (${tasks})${rst}`)
+  process.stderr.write(`${zap}  ${spin} Running ${count} tasks (${tasks})${rst}`)
 }, 100).unref()
-
-let boo = 0
 
 /* ========================================================================== *
  * INTERNALS                                                                  *
