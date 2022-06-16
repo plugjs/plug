@@ -1,18 +1,17 @@
-import assert from 'node:assert'
-import { asyncTasksStorage } from './async'
 
-import type { Build, Task } from './build'
+import type { Build, TaskDescriptor } from './build'
 import type { Files } from './files'
+import { log, runWithTaskName } from './log'
 
-/** A `Run` represents a context used when invoking a `Task` */
+export const buildFailed = Symbol('Build failed')
+
+/** A `Run` represents the context used when invoking a `Task` */
 export class Run {
-  #build: Build<any>
   #directory: string
-  #tasks: Task[] = []
-  #cache: Map<Task, Promise<Files>> = new Map()
+  #stack: TaskDescriptor[] = []
+  #cache: Map<TaskDescriptor, Promise<Files>> = new Map()
 
-  constructor(build: Build<any>, directory: string = process.cwd()) {
-    this.#build = build
+  constructor(directory: string = process.cwd()) {
     this.#directory = directory
   }
 
@@ -21,16 +20,11 @@ export class Run {
   }
 
   /** Run the specified `Task` in this `Run` context */
-  run(task: Task): Promise<Files>
-  run(name: string): Promise<Files>
-  run(arg: string | Task): Promise<Files> {
-    const task = typeof arg === 'string' ? this.#build[arg] : arg
-    assert(task, `Task "${arg}" not found in current build context`)
-
+  run(task: TaskDescriptor, build: Build<any>): Promise<Files> {
     /* Check for circular dependencies */
-    if (this.#tasks.includes(task)) {
+    if (this.#stack.includes(task)) {
       const m = [ `Circular dependency running task "${task.name}"` ]
-      for (const t of this.#tasks) m.push(`  - "${t.name}" defined in ${t.file}`)
+      for (const t of this.#stack) m.push(`  - "${t.name}" defined in ${t.file}`)
       m.push(`  * "${task.name}" defined in ${task.file}`)
       throw new Error(m.join('\n'))
     }
@@ -40,12 +34,25 @@ export class Run {
     if (cached) return cached
 
     /* Prepare a child run */
-    const run = new Run(this.#build, this.#directory)
-    run.#tasks = [ ...this.#tasks, task ]
+    const run = new Run(this.#directory)
+    run.#stack = [ ...this.#stack, task ]
     run.#cache = this.#cache
 
     /* Actually _call_ the `Task` and cache its results */
-    const promise = asyncTasksStorage.run(task, () => task.task(run))
+    const promise = runWithTaskName(task.name, async () => {
+      const now = Date.now()
+      log.debug('Starting task')
+      try {
+        const result = await task.task(build, run)
+        log.info('Completed in', Date.now() - now, 'ms')
+        return result
+      } catch (error) {
+        log.info('Completed in', Date.now() - now, 'ms with errors')
+        if (error !== buildFailed) log.error(error)
+        throw buildFailed
+      } finally {
+      }
+    })
     this.#cache.set(task, promise)
     return promise
   }
