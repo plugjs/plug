@@ -69,13 +69,23 @@ export function taskName(): string | undefined {
   return asyncStorage.getStore()
 }
 
-export function runWithTaskName<T>(name: string, fn: () => T): T {
-  return asyncStorage.run(name, fn)
+export function runWithTaskName<T>(name: string, fn: () => Promise<T>): Promise<T> {
+  return asyncStorage.run(name, async () => {
+    runningTasks.push(name)
+    try {
+      return await fn()
+    } finally {
+      const i = runningTasks.indexOf(name)
+      if (i >= 0) runningTasks.splice(i, 1)
+    }
+  })
 }
 
 /* ========================================================================== *
  * STATE                                                                      *
  * ========================================================================== */
+
+const runningTasks: string[] = []
 
 const levels: { [ k in LogLevel ] : number } = {
   DEBUG: 10,
@@ -89,16 +99,57 @@ let logLevel = levels.INFO
 let logColor = !! process.stderr.isTTY
 
 /* ========================================================================== *
+ * SPINNER                                                                    *
+ * ========================================================================== */
+
+const blips = [
+  '\u2809', // ⠉ - 14
+  '\u2819', // ⠙ - 145
+  '\u2818', // ⠘ - 45
+  '\u2838', // ⠸ - 456
+  '\u2830', // ⠰ - 56
+  '\u2834', // ⠴ - 356
+  '\u2824', // ⠤ - 36
+  '\u2826', // ⠦ - 236
+  '\u2806', // ⠆ - 23
+  '\u2807', // ⠇ - 123
+  '\u2803', // ⠃ - 12
+  '\u280b', // ⠋ - 124
+]
+
+let nextBlip = 0
+
+setInterval(() => {
+  if (! logColor) return
+  if (! runningTasks.length) return
+
+  const blip = `${red}${blips[(nextBlip ++) % blips.length]}${gry}`
+
+  const tasks = runningTasks
+    .map((task) => `${taskColor(task)}${task}`)
+    .join(`${gry}, `) + gry
+
+  const count = `${red}${runningTasks.length}${gry}`
+
+  process.stderr.write(`${zap}  ${blip} Running ${count} tasks (${tasks})${rst}`)
+}, 100).unref()
+
+let boo = 0
+
+/* ========================================================================== *
  * INTERNALS                                                                  *
  * ========================================================================== */
 
 const asyncStorage = new AsyncLocalStorage<string>()
 
-const rst = '\u001b[0m'
-const blk = '\u001b[38;5;240m'
-const blkBg = '\u001b[48;5;239;38;5;16m'
-const redBg = '\u001b[48;5;196;38;5;16m'
-const ylwBg = '\u001b[48;5;226;38;5;16m'
+const zap = '\u001b[0G\u001b[2K' // clear line and set column 0
+const rst = '\u001b[0m' // reset all colors to default
+const gry = '\u001b[38;5;240m' // somewhat gray
+const red = '\u001b[38;5;203m' // light red (Leo's favorite)
+const ylw = '\u001b[38;5;184m' // shaded yellow
+const gryBg = '\u001b[48;5;239;38;5;16m' // gray background
+const redBg = '\u001b[48;5;196;38;5;16m' // red background
+const ylwBg = '\u001b[48;5;226;38;5;16m' // yellow background
 
 const taskColor = (() => {
   const colors: string[] = [
@@ -128,12 +179,12 @@ function emitColor(level: number, ...args: any[]) {
 
   const task = taskName()
   if (task) {
-    prefixStrings.push(`${blk}[${taskColor(task)}${task}${blk}]${rst}`)
+    prefixStrings.push(`${gry}[${taskColor(task)}${task}${gry}]${rst}`)
     prefixLength += task.length + 2
   }
 
   if (level < levels.INFO) {
-    prefixStrings.push(`${blkBg} DEBUG ${rst}`)
+    prefixStrings.push(`${gryBg} DEBUG ${rst}`)
     prefixLength += 7
   } else if (level >= levels.ERROR) {
     prefixStrings.push(`${redBg} ERROR ${rst}`)
@@ -153,9 +204,8 @@ function emitColor(level: number, ...args: any[]) {
   })
 
   const message = strings.join(' ')
-  const marked = prefix ? message.replace(/^/gm, prefix) : message
-  process.stderr.write(marked)
-  process.stderr.write('\n')
+  const prefixed = prefix ? message.replace(/^/gm, prefix) : message
+  process.stderr.write(`${zap}${prefixed}\n`)
 }
 
 function emitPlain(level: number, ...args: any[]) {
@@ -189,7 +239,6 @@ function emitPlain(level: number, ...args: any[]) {
   })
 
   const message = strings.join(' ')
-  const marked = prefix ? message.replace(/^/gm, prefix) : message
-  process.stderr.write(marked)
-  process.stderr.write('\n')
+  const prefixed = prefix ? message.replace(/^/gm, prefix) : message
+  process.stderr.write(`${prefixed}\n`)
 }
