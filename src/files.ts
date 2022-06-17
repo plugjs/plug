@@ -2,6 +2,7 @@ import assert from 'node:assert'
 import fs from 'node:fs'
 import path from 'node:path'
 import util from 'node:util'
+import { Run } from './run'
 
 export interface FilesBuilder {
   push(...files: string[]): this
@@ -12,11 +13,15 @@ export interface FilesBuilder {
 export class Files {
   #directory: string
   #files: string[]
+  #run: Run
 
-  constructor(directory: string) {
+  constructor(run: Run, directory?: string) {
+    directory = path.resolve(run.directory, directory || '.')
     assert(fs.statSync(directory).isDirectory(), `Invalid directory "${directory}"`)
-    this.#directory = path.normalize(directory)
+
+    this.#directory = directory
     this.#files = []
+    this.#run = run
   }
 
   get directory(): string {
@@ -44,21 +49,21 @@ export class Files {
   }
 
   builder(): FilesBuilder {
-    return Files.builder(this.#directory)
+    return Files.builder(this.#run, this.#directory)
   }
 
-  static builder(directory: string): FilesBuilder {
-    const files = new Files(directory)
+  static builder(run: Run, directory?: string): FilesBuilder {
+    const files = new Files(run, directory)
     const set = new Set<string>()
 
     return {
       push(...files: string[]): FilesBuilder {
         if (typeof files === 'string') files = [ files ]
         for (const file of files) {
-          const absolute = path.resolve(directory, file)
-          const relative = path.relative(directory, absolute)
-          assert(isRelative(relative), `File "${file}" not relative to "${directory}"`)
-          assert(isDecendant(relative), `File "${file}" not relative to "${directory}"`)
+          const absolute = path.resolve(run.directory, file)
+          const relative = path.relative(run.directory, absolute)
+          assert(isRelative(relative), `File "${file}" not relative to "${run.directory}"`)
+          assert(isDecendant(relative), `File "${file}" not relative to "${run.directory}"`)
           set.add(relative)
         }
         return this

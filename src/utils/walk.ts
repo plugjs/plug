@@ -116,7 +116,7 @@ export function walk(directory: string, ...args: ParseOptions<WalkOptions>): Wal
     match(...directoryGlobs as [ string, ...string[] ], { ...options, ignore: [] })
 
   // Create our positive matcher to match files
-  const matchFile = match(...globs, options)
+  const matchFile = globs.length === 0 ? () => true : match(...globs, options)
 
   // Do the walk!
   return walker(directory, '', matchFile, ignoreDir, onDirectory, followSymlinks, maxDepth, 0)

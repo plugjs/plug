@@ -250,6 +250,7 @@ export type Matcher = (string: string) => boolean
 
 export function match(...args: ParseOptions<MatchOptions>): Matcher {
   const { globs, options } = parseOptions(args, __defaults)
+  console.log('MATCH', globs, options)
   return picomatch(globs, options)
 }
 

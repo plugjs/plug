@@ -10,7 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "esbuild": "^0.14.42",
-    "picomatch": "^2.3.1"
+    "picomatch": "^2.3.1",
+    "test": "^3.0.1"
   },
   "devDependencies": {
     "@types/node": "^16.11.38",

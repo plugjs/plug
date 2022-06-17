@@ -113,7 +113,7 @@ function makeTaskCall(definition: TaskDefinition<any>, file: string): TaskCall {
     for (const pipe of context.pipes) await pipe
 
     /* Check for simple `Files` (or `void`) results */
-    return result ? result : new Files(run.directory)
+    return result ? result : new Files(run)
   }
 }
 
@@ -154,7 +154,7 @@ class TaskContextImpl implements TaskContext<any> {
 
       log.debug('Finding files', { directory, options, globs })
 
-      const files = Files.builder(directory)
+      const files = Files.builder(run, directory)
       for await (const file of walk(directory, ...globs, options)) {
         files.push(file)
       }

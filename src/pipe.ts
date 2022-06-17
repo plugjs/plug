@@ -19,7 +19,7 @@ export class Pipe extends Promise<Files> {
     if (typeof run === 'function') {
       super(run)
     } else {
-      super((resolve) => resolve(files || new Files(run.directory)))
+      super((resolve) => resolve(files || new Files(run)))
       this.#run = run
     }
   }
