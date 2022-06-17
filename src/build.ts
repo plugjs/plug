@@ -1,7 +1,6 @@
 import assert from 'node:assert'
 import fs from 'node:fs'
 import path from 'node:path'
-import { requireRun } from './async'
 
 import { Files } from './files'
 import { log, prettyfyTaskName } from './log'
@@ -30,7 +29,7 @@ export interface TaskContext<D> {
 }
 
 /** A `TaskDefinition` is a _function_ defining a `Task` */
-export type TaskDefinition<D> = (this: TaskContext<D>, run: Run) =>
+export type TaskDefinition<D> = (this: TaskContext<D>) =>
   | Files | Promise<Files>
   | Pipe | Promise<Pipe>
   | void | Promise<void>
@@ -109,7 +108,7 @@ function makeTaskCall(definition: TaskDefinition<any>, build: Build<any>, file: 
     const context = new TaskContextImpl(build, file)
 
     /* Get the results calling the task */
-    const result = await definition.call(context, requireRun())
+    const result = await definition.call(context)
 
     /* Any pipe created by calling this.xxx(...) gets awaited */
     for (const pipe of context.pipes) await pipe
