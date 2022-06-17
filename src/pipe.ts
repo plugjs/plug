@@ -1,6 +1,7 @@
 import type { Run } from './run'
 import { Files } from './files'
 import { requireRun } from './async'
+// import { requireRun } from './async'
 
 export type PlugFunction = (run: Run, files: Files) => Files | Promise<Files>
 
@@ -8,29 +9,41 @@ export interface Plug {
   pipe: PlugFunction
 }
 
-export class Pipe extends Promise<Files> {
-  constructor(files?: Files)
-  constructor(filesOrExecutor?: (() => void) | Files) {
-    // When subclassing a promise, we _might_ be called with an executor
-    // function (that is, when the promise is `then`-ed). In this case, we
-    // just call `super(...)` with said executor...
-    if (typeof filesOrExecutor === 'function') {
-      super(filesOrExecutor)
-    } else {
-      super((resolve) => resolve(filesOrExecutor || new Files()))
-    }
+export class Pipe implements Promise<Files> {
+  readonly [Symbol.toStringTag] = 'Pipe'
+  #promise: Promise<Files>
+
+  constructor(files?: Files) {
+    this.#promise = Promise.resolve(files || new Files())
   }
 
-  plug(plug: Plug): Pipe
-  plug(plug: PlugFunction): Pipe
-  plug(arg: Plug | PlugFunction): Pipe {
+  plug(plug: Plug): this
+  plug(plug: PlugFunction): this
+  plug(arg: Plug | PlugFunction): this {
     // Normalize our argument as a `Plug` instance
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
 
-    // We _extend_ a `Promise` so `then(...)` will definitely return `Pipe`,
-    // but that instance won't have our `#run` specified (as it's not passed)
-    // in the constructor. We just manually inject it here, for subsequent
-    // calls...
-    return this.then((files) => plug.pipe(requireRun(), files)) as Pipe
+    // Replace our Promise with whatever we were plugged with
+    this.#promise = this.#promise.then((files) => plug.pipe(requireRun(), files))
+
+    // Done
+    return this
+  }
+
+  then<R1 = Files, R2 = never>(
+    onfulfilled?: ((value: Files) => R1 | PromiseLike<R1>) | null,
+    onrejected?: ((reason: any) => R2 | PromiseLike<R2>) | null,
+  ): Promise<R1 | R2> {
+    return this.#promise.then(onfulfilled, onrejected)
+  }
+
+  catch<R = never>(
+    onrejected?: ((reason: any) => R | PromiseLike<R>) | null,
+  ): Promise<Files | R> {
+    return this.#promise.catch(onrejected)
+  }
+
+  finally(onfinally?: (() => void) | null): Promise<Files> {
+    return this.#promise.finally(onfinally)
   }
 }

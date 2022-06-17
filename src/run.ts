@@ -1,11 +1,9 @@
 
 import { runAsync } from './async'
 import type { Task } from './build'
+import { fail } from './fail'
 import type { Files } from './files'
 import { log } from './log'
-
-/** A constant thrown by `Run` indicating a build failure already logged */
-export const buildFailed = Symbol('Build failed')
 
 /** A `Run` represents the context used when invoking a `Task` */
 export class Run {
@@ -51,39 +49,12 @@ export class Run {
         log.info('Task completed in', Date.now() - now, 'ms')
         return result
       } catch (error) {
-        this.fail(error, 'Task failed in', Date.now() - now, 'ms')
+        fail(error, 'Task failed in', Date.now() - now, 'ms')
       }
     })
 
     /* Cache the execution promise (never run the smae task twice) */
     this.#cache.set(task, promise)
     return promise
-  }
-
-  /** Fail this `Run` giving a descriptive reason */
-  fail(reason: string, ...data: any[]): never
-  /** Fail this `Run` for the specified cause, with an optional reason */
-  fail(cause: unknown, reason?: string, ...args: any[]): never
-  // Overload!
-  fail(causeOrReason: unknown, ...args: any[]): never {
-    /* We never have to log `buildFailed`, so treat it as undefined */
-    if (causeOrReason === buildFailed) causeOrReason = undefined
-
-    /* Nomalize our arguments, extracting cause and reason */
-    const [ cause, reason ] =
-      typeof causeOrReason === 'string' ?
-        [ undefined, causeOrReason ] :
-        [ causeOrReason, args.shift() as string | undefined ]
-
-    /* Log our error if we have to */
-    if (reason) {
-      if (cause) args.push(cause)
-      log.error(reason, ...args)
-    } else if (cause) {
-      log.error('Error', cause)
-    }
-
-    /* Failure handled, never log it again */
-    throw buildFailed
   }
 }

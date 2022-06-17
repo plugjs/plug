@@ -1,4 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
+
+import assert from 'node:assert'
 import type { Task } from './build'
 import type { Run } from './run'
 
@@ -47,6 +49,26 @@ export function currentRun(): Run | undefined {
  */
 export function currentTask(): Task | undefined {
   return storage.getStore()?.task
+}
+
+/**
+ * Returns the {@link Run} associated with the current asynchronous invocation
+ * context or `undefined`.
+ */
+ export function requireRun(): Run {
+  const context = storage.getStore()
+  assert(context, 'Unable to determine current asynchronous invocation context')
+  return context.run
+}
+
+/**
+ * Returns the {@link Task} associated with the current asynchronous invocation
+ * context or `undefined`.
+ */
+export function requireTask(): Task {
+  const context = storage.getStore()
+  assert(context, 'Unable to determine current asynchronous invocation context')
+  return context.task
 }
 
 /**

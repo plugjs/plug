@@ -8,6 +8,7 @@ import { parseOptions, ParseOptions } from './utils/options'
 import { Pipe } from './pipe'
 import { Run } from './run'
 import { walk, WalkOptions } from './utils/walk'
+import { fail } from './fail'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -175,7 +176,7 @@ function makeTaskCall(
 
           const tasks = names.map((name) => {
             const task = build[name]
-            if (! task) run.fail(`No such task "${name}"`)
+            if (! task) fail(`No such task "${name}"`)
             return task
           })
 
@@ -194,7 +195,7 @@ function makeTaskCall(
 
           const tasks = names.map((name) => {
             const task = build[name]
-            if (! task) run.fail(`No such task "${name}"`)
+            if (! task) fail(`No such task "${name}"`)
             return task
           })
 
@@ -214,7 +215,7 @@ function makeTaskCall(
             else builder.merge(result.value)
           }
 
-          if (errors) run.fail('Parallel execution produced', errors, 'errors')
+          if (errors) fail('Parallel execution produced', errors, 'errors')
           return builder.build()
         })
 
@@ -222,7 +223,6 @@ function makeTaskCall(
         return pipe
       }
     }
-
 
     /* Call the `TaskDefinition` and await for results */
     const result = await definition.call(context)
