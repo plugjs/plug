@@ -1,5 +1,4 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { isatty } from 'node:tty'
 import { inspect } from 'node:util'
 
 /* ========================================================================== *
@@ -18,10 +17,10 @@ export interface Log {
   logLevel: LogLevel,
   logColor: boolean,
 
-  debug: (...data: any[]) => void
-  info: (...data: any[]) => void
-  warn: (...data: any[]) => void
-  error: (...data: any[]) => void
+  debug: (message: string, ...data: any[]) => void
+  info: (message: string, ...data: any[]) => void
+  warn: (message: string, ...data: any[]) => void
+  error: (message: string, ...data: any[]) => void
 }
 
 export const log: Log = {
@@ -79,6 +78,10 @@ export function runWithTaskName<T>(name: string, fn: () => Promise<T>): Promise<
       if (i >= 0) runningTasks.splice(i, 1)
     }
   })
+}
+
+export function prettyfyTaskName(task: string): string {
+  return logColor ? `${taskColor(task)}${task}${rst}` : task
 }
 
 /* ========================================================================== *
