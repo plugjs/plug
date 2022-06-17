@@ -147,7 +147,6 @@ const zap = '\u001b[0G\u001b[2K' // clear line and set column 0
 const rst = '\u001b[0m' // reset all colors to default
 const gry = '\u001b[38;5;240m' // somewhat gray
 const red = '\u001b[38;5;203m' // light red (Leo's favorite)
-const ylw = '\u001b[38;5;184m' // shaded yellow
 const gryBg = '\u001b[48;5;239;38;5;16m' // gray background
 const redBg = '\u001b[48;5;196;38;5;16m' // red background
 const ylwBg = '\u001b[48;5;226;38;5;16m' // yellow background
