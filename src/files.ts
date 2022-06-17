@@ -13,9 +13,10 @@ export class Files {
   #directory: string
   #files: string[]
 
-  private constructor(directory: string, files: string[]) {
-    this.#directory = directory
-    this.#files = [ ...files ]
+  constructor(directory: string) {
+    assert(fs.statSync(directory).isDirectory(), `Invalid directory "${directory}"`)
+    this.#directory = path.normalize(directory)
+    this.#files = []
   }
 
   get directory(): string {
@@ -43,12 +44,11 @@ export class Files {
   }
 
   builder(): FilesBuilder {
-    return Files.builder(this.#directory).merge(this)
+    return Files.builder(this.#directory)
   }
 
   static builder(directory: string): FilesBuilder {
-    assert(fs.statSync(directory).isDirectory(), `Invalid directory "${directory}"`)
-    directory = path.normalize(directory)
+    const files = new Files(directory)
     const set = new Set<string>()
 
     return {
@@ -74,7 +74,8 @@ export class Files {
       },
 
       build(): Files {
-        return new Files(directory, [ ...set ].sort())
+        files.#files = [ ...set ].sort()
+        return files
       },
     }
   }

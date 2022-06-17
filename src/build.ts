@@ -113,7 +113,7 @@ function makeTaskCall(definition: TaskDefinition<any>, file: string): TaskCall {
     for (const pipe of context.pipes) await pipe
 
     /* Check for simple `Files` (or `void`) results */
-    return result ? result : Files.builder(run.directory).build()
+    return result ? result : new Files(run.directory)
   }
 }
 
