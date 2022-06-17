@@ -21,6 +21,7 @@ export interface FindOptions extends WalkOptions {
 /** The contextual `this` argument used when callng `TaskDefinition`s */
 export interface TaskContext<D> {
   resolve(file: string): string
+  pipe(files?: Files): Pipe
   find(...globs: ParseOptions<FindOptions>): Pipe
   call(...tasks: (keyof D)[]): Pipe
   parallel(...tasks: (keyof D)[]): Pipe
@@ -138,10 +139,16 @@ class TaskContextImpl implements TaskContext<any> {
     return path.resolve(path.dirname(this.#file), file)
   }
 
+  pipe(files?: Files): Pipe {
+    const pipe = new Pipe(this.#run, files)
+    this.#pipes.push(pipe)
+    return pipe
+  }
+
   find(...args: ParseOptions<FindOptions>): Pipe {
     const { globs, options: opts } = parseOptions(args, {})
 
-    const pipe = new Pipe(this.#run).plug(async (run: Run): Promise<Files> => {
+    return this.pipe().plug(async (run: Run): Promise<Files> => {
       const { directory: dir, ...options } = opts
       const directory = dir ? dir : run.directory
 
@@ -154,13 +161,10 @@ class TaskContextImpl implements TaskContext<any> {
 
       return files.build()
     })
-
-    this.#pipes.push(pipe)
-    return pipe
   }
 
   call(...names: string[]): Pipe {
-    const pipe = new Pipe(this.#run).plug(async (run: Run): Promise<Files> => {
+    return this.pipe().plug(async (run: Run): Promise<Files> => {
       const files = Files.builder(run.directory)
       if (names.length === 0) return files.build()
 
@@ -178,9 +182,6 @@ class TaskContextImpl implements TaskContext<any> {
       }
       return files.build()
     })
-
-    this.#pipes.push(pipe)
-    return pipe
   }
 
   parallel(...names: string[]): Pipe {
