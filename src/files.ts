@@ -42,6 +42,10 @@ export class Files {
     for (const file of this) yield [ file, path.resolve(this.#directory, file) ]
   }
 
+  builder(): FilesBuilder {
+    return Files.builder(this.#directory).merge(this)
+  }
+
   static builder(directory: string): FilesBuilder {
     assert(fs.statSync(directory).isDirectory(), `Invalid directory "${directory}"`)
     directory = path.normalize(directory)
