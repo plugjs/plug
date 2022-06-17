@@ -28,7 +28,7 @@ export interface TaskContext<D> {
 }
 
 /* A `TaskCall` defines the callable component of a `Task` */
-export type TaskCall = (build: Build<any>, run: Run) => Promise<Files>
+export type TaskCall = (this: undefined, build: Build<any>, run: Run) => Promise<Files>
 
 /** A `TaskDefinition` is a _function_ defining a `Task` */
 export type TaskDefinition<D> = (this: TaskContext<D>, run: Run) =>
@@ -37,26 +37,28 @@ export type TaskDefinition<D> = (this: TaskContext<D>, run: Run) =>
   | void | Promise<void>
 
 /* A `TaskDescriptor` defines a descriptor for a `Task` */
-export interface TaskDescriptor {
+export interface Task {
   /** The _name_ of this task */
   name: string,
   /** The _file name_ where this task was defined from */
   file: string,
   /** The `TaskCall` of this `Task` */
   task: TaskCall
+  /** The `Build` associated to this `Task` */
+  build: Build<unknown>
 }
 
 /** A callable `Task`, merging `TaskDescriptor` and `TaskCall` */
-export type Task = ((run?: Run) => Promise<Files>) & Readonly<TaskDescriptor>
+export type CallableTask = ((run?: Run) => Promise<Files>) & Readonly<Task>
 
 /** A `Build` represents a number of compiled `Task`s */
 export type Build<B> = {
-  [ K in keyof B ] : Task
+  [ K in keyof B ] : CallableTask
 }
 
 /** The collection of `Task`s and `TaskDefinition`s defining a `Build` */
 export type BuildDefinition<B> = {
-  [ K in keyof B ] : TaskDefinition<B> | Task
+  [ K in keyof B ] : TaskDefinition<B> | CallableTask
 }
 
 /* ========================================================================== *
@@ -81,10 +83,10 @@ export function build<D extends BuildDefinition<D>>(
         [ makeTaskCall(value, source), source ]
 
     /* Create our `TaskDescriptor` (for type checking) */
-    const descriptor: TaskDescriptor = { name, file, task }
+    const descriptor: Task = { name, file, task, build }
 
     /* Crate the task function, and merge its descriptor properties */
-    const call = ((run = new Run()) => run.run(call, build)) as Task
+    const call = ((run = new Run()) => run.run(call)) as CallableTask
     for (const [ key, value ] of Object.entries(descriptor)) {
       Object.defineProperty(call, key, { enumerable: true, value })
     }
@@ -177,7 +179,7 @@ class TaskContextImpl implements TaskContext<any> {
       log.info('Calling', tasks.length, `tasks in series: ${message}.`)
 
       const builder = files.builder()
-      for (const task of tasks) builder.merge(await run.run(task, this.#build))
+      for (const task of tasks) builder.merge(await run.run(task))
       return builder.build()
     })
   }
@@ -197,7 +199,7 @@ class TaskContextImpl implements TaskContext<any> {
 
       const promises: Promise<Files>[] = []
       for (const task of tasks) {
-        promises.push(run.run(task, this.#build))
+        promises.push(run.run(task))
       }
 
       let errors = 0

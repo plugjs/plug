@@ -1,6 +1,6 @@
 
 import { runAsync } from './async'
-import type { Build, TaskDescriptor } from './build'
+import type { Task } from './build'
 import type { Files } from './files'
 import { log } from './log'
 
@@ -10,8 +10,8 @@ export const buildFailed = Symbol('Build failed')
 /** A `Run` represents the context used when invoking a `Task` */
 export class Run {
   #directory: string
-  #stack: TaskDescriptor[] = []
-  #cache: Map<TaskDescriptor, Promise<Files>> = new Map()
+  #stack: Task[] = []
+  #cache: Map<Task, Promise<Files>> = new Map()
 
   /** Create a `Run` with the specified base directory (default `process.cwd()`) */
   constructor(directory: string = process.cwd()) {
@@ -23,16 +23,8 @@ export class Run {
     return this.#directory
   }
 
-  get currentTask(): TaskDescriptor | undefined {
-    return this.#stack[this.#stack.length - 1]
-  }
-
-  get runningTasks(): TaskDescriptor[] {
-    return [ ...this.#stack ]
-  }
-
   /** Run the specified `TaskDescriptor` in this `Run` context */
-  run(task: TaskDescriptor, build: Build<any>): Promise<Files> {
+  run(task: Task): Promise<Files> {
     /* Check for circular dependencies */
     if (this.#stack.includes(task)) {
       const m = [ `Circular dependency running task "${task.name}"` ]
@@ -51,11 +43,11 @@ export class Run {
     run.#cache = this.#cache
 
     /* Actually _call_ the `Task` and get a promise for it */
-    const promise = runAsync({ run, build, task }, async () => {
+    const promise = runAsync({ run, task }, async () => {
       const now = Date.now()
       log.info('Starting task')
       try {
-        const result = await task.task(build, run)
+        const result = await task.task.call(undefined, task.build, run)
         log.info('Task completed in', Date.now() - now, 'ms')
         return result
       } catch (error) {

@@ -1,5 +1,5 @@
 import { inspect } from 'node:util'
-import { currentRun } from './async'
+import { currentTask, runningTasks } from './async'
 
 /* ========================================================================== *
  * INTERNALS                                                                  *
@@ -72,8 +72,6 @@ export function prettyfyTaskName(task: string): string {
  * STATE                                                                      *
  * ========================================================================== */
 
-const runningTasks: string[] = []
-
 const levels: { [ k in LogLevel ] : number } = {
   DEBUG: 10,
   INFO: 20,
@@ -108,17 +106,17 @@ let nextSpin = 0
 
 setInterval(() => {
   if (! logColor) return
-  if (! runningTasks.length) return
+  const tasks = runningTasks()
+  if (! tasks.length) return
 
   const spin = `${red}${spins[(nextSpin ++) % spins.length]}${gry}`
 
-  const tasks = runningTasks
-    .map((task) => `${taskColor(task)}${task}`)
+  const names = tasks
+    .map((task) => `${taskColor(task.name)}${task.name}`)
     .join(`${gry}, `) + gry
 
-  const count = `${red}${runningTasks.length}${gry}`
-
-  process.stderr.write(`${zap}  ${spin} Running ${count} tasks (${tasks})${rst}`)
+  const count = `${red}${tasks.length}${gry}`
+  process.stderr.write(`${zap}  ${spin} Running ${count} tasks (${names})${rst}`)
 }, 100).unref()
 
 /* ========================================================================== *
@@ -159,7 +157,7 @@ function emitColor(level: number, ...args: any[]) {
   const prefixStrings: string[] = []
   let prefixLength = 0
 
-  const task = currentRun()?.currentTask?.name
+  const task = currentTask()?.name
   if (task) {
     prefixStrings.push(`${gry}[${taskColor(task)}${task}${gry}]${rst}`)
     prefixLength += task.length + 2
@@ -194,7 +192,7 @@ function emitPlain(level: number, ...args: any[]) {
   const prefixStrings: string[] = []
   let prefixLength = 0
 
-  const task = currentRun()?.currentTask?.name
+  const task = currentTask()?.name
   if (task) {
     prefixStrings.push(`[${task}]`)
     prefixLength += task.length + 2
