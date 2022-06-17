@@ -4,7 +4,7 @@
     "types": [ "node" ],
     "target": "esnext",
     "outDir": "./types",
-    "rootDir": "src",
+    "rootDir": ".",
     "strict": true,
     "module": "commonjs",
     "moduleResolution": "node",
@@ -12,10 +12,10 @@
     "emitDeclarationOnly": true,
     "noImplicitReturns": true,
     "esModuleInterop": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
   },
   "include": [
-    "**/*.ts",
+    "src/**/*.ts",
   ]
 }
