@@ -164,9 +164,8 @@ class TaskContextImpl implements TaskContext<any> {
   }
 
   call(...names: string[]): Pipe {
-    return this.pipe().plug(async (run: Run): Promise<Files> => {
-      const files = Files.builder(run.directory)
-      if (names.length === 0) return files.build()
+    return this.pipe().plug(async (run, files): Promise<Files> => {
+      if (names.length === 0) return files
 
       const tasks = names.map((name) => {
         const task = this.#build[name]
@@ -177,17 +176,15 @@ class TaskContextImpl implements TaskContext<any> {
       const message = names.map((name) => prettyfyTaskName(name)).join(', ')
       log.info('Calling', tasks.length, `tasks in series: ${message}.`)
 
-      for (const task of tasks) {
-        files.merge(await run.run(task, this.#build))
-      }
-      return files.build()
+      const builder = files.builder()
+      for (const task of tasks) builder.merge(await run.run(task, this.#build))
+      return builder.build()
     })
   }
 
   parallel(...names: string[]): Pipe {
-    const pipe = new Pipe(this.#run).plug(async (run: Run): Promise<Files> => {
-      const files = Files.builder(run.directory)
-      if (names.length === 0) return files.build()
+    const pipe = new Pipe(this.#run).plug(async (run, files): Promise<Files> => {
+      if (names.length === 0) return files
 
       const tasks = names.map((name) => {
         const task = this.#build[name]
@@ -203,15 +200,16 @@ class TaskContextImpl implements TaskContext<any> {
         promises.push(run.run(task, this.#build))
       }
 
-      const results = await Promise.allSettled(promises)
       let errors = 0
+      const builder = files.builder()
+      const results = await Promise.allSettled(promises)
       for (const result of results) {
         if (result.status === 'rejected') errors ++
-        else files.merge(result.value)
+        else builder.merge(result.value)
       }
 
-      if (! errors) return files.build()
-      run.fail('Parallel execution produced', errors, 'errors')
+      if (errors) run.fail('Parallel execution produced', errors, 'errors')
+      return builder.build()
     })
 
     this.#pipes.push(pipe)
