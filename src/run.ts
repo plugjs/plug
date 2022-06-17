@@ -3,7 +3,8 @@ import type { Build, TaskDescriptor } from './build'
 import type { Files } from './files'
 import { log, runWithTaskName } from './log'
 
-const buildFailed = Symbol('Build failed')
+/** A constant thrown by `Run` indicating a build failure already logged */
+export const buildFailed = Symbol('Build failed')
 
 /** A `Run` represents the context used when invoking a `Task` */
 export class Run {
@@ -11,15 +12,17 @@ export class Run {
   #stack: TaskDescriptor[] = []
   #cache: Map<TaskDescriptor, Promise<Files>> = new Map()
 
+  /** Create a `Run` with the specified base directory (default `process.cwd()`) */
   constructor(directory: string = process.cwd()) {
     this.#directory = directory
   }
 
+  /** Return the base directory of this `Run` */
   get directory(): string {
     return this.#directory
   }
 
-  /** Run the specified `Task` in this `Run` context */
+  /** Run the specified `TaskDescriptor` in this `Run` context */
   run(task: TaskDescriptor, build: Build<any>): Promise<Files> {
     /* Check for circular dependencies */
     if (this.#stack.includes(task)) {
@@ -38,7 +41,7 @@ export class Run {
     run.#stack = [ ...this.#stack, task ]
     run.#cache = this.#cache
 
-    /* Actually _call_ the `Task` and cache its results */
+    /* Actually _call_ the `Task` and get a promise for it */
     const promise = runWithTaskName(task.name, async () => {
       const now = Date.now()
       log.info('Starting task')
@@ -50,27 +53,36 @@ export class Run {
         this.fail(error, 'Task failed in', Date.now() - now, 'ms')
       }
     })
+
+    /* Cache the execution promise (never run the smae task twice) */
     this.#cache.set(task, promise)
     return promise
   }
 
+  /** Fail this `Run` giving a descriptive reason */
   fail(reason: string, ...data: any[]): never
+  /** Fail this `Run` for the specified cause, with an optional reason */
   fail(cause: unknown, reason?: string, ...args: any[]): never
+  // Overload!
   fail(causeOrReason: unknown, ...args: any[]): never {
+    /* We never have to log `buildFailed`, so treat it as undefined */
+    if (causeOrReason === buildFailed) causeOrReason = undefined
+
+    /* Nomalize our arguments, extracting cause and reason */
     const [ cause, reason ] =
       typeof causeOrReason === 'string' ?
         [ undefined, causeOrReason ] :
         [ causeOrReason, args.shift() as string | undefined ]
 
-    const error = cause === buildFailed ? undefined : cause
-
+    /* Log our error if we have to */
     if (reason) {
-      if (error) args.push(error)
+      if (cause) args.push(cause)
       log.error(reason, ...args)
-    } else if (error) {
-      log.error('Error', error)
+    } else if (cause) {
+      log.error('Error', cause)
     }
 
+    /* Failure handled, never log it again */
     throw buildFailed
   }
 }
