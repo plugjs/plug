@@ -28,7 +28,6 @@ export function requireTask(): Task {
   return context.task
 }
 
-
 export function runningTasks(): Task[] {
   return [ ...tasks ]
 }

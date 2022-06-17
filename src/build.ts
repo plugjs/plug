@@ -29,14 +29,14 @@ export interface TaskContext<D> {
   parallel(...tasks: (keyof D)[]): Pipe
 }
 
-/* A `TaskCall` defines the callable component of a `Task` */
-export type TaskCall = (this: Task) => Promise<Files>
-
 /** A `TaskDefinition` is a _function_ defining a `Task` */
 export type TaskDefinition<D> = (this: TaskContext<D>, run: Run) =>
   | Files | Promise<Files>
   | Pipe | Promise<Pipe>
   | void | Promise<void>
+
+/* A `TaskCall` defines the callable component of a `Task` */
+export type TaskCall = (this: Task) => Promise<Files>
 
 /* A `TaskDescriptor` defines a descriptor for a `Task` */
 export interface Task {
