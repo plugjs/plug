@@ -2,6 +2,7 @@ import assert from 'node:assert'
 import fs from 'node:fs'
 import path from 'node:path'
 import util from 'node:util'
+import { requireRun } from './async'
 import { Run } from './run'
 
 export interface FilesBuilder {
@@ -13,15 +14,14 @@ export interface FilesBuilder {
 export class Files {
   #directory: string
   #files: string[]
-  #run: Run
 
-  constructor(run: Run, directory?: string) {
-    directory = path.resolve(run.directory, directory || '.')
+  constructor(directory?: string)
+  constructor(directory: string = '.') {
+    directory = path.resolve(requireRun().directory, directory)
     assert(fs.statSync(directory).isDirectory(), `Invalid directory "${directory}"`)
 
     this.#directory = directory
     this.#files = []
-    this.#run = run
   }
 
   get directory(): string {
@@ -49,21 +49,21 @@ export class Files {
   }
 
   builder(): FilesBuilder {
-    return Files.builder(this.#run, this.#directory)
+    return Files.builder(this.#directory)
   }
 
-  static builder(run: Run, directory?: string): FilesBuilder {
-    const files = new Files(run, directory)
+  static builder(directory?: string): FilesBuilder {
+    const instance = new Files(directory)
     const set = new Set<string>()
 
     return {
       push(...files: string[]): FilesBuilder {
         if (typeof files === 'string') files = [ files ]
         for (const file of files) {
-          const absolute = path.resolve(run.directory, file)
-          const relative = path.relative(run.directory, absolute)
-          assert(isRelative(relative), `File "${file}" not relative to "${run.directory}"`)
-          assert(isDecendant(relative), `File "${file}" not relative to "${run.directory}"`)
+          const absolute = path.resolve(instance.directory, file)
+          const relative = path.relative(instance.directory, absolute)
+          assert(isRelative(relative), `File "${file}" not relative to "${instance.directory}"`)
+          assert(isDecendant(relative), `File "${file}" not relative to "${instance.directory}"`)
           set.add(relative)
         }
         return this
@@ -79,8 +79,8 @@ export class Files {
       },
 
       build(): Files {
-        files.#files = [ ...set ].sort()
-        return files
+        instance.#files = [ ...set ].sort()
+        return instance
       },
     }
   }

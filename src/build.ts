@@ -115,7 +115,7 @@ function makeTaskCall(definition: TaskDefinition<any>, file: string): TaskCall {
     for (const pipe of context.pipes) await pipe
 
     /* Check for simple `Files` (or `void`) results */
-    return result ? result : new Files(run)
+    return result ? result : new Files()
   }
 }
 
@@ -142,7 +142,7 @@ class TaskContextImpl implements TaskContext<any> {
   }
 
   pipe(files?: Files): Pipe {
-    const pipe = new Pipe(this.#run, files)
+    const pipe = new Pipe(files)
     this.#pipes.push(pipe)
     return pipe
   }
@@ -156,7 +156,7 @@ class TaskContextImpl implements TaskContext<any> {
 
       log.debug('Finding files', { directory, options, globs })
 
-      const files = Files.builder(run, directory)
+      const files = Files.builder(directory)
       for await (const file of walk(directory, ...globs, options)) {
         files.push(file)
       }
@@ -185,7 +185,7 @@ class TaskContextImpl implements TaskContext<any> {
   }
 
   parallel(...names: string[]): Pipe {
-    const pipe = new Pipe(this.#run).plug(async (run, files): Promise<Files> => {
+    const pipe = new Pipe().plug(async (run, files): Promise<Files> => {
       if (names.length === 0) return files
 
       const tasks = names.map((name) => {

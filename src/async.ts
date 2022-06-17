@@ -1,3 +1,4 @@
+import assert from 'node:assert'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import type { Task } from './build'
 import type { Run } from './run'
@@ -14,6 +15,19 @@ export function currentRun(): Run | undefined {
 export function currentTask(): Task | undefined {
   return storage.getStore()?.task
 }
+
+export function requireRun(): Run {
+  const context = storage.getStore()
+  assert(context, 'No `Run` associated with current async context')
+  return context.run
+}
+
+export function requireTask(): Task {
+  const context = storage.getStore()
+  assert(context, 'No `Task` associated with current async context')
+  return context.task
+}
+
 
 export function runningTasks(): Task[] {
   return [ ...tasks ]
