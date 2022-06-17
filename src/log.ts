@@ -1,5 +1,5 @@
-import { AsyncLocalStorage } from 'node:async_hooks'
 import { inspect } from 'node:util'
+import { currentRun } from './async'
 
 /* ========================================================================== *
  * INTERNALS                                                                  *
@@ -64,22 +64,6 @@ export const log: Log = {
   },
 }
 
-export function taskName(): string | undefined {
-  return asyncStorage.getStore()
-}
-
-export function runWithTaskName<T>(name: string, fn: () => Promise<T>): Promise<T> {
-  return asyncStorage.run(name, async () => {
-    runningTasks.push(name)
-    try {
-      return await fn()
-    } finally {
-      const i = runningTasks.indexOf(name)
-      if (i >= 0) runningTasks.splice(i, 1)
-    }
-  })
-}
-
 export function prettyfyTaskName(task: string): string {
   return logColor ? `${taskColor(task)}${task}${rst}` : task
 }
@@ -141,8 +125,6 @@ setInterval(() => {
  * INTERNALS                                                                  *
  * ========================================================================== */
 
-const asyncStorage = new AsyncLocalStorage<string>()
-
 const zap = '\u001b[0G\u001b[2K' // clear line and set column 0
 const rst = '\u001b[0m' // reset all colors to default
 const gry = '\u001b[38;5;240m' // somewhat gray
@@ -177,7 +159,7 @@ function emitColor(level: number, ...args: any[]) {
   const prefixStrings: string[] = []
   let prefixLength = 0
 
-  const task = taskName()
+  const task = currentRun()?.currentTask?.name
   if (task) {
     prefixStrings.push(`${gry}[${taskColor(task)}${task}${gry}]${rst}`)
     prefixLength += task.length + 2
@@ -212,7 +194,7 @@ function emitPlain(level: number, ...args: any[]) {
   const prefixStrings: string[] = []
   let prefixLength = 0
 
-  const task = taskName()
+  const task = currentRun()?.currentTask?.name
   if (task) {
     prefixStrings.push(`[${task}]`)
     prefixLength += task.length + 2

@@ -1,7 +1,8 @@
 
+import { runAsync } from './async'
 import type { Build, TaskDescriptor } from './build'
 import type { Files } from './files'
-import { log, runWithTaskName } from './log'
+import { log } from './log'
 
 /** A constant thrown by `Run` indicating a build failure already logged */
 export const buildFailed = Symbol('Build failed')
@@ -20,6 +21,14 @@ export class Run {
   /** Return the base directory of this `Run` */
   get directory(): string {
     return this.#directory
+  }
+
+  get currentTask(): TaskDescriptor | undefined {
+    return this.#stack[this.#stack.length - 1]
+  }
+
+  get runningTasks(): TaskDescriptor[] {
+    return [ ...this.#stack ]
   }
 
   /** Run the specified `TaskDescriptor` in this `Run` context */
@@ -42,7 +51,7 @@ export class Run {
     run.#cache = this.#cache
 
     /* Actually _call_ the `Task` and get a promise for it */
-    const promise = runWithTaskName(task.name, async () => {
+    const promise = runAsync({ run, build, task }, async () => {
       const now = Date.now()
       log.info('Starting task')
       try {
