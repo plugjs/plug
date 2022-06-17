@@ -41,7 +41,7 @@ export class Run {
     /* Actually _call_ the `Task` and cache its results */
     const promise = runWithTaskName(task.name, async () => {
       const now = Date.now()
-      log.debug('Starting task')
+      log.info('Starting')
       try {
         const result = await task.task(build, run)
         log.info('Completed in', Date.now() - now, 'ms')
