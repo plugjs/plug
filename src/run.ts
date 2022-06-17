@@ -3,7 +3,7 @@ import type { Build, TaskDescriptor } from './build'
 import type { Files } from './files'
 import { log, runWithTaskName } from './log'
 
-export const buildFailed = Symbol('Build failed')
+const buildFailed = Symbol('Build failed')
 
 /** A `Run` represents the context used when invoking a `Task` */
 export class Run {
@@ -41,19 +41,36 @@ export class Run {
     /* Actually _call_ the `Task` and cache its results */
     const promise = runWithTaskName(task.name, async () => {
       const now = Date.now()
-      log.info('Starting')
+      log.info('Starting task')
       try {
         const result = await task.task(build, run)
-        log.info('Completed in', Date.now() - now, 'ms')
+        log.info('Task completed in', Date.now() - now, 'ms')
         return result
       } catch (error) {
-        log.info('Completed in', Date.now() - now, 'ms with errors')
-        if (error !== buildFailed) log.error(error)
-        throw buildFailed
-      } finally {
+        this.fail(error, 'Task failed in', Date.now() - now, 'ms')
       }
     })
     this.#cache.set(task, promise)
     return promise
+  }
+
+  fail(reason: string, ...data: any[]): never
+  fail(cause: unknown, reason?: string, ...args: any[]): never
+  fail(causeOrReason: unknown, ...args: any[]): never {
+    const [ cause, reason ] =
+      typeof causeOrReason === 'string' ?
+        [ undefined, causeOrReason ] :
+        [ causeOrReason, args.shift() as string | undefined ]
+
+    const error = cause === buildFailed ? undefined : cause
+
+    if (reason) {
+      if (error) args.push(error)
+      log.error(reason, ...args)
+    } else if (error) {
+      log.error('Error', error)
+    }
+
+    throw buildFailed
   }
 }
