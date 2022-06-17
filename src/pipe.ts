@@ -9,14 +9,15 @@ export interface Plug {
 
 export class Pipe {
   #plugs: Plug[] = []
+  #run: Run
 
-  constructor() {
-    // nothing to do here!
+  constructor(run: Run) {
+    this.#run = run
   }
 
-  async run(run: Run): Promise<Files> {
-    let files = Files.builder(run.directory).build()
-    for (const plug of this.#plugs) files = await plug.pipe(run, files)
+  async run(): Promise<Files> {
+    let files = Files.builder(this.#run.directory).build()
+    for (const plug of this.#plugs) files = await plug.pipe(this.#run, files)
     return files
   }
 

@@ -30,7 +30,7 @@ export interface TaskContext<D> {
 export type TaskCall = (build: Build<any>, run: Run) => Promise<Files>
 
 /** A `TaskDefinition` is a _function_ defining a `Task` */
-export type TaskDefinition<D> = (this: TaskContext<D>) =>
+export type TaskDefinition<D> = (this: TaskContext<D>, run: Run) =>
   | Files | Promise<Files>
   | Pipe | Promise<Pipe>
   | void | Promise<void>
@@ -103,14 +103,14 @@ export function build<D extends BuildDefinition<D>>(
 /** Take a `TaskDefinition` and return a callable `TaskCall` */
 function makeTaskCall(definition: TaskDefinition<any>, file: string): TaskCall {
   return async function task(build: Build<any>, run: Run): Promise<Files> {
-    const context = new TaskContextImpl(build, file)
+    const context = new TaskContextImpl(run, build, file)
 
     /* Get the results calling the task */
-    const result = await definition.call(context)
+    const result = await definition.call(context, run)
 
     /* Any pipe created by calling this.xxx(...) gets awaited */
     for (const pipe of context.pipes) {
-      if (pipe !== result) await pipe.run(run)
+      if (pipe !== result) await pipe.run()
     }
 
     /* Check for simple `Files` (or `void`) results */
@@ -118,7 +118,7 @@ function makeTaskCall(definition: TaskDefinition<any>, file: string): TaskCall {
     if (result instanceof Files) return result
 
     /* If the result is a `Pipe` run it now! */
-    return result.run(run)
+    return result.run()
   }
 }
 
@@ -128,10 +128,12 @@ class TaskContextImpl implements TaskContext<any> {
   #pipes: Pipe[] = []
   #build: Build<any>
   #file: string
+  #run: Run
 
-  constructor(build: Build<any>, file: string) {
+  constructor(run: Run, build: Build<any>, file: string) {
     this.#build = build
     this.#file = file
+    this.#run = run
   }
 
   get pipes(): Pipe[] {
@@ -145,7 +147,7 @@ class TaskContextImpl implements TaskContext<any> {
   find(...args: ParseOptions<FindOptions>): Pipe {
     const { globs, options: opts } = parseOptions(args, {})
 
-    const pipe = new Pipe().plug(async (run: Run): Promise<Files> => {
+    const pipe = new Pipe(this.#run).plug(async (run: Run): Promise<Files> => {
       const { directory: dir, ...options } = opts
       const directory = dir ? dir : run.directory
 
@@ -164,7 +166,7 @@ class TaskContextImpl implements TaskContext<any> {
   }
 
   call(...names: string[]): Pipe {
-    const pipe = new Pipe().plug(async (run: Run): Promise<Files> => {
+    const pipe = new Pipe(this.#run).plug(async (run: Run): Promise<Files> => {
       const files = Files.builder(run.directory)
       if (names.length === 0) return files.build()
 
@@ -188,7 +190,7 @@ class TaskContextImpl implements TaskContext<any> {
   }
 
   parallel(...names: string[]): Pipe {
-    const pipe = new Pipe().plug(async (run: Run): Promise<Files> => {
+    const pipe = new Pipe(this.#run).plug(async (run: Run): Promise<Files> => {
       const files = Files.builder(run.directory)
       if (names.length === 0) return files.build()
 
