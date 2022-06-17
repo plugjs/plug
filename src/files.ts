@@ -3,9 +3,9 @@ import fs from 'node:fs'
 import path from 'node:path'
 import util from 'node:util'
 import { requireRun } from './async'
-import { Run } from './run'
 
 export interface FilesBuilder {
+  readonly directory: string
   push(...files: string[]): this
   merge(...files: Files[]): this
   build(): Files
@@ -57,13 +57,15 @@ export class Files {
     const set = new Set<string>()
 
     return {
+      directory: instance.directory,
+
       push(...files: string[]): FilesBuilder {
         if (typeof files === 'string') files = [ files ]
         for (const file of files) {
-          const absolute = path.resolve(instance.directory, file)
-          const relative = path.relative(instance.directory, absolute)
-          assert(isRelative(relative), `File "${file}" not relative to "${instance.directory}"`)
-          assert(isDecendant(relative), `File "${file}" not relative to "${instance.directory}"`)
+          const absolute = path.resolve(this.directory, file)
+          const relative = path.relative(this.directory, absolute)
+          assert(isRelative(relative), `File "${file}" not relative to "${this.directory}"`)
+          assert(isDecendant(relative), `File "${file}" not relative to "${this.directory}"`)
           set.add(relative)
         }
         return this

@@ -1,6 +1,7 @@
 import assert from 'node:assert'
 import fs from 'node:fs'
 import path from 'node:path'
+import { requireRun } from './async'
 
 import { Files } from './files'
 import { log, prettyfyTaskName } from './log'
@@ -20,6 +21,7 @@ export interface FindOptions extends WalkOptions {
 
 /** The contextual `this` argument used when callng `TaskDefinition`s */
 export interface TaskContext<D> {
+  readonly build: Build<D>
   resolve(file: string): string
   pipe(files?: Files): Pipe
   find(...globs: ParseOptions<FindOptions>): Pipe
@@ -28,7 +30,7 @@ export interface TaskContext<D> {
 }
 
 /* A `TaskCall` defines the callable component of a `Task` */
-export type TaskCall = (this: undefined, build: Build<any>, run: Run) => Promise<Files>
+export type TaskCall = (this: Task) => Promise<Files>
 
 /** A `TaskDefinition` is a _function_ defining a `Task` */
 export type TaskDefinition<D> = (this: TaskContext<D>, run: Run) =>
@@ -39,13 +41,11 @@ export type TaskDefinition<D> = (this: TaskContext<D>, run: Run) =>
 /* A `TaskDescriptor` defines a descriptor for a `Task` */
 export interface Task {
   /** The _name_ of this task */
-  name: string,
+  readonly name: string,
   /** The _file name_ where this task was defined from */
-  file: string,
+  readonly file: string,
   /** The `TaskCall` of this `Task` */
-  task: TaskCall
-  /** The `Build` associated to this `Task` */
-  build: Build<unknown>
+  readonly task: TaskCall
 }
 
 /** A callable `Task`, merging `TaskDescriptor` and `TaskCall` */
@@ -80,10 +80,10 @@ export function build<D extends BuildDefinition<D>>(
     const [ task, file ] =
       'task' in value ?
         [ value.task, value.file ] :
-        [ makeTaskCall(value, source), source ]
+        [ makeTaskCall(value, build, source), source ]
 
     /* Create our `TaskDescriptor` (for type checking) */
-    const descriptor: Task = { name, file, task, build }
+    const descriptor: Task = { name, file, task } // TODO , build }
 
     /* Crate the task function, and merge its descriptor properties */
     const call = ((run = new Run()) => run.run(call)) as CallableTask
@@ -104,12 +104,12 @@ export function build<D extends BuildDefinition<D>>(
  * ========================================================================== */
 
 /** Take a `TaskDefinition` and return a callable `TaskCall` */
-function makeTaskCall(definition: TaskDefinition<any>, file: string): TaskCall {
-  return async function task(build: Build<any>, run: Run): Promise<Files> {
-    const context = new TaskContextImpl(run, build, file)
+function makeTaskCall(definition: TaskDefinition<any>, build: Build<any>, file: string): TaskCall {
+  return async function task(): Promise<Files> {
+    const context = new TaskContextImpl(build, file)
 
     /* Get the results calling the task */
-    const result = await definition.call(context, run)
+    const result = await definition.call(context, requireRun())
 
     /* Any pipe created by calling this.xxx(...) gets awaited */
     for (const pipe of context.pipes) await pipe
@@ -119,22 +119,22 @@ function makeTaskCall(definition: TaskDefinition<any>, file: string): TaskCall {
   }
 }
 
-
-
 class TaskContextImpl implements TaskContext<any> {
   #pipes: Pipe[] = []
   #build: Build<any>
   #file: string
-  #run: Run
 
-  constructor(run: Run, build: Build<any>, file: string) {
+  constructor(build: Build<any>, file: string) {
     this.#build = build
     this.#file = file
-    this.#run = run
   }
 
   get pipes(): Pipe[] {
     return this.#pipes
+  }
+
+  get build(): Build<any> {
+    return this.#build
   }
 
   resolve(file: string) {
@@ -151,17 +151,16 @@ class TaskContextImpl implements TaskContext<any> {
     const { globs, options: opts } = parseOptions(args, {})
 
     return this.pipe().plug(async (run: Run): Promise<Files> => {
-      const { directory: dir, ...options } = opts
-      const directory = dir ? dir : run.directory
+      const { directory, ...options } = { directory: run.directory, ...opts }
 
       log.debug('Finding files', { directory, options, globs })
 
-      const files = Files.builder(directory)
-      for await (const file of walk(directory, ...globs, options)) {
-        files.push(file)
+      const builder = Files.builder(directory)
+      for await (const file of walk(builder.directory, ...globs, options)) {
+        builder.push(file)
       }
 
-      return files.build()
+      return builder.build()
     })
   }
 
@@ -171,7 +170,7 @@ class TaskContextImpl implements TaskContext<any> {
 
       const tasks = names.map((name) => {
         const task = this.#build[name]
-        if (! task) run.fail('TODO', `No such task "${name}"`) // TODO
+        if (! task) run.fail(`No such task "${name}"`)
         return task
       })
 
@@ -190,7 +189,7 @@ class TaskContextImpl implements TaskContext<any> {
 
       const tasks = names.map((name) => {
         const task = this.#build[name]
-        if (! task) run.fail('TODO', `No such task "${name}"`) // TODO
+        if (! task) run.fail(`No such task "${name}"`)
         return task
       })
 

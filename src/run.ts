@@ -47,7 +47,7 @@ export class Run {
       const now = Date.now()
       log.info('Starting task')
       try {
-        const result = await task.task.call(undefined, task.build, run)
+        const result = await task.task()
         log.info('Task completed in', Date.now() - now, 'ms')
         return result
       } catch (error) {

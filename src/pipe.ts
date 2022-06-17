@@ -1,6 +1,5 @@
 import type { Run } from './run'
 import { Files } from './files'
-import assert from 'node:assert'
 import { requireRun } from './async'
 
 export type PlugFunction = (run: Run, files: Files) => Files | Promise<Files>
