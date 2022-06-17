@@ -1,12 +1,11 @@
 import assert from 'node:assert'
-import { dir } from 'node:console'
 import fs from 'node:fs'
 import path from 'node:path'
 
 import { Files } from './files'
-import { log } from './log'
+import { log, prettyfyTaskName } from './log'
 import { Pipe } from './pipe'
-import { buildFailed, Run } from './run'
+import { Run } from './run'
 
 import { parseOptions, ParseOptions } from './utils/options'
 import { walk, WalkOptions } from './utils/walk'
@@ -106,19 +105,20 @@ function makeTaskCall(definition: TaskDefinition<any>, file: string): TaskCall {
   return async function task(build: Build<any>, run: Run): Promise<Files> {
     const context = new TaskContextImpl(build, file)
 
+    /* Get the results calling the task */
     const result = await definition.call(context)
-    console.log('RESULT IS', result)
 
+    /* Any pipe created by calling this.xxx(...) gets awaited */
     for (const pipe of context.pipes) {
       if (pipe !== result) await pipe.run(run)
     }
-    // console.log('EXTRA', self.pipes.length, 'PIPES CALLED')
 
+    /* Check for simple `Files` (or `void`) results */
     if (! result) return Files.builder(run.directory).build()
     if (result instanceof Files) return result
 
-    console.log('RUNNING RETURNED PIPE')
-    return result.run(run) // todo: pipe might have run already!
+    /* If the result is a `Pipe` run it now! */
+    return result.run(run)
   }
 }
 
@@ -163,21 +163,21 @@ class TaskContextImpl implements TaskContext<any> {
     return pipe
   }
 
-  call(...tasks: string[]): Pipe {
+  call(...names: string[]): Pipe {
     const pipe = new Pipe().plug(async (run: Run): Promise<Files> => {
       const files = Files.builder(run.directory)
-      if (tasks.length === 0) return files.build()
+      if (names.length === 0) return files.build()
 
-      log.debug('Calling', tasks.length, 'tasks in series', { tasks })
-
-      for (const name of tasks) {
+      const tasks = names.map((name) => {
         const task = this.#build[name]
+        if (! task) run.fail('TODO', `No such task "${name}"`) // TODO
+        return task
+      })
 
-        if (! task) {
-          log.error(`No such task "${name}"`)
-          throw buildFailed
-        }
+      const message = names.map((name) => prettyfyTaskName(name)).join(', ')
+      log.info('Calling', tasks.length, `tasks in series: ${message}.`)
 
+      for (const task of tasks) {
         files.merge(await run.run(task, this.#build))
       }
       return files.build()
@@ -187,39 +187,34 @@ class TaskContextImpl implements TaskContext<any> {
     return pipe
   }
 
-  parallel(...tasks: string[]): Pipe {
+  parallel(...names: string[]): Pipe {
     const pipe = new Pipe().plug(async (run: Run): Promise<Files> => {
       const files = Files.builder(run.directory)
-      if (tasks.length === 0) return files.build()
+      if (names.length === 0) return files.build()
 
-      log.debug('Calling', tasks.length, 'tasks in parallel', { tasks })
+      const tasks = names.map((name) => {
+        const task = this.#build[name]
+        if (! task) run.fail('TODO', `No such task "${name}"`) // TODO
+        return task
+      })
+
+      const message = names.map((name) => prettyfyTaskName(name)).join(', ')
+      log.info('Calling', tasks.length, `tasks in parallel: ${message}.`)
 
       const promises: Promise<Files>[] = []
-      for (const name of tasks) {
-        const task = this.#build[name]
-
-        if (! task) {
-          log.error(`No such task "${name}"`)
-          promises.push(Promise.reject(buildFailed))
-        } else {
-          promises.push(run.run(task, this.#build))
-        }
+      for (const task of tasks) {
+        promises.push(run.run(task, this.#build))
       }
 
       const results = await Promise.allSettled(promises)
       let errors = 0
       for (const result of results) {
-        if (result.status === 'fulfilled') {
-          files.merge(result.value)
-        } else {
-          if (result.reason !== buildFailed) log.error(result.reason)
-          errors ++
-        }
+        if (result.status === 'rejected') errors ++
+        else files.merge(result.value)
       }
 
-      if (errors) throw buildFailed
-
-      return files.build()
+      if (! errors) return files.build()
+      run.fail('Parallel execution produced', errors, 'errors')
     })
 
     this.#pipes.push(pipe)
