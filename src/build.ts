@@ -109,16 +109,10 @@ function makeTaskCall(definition: TaskDefinition<any>, file: string): TaskCall {
     const result = await definition.call(context, run)
 
     /* Any pipe created by calling this.xxx(...) gets awaited */
-    for (const pipe of context.pipes) {
-      if (pipe !== result) await pipe.run()
-    }
+    for (const pipe of context.pipes) await pipe
 
     /* Check for simple `Files` (or `void`) results */
-    if (! result) return Files.builder(run.directory).build()
-    if (result instanceof Files) return result
-
-    /* If the result is a `Pipe` run it now! */
-    return result.run()
+    return result ? result : Files.builder(run.directory).build()
   }
 }
 
