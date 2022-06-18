@@ -1,6 +1,5 @@
 import picomatch from 'picomatch'
 
-import { caseSensitivePaths } from './paths'
 import { parseOptions, ParseOptions } from './options'
 
 export interface MatchResult {
@@ -26,7 +25,7 @@ export interface MatchOptions {
    * For example, `a?b` would match the path `/xyz/123/acb`, but not
    * `/xyz/acb/123`.
    *
-   * @default false
+   * @defaultValue `false`
    */
   basename?: boolean,
 
@@ -34,28 +33,28 @@ export interface MatchOptions {
    * Follow bash matching rules more strictly - disallows backslashes as escape
    * characters, and treats single stars as globstars (`**`).
    *
-   * @default false
+   * @defaultValue `false`
    */
   bash?: boolean,
 
   /**
    * Return regex matches in `onIgnore(..)`, `onMatch(..)` and `onResult(..)`.
    *
-   * @default false
+   * @defaultValue `false`
    */
   capture?: boolean,
 
   /**
    * Allows glob to match any part of the given string(s).
    *
-   * @default false
+   * @defaultValue `false`
    */
   contains?: boolean,
 
   /**
    * Debug regular expressions when an error is thrown.
    *
-   * @default false
+   * @defaultValue `false`
    */
   debug?: boolean,
 
@@ -65,7 +64,7 @@ export interface MatchOptions {
    * By default, dotfiles are ignored unless a `.` is explicitly defined in
    * the pattern, or this option is `true`.
    *
-   * @default false
+   * @defaultValue `false`
    */
   dot?: boolean,
 
@@ -77,7 +76,7 @@ export interface MatchOptions {
    *
    * It's recommended that returned strings be wrapped in parentheses.
    *
-   * @default undefined
+   * @defaultValue `undefined`
    */
   expandRange?: (a: string, b: string) => string,
 
@@ -87,7 +86,7 @@ export interface MatchOptions {
    *
    * Disable this behavior by setting this option to `false`.
    *
-   * @default true
+   * @defaultValue `true`
    */
   fastpaths?: boolean,
 
@@ -96,7 +95,7 @@ export interface MatchOptions {
    *
    * If defined, the nocase option will be overridden.
    *
-   * @default undefined
+   * @defaultValue `undefined`
    */
   flags?: string,
 
@@ -104,7 +103,7 @@ export interface MatchOptions {
    * One or more glob patterns for excluding strings that should not be matched
    * from the result.
    *
-   * @default  undefined
+   * @defaultValue  `undefined`
    */
   ignore?: string | string[],
 
@@ -112,7 +111,7 @@ export interface MatchOptions {
    * Retain quotes in the generated regular expressions, since quotes may also
    * be used as an alternative to backslashes.
    *
-   * @default false
+   * @defaultValue `false`
    */
   keepQuotes?: boolean,
 
@@ -120,7 +119,7 @@ export interface MatchOptions {
    * When `true`, brackets in the glob pattern will be escaped so that only
    * literal brackets will be matched.
    *
-   * @default false
+   * @defaultValue `false`
    */
   literalBrackets?: boolean,
 
@@ -128,14 +127,14 @@ export interface MatchOptions {
    * Disable brace matching, so that `{a,b}` and `{1..3}` would be treated as
    * literal characters.
    *
-   * @default false
+   * @defaultValue `false`
    */
   nobrace?: boolean,
 
   /**
    * Disable matching with regex brackets.
    *
-   * @default false
+   * @defaultValue `false`
    */
   nobracket?: boolean,
 
@@ -144,28 +143,28 @@ export interface MatchOptions {
    *
    * Note that this option is overridden by the flags option.
    *
-   * @default false
+   * @defaultValue `false`
    */
   nocase?: boolean,
 
   /**
    * Disable support for matching with extglobs (like `+(a|b)`).
    *
-   * @default false
+   * @defaultValue `false`
    */
   noextglob?: boolean,
 
   /**
    * Disable support for matching nested directories with globstars (`**`).
    *
-   * @default false
+   * @defaultValue `false`
    */
   noglobstar?: boolean,
 
   /**
    * Disable support for negating with leading `!`.
    *
-   * @default false
+   * @defaultValue `false`
    */
   nonegate?: boolean,
 
@@ -173,21 +172,21 @@ export interface MatchOptions {
    * Disable support for regex quantifiers (like `a{1,2}`) and treat them as
    * brace patterns to be expanded.
    *
-   * @default false
+   * @defaultValue `false`
    */
   noquantifiers?: boolean,
 
   /**
    * Function to be called on ignored items.
    *
-   * @default undefined
+   * @defaultValue `undefined`
    */
   onIgnore?: (result: MatchResult) => void,
 
   /**
    * Function to be called on matched items.
    *
-   * @default undefined
+   * @defaultValue `undefined`
    */
   onMatch?: (result: MatchResult) => void,
 
@@ -195,21 +194,21 @@ export interface MatchOptions {
    * Function to be called on all items, regardless of whether or not they
    * are matched or ignored.
    *
-   * @default undefined
+   * @defaultValue `undefined`
    */
   onResult?: (result: MatchResult) => void,
 
   /**
    * Support POSIX character classes ("posix brackets").
    *
-   * @default false
+   * @defaultValue `false`
    */
   posix?: boolean,
 
   /**
    * String to prepend to the generated regex used for matching.
    *
-   * @default undefined
+   * @defaultValue `undefined`
    */
   prepend?: string,
 
@@ -218,21 +217,21 @@ export interface MatchOptions {
    * and for stars that follow closing parentheses or brackets (as in `)*`
    * and `]*`).
    *
-   * @default false
+   * @defaultValue `false`
    */
   regex?: boolean,
 
   /**
    * Throw an error if brackets, braces, or parens are imbalanced.
    *
-   * @default false
+   * @defaultValue `false`
    */
   strictBrackets?: boolean,
 
   /**
    * When true, picomatch won't match trailing slashes with single stars.
    *
-   * @default false
+   * @defaultValue `false`
    */
   strictSlashes?: boolean,
 
@@ -241,20 +240,27 @@ export interface MatchOptions {
    *
    * By default, backslashes are retained.
    *
-   * @default false
+   * @defaultValue `false`
    */
   unescape?: boolean,
 }
 
+/** A _function_ matching a string. */
 export type Matcher = (string: string) => boolean
 
+/**
+ * Create a {@link Matcher} according to the globs and options specified.
+ */
 export function match(...args: ParseOptions<MatchOptions>): Matcher {
-  const { globs, options } = parseOptions(args, __defaults)
-  console.log('MATCH', globs, options)
+  const { globs, options } = parseOptions(args, defaults)
   return picomatch(globs, options)
 }
 
-const __defaults = {
+/* ========================================================================== *
+ * OUR DEFAULTS                                                               *
+ * ========================================================================== */
+
+const defaults = {
   basename: false,
   bash: false,
   capture: false,
@@ -269,7 +275,7 @@ const __defaults = {
   literalBrackets: false,
   nobrace: false,
   nobracket: false,
-  nocase: !caseSensitivePaths,
+  nocase: false,
   noextglob: false,
   noglobstar: false,
   nonegate: false,
