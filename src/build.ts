@@ -154,15 +154,17 @@ function makeTaskCall(
       }
 
       find(...args: ParseOptions<FindOptions>): Pipe {
-        const { globs, options: opts } = parseOptions(args, {})
-
         return this.pipe().plug(async (run: Run): Promise<Files> => {
-          const { directory, ...options } = { directory: run.directory, ...opts }
-
-          log.debug('Finding files', { directory, options, globs })
+          const { globs, options: { directory, ...options } } = parseOptions(args, {
+            directory: run.directory
+          })
 
           const builder = Files.builder(directory)
-          for await (const file of walk(builder.directory, ...globs, options)) {
+          const dir = builder.directory // builder.directory is resolved
+
+          log.debug('Finding files', { dir, options, globs })
+
+          for await (const file of walk(dir, ...globs, options)) {
             builder.push(file)
           }
 
