@@ -1,53 +1,85 @@
-import { inspect } from 'node:util'
+import type fs from 'node:fs'
+import type tty from 'node:tty'
+
+import { inspect, InspectOptions } from 'node:util'
 import { currentTask, runningTasks } from './async'
 
 /* ========================================================================== *
- * INTERNALS                                                                  *
+ * GENERIC LOGGING                                                            *
  * ========================================================================== */
 
-export const LogLevels = Object.freeze({
-  TRACE: 'TRACE',
-  DEBUG: 'DEBUG',
-  INFO: 'INFO',
-  WARN: 'WARN',
-  ERROR: 'ERROR',
-  OFF: 'OFF',
-} as const)
+/** Combine {@link fs.WriteStream} and {@link tty.WriteStream} */
+export type WriteStream = fs.WriteStream | tty.WriteStream
 
-export type LogLevel = keyof typeof LogLevels
+/** A type identifying all our log levels */
+export type LogLevel =
+  | 'TRACE'
+  | 'DEBUG'
+  | 'INFO'
+  | 'WARN'
+  | 'ERROR'
+  | 'OFF'
 
+/** Our {@link Log} interface */
 export interface Log {
-  logLevel: LogLevel,
-  logColor: boolean,
+  /* The current logging options */
+  options: {
+    /** The {@link LogLevel} currently being logged */
+    level: LogLevel,
+    /** Whether to log with colors or not */
+    colors: boolean,
+    /** The current output */
+    output: WriteStream
+  }
 
+  /** Log a `TRACE` message */
   trace: (message: string, ...data: any[]) => void
+  /** Log a `DEBUG` message */
   debug: (message: string, ...data: any[]) => void
+  /** Log an `INFO` message */
   info: (message: string, ...data: any[]) => void
+  /** Log a `WARNING` message */
   warn: (message: string, ...data: any[]) => void
+  /** Log an `ERROR` message */
   error: (message: string, ...data: any[]) => void
 }
 
+/** Our shared {@link Log} instance */
 export const log: Log = {
-  get logLevel(): LogLevel {
-    if (logLevel <= levels.TRACE) return LogLevels.TRACE
-    if (logLevel <= levels.DEBUG) return LogLevels.DEBUG
-    if (logLevel <= levels.INFO) return LogLevels.INFO
-    if (logLevel <= levels.WARN) return LogLevels.WARN
-    if (logLevel <= levels.ERROR) return LogLevels.ERROR
-    return LogLevels.OFF
+  options: {
+    get level(): LogLevel {
+      if (logLevel <= levels.TRACE) return 'TRACE'
+      if (logLevel <= levels.DEBUG) return 'DEBUG'
+      if (logLevel <= levels.INFO) return 'INFO'
+      if (logLevel <= levels.WARN) return 'WARN'
+      if (logLevel <= levels.ERROR) return 'ERROR'
+      return 'OFF'
+    },
+
+    set level(level: LogLevel) {
+      logLevel = level in levels ? levels[level] : levels.INFO
+    },
+
+    get colors(): boolean {
+      return logColor
+    },
+
+    set colors(color: boolean) {
+      logColor = !! color
+    },
+
+    get output() {
+      return logOutput
+    },
+
+    set output(output: WriteStream) {
+      logColor = 'isTTY' in output ? !! output.isTTY : false
+      logWidth = 'columns' in output ? output.columns : 80
+      logOutput = output
+    },
   },
 
-  set logLevel(level: LogLevel) {
-    logLevel = level in levels ? levels[level] : levels.INFO
-  },
-
-  get logColor(): boolean {
-    return logColor
-  },
-
-  set logColor(color: boolean) {
-    logColor = !! color
-  },
+  /* ------------------------------------------------------------------------ */
 
   trace(...args: any[]): void {
     if (logLevel > levels.TRACE) return
@@ -75,14 +107,45 @@ export const log: Log = {
   },
 }
 
-export function prettyfyTaskName(task: string): string {
-  return logColor ? `${taskColor(task)}${task}${rst}` : task
+/* ========================================================================== *
+ * BUILD FAILURES                                                             *
+ * ========================================================================== */
+
+/** A constant thrown by `Run` indicating a build failure already logged */
+export const buildFailed = Symbol('Build failed')
+
+/** Fail this `Run` giving a descriptive reason */
+export function fail(reason: string, ...data: any[]): never
+/** Fail this `Run` for the specified cause, with an optional reason */
+export function fail(cause: unknown, reason?: string, ...args: any[]): never
+// Overload!
+export function fail(causeOrReason: unknown, ...args: any[]): never {
+  /* We never have to log `buildFailed`, so treat it as undefined */
+  if (causeOrReason === buildFailed) causeOrReason = undefined
+
+  /* Nomalize our arguments, extracting cause and reason */
+  const [ cause, reason ] =
+    typeof causeOrReason === 'string' ?
+      [ undefined, causeOrReason ] :
+      [ causeOrReason, args.shift() as string | undefined ]
+
+  /* Log our error if we have to */
+  if (reason) {
+    if (cause) args.push(cause)
+    log.error(reason, ...args)
+  } else if (cause) {
+    log.error('Error', cause)
+  }
+
+  /* Failure handled, never log it again */
+  throw buildFailed
 }
 
 /* ========================================================================== *
  * STATE                                                                      *
  * ========================================================================== */
 
+/* Our level numbers (internal) */
 const levels: { [ k in LogLevel ] : number } = {
   TRACE: 0,
   DEBUG: 10,
@@ -92,8 +155,14 @@ const levels: { [ k in LogLevel ] : number } = {
   OFF: Number.MAX_SAFE_INTEGER,
 }
 
-let logLevel = levels.INFO
-let logColor = !! process.stderr.isTTY
+/* The current log level */
+let logLevel: number = levels.INFO
+/* The current log output */
+let logOutput: WriteStream = process.stderr
+/* Log colors (default is stderr is a TTY) */
+let logColor = logOutput.isTTY
+/* Log width (if it's a tty, or 80) */
+let logWidth = logOutput.columns
 
 /* ========================================================================== *
  * SPINNER                                                                    *
@@ -128,7 +197,7 @@ setInterval(() => {
     .join(`${gry}, `) + gry
 
   const count = `${red}${tasks.length}${gry}`
-  process.stderr.write(`${zap}  ${spin} Running ${count} tasks (${names})${rst}`)
+  write(`${zap}  ${spin} Running ${count} tasks (${names})${rst}`)
 }, 100).unref()
 
 /* ========================================================================== *
@@ -192,16 +261,12 @@ function emitColor(level: number, ...args: any[]) {
   const prefix = prefixStrings.length ? `${prefixStrings.join(' ')} ` : ''
   prefixLength += prefixStrings.length
 
-  const breakLength = (process.stderr.columns || 80) - prefixLength - 1
-  const strings = args.map((arg) => {
-    if (typeof arg === 'string') return arg
-    if (arg instanceof Error) return arg.stack
-    return inspect(arg, { breakLength, colors: true })
-  })
+  const breakLength = logWidth - prefixLength - 1
+  const strings = stringifyArgs(args, { breakLength })
 
   const message = strings.join(' ')
   const prefixed = prefix ? message.replace(/^/gm, prefix) : message
-  process.stderr.write(`${zap}${prefixed}\n`)
+  write(`${zap}${prefixed}\n`)
 }
 
 function emitPlain(level: number, ...args: any[]) {
@@ -229,13 +294,25 @@ function emitPlain(level: number, ...args: any[]) {
   prefixLength += prefixStrings.length
 
   const breakLength = 79 - prefixLength
-  const strings = args.map((arg) => {
-    if (typeof arg === 'string') return arg
-    if (arg instanceof Error) return arg.stack
-    return inspect(arg, { breakLength, colors: false })
-  })
+  const strings = stringifyArgs(args, { breakLength })
 
   const message = strings.join(' ')
   const prefixed = prefix ? message.replace(/^/gm, prefix) : message
-  process.stderr.write(`${prefixed}\n`)
+  write(`${prefixed}\n`)
+}
+
+function stringifyArgs(args: any[], options: InspectOptions): string[] {
+  return args.map((arg) => {
+    if (arg === buildFailed) return undefined
+    if (typeof arg === 'string') return arg
+    if (arg instanceof Error) return arg.stack
+    if ((typeof arg === 'function') && (typeof arg.task === 'function')) {
+      return logColor ? `${taskColor(arg.name)}${arg.name}${rst}` : arg.name
+    }
+    return inspect(arg, { ...options, colors: logColor })
+  }).filter((arg) => arg !== undefined) as string[]
+}
+
+function write(value: string) {
+  (<any> logOutput).write(Buffer.from(value, 'utf-8'))
 }
