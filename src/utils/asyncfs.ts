@@ -1,4 +1,5 @@
 import fsp from 'node:fs/promises'
+import { constants } from 'node:fs'
 
 /*
  * I have no idea why sometimes stacks don't have a trace when coming out of
@@ -41,7 +42,7 @@ const fs = Object.entries(fsp as any).reduce((fs, [ key, val ]) => {
 
   /* Return the "reduced" exports */
   return fs
-}, {} as any) as typeof fsp
+}, { constants } as any) as typeof fsp & { constants: typeof constants }
 
 /* Export _our_ version of the "node:fs/promises" module */
 export default fs
