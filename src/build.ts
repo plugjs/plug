@@ -29,7 +29,7 @@ export interface FindOptions extends WalkOptions {
 
 /**
  * The {@link TaskContext} interface describes the value of `this` used
- * when calling {@link TaskDefinition}s.
+ * when calling a {@link TaskDefinition}s.
  */
 export interface TaskContext<D> {
   /**
@@ -51,7 +51,7 @@ export interface TaskContext<D> {
 /**
  * A {@link TaskDefinition} is a _function_ defining a {@link Task}.
  */
-export type TaskDefinition<D> = (this: TaskContext<D>) =>
+export type TaskDefinition<D> = (this: TaskContext<D>, run: Run) =>
   | Files | Promise<Files>
   | Pipe | Promise<Pipe>
   | void | Promise<void>
@@ -65,8 +65,11 @@ export interface Task {
   /** The _file name_ where this task was defined */
   readonly file: string,
   /** The _function_ to invoke to execute this {@link Task} */
-  readonly task: () => Promise<Files>
+  readonly task: (run: Run) => Promise<Files>
 }
+
+/** A {@link TaskCall} defines the type of the {@link Task.task} function. */
+export type TaskCall = Task["task"]
 
 /**
  * A callable {@link Task}, or a _function_ contextualizing all that is
@@ -75,8 +78,8 @@ export interface Task {
 export type CallableTask = ((run?: Run) => Promise<Files>) & Readonly<Task>
 
 /**
- * A {@link Build} is a collection of {@link CallableTask}s, as produced by
- * {@link build} from a {@link BuildDefinition}.
+ * A {@link Build} is a collection of {@link CallableTask}s, as produced by the
+ * {@link build} function from a {@link BuildDefinition}.
  */
 export type Build<B> = {
   [ K in keyof B ] : CallableTask
@@ -84,13 +87,13 @@ export type Build<B> = {
 
 /**
  * A {@link BuildDefinition} is a collection of {@link TaskDefinition}s
- * that {@link build} will use to prepare a {@link Build}.
+ * that the {@link build} function will use to prepare a {@link Build}.
  *
  * A {@link BuildDefinition} can also include other {@link Task}s, inherited
  * from other {@link Build}s.
  */
 export type BuildDefinition<B> = {
-  [ K in keyof B ] : TaskDefinition<B> | CallableTask
+  [ K in keyof B ] : TaskDefinition<B> | Task
 }
 
 /* ========================================================================== *
@@ -114,10 +117,10 @@ export function build<D extends BuildDefinition<D>>(
         [ value.task, value.file ] :
         [ makeTaskCall(value, build, source), source ]
 
-    /* Create our `TaskDescriptor` (for type checking) */
-    const descriptor: Task = { name, file, task } // TODO , build }
+    /* Create our `Task` */
+    const descriptor: Task = { name, file, task }
 
-    /* Crate the task function, and merge its descriptor properties */
+    /* Crate the `CallableTask` function */
     const call = ((run = new Run()) => run.run(call)) as CallableTask
     for (const [ key, value ] of Object.entries(descriptor)) {
       Object.defineProperty(call, key, { enumerable: true, value })
@@ -135,15 +138,22 @@ export function build<D extends BuildDefinition<D>>(
  * TASK CALL AND RELATIVE CONTEXT                                             *
  * ========================================================================== */
 
-/** Take a {@link TaskDefinition} and return a {@link Task.task} function. */
+/* Take a {@link TaskDefinition} and return a {@link TaskCall}. */
 function makeTaskCall(
   definition: TaskDefinition<any>,
   build: Build<any>,
   file: string,
-): () => Promise<Files> {
-  return async function task(): Promise<Files> {
+): TaskCall {
+  return async function task(run: Run): Promise<Files> {
     const pipes: Pipe[] = []
     const directory = path.dirname(file)
+
+    /* Create a `Pipe` that needs to be awaited before this task finishes */
+    function createPipe(fn: () => Promise<Files>): Pipe {
+      const pipe = new Pipe(run, fn)
+      pipes.push(pipe)
+      return pipe
+    }
 
     /* Create a `TaskContext` instance to call the `TaskDefinition` */
     const context = new class implements TaskContext<any> {
@@ -152,20 +162,18 @@ function makeTaskCall(
       }
 
       pipe(files?: Files): Pipe {
-        const pipe = new Pipe(files)
-        pipes.push(pipe)
-        return pipe
+        return createPipe(() => Promise.resolve(files || run.files()))
       }
 
       find(...args: ParseOptions<FindOptions>): Pipe {
-        return this.pipe().plug(async (run: Run): Promise<Files> => {
+        return createPipe(async (): Promise<Files> => {
           const { params: globs, options: { directory, ...options } } =
             parseOptions(args, { directory: run.directory })
 
-          const builder = Files.builder(directory)
+          const builder = Files.builder(run, directory)
           const dir = builder.directory // builder.directory is resolved
 
-          log.debug('Finding files', { dir, options, globs })
+          log.debug(`Finding files in "${dir}"`, { options, globs })
 
           for await (const file of walk(dir, ...globs, options)) {
             builder.push(file)
@@ -176,8 +184,8 @@ function makeTaskCall(
       }
 
       call(...names: string[]): Pipe {
-        return this.pipe().plug(async (run, files): Promise<Files> => {
-          if (names.length === 0) return files
+        return createPipe(async (): Promise<Files> => {
+          if (names.length === 0) return run.files()
 
           const tasks = names.map((name) => {
             const task = build[name]
@@ -188,15 +196,15 @@ function makeTaskCall(
           const message = names.map((name) => prettyfyTaskName(name)).join(', ')
           log.info('Calling', tasks.length, `tasks in series: ${message}.`)
 
-          const builder = files.builder()
+          const builder = Files.builder(run)
           for (const task of tasks) builder.merge(await run.run(task))
           return builder.build()
         })
       }
 
       parallel(...names: string[]): Pipe {
-        const pipe = new Pipe().plug(async (run, files): Promise<Files> => {
-          if (names.length === 0) return files
+        return createPipe(async (): Promise<Files> => {
+          if (names.length === 0) return run.files()
 
           const tasks = names.map((name) => {
             const task = build[name]
@@ -213,7 +221,7 @@ function makeTaskCall(
           }
 
           let errors = 0
-          const builder = files.builder()
+          const builder = Files.builder(run)
           const results = await Promise.allSettled(promises)
           for (const result of results) {
             if (result.status === 'rejected') errors ++
@@ -223,20 +231,17 @@ function makeTaskCall(
           if (errors) fail('Parallel execution produced', errors, 'errors')
           return builder.build()
         })
-
-        pipes.push(pipe)
-        return pipe
       }
     }
 
     /* Call the `TaskDefinition` and await for results */
-    const result = await definition.call(context)
+    const result = await definition.call(context, run)
 
-    /* Any pipe created by calling this.xxx(...) gets awaited, too */
+    /* Any pipe created by calling this.xxx(...) gets awaited */
     for (const pipe of pipes) await pipe
 
-    /* Return the result (or an empty `Files`) */
-    return result ? result : new Files()
+    /* Return the result or an empty `Files` */
+    return result || run.files()
   }
 }
 
