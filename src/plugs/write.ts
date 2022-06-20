@@ -48,11 +48,14 @@ export class Write implements Plug {
       /* Create the parent directory, recursively */
       const directory = path.dirname(target)
       const first = await fs.mkdir(directory, { recursive: true })
-      if (first && (dmode !== undefined)) {
-        for (let dir = directory; ; dir = path.dirname(dir)) {
-          log.trace(`Setting mode "${stringifyMode(dmode)}" for dir ${$p(dir)}`)
-          await fs.chmod(dir, dmode)
-          if (dir === first) break
+      if (first) {
+        log.trace(`Directory ${$p(first)} created`)
+        if (dmode !== undefined) {
+          for (let dir = directory; ; dir = path.dirname(dir)) {
+            log.trace(`Setting mode ${stringifyMode(dmode)} for dir ${$p(dir)}`)
+            await fs.chmod(dir, dmode)
+            if (dir === first) break
+          }
         }
       }
 
@@ -60,7 +63,7 @@ export class Write implements Plug {
       await fs.copyFile(absolute, target, flags)
 
       if (fmode !== undefined) {
-        log.trace(`Setting mode "${stringifyMode(fmode)}" for file ${$p(target)}`)
+        log.trace(`Setting mode ${stringifyMode(fmode)} for file ${$p(target)}`)
         await fs.chmod(target, fmode)
       }
 
