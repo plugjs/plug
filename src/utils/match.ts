@@ -250,9 +250,11 @@ export type Matcher = (string: string) => boolean
 
 /**
  * Create a {@link Matcher} according to the globs and options specified.
+ *
+ * Remember that no globs here means an always-failing matcher.
  */
 export function match(...args: ParseOptions<MatchOptions>): Matcher {
-  const { globs, options } = parseOptions(args, defaults)
+  const { params: globs, options } = parseOptions(args, defaults)
   return picomatch(globs, options)
 }
 
