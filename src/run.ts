@@ -1,27 +1,49 @@
 
+import assert from 'node:assert'
+import path from 'node:path'
+
 import { runAsync } from './async'
-import type { Task } from './build'
 import { fail } from './fail'
-import type { Files } from './files'
 import { log } from './log'
 
-/** A `Run` represents the context used when invoking a `Task` */
-export class Run {
-  #directory: string
-  #stack: Task[] = []
-  #cache: Map<Task, Promise<Files>> = new Map()
+import type { Task } from './build'
+import type { Files } from './files'
 
-  /** Create a `Run` with the specified base directory (default `process.cwd()`) */
-  constructor(directory: string = process.cwd()) {
-    this.#directory = directory
+/** A {@link Run} represents the context used when invoking a {@link Task}. */
+export class Run {
+  #cache: Map<Task, Promise<Files>>
+  #directory: string
+  #stack: Task[]
+
+  /** Create a {@link Run} with the specified directory (or `process.cwd()`) */
+  constructor(directory?: string)
+  /** Create a child {@link Run} for a specific {@link Task} */
+  constructor(parent: Run, task: Task)
+  /* Overloaded implementation */
+  constructor(...args: [ string? ] | [ Run, Task ]) {
+    if (args[0] instanceof Run) {
+      const [ parent, task ] = args
+      assert(task, 'No task specified for child run')
+
+      this.#cache = parent.#cache
+      this.#directory = parent.#directory
+      this.#stack = [ ...parent.#stack, task ]
+    } else {
+      const directory = args[0] || process.cwd()
+      assert(path.isAbsolute(directory), `Directory "${directory}" not absolute`)
+
+      this.#cache = new Map<Task, Promise<Files>>()
+      this.#directory = path.normalize(directory)
+      this.#stack = []
+    }
   }
 
-  /** Return the base directory of this `Run` */
+  /** Return the directory of this {@link Run} */
   get directory(): string {
     return this.#directory
   }
 
-  /** Run the specified `TaskDescriptor` in this `Run` context */
+  /** Run the specified {@link Task} in the context of this {@link Run} */
   run(task: Task): Promise<Files> {
     /* Check for circular dependencies */
     if (this.#stack.includes(task)) {
@@ -35,17 +57,13 @@ export class Run {
     const cached = this.#cache.get(task)
     if (cached) return cached
 
-    /* Prepare a child run */
-    const run = new Run(this.#directory)
-    run.#stack = [ ...this.#stack, task ]
-    run.#cache = this.#cache
-
     /* Actually _call_ the `Task` and get a promise for it */
-    const promise = runAsync({ run, task }, async () => {
+    const promise = runAsync(task, async () => {
       const now = Date.now()
       log.info('Starting task')
+
       try {
-        const result = await task.task()
+        const result = await task.task(new Run(this, task))
         log.info('Task completed in', Date.now() - now, 'ms')
         return result
       } catch (error) {
