@@ -1,6 +1,5 @@
 import type { Run } from './run'
-import { Files } from './files'
-import { requireRun } from './async'
+import type { Files } from './files'
 
 export interface Plug {
   pipe(run: Run, files: Files): Files | Promise<Files>
@@ -9,11 +8,18 @@ export interface Plug {
 export type PlugFunction = Plug['pipe']
 
 export class Pipe implements Promise<Files> {
-  readonly [Symbol.toStringTag] = 'Pipe'
   #promise: Promise<Files>
+  #run: Run
 
-  constructor(files?: Files) {
-    this.#promise = Promise.resolve(files || new Files())
+  constructor(run: Run, files: Files)
+  constructor(run: Run, fn: () => Files | Promise<Files>)
+  constructor(run: Run, filesOrFn: Files | (() => Files | Promise<Files>)) {
+    if (typeof filesOrFn === 'function') {
+      this.#promise = Promise.resolve().then(() => filesOrFn())
+    } else {
+      this.#promise = Promise.resolve(filesOrFn)
+    }
+    this.#run = run
   }
 
   plug(plug: Plug): this
@@ -23,7 +29,7 @@ export class Pipe implements Promise<Files> {
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
 
     /* Attach this plug to the promise chain and return */
-    this.#promise = this.#promise.then((files) => plug.pipe(requireRun(), files))
+    this.#promise = this.#promise.then((files) => plug.pipe(this.#run, files))
     return this
   }
 
@@ -43,4 +49,7 @@ export class Pipe implements Promise<Files> {
   finally(onfinally?: (() => void) | null): Promise<Files> {
     return this.#promise.finally(onfinally)
   }
+
+  /** Promises must always have a `Symbol.toStringTag` */
+  readonly [Symbol.toStringTag] = 'Pipe'
 }
