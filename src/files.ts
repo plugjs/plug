@@ -1,5 +1,4 @@
 import assert from 'node:assert'
-import fs from 'node:fs'
 import path from 'node:path'
 import util from 'node:util'
 import { requireRun } from './async'
@@ -18,8 +17,6 @@ export class Files {
   constructor(directory?: string)
   constructor(directory: string = '.') {
     directory = path.resolve(requireRun().directory, directory)
-    assert(fs.statSync(directory).isDirectory(), `Invalid directory "${directory}"`)
-
     this.#directory = directory
     this.#files = []
   }
