@@ -18,7 +18,7 @@ import type { Run } from '../run'
    directory?: string
 }
 
-
+/** Filter some {@link Files} based on some globs and optional directory. */
 export class Filter implements Plug {
   #globs: [ string, ...string[] ]
   #options: FilterOptions
@@ -42,4 +42,9 @@ export class Filter implements Plug {
 
     return builder.build()
   }
+}
+
+/** Filter some {@link Files} based on some globs and optional directory. */
+export function filter(glob: string, ...args: ParseOptions<FilterOptions>): Filter {
+  return new Filter(glob, ...args)
 }
