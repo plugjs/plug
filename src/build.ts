@@ -161,8 +161,8 @@ function makeTaskCall(
         return path.resolve(directory, file)
       }
 
-      pipe(files?: Files): Pipe {
-        return createPipe(() => Promise.resolve(files || run.files()))
+      pipe(files: Files = new Files(run)): Pipe {
+        return createPipe(() => Promise.resolve(files))
       }
 
       find(...args: ParseOptions<FindOptions>): Pipe {
@@ -185,7 +185,7 @@ function makeTaskCall(
 
       call(...names: string[]): Pipe {
         return createPipe(async (): Promise<Files> => {
-          if (names.length === 0) return run.files()
+          if (names.length === 0) return new Files(run)
 
           const tasks = names.map((name) => {
             const task = build[name]
@@ -204,7 +204,7 @@ function makeTaskCall(
 
       parallel(...names: string[]): Pipe {
         return createPipe(async (): Promise<Files> => {
-          if (names.length === 0) return run.files()
+          if (names.length === 0) return new Files(run)
 
           const tasks = names.map((name) => {
             const task = build[name]
@@ -241,7 +241,7 @@ function makeTaskCall(
     for (const pipe of pipes) await pipe
 
     /* Return the result or an empty `Files` */
-    return result || run.files()
+    return result || new Files(run)
   }
 }
 
