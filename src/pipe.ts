@@ -1,13 +1,12 @@
 import type { Run } from './run'
 import { Files } from './files'
 import { requireRun } from './async'
-// import { requireRun } from './async'
-
-export type PlugFunction = (run: Run, files: Files) => Files | Promise<Files>
 
 export interface Plug {
-  pipe: PlugFunction
+  pipe(run: Run, files: Files): Files | Promise<Files>
 }
+
+export type PlugFunction = Plug['pipe']
 
 export class Pipe implements Promise<Files> {
   readonly [Symbol.toStringTag] = 'Pipe'
@@ -20,13 +19,11 @@ export class Pipe implements Promise<Files> {
   plug(plug: Plug): this
   plug(plug: PlugFunction): this
   plug(arg: Plug | PlugFunction): this {
-    // Normalize our argument as a `Plug` instance
+    /* Normalize our argument as a `Plug` instance */
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
 
-    // Replace our Promise with whatever we were plugged with
+    /* Attach this plug to the promise chain and return */
     this.#promise = this.#promise.then((files) => plug.pipe(requireRun(), files))
-
-    // Done
     return this
   }
 
