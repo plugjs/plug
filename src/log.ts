@@ -180,6 +180,7 @@ function emitColor(level: number, ...args: any[]) {
   const breakLength = (process.stderr.columns || 80) - prefixLength - 1
   const strings = args.map((arg) => {
     if (typeof arg === 'string') return arg
+    if (arg instanceof Error) return arg.stack
     return inspect(arg, { breakLength, colors: true })
   })
 
@@ -215,6 +216,7 @@ function emitPlain(level: number, ...args: any[]) {
   const breakLength = 79 - prefixLength
   const strings = args.map((arg) => {
     if (typeof arg === 'string') return arg
+    if (arg instanceof Error) return arg.stack
     return inspect(arg, { breakLength, colors: false })
   })
 
