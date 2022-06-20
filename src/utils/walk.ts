@@ -4,7 +4,7 @@ import path, { join } from 'node:path'
 import { match } from './match'
 
 import type { MatchOptions } from './match'
-import { log } from '../log'
+import { $p, log } from '../log'
 
 /** Specific options for walking a directory */
 export interface WalkOptions extends MatchOptions {
@@ -57,7 +57,7 @@ export type WalkGenerator = AsyncGenerator<string, void, void>
   const positiveMatcher = match(globs, opts)
 
   /* Do the walk! */
-  log.trace(`Walking directory "${directory}"`, { globs, options })
+  log.debug('Walking directory', $p(directory), { globs, options })
   return walker({
     directory,
     relative: '',
@@ -98,7 +98,7 @@ async function* walker(args: WalkerArguments): WalkGenerator {
   /* Read the directory, including file types */
   const dir = join(directory, relative)
   if (! onDirectory(dir)) return
-  log.trace(`Reading directory "${dir}"`)
+  log.trace('Reading directory', $p(dir))
   const dirents = await fs.readdir(dir, { withFileTypes: true })
 
   /* For each entry we determine the full path */
