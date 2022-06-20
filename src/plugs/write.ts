@@ -41,7 +41,7 @@ export class Write implements Plug {
 
       /* We never copy a file onto itself, but not fail either */
       if (target === absolute) {
-        log.warn(`Cowardly refusing to copy same file ${$p(absolute)}`)
+        log.warn('Cowardly refusing to copy same file', $p(absolute))
         continue
       }
 
@@ -52,7 +52,7 @@ export class Write implements Plug {
         log.trace(`Directory ${$p(first)} created`)
         if (dmode !== undefined) {
           for (let dir = directory; ; dir = path.dirname(dir)) {
-            log.trace(`Setting mode ${stringifyMode(dmode)} for dir ${$p(dir)}`)
+            log.trace(`Setting mode ${stringifyMode(dmode)} for dir`, $p(dir))
             await fs.chmod(dir, dmode)
             if (dir === first) break
           }
@@ -63,7 +63,7 @@ export class Write implements Plug {
       await fs.copyFile(absolute, target, flags)
 
       if (fmode !== undefined) {
-        log.trace(`Setting mode ${stringifyMode(fmode)} for file ${$p(target)}`)
+        log.trace(`Setting mode ${stringifyMode(fmode)} for file`, $p(target))
         await fs.chmod(target, fmode)
       }
 
@@ -71,11 +71,15 @@ export class Write implements Plug {
     }
 
     const result = builder.build()
-    log.info('Copied', result.length, `files to ${$p(builder.directory)}`)
+    log.info('Copied', result.length, 'files to', $p(builder.directory))
 
     return builder.build()
   }
 
+}
+
+export function write(directory: string, options?: WriteOptions) {
+  return new Write(directory, options)
 }
 
 function parseMode(mode: string | number | undefined): number | undefined {
