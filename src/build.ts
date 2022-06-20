@@ -41,7 +41,7 @@ export interface TaskContext<D> {
   /** Create a new {@link Pipe} */
   pipe(files?: Files): Pipe
   /** Find files {@link Pipe} with globs */
-  find(...globs: ParseOptions<FindOptions>): Pipe
+  find(glob: string, ...args: ParseOptions<FindOptions>): Pipe
   /** Call the specified {@link Task}s from the current build sequentially */
   call(...tasks: (keyof D)[]): Pipe
   /** Call the specified {@link Task}s from the current build in parallel */
@@ -165,17 +165,18 @@ function makeTaskCall(
         return createPipe(() => Promise.resolve(files))
       }
 
-      find(...args: ParseOptions<FindOptions>): Pipe {
+      find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
         return createPipe(async (): Promise<Files> => {
-          const { params: globs, options: { directory, ...options } } =
+          const { params, options: { directory, ...options } } =
             parseOptions(args, { directory: run.directory })
 
           const builder = Files.builder(run, directory)
           const dir = builder.directory // builder.directory is resolved
+          const globs = [ glob, ...params ]
 
-          log.debug(`Finding files in "${dir}"`, { options, globs })
+          log.debug(`Finding files in "${dir}"`, { globs, options })
 
-          for await (const file of walk(dir, ...globs, options)) {
+          for await (const file of walk(dir, globs, options)) {
             builder.push(file)
           }
 
