@@ -5,18 +5,22 @@ import { currentTask, runningTasks } from './async'
  * INTERNALS                                                                  *
  * ========================================================================== */
 
-export enum LogLevel {
-  DEBUG = 'DEBUG',
-  INFO = 'INFO',
-  WARN = 'WARN',
-  ERROR = 'ERROR',
-  OFF= 'OFF',
-}
+export const LogLevels = Object.freeze({
+  TRACE: 'TRACE',
+  DEBUG: 'DEBUG',
+  INFO: 'INFO',
+  WARN: 'WARN',
+  ERROR: 'ERROR',
+  OFF: 'OFF',
+} as const)
+
+export type LogLevel = keyof typeof LogLevels
 
 export interface Log {
   logLevel: LogLevel,
   logColor: boolean,
 
+  trace: (message: string, ...data: any[]) => void
   debug: (message: string, ...data: any[]) => void
   info: (message: string, ...data: any[]) => void
   warn: (message: string, ...data: any[]) => void
@@ -25,14 +29,16 @@ export interface Log {
 
 export const log: Log = {
   get logLevel(): LogLevel {
-    if (logLevel <= levels.DEBUG) return LogLevel.DEBUG
-    if (logLevel <= levels.INFO) return LogLevel.INFO
-    if (logLevel <= levels.WARN) return LogLevel.WARN
-    return LogLevel.ERROR
+    if (logLevel <= levels.TRACE) return LogLevels.TRACE
+    if (logLevel <= levels.DEBUG) return LogLevels.DEBUG
+    if (logLevel <= levels.INFO) return LogLevels.INFO
+    if (logLevel <= levels.WARN) return LogLevels.WARN
+    if (logLevel <= levels.ERROR) return LogLevels.ERROR
+    return LogLevels.OFF
   },
 
   set logLevel(level: LogLevel) {
-    logLevel = levels[level] || levels[LogLevel.INFO]
+    logLevel = level in levels ? levels[level] : levels.INFO
   },
 
   get logColor(): boolean {
@@ -41,6 +47,11 @@ export const log: Log = {
 
   set logColor(color: boolean) {
     logColor = !! color
+  },
+
+  trace(...args: any[]): void {
+    if (logLevel > levels.TRACE) return
+    emit(levels.TRACE, ...args)
   },
 
   debug(...args: any[]): void {
@@ -73,6 +84,7 @@ export function prettyfyTaskName(task: string): string {
  * ========================================================================== */
 
 const levels: { [ k in LogLevel ] : number } = {
+  TRACE: 0,
   DEBUG: 10,
   INFO: 20,
   WARN: 30,
@@ -163,7 +175,10 @@ function emitColor(level: number, ...args: any[]) {
     prefixLength += task.length + 2
   }
 
-  if (level < levels.INFO) {
+  if (level < levels.DEBUG) {
+    prefixStrings.push(`${gryBg} TRACE ${rst}`)
+    prefixLength += 7
+  } else if (level < levels.INFO) {
     prefixStrings.push(`${gryBg} DEBUG ${rst}`)
     prefixLength += 7
   } else if (level >= levels.ERROR) {
