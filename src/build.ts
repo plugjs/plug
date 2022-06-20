@@ -3,7 +3,7 @@ import path from 'node:path'
 import { statSync, existsSync } from 'node:fs'
 
 import { Files } from './files'
-import { log, fail, $t } from './log'
+import { log, fail, $t, $p } from './log'
 import { parseOptions, ParseOptions } from './utils/options'
 import { Pipe } from './pipe'
 import { Run } from './run'
@@ -173,11 +173,12 @@ function makeTaskCall(
           const dir = builder.directory // builder.directory is resolved
           const globs = [ glob, ...params ]
 
-          log.debug(`Finding files in "${dir}"`, { globs, options })
-
           for await (const file of walk(dir, globs, options)) {
             builder.add(file)
           }
+
+          const files = builder.build()
+          log.debug('Found', files.length, 'files in', $p(dir))
 
           return builder.build()
         })
