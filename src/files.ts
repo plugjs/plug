@@ -39,6 +39,10 @@ export class Files {
     return this.#directory
   }
 
+  get length(): number {
+    return this.#files.length
+  }
+
   /** Return an iterator over all _relative_ files of this instance */
   *[Symbol.iterator](): Generator<string> {
     for (const file of this.#files) yield file
