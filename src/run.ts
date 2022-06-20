@@ -3,8 +3,7 @@ import assert from 'node:assert'
 import path from 'node:path'
 
 import { runAsync } from './async'
-import { fail } from './fail'
-import { log } from './log'
+import { log, fail } from './log'
 
 import type { Task } from './build'
 import type { Files } from './files'
