@@ -3,12 +3,11 @@ import path from 'node:path'
 import { statSync, existsSync } from 'node:fs'
 
 import { Files } from './files'
-import { log, prettyfyTaskName } from './log'
+import { log, fail } from './log'
 import { parseOptions, ParseOptions } from './utils/options'
 import { Pipe } from './pipe'
 import { Run } from './run'
 import { walk, WalkOptions } from './utils/walk'
-import { fail } from './fail'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -194,8 +193,7 @@ function makeTaskCall(
             return task
           })
 
-          const message = names.map((name) => prettyfyTaskName(name)).join(', ')
-          log.info('Calling', tasks.length, `tasks in series: ${message}.`)
+          log.info('Calling', tasks.length, 'tasks in series:', ...tasks)
 
           const builder = Files.builder(run)
           for (const task of tasks) builder.merge(await run.run(task))
@@ -213,8 +211,7 @@ function makeTaskCall(
             return task
           })
 
-          const message = names.map((name) => prettyfyTaskName(name)).join(', ')
-          log.info('Calling', tasks.length, `tasks in parallel: ${message}.`)
+          log.info('Calling', tasks.length, 'tasks in parallel:', ...tasks)
 
           const promises: Promise<Files>[] = []
           for (const task of tasks) {
