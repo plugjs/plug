@@ -1,6 +1,6 @@
 import assert from 'node:assert'
-import fs from 'node:fs'
 import path from 'node:path'
+import { statSync, existsSync } from 'node:fs'
 
 import { Files } from './files'
 import { log, prettyfyTaskName } from './log'
@@ -19,8 +19,12 @@ import { fail } from './fail'
  * {@link TaskContext.find}.
  */
 export interface FindOptions extends WalkOptions {
-  /** The directory where to start looking for files */
-  directory?: string
+  /**
+   * The directory where to start looking for files.
+   *
+   * @defaultValue The current {@link Run.directory}
+   */
+   directory?: string
 }
 
 /**
@@ -155,9 +159,8 @@ function makeTaskCall(
 
       find(...args: ParseOptions<FindOptions>): Pipe {
         return this.pipe().plug(async (run: Run): Promise<Files> => {
-          const { globs, options: { directory, ...options } } = parseOptions(args, {
-            directory: run.directory
-          })
+          const { params: globs, options: { directory, ...options } } =
+            parseOptions(args, { directory: run.directory })
 
           const builder = Files.builder(directory)
           const dir = builder.directory // builder.directory is resolved
@@ -243,7 +246,7 @@ function makeTaskCall(
  * ========================================================================== */
 
 function findCaller(): string {
-  const _old = Error.prepareStackTrace
+  const oldPrepareStackTrace = Error.prepareStackTrace
 
   try {
     const record: { stack?: string, file?: string } = {}
@@ -254,7 +257,7 @@ function findCaller(): string {
         if (fileName == __filename) continue
 
         if (! fileName) continue
-        if (! fs.existsSync(fileName)) continue
+        if (! existsSync(fileName)) continue
 
         record.file = fileName
         break
@@ -265,9 +268,9 @@ function findCaller(): string {
     record.stack // this is a getter
 
     assert(record.file, 'Unable to determine build file name')
-    assert(fs.statSync(record.file).isFile(), `Build file "${record.file}" not found`)
+    assert(statSync(record.file).isFile(), `Build file "${record.file}" not found`)
     return record.file
   } finally {
-    Error.prepareStackTrace = _old
+    Error.prepareStackTrace = oldPrepareStackTrace
   }
 }
