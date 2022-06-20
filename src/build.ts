@@ -3,7 +3,7 @@ import path from 'node:path'
 import { statSync, existsSync } from 'node:fs'
 
 import { Files } from './files'
-import { log, fail } from './log'
+import { log, fail, $t } from './log'
 import { parseOptions, ParseOptions } from './utils/options'
 import { Pipe } from './pipe'
 import { Run } from './run'
@@ -193,7 +193,7 @@ function makeTaskCall(
             return task
           })
 
-          log.info('Calling', tasks.length, 'tasks in series:', ...tasks)
+          log.info('Calling', tasks.length, 'tasks in series:', $t(...tasks))
 
           const builder = Files.builder(run)
           for (const task of tasks) builder.merge(await run.run(task))
@@ -211,7 +211,7 @@ function makeTaskCall(
             return task
           })
 
-          log.info('Calling', tasks.length, 'tasks in parallel:', ...tasks)
+          log.info('Calling', tasks.length, 'tasks in parallel:', $t(...tasks))
 
           const promises: Promise<Files>[] = []
           for (const task of tasks) {
