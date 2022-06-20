@@ -110,15 +110,10 @@ export function assertRelativeChildPath(directory: string, file: string): string
 
 export function getRelativeChildPath(directory: string, file: string): string | undefined {
   assert(path.isAbsolute(directory), `Directory "${directory}" not absolute`)
-  const absolute = path.resolve(directory, file)
-  const relative = path.relative(directory, absolute)
-  if (path.isAbsolute(relative)) {
-    log.trace('Relativized path is absolute', { directory, absolute, relative })
+  const abs = path.resolve(directory, file)
+  const rel = path.relative(directory, abs)
+  if (path.isAbsolute(rel) || (rel === '..') || rel.startsWith(`..${path.sep}`)) {
     return undefined
   }
-  if ((relative === '..') || relative.startsWith(`..${path.sep}`)) {
-    log.trace('Relativized path is not descendant', { directory, absolute, relative })
-    return undefined
-  }
-  return relative
+  return rel
 }
