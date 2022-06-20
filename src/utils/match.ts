@@ -1,7 +1,5 @@
 import picomatch from 'picomatch'
 
-import { parseOptions, ParseOptions } from './options'
-
 export interface MatchResult {
   /** The glob that matched this `MatchResult` */
   glob: string;
@@ -12,7 +10,7 @@ export interface MatchResult {
   /** The input string of this `MatchResult` */
   output: string;
   /** The match result of this instance, if any */
-  match?: boolean | RegExpExecArray;
+  match?: boolean | RegExpExecArray | null;
   /** Whether the string matched or not */
   isMatch: boolean;
 }
@@ -205,12 +203,12 @@ export interface MatchOptions {
    */
   posix?: boolean,
 
-  /**
-   * String to prepend to the generated regex used for matching.
-   *
-   * @defaultValue `undefined`
-   */
-  prepend?: string,
+  // /**
+  //  * String to prepend to the generated regex used for matching.
+  //  *
+  //  * @defaultValue `undefined`
+  //  */
+  // prepend?: string,
 
   /**
    * Use regular expression rules for `+` (instead of matching literal `+`),
@@ -253,42 +251,36 @@ export type Matcher = (string: string) => boolean
  *
  * Remember that no globs here means an always-failing matcher.
  */
-export function match(...args: ParseOptions<MatchOptions>): Matcher {
-  const { params: globs, options } = parseOptions(args, defaults)
-  return picomatch(globs, options)
-}
-
-/* ========================================================================== *
- * OUR DEFAULTS                                                               *
- * ========================================================================== */
-
-const defaults = {
-  basename: false,
-  bash: false,
-  capture: false,
-  contains: false,
-  debug: false,
-  dot: false,
-  expandRange: undefined,
-  fastpaths: true,
-  flags: undefined,
-  ignore: undefined,
-  keepQuotes: false,
-  literalBrackets: false,
-  nobrace: false,
-  nobracket: false,
-  nocase: false,
-  noextglob: false,
-  noglobstar: false,
-  nonegate: false,
-  noquantifiers: false,
-  onIgnore: undefined,
-  onMatch: undefined,
-  onResult: undefined,
-  posix: false,
-  prepend: undefined,
-  regex: false,
-  strictBrackets: false,
-  strictSlashes: false,
-  unescape: false,
+export function match(globs: string[], options: MatchOptions = {}): Matcher {
+  return picomatch(globs, {
+    basename: false,
+    bash: false,
+    capture: false,
+    contains: false,
+    debug: false,
+    dot: false,
+    expandRange: undefined,
+    fastpaths: true,
+    flags: undefined,
+    ignore: undefined,
+    keepQuotes: false,
+    literalBrackets: false,
+    nobrace: false,
+    nobracket: false,
+    nocase: false,
+    noextglob: false,
+    noglobstar: false,
+    nonegate: false,
+    noquantifiers: false,
+    onIgnore: undefined,
+    onMatch: undefined,
+    onResult: undefined,
+    posix: false,
+    // prepend: undefined,
+    regex: false,
+    strictBrackets: false,
+    strictSlashes: false,
+    unescape: false,
+    ...options,
+  })
 }

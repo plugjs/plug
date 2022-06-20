@@ -1,11 +1,10 @@
 import fs from './asyncfs'
 
-import { join } from 'node:path'
+import path, { join } from 'node:path'
 import { match } from './match'
-import { parseOptions } from './options'
 
 import type { MatchOptions } from './match'
-import type { ParseOptions } from './options'
+import { log } from '../log'
 
 /** Specific options for walking a directory */
 export interface WalkOptions extends MatchOptions {
@@ -29,16 +28,6 @@ export interface WalkOptions extends MatchOptions {
    * @defaultValue `false`
    */
   allowNodeModules?: boolean,
-
-  /**
-   * A callback invoked on each individual directory being walked.
-   *
-   * If the callback returns `false` the directory and all of its children will
-   * not be walked.
-   *
-   * @defaultValue `() => true`
-   */
-  onDirectory?: (directory: string) => boolean,
 }
 
 /** The {@link AsyncGenerator} yielding results for our matches. */
@@ -48,63 +37,36 @@ export type WalkGenerator = AsyncGenerator<string, void, void>
  * Walk the specified directory, returning an asynchronous iterator over all
  * the files found matching the specified globs and matching options.
  */
- export function walk(directory: string, ...args: ParseOptions<WalkOptions>):  WalkGenerator {
+ export function walk(directory: string, globs: string[], options: WalkOptions = {}):  WalkGenerator {
   const {
-    params: globs,
-    options: {
-      followSymlinks,
-      maxDepth,
-      allowNodeModules,
-      onDirectory,
-      ...options
-    },
-  } = parseOptions(args, defaults)
-
-  /* Prepare some negative globs from the ignore option */
-  const negativeGlobs =
-    typeof options.ignore === 'string' ?
-      [ options.ignore ] :
-    Array.isArray(options.ignore) ?
-      [ ...options.ignore ] :
-    []
+    maxDepth = Infinity,
+    followSymlinks = true,
+    allowNodeModules = false,
+    ...opts
+  } = options
 
   /* Make sure to also ignore node modules or dot directories if we have to */
-  if (! allowNodeModules) negativeGlobs.push('**/node_modules')
-  if (! options.dot) negativeGlobs.push('**/.*')
-
-  /* Create our negative matcher */
-  const negativeMatcher =
-    negativeGlobs.length > 0 ?
-      match(...negativeGlobs as [ string, ...string[] ], { ...options, ignore: [] }) :
-      () => false
+  const onDirectory = (directory: string) => {
+    const name = path.basename(directory)
+    if (name === 'node_modules') return !!allowNodeModules
+    if (name.startsWith('.')) return !!opts.dot
+    return true
+  }
 
   /* Create our positive matcher to match our globs */
-  const positiveMatcher = globs.length > 0 ?
-      match(...globs as [ string, ...string[] ], options) :
-      () => true
+  const positiveMatcher = match(globs, opts)
 
   /* Do the walk! */
+  log.trace(`Walking directory "${directory}"`, { globs, options })
   return walker({
     directory,
     relative: '',
-    positiveMatcher,
-    negativeMatcher,
+    matcher: positiveMatcher,
     onDirectory,
     followSymlinks,
     maxDepth,
     depth: 0
   })
-}
-
-/* ========================================================================== *
- * DEFAULTS                                                                   *
- * ========================================================================== */
-
-const defaults = {
-  onDirectory: () => true,
-  allowNodeModules: false,
-  followSymlinks: true,
-  maxDepth: Infinity,
 }
 
 /* ========================================================================== *
@@ -114,9 +76,8 @@ const defaults = {
 interface WalkerArguments {
   directory: string,
   relative: string,
-  positiveMatcher: (path: string) => boolean,
-  negativeMatcher: (path: string) => boolean,
-  onDirectory: (directory: string) => boolean | void,
+  matcher: (path: string) => boolean,
+  onDirectory: (directory: string) => boolean,
   followSymlinks: boolean,
   maxDepth: number,
   depth: number,
@@ -127,8 +88,7 @@ async function* walker(args: WalkerArguments): WalkGenerator {
   const {
     directory,
     relative,
-    positiveMatcher,
-    negativeMatcher,
+    matcher: positiveMatcher,
     onDirectory,
     followSymlinks,
     maxDepth,
@@ -137,7 +97,8 @@ async function* walker(args: WalkerArguments): WalkGenerator {
 
   /* Read the directory, including file types */
   const dir = join(directory, relative)
-  if (onDirectory(dir) === false) return
+  if (! onDirectory(dir)) return
+  log.trace(`Reading directory "${dir}"`)
   const dirents = await fs.readdir(dir, { withFileTypes: true })
 
   /* For each entry we determine the full path */
@@ -148,7 +109,7 @@ async function* walker(args: WalkerArguments): WalkGenerator {
     if (dirent.isFile() && positiveMatcher(path)) yield path
 
     /* If the entry is a directory within our depth, walk it recursively */
-    else if (dirent.isDirectory() && (!negativeMatcher(path)) && (depth < maxDepth)) {
+    else if (dirent.isDirectory() && (depth < maxDepth)) {
       const children = walker({ ...args, relative: path, depth: depth + 1 })
       for await (const child of children) yield child
 
@@ -160,7 +121,7 @@ async function* walker(args: WalkerArguments): WalkGenerator {
       if (stat.isFile() && positiveMatcher(path)) yield path
 
       /* If the link is a directory within our depth, walk it recursively */
-      else if (stat.isDirectory() && (!negativeMatcher(path)) && (depth < maxDepth)) {
+      else if (stat.isDirectory() && (depth < maxDepth)) {
         const children = walker({ ...args, relative: path, depth: depth + 1 })
         for await (const child of children) yield child
       }
