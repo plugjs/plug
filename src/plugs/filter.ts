@@ -37,7 +37,7 @@ export class Filter implements Plug {
 
     for (const file of files.absolutePaths()) {
       const relative = getRelativeChildPath(builder.directory, file)
-      if (relative && matcher(relative)) builder.push(relative)
+      if (relative && matcher(relative)) builder.add(relative)
     }
 
     return builder.build()

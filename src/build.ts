@@ -176,7 +176,7 @@ function makeTaskCall(
           log.debug(`Finding files in "${dir}"`, { globs, options })
 
           for await (const file of walk(dir, globs, options)) {
-            builder.push(file)
+            builder.add(file)
           }
 
           return builder.build()

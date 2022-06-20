@@ -10,7 +10,7 @@ export interface FilesBuilder {
   /** The (resolved) directory the {@link Files} will be associated with */
   readonly directory: string
   /** Push files into the {@link Files} instance being built */
-  push(...files: string[]): this
+  add(...files: string[]): this
   /** Merge orther {@link Files} instance to the {@link Files} being built */
   merge(...files: Files[]): this
   /** Build and return a {@link Files} instance */
@@ -71,7 +71,7 @@ export class Files {
     return {
       directory: instance.directory,
 
-      push(...files: string[]): FilesBuilder {
+      add(...files: string[]): FilesBuilder {
         if (typeof files === 'string') files = [ files ]
         for (const file of files) {
           const relative = assertRelativeChildPath(instance.directory, file)
@@ -83,7 +83,7 @@ export class Files {
       merge(...args: Files[]): FilesBuilder {
         for (const files of args) {
           for (const file of files.absolutePaths()) {
-            this.push(file)
+            this.add(file)
           }
         }
         return this
