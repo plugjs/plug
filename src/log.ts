@@ -4,6 +4,8 @@ import type tty from 'node:tty'
 import { inspect, InspectOptions } from 'node:util'
 import { currentTask, runningTasks } from './async'
 
+import type { Task } from './build'
+
 /* ========================================================================== *
  * GENERIC LOGGING                                                            *
  * ========================================================================== */
@@ -106,6 +108,17 @@ export const log: Log = {
     emit(levels.ERROR, ...args)
   },
 }
+
+export function $p(path: string): string {
+  return logColor ? `\u001b[4m${path}\u001b[24m` : `"${path}"`
+}
+
+export function $t(...tasks: Task[]): string {
+  return logColor ?
+    tasks.map((task) => `${taskColor(task.name)}${task.name}${rst}`).join(', ') :
+    tasks.map((task) => `"${task.name}"`).join(', ')
+}
+
 
 /* ========================================================================== *
  * BUILD FAILURES                                                             *
@@ -306,9 +319,6 @@ function stringifyArgs(args: any[], options: InspectOptions): string[] {
     if (arg === buildFailed) return undefined
     if (typeof arg === 'string') return arg
     if (arg instanceof Error) return arg.stack
-    if ((typeof arg === 'function') && (typeof arg.task === 'function')) {
-      return logColor ? `${taskColor(arg.name)}${arg.name}${rst}` : arg.name
-    }
     return inspect(arg, { ...options, colors: logColor })
   }).filter((arg) => arg !== undefined) as string[]
 }
