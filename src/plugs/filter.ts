@@ -1,6 +1,7 @@
 import { Files, getRelativeChildPath } from '../files'
 import { ParseOptions, parseOptions } from '../utils/options'
 import { MatchOptions, match } from '../utils/match'
+import { log } from '../log'
 
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
@@ -40,7 +41,14 @@ export class Filter implements Plug {
       if (relative && matcher(relative)) builder.add(relative)
     }
 
-    return builder.build()
+    const result = builder.build()
+    log.debug('Filtered', result.length, 'files (discarded', files.length - result.length,'files)', {
+      from: files.directory,
+      into: result.directory,
+      globs: this.#globs, options,
+    })
+
+    return result
   }
 }
 
