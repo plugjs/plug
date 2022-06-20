@@ -1,6 +1,7 @@
 import assert from 'node:assert'
 import path from 'node:path'
 import util from 'node:util'
+import { log } from './log'
 
 import type { Run } from './run'
 
@@ -53,6 +54,7 @@ export class Files {
     for (const file of this) yield [ file, path.resolve(this.#directory, file) ]
   }
 
+  /* Nicety for logging */
   [util.inspect.custom]() {
     const self = this
     return new class Files {
@@ -61,6 +63,7 @@ export class Files {
     }
   }
 
+  /** Create a new {@link FilesBuilder} creating {@link Files} instances. */
   static builder(run: Run, directory?: string): FilesBuilder {
     const instance = new Files(run, directory)
     const set = new Set<string>()
@@ -71,10 +74,7 @@ export class Files {
       push(...files: string[]): FilesBuilder {
         if (typeof files === 'string') files = [ files ]
         for (const file of files) {
-          const absolute = path.resolve(this.directory, file)
-          const relative = path.relative(this.directory, absolute)
-          assert(isRelative(relative), `File "${file}" not relative to "${this.directory}"`)
-          assert(isDecendant(relative), `File "${file}" not relative to "${this.directory}"`)
+          const relative = assertRelativeChildPath(instance.directory, file)
           set.add(relative)
         }
         return this
@@ -98,10 +98,23 @@ export class Files {
   }
 }
 
-function isRelative(arg: string): boolean {
-  return ! path.isAbsolute(arg)
+export function assertRelativeChildPath(directory: string, file: string): string {
+  const relative = getRelativeChildPath(directory, file)
+  assert(relative, `File "${file}" not relative to "${directory}"`)
+  return relative
 }
 
-function isDecendant(arg: string): boolean {
-  return arg === '..' ? false : ! arg.startsWith(`..${path.sep}`)
+export function getRelativeChildPath(directory: string, file: string): string | undefined {
+  assert(path.isAbsolute(directory), `Directory "${directory}" not absolute`)
+  const absolute = path.resolve(directory, file)
+  const relative = path.relative(directory, absolute)
+  if (path.isAbsolute(relative)) {
+    log.trace('Relativized path is absolute', { directory, absolute, relative })
+    return undefined
+  }
+  if ((relative === '..') || relative.startsWith(`..${path.sep}`)) {
+    log.trace('Relativized path is not descendant', { directory, absolute, relative })
+    return undefined
+  }
+  return relative
 }
