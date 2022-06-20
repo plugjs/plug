@@ -1,4 +1,4 @@
-import * as fs from 'node:fs/promises'
+import fs from './asyncfs'
 
 import { join } from 'node:path'
 import { match } from './match'
@@ -50,7 +50,7 @@ export type WalkGenerator = AsyncGenerator<string, void, void>
  */
  export function walk(directory: string, ...args: ParseOptions<WalkOptions>):  WalkGenerator {
   const {
-    globs,
+    params: globs,
     options: {
       followSymlinks,
       maxDepth,
@@ -79,7 +79,9 @@ export type WalkGenerator = AsyncGenerator<string, void, void>
       () => false
 
   /* Create our positive matcher to match our globs */
-  const positiveMatcher = globs.length > 0 ? match(...globs, options) : () => true
+  const positiveMatcher = globs.length > 0 ?
+      match(...globs as [ string, ...string[] ], options) :
+      () => true
 
   /* Do the walk! */
   return walker({
