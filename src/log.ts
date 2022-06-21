@@ -123,7 +123,7 @@ export const log: Log = {
   },
 }
 
-export class AsyncLogger implements Logger {
+export class TaskLogger implements Logger {
   #task = currentTask()
 
   constructor() {
@@ -166,6 +166,10 @@ export function $t(...tasks: Task[]): string {
     tasks.map((task) => `"${task.name}"`).join(', ')
 }
 
+export function registerTask(task: Task) {
+  if (task.name.length > taskWidth) taskWidth = task.name.length
+  taskColor(task.name) // register the color already
+}
 
 /* ========================================================================== *
  * BUILD FAILURES                                                             *
@@ -206,14 +210,14 @@ export function fail(causeOrReason: unknown, ...args: any[]): never {
  * ========================================================================== */
 
 /* Our level numbers (internal) */
-const levels: { [ k in LogLevel ] : number } = {
+const levels = {
   TRACE: 0,
   DEBUG: 10,
   INFO: 20,
   WARN: 30,
   ERROR: 40,
   OFF: Number.MAX_SAFE_INTEGER,
-}
+} as const
 
 /* The current log level */
 let logLevel: number = levels.INFO
@@ -225,6 +229,8 @@ let logColor = logOutput.isTTY
 let logWidth = logOutput.columns
 /* Log depth (defaults to 2 as node) */
 let logDepth = 2
+/* The maximum width of all registered tasks */
+let taskWidth = 0
 
 /* ========================================================================== *
  * SPINNER                                                                    *
@@ -279,7 +285,6 @@ const taskColor = (() => {
     64, 69, 76, 81, 124, 129, 136, 141,
     148, 153, 201, 208, 213, 220 ]
       .map((color) => `\u001b[38;5;${color}m`)
-      .sort(() => .5 - Math.random())
 
   let index = 0
 
@@ -302,8 +307,10 @@ function emitColor(task: Task | undefined, level: number, ...args: any[]) {
 
   if (task) {
     const name = task.name
-    prefixStrings.push(`${gry}[${taskColor(name)}${name}${gry}]${rst}`)
-    prefixLength += name.length + 2
+    const pad = ''.padStart(taskWidth - task.name.length, ' ')
+    const msg = `${gry}${pad}[${taskColor(name)}${name}${gry}]${rst}`
+    prefixStrings.push(msg)
+    prefixLength += name.length + pad.length + 2
   }
 
   if (level < levels.DEBUG) {
@@ -337,8 +344,9 @@ function emitPlain(task: Task | undefined, level: number, ...args: any[]) {
 
   if (task) {
     const name = task.name
-    prefixStrings.push(`[${name}]`)
-    prefixLength += name.length + 2
+    const pad = ''.padStart(taskWidth - task.name.length, ' ')
+    prefixStrings.push(`${pad}[${name}]`)
+    prefixLength += name.length + pad.length + 2
   }
 
   if (level < levels.INFO) {
@@ -368,7 +376,7 @@ function stringifyArgs(args: any[], breakLength: number): string[] {
     if (arg === buildFailed) return undefined
     if (typeof arg === 'string') return arg
     if (arg instanceof Error) return arg.stack
-    return inspect(arg, { breakLength, colors: logColor, depth: logDepth, compact: 2 })
+    return inspect(arg, { breakLength, colors: logColor, depth: logDepth, compact: 1 })
   }).filter((arg) => arg !== undefined) as string[]
 }
 
