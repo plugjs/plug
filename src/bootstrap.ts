@@ -1,48 +1,36 @@
-import { Files } from './files'
 import { build } from './build'
 import { log } from './log'
+import { debug } from './plugs/debug'
+import { esbuild } from './plugs/esbuild'
+import { test } from './plugs/test'
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
-
-function fff() {
-  log.info('Hello, compile XXX!')
-}
-
-const q = fff.bind(undefined)
+// log.options.level = 'DEBUG'
+// log.options.depth = 10
 
 const b = build({
-  async compile() {
-    console.log(await this.find({
-      directory: '.',
-    }))
-
-    setTimeout(q, 1500)
-    log.info('Hello, compile 1!')
-    await sleep(2000)
-    log.info('Hello, compile 2!')
-    // return this.find('**/*.ts', { directory: 'src' })
+  async compile_sources() {
+    this.find('src/**/*.ts')
+      // .plug(debug())
+      .plug(esbuild({ outdir: 'build' }))
+      // .plug(debug())
   },
-  async runme() {
-    log.info('Hello, runme 1!')
-    await sleep(1000)
-    log.info('Hello, runme 2!')
-    // return this.find('types/**/*.ts')
-    throw new Error('Foo')
-    // this.call('compile')
+  async compile_tests() {
+    this.call('compile_sources')
+    this.find('test/**/*.ts')
+      // .plug(debug())
+      .plug(esbuild({ outdir: 'build' }))
+      // .plug(debug())
   },
-  async default(): Promise<Files> {
-    const pipe = await this.parallel('compile' , 'runme')
-    log.info('PIPE AWAITED')
-    return pipe
+  async test() {
+    this.call('compile_tests')
+      // .plug(debug())
+      .plug(test())
+  },
+  async default() {
+    this.parallel('compile_tests' , 'test')
   }
 })
 
-// log.logLevel = LogLevel.DEBUG
-
 b.default()
-  .then((result) => console.log('DONE', result))
-  .catch((error) => console.error(error))
+  .then((result) => log.info('All done!', result))
+  .catch((error) => log.error('Build error', error))
