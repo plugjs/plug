@@ -1,7 +1,7 @@
 import assert from 'assert'
 import path from 'path'
 
-import { $p, log } from '../log'
+import { $p, fail, log } from '../log'
 import { build, BuildOptions } from 'esbuild'
 import { Files, FilesBuilder } from '../files'
 
@@ -18,7 +18,7 @@ export class ESBuild implements Plug {
   }
 
   async pipe(run: Run, _files: Files): Promise<Files> {
-    const entryPoints = [ ..._files.absolutePaths() ]
+    const entryPoints = [ ..._files ]
     const absWorkingDir = _files.directory
 
     const options: BuildOptions = {
@@ -26,6 +26,7 @@ export class ESBuild implements Plug {
       platform: 'node',
       target: `node${process.versions['node']}`,
       format: 'cjs',
+      outbase: absWorkingDir,
 
       /* Our options */
       ...this.#options,
@@ -57,9 +58,25 @@ export class ESBuild implements Plug {
       log.debug(message, entryPoints.length, 'files to', $p(builder.directory))
     }
 
-    const { metafile } = await build({ ...options, metafile: true })
-    const outputs = metafile.outputs
+    log.trace('Running ESBuild', options)
+    const esbuild = await build({ ...options, metafile: true })
+    log.trace('ESBuild Results', esbuild)
 
+    for (const warning of esbuild.warnings) {
+      const { id, text, ...details } = warning
+      log.warn(`${text} [${id}]`, details)
+    }
+
+    for (const error of esbuild.errors) {
+      const { id, text, ...details } = error
+      log.error(`${text} [${id}]`, details)
+    }
+
+    if (esbuild.errors.length) {
+      fail('ESBuild encountered', esbuild.errors.length, 'errors')
+    }
+
+    const outputs = esbuild.metafile.outputs
     for (const file in outputs) {
       const source = path.resolve(absWorkingDir, outputs[file].entryPoint!)
       const target = path.resolve(absWorkingDir, file)
