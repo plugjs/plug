@@ -70,11 +70,14 @@ export class Files {
   static builder(run: Run, directory?: string): FilesBuilder {
     const instance = new Files(run, directory)
     const set = new Set<string>()
+    let built = false
 
     return {
       directory: instance.directory,
 
       add(...files: string[]): FilesBuilder {
+        if (built) throw new Error('FileBuilder "build()" already called')
+
         if (typeof files === 'string') files = [ files ]
         for (const file of files) {
           const relative = assertRelativeChildPath(instance.directory, file)
@@ -84,6 +87,8 @@ export class Files {
       },
 
       merge(...args: Files[]): FilesBuilder {
+        if (built) throw new Error('FileBuilder "build()" already called')
+
         for (const files of args) {
           for (const file of files.absolutePaths()) {
             this.add(file)
@@ -93,6 +98,9 @@ export class Files {
       },
 
       build(): Files {
+        if (built) throw new Error('FileBuilder "build()" already called')
+
+        built = true
         instance.#files.push(...set)
         instance.#files.sort()
         return instance
