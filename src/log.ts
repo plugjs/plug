@@ -1,7 +1,7 @@
 import type fs from 'node:fs'
 import type tty from 'node:tty'
 
-import { inspect, InspectOptions } from 'node:util'
+import { inspect } from 'node:util'
 import { currentTask, runningTasks } from './async'
 
 import type { Task } from './build'
@@ -22,18 +22,8 @@ export type LogLevel =
   | 'ERROR'
   | 'OFF'
 
-/** Our {@link Log} interface */
-export interface Log {
-  /* The current logging options */
-  options: {
-    /** The {@link LogLevel} currently being logged */
-    level: LogLevel,
-    /** Whether to log with colors or not */
-    colors: boolean,
-    /** The current output */
-    output: WriteStream
-  }
-
+/** A {@link Logger} emits log events */
+export interface Logger {
   /** Log a `TRACE` message */
   trace: (message: string, ...data: any[]) => void
   /** Log a `DEBUG` message */
@@ -44,6 +34,21 @@ export interface Log {
   warn: (message: string, ...data: any[]) => void
   /** Log an `ERROR` message */
   error: (message: string, ...data: any[]) => void
+}
+
+/** Our {@link Log} interface */
+export interface Log extends Logger {
+  /* The current logging options */
+  options: {
+    /** The {@link LogLevel} currently being logged */
+    level: LogLevel,
+    /** Whether to log with colors or not */
+    colors: boolean,
+    /** The current output */
+    output: WriteStream
+    /** The depth for object inspection */
+    depth: number,
+  }
 }
 
 /** Our shared {@link Log} instance */
@@ -79,34 +84,76 @@ export const log: Log = {
       logWidth = 'columns' in output ? output.columns : 80
       logOutput = output
     },
+
+    get depth() {
+      return logDepth
+    },
+
+    set depth(depth: number) {
+      logDepth = Math.floor(depth)
+      if (logDepth < 0) logDepth = 2
+    },
   },
 
   /* ------------------------------------------------------------------------ */
 
   trace(...args: any[]): void {
     if (logLevel > levels.TRACE) return
-    emit(levels.TRACE, ...args)
+    emit(currentTask(), levels.TRACE, ...args)
   },
 
   debug(...args: any[]): void {
     if (logLevel > levels.DEBUG) return
-    emit(levels.DEBUG, ...args)
+    emit(currentTask(), levels.DEBUG, ...args)
   },
 
   info(...args: any[]): void {
     if (logLevel > levels.INFO) return
-    emit(levels.INFO, ...args)
+    emit(currentTask(), levels.INFO, ...args)
   },
 
   warn(...args: any[]): void {
     if (logLevel > levels.WARN) return
-    emit(levels.WARN, ...args)
+    emit(currentTask(), levels.WARN, ...args)
   },
 
   error(...args: any[]): void {
     if (logLevel > levels.ERROR) return
-    emit(levels.ERROR, ...args)
+    emit(currentTask(), levels.ERROR, ...args)
   },
+}
+
+export class AsyncLogger implements Logger {
+  #task = currentTask()
+
+  constructor() {
+    /* Empty constructor */
+  }
+
+  trace(...args: any[]): void {
+    if (logLevel > levels.TRACE) return
+    emit(this.#task, levels.TRACE, ...args)
+  }
+
+  debug(...args: any[]): void {
+    if (logLevel > levels.DEBUG) return
+    emit(this.#task, levels.DEBUG, ...args)
+  }
+
+  info(...args: any[]): void {
+    if (logLevel > levels.INFO) return
+    emit(this.#task, levels.INFO, ...args)
+  }
+
+  warn(...args: any[]): void {
+    if (logLevel > levels.WARN) return
+    emit(this.#task, levels.WARN, ...args)
+  }
+
+  error(...args: any[]): void {
+    if (logLevel > levels.ERROR) return
+    emit(this.#task, levels.ERROR, ...args)
+  }
 }
 
 export function $p(path: string): string {
@@ -176,6 +223,8 @@ let logOutput: WriteStream = process.stderr
 let logColor = logOutput.isTTY
 /* Log width (if it's a tty, or 80) */
 let logWidth = logOutput.columns
+/* Log depth (defaults to 2 as node) */
+let logDepth = 2
 
 /* ========================================================================== *
  * SPINNER                                                                    *
@@ -243,18 +292,18 @@ const taskColor = (() => {
   }
 })()
 
-function emit(level: number, ...args: any[]) {
-  return logColor ? emitColor(level, ...args) : emitPlain(level, ...args)
+function emit(task: Task | undefined, level: number, ...args: any[]) {
+  return logColor ? emitColor(task, level, ...args) : emitPlain(task, level, ...args)
 }
 
-function emitColor(level: number, ...args: any[]) {
+function emitColor(task: Task | undefined, level: number, ...args: any[]) {
   const prefixStrings: string[] = []
   let prefixLength = 0
 
-  const task = currentTask()?.name
   if (task) {
-    prefixStrings.push(`${gry}[${taskColor(task)}${task}${gry}]${rst}`)
-    prefixLength += task.length + 2
+    const name = task.name
+    prefixStrings.push(`${gry}[${taskColor(name)}${name}${gry}]${rst}`)
+    prefixLength += name.length + 2
   }
 
   if (level < levels.DEBUG) {
@@ -275,21 +324,21 @@ function emitColor(level: number, ...args: any[]) {
   prefixLength += prefixStrings.length
 
   const breakLength = logWidth - prefixLength - 1
-  const strings = stringifyArgs(args, { breakLength })
+  const strings = stringifyArgs(args, breakLength)
 
   const message = strings.join(' ')
   const prefixed = prefix ? message.replace(/^/gm, prefix) : message
   write(`${zap}${prefixed}\n`)
 }
 
-function emitPlain(level: number, ...args: any[]) {
+function emitPlain(task: Task | undefined, level: number, ...args: any[]) {
   const prefixStrings: string[] = []
   let prefixLength = 0
 
-  const task = currentTask()?.name
   if (task) {
-    prefixStrings.push(`[${task}]`)
-    prefixLength += task.length + 2
+    const name = task.name
+    prefixStrings.push(`[${name}]`)
+    prefixLength += name.length + 2
   }
 
   if (level < levels.INFO) {
@@ -307,19 +356,19 @@ function emitPlain(level: number, ...args: any[]) {
   prefixLength += prefixStrings.length
 
   const breakLength = 79 - prefixLength
-  const strings = stringifyArgs(args, { breakLength })
+  const strings = stringifyArgs(args, breakLength)
 
   const message = strings.join(' ')
   const prefixed = prefix ? message.replace(/^/gm, prefix) : message
   write(`${prefixed}\n`)
 }
 
-function stringifyArgs(args: any[], options: InspectOptions): string[] {
+function stringifyArgs(args: any[], breakLength: number): string[] {
   return args.map((arg) => {
     if (arg === buildFailed) return undefined
     if (typeof arg === 'string') return arg
     if (arg instanceof Error) return arg.stack
-    return inspect(arg, { ...options, colors: logColor })
+    return inspect(arg, { breakLength, colors: logColor, depth: logDepth, compact: 2 })
   }).filter((arg) => arg !== undefined) as string[]
 }
 
