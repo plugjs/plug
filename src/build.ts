@@ -3,7 +3,7 @@ import path from 'node:path'
 import { statSync, existsSync } from 'node:fs'
 
 import { Files } from './files'
-import { log, fail, $t, $p } from './log'
+import { log, fail, $t, $p, registerTask } from './log'
 import { parseOptions, ParseOptions } from './utils/options'
 import { Pipe } from './pipe'
 import { Run } from './run'
@@ -126,6 +126,7 @@ export function build<D extends BuildDefinition<D>>(
     }
 
     /* Set the `Task` in our `Build` */
+    registerTask(call)
     build[name] = call
   }
 
