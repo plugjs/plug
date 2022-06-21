@@ -239,7 +239,7 @@ function makeTaskCall(
     for (const pipe of pipes) await pipe
 
     /* Return the result or an empty `Files` */
-    return result || new Files(run)
+    return result || pipes.pop() || new Files(run)
   }
 }
 
