@@ -179,8 +179,7 @@ function makeTaskCall(
 
           const files = builder.build()
           log.debug('Found', files.length, 'files in', $p(dir))
-
-          return builder.build()
+          return files
         })
       }
 
