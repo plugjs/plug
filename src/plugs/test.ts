@@ -2,7 +2,7 @@ import assert from 'assert'
 import { ChildProcess, fork } from 'child_process'
 import { randomUUID } from 'crypto'
 import { Files } from '../files'
-import { $p, TaskLogger, Logger, log } from '../log'
+import { $p, TaskLogger, Logger, log, $grn, $ylw, $gry, $red, $blu } from '../log'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
 import type { TestMessage, TestStartMessage } from '../test'
@@ -103,8 +103,7 @@ class TestAdapter {
 
   start() {
     if (this.started) return
-    const tag = log.options.colors ? `\u001b[34m\u2022\u001b[0m` : '\u2022'
-    log.info(this.pad, tag, this.label)
+    log.info(this.pad, $blu('\u2022'), this.label)
     this.started = true
   }
 
@@ -117,18 +116,15 @@ class TestAdapter {
       adapter.handle(message)
     } else if (message.event === 'pass') {
       this.parent.start()
-      const tag = log.options.colors ? `\u001b[32m\u2714\u001b[0m` : '\u2714'
-      log.info(this.pad, tag, this.label)
+      log.info(this.pad, $grn('\u2714'), this.label)
     } else if (message.event === 'skip') {
       this.parent.start()
-      const tag = log.options.colors ? `\u001b[33m\u25aa\u001b[0m` : '\u25aa'
-      const extra = log.options.colors ? `\u001b[90m(\u001b[33mskipped\u001b[90m)\u001b[0m` : '(skipped)'
-      log.info(this.pad, tag, this.label, extra)
+      const extra = `${$gry('(')}${$ylw('skipped')}${$gry(')')}`
+      log.info(this.pad, $ylw('\u25aa'), this.label, extra)
     } else if (message.event === 'fail') {
       this.parent.start()
-      const tag = log.options.colors ? `\u001b[31m\u2716\u001b[0m` : '\u2716'
-      const extra = log.options.colors ? `\u001b[90m(\u001b[31mfailed\u001b[90m)\u001b[0m` : '(failed)'
-      log.info(this.pad, tag, this.label, extra)
+      const extra = `${$gry('(')}${$red('failed')}${$gry(')')}`
+      log.info(this.pad, $red('\u2716'), this.label, extra)
     }
   }
 }
