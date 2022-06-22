@@ -6,12 +6,12 @@ import { runAsync } from './async'
 import { log, fail } from './log'
 
 import type { Task } from './build'
-import type { Files } from './files'
+import type { AbsolutePath, Files } from './files'
 
 /** A {@link Run} represents the context used when invoking a {@link Task}. */
 export class Run {
   #cache: Map<Task, Promise<Files>>
-  #directory: string
+  #directory: AbsolutePath
   #stack: Task[]
 
   /** Create a {@link Run} with the specified directory (or `process.cwd()`) */
@@ -32,13 +32,13 @@ export class Run {
       assert(path.isAbsolute(directory), `Directory "${directory}" not absolute`)
 
       this.#cache = new Map<Task, Promise<Files>>()
-      this.#directory = path.normalize(directory)
+      this.#directory = path.normalize(directory) as AbsolutePath
       this.#stack = []
     }
   }
 
   /** Return the directory of this {@link Run} */
-  get directory(): string {
+  get directory(): AbsolutePath {
     return this.#directory
   }
 

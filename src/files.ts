@@ -4,10 +4,13 @@ import util from 'node:util'
 
 import type { Run } from './run'
 
+export type AbsolutePath = string & { __brand_absolute_path: never }
+export type RelativePath = string & { __brand_relative_path: never }
+
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
 export interface FilesBuilder {
   /** The (resolved) directory the {@link Files} will be associated with */
-  readonly directory: string
+  readonly directory: AbsolutePath
   /** Push files into the {@link Files} instance being built */
   add(...files: string[]): this
   /** Merge orther {@link Files} instance to the {@link Files} being built */
@@ -21,20 +24,20 @@ export interface FilesBuilder {
  * identifying some _files_ rooted in a given _directory_.
  */
 export class Files {
-  readonly #directory: string
-  readonly #files: string[]
+  readonly #directory: AbsolutePath
+  readonly #files: RelativePath[]
 
   /**
    * Create a new {@link Files} instance rooted in the specified `directory`
    * relative to the specified {@link Run}'s directory.
    */
   constructor(run: Run, directory?: string) {
-    this.#directory = directory ? path.resolve(run.directory, directory) : run.directory
+    this.#directory = (directory ? path.resolve(run.directory, directory) : run.directory) as AbsolutePath
     this.#files = []
   }
 
   /** Return the _directory_ where this {@link Files} is rooted */
-  get directory(): string {
+  get directory(): AbsolutePath {
     return this.#directory
   }
 
@@ -43,18 +46,18 @@ export class Files {
   }
 
   /** Return an iterator over all _relative_ files of this instance */
-  *[Symbol.iterator](): Generator<string> {
+  *[Symbol.iterator](): Generator<RelativePath> {
     for (const file of this.#files) yield file
   }
 
   /** Return an iterator over all _absolute_ files of this instance */
-  *absolutePaths(): Generator<string> {
-    for (const file of this) yield path.resolve(this.#directory, file)
+  *absolutePaths(): Generator<AbsolutePath> {
+    for (const file of this) yield path.resolve(this.#directory, file) as AbsolutePath
   }
 
   /** Return an iterator over all _relative_ to _absolute_ mappings */
-  *pathMappings(): Generator<[ relative: string, absolute: string ]> {
-    for (const file of this) yield [ file, path.resolve(this.#directory, file) ]
+  *pathMappings(): Generator<[ relative: RelativePath, absolute: AbsolutePath ]> {
+    for (const file of this) yield [ file, path.resolve(this.#directory, file) as AbsolutePath ]
   }
 
   /* Nicety for logging */
@@ -69,7 +72,7 @@ export class Files {
   /** Create a new {@link FilesBuilder} creating {@link Files} instances. */
   static builder(run: Run, directory?: string): FilesBuilder {
     const instance = new Files(run, directory)
-    const set = new Set<string>()
+    const set = new Set<RelativePath>()
     let built = false
 
     return {
@@ -109,18 +112,18 @@ export class Files {
   }
 }
 
-export function assertRelativeChildPath(directory: string, file: string): string {
+export function assertRelativeChildPath(directory: string, file: string): RelativePath {
   const relative = getRelativeChildPath(directory, file)
   assert(relative, `File "${file}" not relative to "${directory}"`)
-  return relative
+  return relative as RelativePath
 }
 
-export function getRelativeChildPath(directory: string, file: string): string | undefined {
+export function getRelativeChildPath(directory: string, file: string): RelativePath | undefined {
   assert(path.isAbsolute(directory), `Directory "${directory}" not absolute`)
   const abs = path.resolve(directory, file)
   const rel = path.relative(directory, abs)
   if (path.isAbsolute(rel) || (rel === '..') || rel.startsWith(`..${path.sep}`)) {
     return undefined
   }
-  return rel
+  return rel as RelativePath
 }
