@@ -1,8 +1,13 @@
 import { describe, it } from '../src/test'
 
 describe('Basic test', () => {
-  it('Test number one', () => {
+  it('Test number one', (context) => {
     console.log('This goes to standard output')
+    context.log.trace('Hello, trace!')
+    context.log.debug('Hello, debug!')
+    context.log.info('Hello, info!')
+    context.log.warn('Hello, warn!')
+    context.log.error('Hello, error!', new Error('FooBarBaz'))
   })
 
   describe('Test number two', () => {
@@ -17,6 +22,6 @@ describe('Basic test', () => {
   })
 
   it('Test number three', () => {
-    console.error('This goes to standard error')
+    console.error('This\ngoes\nto\nstandard\nerror')
   })
 })
