@@ -41,10 +41,8 @@ export interface TaskContext<D> {
   pipe(files?: Files): Pipe
   /** Find files {@link Pipe} with globs */
   find(glob: string, ...args: ParseOptions<FindOptions>): Pipe
-  /** Call the specified {@link Task}s from the current build sequentially */
-  call(...tasks: (keyof D)[]): Pipe
-  /** Call the specified {@link Task}s from the current build in parallel */
-  parallel(...tasks: (keyof D)[]): Pipe
+  /** Call the specified {@link Task} from the current */
+  call(task: keyof D): Pipe
 }
 
 /**
@@ -184,51 +182,14 @@ function makeTaskCall(
         })
       }
 
-      call(...names: string[]): Pipe {
+      call(name: string): Pipe {
         return createPipe(async (): Promise<Files> => {
-          if (names.length === 0) return new Files(run)
+          const task = build[name]
+          if (! task) fail(`No such task "${name}"`)
 
-          const tasks = names.map((name) => {
-            const task = build[name]
-            if (! task) fail(`No such task "${name}"`)
-            return task
-          })
+          log.info('Calling task', $t(task))
 
-          log.info('Calling', tasks.length, 'tasks in series:', $t(...tasks))
-
-          const builder = Files.builder(run)
-          for (const task of tasks) builder.merge(await run.run(task))
-          return builder.build()
-        })
-      }
-
-      parallel(...names: string[]): Pipe {
-        return createPipe(async (): Promise<Files> => {
-          if (names.length === 0) return new Files(run)
-
-          const tasks = names.map((name) => {
-            const task = build[name]
-            if (! task) fail(`No such task "${name}"`)
-            return task
-          })
-
-          log.info('Calling', tasks.length, 'tasks in parallel:', $t(...tasks))
-
-          const promises: Promise<Files>[] = []
-          for (const task of tasks) {
-            promises.push(run.run(task))
-          }
-
-          let errors = 0
-          const builder = Files.builder(run)
-          const results = await Promise.allSettled(promises)
-          for (const result of results) {
-            if (result.status === 'rejected') errors ++
-            else builder.merge(result.value)
-          }
-
-          if (errors) fail('Parallel execution produced', errors, 'errors')
-          return builder.build()
+          return run.run(task)
         })
       }
     }
