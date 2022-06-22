@@ -1,5 +1,7 @@
-import assert from 'assert'
-import { ChildProcess, fork } from 'child_process'
+import assert from 'node:assert'
+import { ChildProcess, fork } from 'node:child_process'
+import readline  from 'node:readline'
+
 import { randomUUID } from 'crypto'
 import { Files } from '../files'
 import { $p, TaskLogger, log, $grn, $ylw, $gry, $red, $blu, fail } from '../log'
@@ -34,8 +36,11 @@ export class Test implements Plug {
 
           assert(child.stdout, 'No standard output from child process')
           assert(child.stderr, 'No standard error from child process')
-          child.stdout.pipe(process.stdout)
-          child.stderr.pipe(process.stderr)
+
+          const stdout = readline.createInterface(child.stdout)
+          const stderr = readline.createInterface(child.stderr)
+          stdout.on('line', (line) => log.info(`${$blu('\u25b6')} ${$gry(line)}`))
+          stderr.on('line', (line) => log.info(`${$ylw('\u25b6')} ${$gry(line)}`))
 
           const adapters = new TestLogAdapters(reporter)
 

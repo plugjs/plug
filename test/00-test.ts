@@ -2,7 +2,7 @@ import { describe, it } from '../src/test'
 
 describe('Basic test', () => {
   it('Test number one', () => {
-    console.log('Test number one')
+    console.log('This goes to standard output')
   })
 
   describe('Test number two', () => {
