@@ -1,30 +1,29 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { assert } from 'node:console'
+import type { Logger } from './log'
 
 export type TestBaseMessage = { id: number }
+
 export type TestStartMessage = TestBaseMessage & { event: 'start', label: string, parent: number }
 export type TestPassMessage = TestBaseMessage & { event: 'pass' }
 export type TestSkipMessage = TestBaseMessage & { event: 'skip' }
 export type TestFailMessage = TestBaseMessage & { event: 'fail', failure: any}
-export type TestNotifyMessage = TestStartMessage | TestPassMessage | TestSkipMessage | TestFailMessage
+export type TestLogMessage = TestBaseMessage & { event: 'log', level: keyof Logger, args: any[] }
+
+export type TestNotifyMessage = TestStartMessage | TestPassMessage | TestSkipMessage | TestFailMessage | TestLogMessage
+
 export type TestMessage = TestNotifyMessage & { test_run_uuid: string }
 
 /* ========================================================================== *
  * MOCHA-LIKE INTERFACE                                                       *
  * ========================================================================== */
 
-type Message =
-  | { event: 'start', id: number, label: string }
-  | { event: 'fail', id: number, failure: any }
-  | { event: 'pass', id: number }
-  | { event: 'skip', id: number }
-
 export interface TestContext {
   // timeout(): void
-  // skip(): void
+  skip(): void
+  log: Logger
 }
 
-export type TestFunction = () => void | Promise<void>
+export type TestFunction = (context: TestContext) => void | Promise<void>
 
 export type MochaFunction = ((label: string, fn: TestFunction) => void) & {
   readonly only: (label: string, fn: TestFunction) => void
@@ -111,9 +110,29 @@ class Test {
         return
       }
 
+      /* Create our context */
+      const log = (level: keyof Logger, args: any[]): Logger => {
+        notify({ event: 'log', id: this.id, level, args })
+        return context.log
+      }
+
+      const context: TestContext = {
+        skip: () => void (this.skip = true),
+        log: {
+          trace: (...args: any[]) => log('trace', args),
+          debug: (...args: any[]) => log('debug', args),
+          info: (...args: any[]) => log('info', args),
+          warn: (...args: any[]) => log('warn', args),
+          error: (...args: any[]) => log('error', args),
+          sep: () => log('sep', []),
+        }
+      }
+
+      const fn = this.fn.bind(context, context)
+
       /* Run the function, it _may_ contextualize other tasks */
       try {
-        await storage.run(this, this.fn)
+        await storage.run(this, fn)
       } catch (error) {
         notify({ event: 'fail', id: this.id, failure: error })
         return
