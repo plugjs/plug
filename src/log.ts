@@ -175,31 +175,31 @@ export function $t(...tasks: Task[]): string {
     tasks.map((task) => `"${task.name}"`).join(', ')
 }
 
-export function $gry(string: string): string {
+export function $gry(string: any): string {
   return logColor ? `${gry}${string}${rst}` : string
 }
 
-export function $red(string: string) {
+export function $red(string: any) {
   return logColor ? `${red}${string}${rst}` : string
 }
 
-export function $grn(string: string) {
+export function $grn(string: any) {
   return logColor ? `${grn}${string}${rst}` : string
 }
 
-export function $ylw(string: string) {
+export function $ylw(string: any) {
   return logColor ? `${ylw}${string}${rst}` : string
 }
 
-export function $blu(string: string) {
+export function $blu(string: any) {
   return logColor ? `${blu}${string}${rst}` : string
 }
 
-export function $mgt(string: string) {
+export function $mgt(string: any) {
   return logColor ? `${mgt}${string}${rst}` : string
 }
 
-export function $cyn(string: string) {
+export function $cyn(string: any) {
   return logColor ? `${cyn}${string}${rst}` : string
 }
 
