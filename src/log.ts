@@ -7,7 +7,7 @@ import { currentTask, runningTasks } from './async'
 import type { Task } from './build'
 
 /* ========================================================================== *
- * GENERIC LOGGING                                                            *
+ * TYPES                                                                      *
  * ========================================================================== */
 
 /** Combine {@link fs.WriteStream} and {@link tty.WriteStream} */
@@ -50,6 +50,43 @@ export interface Log extends Logger {
     depth: number,
   }
 }
+
+/* ========================================================================== *
+ * STATE                                                                      *
+ * ========================================================================== */
+
+/* Our level numbers (internal) */
+const levels = {
+  TRACE: 0,
+  DEBUG: 10,
+  INFO: 20,
+  WARN: 30,
+  ERROR: 40,
+  OFF: Number.MAX_SAFE_INTEGER,
+} as const
+
+/* The current log level */
+let logLevel: number = levels.INFO
+/* The current log output */
+let logOutput: WriteStream = process.stderr
+/* Log colors (default is stderr is a TTY) */
+let logColor = logOutput.isTTY
+/* Log width (if it's a tty, or 80) */
+let logWidth = logOutput.columns || 80
+/* Log depth (defaults to 2 as node) */
+let logDepth = 2
+/* The maximum width of all registered tasks */
+let taskWidth = 0
+
+/** Used internally to register task names, for width calculation and colors */
+export function registerTask(task: Task) {
+  if (task.name.length > taskWidth) taskWidth = task.name.length
+  taskColor(task.name) // register the color already
+}
+
+/* ========================================================================== *
+ * LOGGERS, SHARED (AUTOMATIC TASK DETECTION) AND PER-TASK                    *
+ * ========================================================================== */
 
 /** Our shared {@link Log} instance */
 export const log: Log = {
@@ -123,6 +160,11 @@ export const log: Log = {
   },
 }
 
+/**
+ * A {@link TaskLogger}  is a {@link Logger} always associated with the
+ * task inferred at construction, and is useful when handling callbacks that
+ * normally de-associate the calling execution stack.
+ */
 export class TaskLogger implements Logger {
   #task = currentTask()
 
@@ -156,17 +198,53 @@ export class TaskLogger implements Logger {
   }
 }
 
-export function registerTask(task: Task) {
-  if (task.name.length > taskWidth) taskWidth = task.name.length
-  taskColor(task.name) // register the color already
-}
-
 /* ========================================================================== *
  * PRETTY COLORS                                                              *
  * ========================================================================== */
 
+const zap = '\u001b[0G\u001b[2K' // clear line and set column 0
+const rst = '\u001b[0m' // reset all colors to default
+
+const uon = '\u001b[4m' // underline on
+const uof = '\u001b[24m' // underline off
+
+const gry = '\u001b[38;5;240m' // somewhat gray
+const red = '\u001b[38;5;203m' // light red (Leo's favorite)
+const grn = '\u001b[38;5;76m' // greenish
+const ylw = '\u001b[38;5;220m' // yellow
+const blu = '\u001b[38;5;69m' // brighter blue
+const mgt = '\u001b[38;5;213m' // pinky magenta
+const cyn = '\u001b[38;5;81m' // darker cyan
+
+const gryBg = '\u001b[48;5;239;38;5;16m' // gray background
+const redBg = '\u001b[48;5;196;38;5;16m' // red background
+const ylwBg = '\u001b[48;5;226;38;5;16m' // yellow background
+
+/** Wrap a task name in its color */
+const tsk = (() => {
+  const colors: string[] = [
+    64, 69, 76, 81, 124, 129, 136, 141,
+    148, 153, 201, 208, 213, 220 ]
+      .map((color) => `\u001b[38;5;${color}m`)
+
+  let index = 0
+
+  const tasks: Record<string, string> = {}
+
+  return function taskColor(task: string): string {
+    const mapped = tasks[task]
+    if (mapped) return mapped
+
+    const color = colors[(index ++) % colors.length]
+    const wrapped = `\u001b[38;5;${color}m${task}${rst}`
+    return tasks[task] = wrapped
+  }
+})()
+
+/* ========================================================================== */
+
 export function $p(path: string): string {
-  return logColor ? `\u001b[4m${path}\u001b[24m` : `"${path}"`
+  return logColor ? `${uon}${path}${uof}` : `"${path}"`
 }
 
 export function $t(task: Task): string {
@@ -238,33 +316,6 @@ export function fail(causeOrReason: unknown, ...args: any[]): never {
 }
 
 /* ========================================================================== *
- * STATE                                                                      *
- * ========================================================================== */
-
-/* Our level numbers (internal) */
-const levels = {
-  TRACE: 0,
-  DEBUG: 10,
-  INFO: 20,
-  WARN: 30,
-  ERROR: 40,
-  OFF: Number.MAX_SAFE_INTEGER,
-} as const
-
-/* The current log level */
-let logLevel: number = levels.INFO
-/* The current log output */
-let logOutput: WriteStream = process.stderr
-/* Log colors (default is stderr is a TTY) */
-let logColor = logOutput.isTTY
-/* Log width (if it's a tty, or 80) */
-let logWidth = logOutput.columns
-/* Log depth (defaults to 2 as node) */
-let logDepth = 2
-/* The maximum width of all registered tasks */
-let taskWidth = 0
-
-/* ========================================================================== *
  * SPINNER                                                                    *
  * ========================================================================== */
 
@@ -304,37 +355,6 @@ setInterval(() => {
  * INTERNALS                                                                  *
  * ========================================================================== */
 
-const zap = '\u001b[0G\u001b[2K' // clear line and set column 0
-const rst = '\u001b[0m' // reset all colors to default
-
-const gry = '\u001b[38;5;240m' // somewhat gray
-const red = '\u001b[38;5;203m' // light red (Leo's favorite)
-const grn = '\u001b[38;5;76m' // greenish
-const ylw = '\u001b[38;5;220m' // yellow
-const blu = '\u001b[38;5;69m' // brighter blue
-const mgt = '\u001b[38;5;213m' // pinky magenta
-const cyn = '\u001b[38;5;81m' // darker cyan
-
-const gryBg = '\u001b[48;5;239;38;5;16m' // gray background
-const redBg = '\u001b[48;5;196;38;5;16m' // red background
-const ylwBg = '\u001b[48;5;226;38;5;16m' // yellow background
-
-const taskColor = (() => {
-  const colors: string[] = [
-    64, 69, 76, 81, 124, 129, 136, 141,
-    148, 153, 201, 208, 213, 220 ]
-      .map((color) => `\u001b[38;5;${color}m`)
-
-  let index = 0
-
-  const tasks: Record<string, string> = {}
-
-  return function taskColor(task: string): string {
-    const color = tasks[task]
-    if (color) return color
-    return tasks[task] = colors[(index ++) % colors.length]
-  }
-})()
 
 function emit(task: Task | undefined, level: number, ...args: any[]) {
   return logColor ? emitColor(task, level, ...args) : emitPlain(task, level, ...args)
