@@ -25,15 +25,17 @@ export type LogLevel =
 /** A {@link Logger} emits log events */
 export interface Logger {
   /** Log a `TRACE` message */
-  trace: (message: string, ...data: any[]) => void
+  trace: (message: string, ...data: any[]) => this
   /** Log a `DEBUG` message */
-  debug: (message: string, ...data: any[]) => void
+  debug: (message: string, ...data: any[]) => this
   /** Log an `INFO` message */
-  info: (message: string, ...data: any[]) => void
+  info: (message: string, ...data: any[]) => this
   /** Log a `WARNING` message */
-  warn: (message: string, ...data: any[]) => void
+  warn: (message: string, ...data: any[]) => this
   /** Log an `ERROR` message */
-  error: (message: string, ...data: any[]) => void
+  error: (message: string, ...data: any[]) => this
+  /** Separate log entries */
+  sep: () => this
 }
 
 /** Our {@link Log} interface */
@@ -81,6 +83,8 @@ let taskWidth = 0
 let lastTask: string | undefined
 /** True after the first log line is emitted */
 let logStarted: boolean = false
+/** A marker to indicate that the next line must be separated */
+let separateLines: boolean = false
 
 /** Used internally to register task names, for width calculation and colors */
 export function registerTask(task: Task) {
@@ -138,30 +142,40 @@ export const log: Log = {
 
   /* ------------------------------------------------------------------------ */
 
-  trace(...args: any[]): void {
-    if (logLevel > levels.TRACE) return
+  trace(...args: any[]): Log {
+    if (logLevel > levels.TRACE) return log
     emit(currentTask(), levels.TRACE, ...args)
+    return log
   },
 
-  debug(...args: any[]): void {
-    if (logLevel > levels.DEBUG) return
+  debug(...args: any[]): Log {
+    if (logLevel > levels.DEBUG) return log
     emit(currentTask(), levels.DEBUG, ...args)
+    return log
   },
 
-  info(...args: any[]): void {
-    if (logLevel > levels.INFO) return
+  info(...args: any[]): Log {
+    if (logLevel > levels.INFO) return log
     emit(currentTask(), levels.INFO, ...args)
+    return log
   },
 
-  warn(...args: any[]): void {
-    if (logLevel > levels.WARN) return
+  warn(...args: any[]): Log {
+    if (logLevel > levels.WARN) return log
     emit(currentTask(), levels.WARN, ...args)
+    return log
   },
 
-  error(...args: any[]): void {
-    if (logLevel > levels.ERROR) return
+  error(...args: any[]): Log {
+    if (logLevel > levels.ERROR) return log
     emit(currentTask(), levels.ERROR, ...args)
+    return log
   },
+
+  sep(): Log {
+    separateLines = true
+    return this
+  }
 }
 
 /**
@@ -176,29 +190,39 @@ export class TaskLogger implements Logger {
     /* Empty constructor */
   }
 
-  trace(...args: any[]): void {
-    if (logLevel > levels.TRACE) return
+  trace(...args: any[]): this {
+    if (logLevel > levels.TRACE) return this
     emit(this.#task, levels.TRACE, ...args)
+    return this
   }
 
-  debug(...args: any[]): void {
-    if (logLevel > levels.DEBUG) return
+  debug(...args: any[]): this {
+    if (logLevel > levels.DEBUG) return this
     emit(this.#task, levels.DEBUG, ...args)
+    return this
   }
 
-  info(...args: any[]): void {
-    if (logLevel > levels.INFO) return
+  info(...args: any[]): this {
+    if (logLevel > levels.INFO) return this
     emit(this.#task, levels.INFO, ...args)
+    return this
   }
 
-  warn(...args: any[]): void {
-    if (logLevel > levels.WARN) return
+  warn(...args: any[]): this {
+    if (logLevel > levels.WARN) return this
     emit(this.#task, levels.WARN, ...args)
+    return this
   }
 
-  error(...args: any[]): void {
-    if (logLevel > levels.ERROR) return
+  error(...args: any[]): this {
+    if (logLevel > levels.ERROR) return this
     emit(this.#task, levels.ERROR, ...args)
+    return this
+  }
+
+  sep(): this {
+    separateLines = true
+    return this
   }
 }
 
@@ -227,9 +251,9 @@ export function fail(causeOrReason: unknown, ...args: any[]): never {
   /* Log our error if we have to */
   if (reason) {
     if (cause) args.push(cause)
-    log.error(reason, ...args)
+    log.sep().error(reason, ...args)
   } else if (cause) {
-    log.error('Error', cause)
+    log.sep().error('Error', cause)
   }
 
   /* Failure handled, never log it again */
@@ -368,13 +392,17 @@ function emitColor(task: string | undefined, level: number, ...args: any[]) {
   if ((lastTask !== task) && logStarted) {
     const pad = ''.padStart(taskWidth, ' ')
     write(`${zap}${pad} ${gry}${whiteSquare}${rst}\n`)
+    separateLines = false
     lastTask = task
   }
 
+  /* Definitely started */
   logStarted = true
 
+  /* Prefixes, to prepend at the beginning of each line */
   const prefixes: string[] = []
 
+  /* Task name or blank padding */
   if (task) {
     const pad = ''.padStart(taskWidth - task.length, ' ')
     prefixes.push(`${pad}${tsk(task)}`)
@@ -382,6 +410,7 @@ function emitColor(task: string | undefined, level: number, ...args: any[]) {
     prefixes.push(''.padStart(taskWidth, ' '))
   }
 
+  /* Level indicator (our little colorful squares) */
   if (level <= levels.DEBUG) {
     prefixes.push(`${gry}${whiteSquare}${rst}`) // trace/debug: gray open
   } else if (level <= levels.INFO) {
@@ -392,8 +421,16 @@ function emitColor(task: string | undefined, level: number, ...args: any[]) {
     prefixes.push(`${red}${blackSquare}${rst}`) // error: red
   }
 
+  /* The prefix to be prepended to all log entries */
   const prefix = prefixes.join(' ') + '  '
 
+  /* If we need to separate entries, do it now */
+  if (separateLines) {
+    write(`${zap}${prefix}\n`)
+    separateLines = false
+  }
+
+  /* Now for the normal logging of all our parameters */
   const breakLength = logWidth - taskWidth - 3
   const strings = stringifyArgs(args, breakLength)
 
