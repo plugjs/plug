@@ -7,6 +7,10 @@ import { test } from './plugs/test'
 // log.options.level = 'DEBUG'
 // log.options.depth = 10
 
+function sleep(ms: number = 1000) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 const b = build({
   async compile_sources() {
     this.find('src/**/*.ts')
@@ -27,9 +31,13 @@ const b = build({
       .plug(test())
   },
   async default() {
+    await sleep()
     await this.call('compile_sources')
+    await sleep()
     await this.call('compile_tests')
+    await sleep()
     await this.call('test')
+    await sleep()
   }
 })
 
