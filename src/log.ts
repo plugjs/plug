@@ -34,6 +34,8 @@ export interface Logger {
   warn: (message: string, ...data: any[]) => void
   /** Log an `ERROR` message */
   error: (message: string, ...data: any[]) => void
+  /** Separate logs */
+  sep: () => void
 }
 
 /** Our {@link Log} interface */
@@ -121,6 +123,10 @@ export const log: Log = {
     if (logLevel > levels.ERROR) return
     emit(currentTask(), levels.ERROR, ...args)
   },
+
+  sep(): void {
+    emit(undefined, levels.INFO, '')
+  }
 }
 
 export class TaskLogger implements Logger {
@@ -153,6 +159,10 @@ export class TaskLogger implements Logger {
   error(...args: any[]): void {
     if (logLevel > levels.ERROR) return
     emit(this.#task, levels.ERROR, ...args)
+  }
+
+  sep(): void {
+    emit(undefined, levels.INFO, '')
   }
 }
 
