@@ -156,6 +156,15 @@ export class TaskLogger implements Logger {
   }
 }
 
+export function registerTask(task: Task) {
+  if (task.name.length > taskWidth) taskWidth = task.name.length
+  taskColor(task.name) // register the color already
+}
+
+/* ========================================================================== *
+ * PRETTY COLORS                                                              *
+ * ========================================================================== */
+
 export function $p(path: string): string {
   return logColor ? `\u001b[4m${path}\u001b[24m` : `"${path}"`
 }
@@ -166,9 +175,32 @@ export function $t(...tasks: Task[]): string {
     tasks.map((task) => `"${task.name}"`).join(', ')
 }
 
-export function registerTask(task: Task) {
-  if (task.name.length > taskWidth) taskWidth = task.name.length
-  taskColor(task.name) // register the color already
+export function $gry(string: string): string {
+  return logColor ? `${gry}${string}${rst}` : string
+}
+
+export function $red(string: string) {
+  return logColor ? `${red}${string}${rst}` : string
+}
+
+export function $grn(string: string) {
+  return logColor ? `${grn}${string}${rst}` : string
+}
+
+export function $ylw(string: string) {
+  return logColor ? `${ylw}${string}${rst}` : string
+}
+
+export function $blu(string: string) {
+  return logColor ? `${blu}${string}${rst}` : string
+}
+
+export function $mgt(string: string) {
+  return logColor ? `${mgt}${string}${rst}` : string
+}
+
+export function $cyn(string: string) {
+  return logColor ? `${cyn}${string}${rst}` : string
 }
 
 /* ========================================================================== *
@@ -274,8 +306,15 @@ setInterval(() => {
 
 const zap = '\u001b[0G\u001b[2K' // clear line and set column 0
 const rst = '\u001b[0m' // reset all colors to default
+
 const gry = '\u001b[38;5;240m' // somewhat gray
 const red = '\u001b[38;5;203m' // light red (Leo's favorite)
+const grn = '\u001b[38;5;76m' // greenish
+const ylw = '\u001b[38;5;220m' // yellow
+const blu = '\u001b[38;5;69m' // brighter blue
+const mgt = '\u001b[38;5;213m' // pinky magenta
+const cyn = '\u001b[38;5;81m' // darker cyan
+
 const gryBg = '\u001b[48;5;239;38;5;16m' // gray background
 const redBg = '\u001b[48;5;196;38;5;16m' // red background
 const ylwBg = '\u001b[48;5;226;38;5;16m' // yellow background
@@ -308,7 +347,7 @@ function emitColor(task: Task | undefined, level: number, ...args: any[]) {
   if (task) {
     const name = task.name
     const pad = ''.padStart(taskWidth - task.name.length, ' ')
-    const msg = `${gry}${pad}[${taskColor(name)}${name}${gry}]${rst}`
+    const msg = `${pad}${taskColor(name)}${name} ${gry}|${rst}`
     prefixStrings.push(msg)
     prefixLength += name.length + pad.length + 2
   }
