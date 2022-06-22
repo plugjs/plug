@@ -2,10 +2,10 @@ import assert from 'assert'
 import { ChildProcess, fork } from 'child_process'
 import { randomUUID } from 'crypto'
 import { Files } from '../files'
-import { $p, TaskLogger, Logger, log, $grn, $ylw, $gry, $red, $blu } from '../log'
+import { $p, TaskLogger, log, $grn, $ylw, $gry, $red, $blu, fail } from '../log'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
-import type { TestMessage, TestStartMessage } from '../test'
+import type { TestMessage } from '../test'
 
 export class Test implements Plug {
   constructor() {
@@ -17,6 +17,8 @@ export class Test implements Plug {
     const uuid = randomUUID()
 
     log.info('Executing', files.length, 'test files')
+
+    const reporter = new TestReporter()
 
     for (const file of files.absolutePaths()) {
       await new Promise<void>((resolve, reject) => {
@@ -35,11 +37,11 @@ export class Test implements Plug {
           child.stdout.pipe(process.stdout)
           child.stderr.pipe(process.stderr)
 
-          const adapter = new TestAdapter()
+          const adapters = new TestLogAdapters(reporter)
 
           child.on('message', (message: TestMessage) => {
-            if (message.test_run_uuid !== uuid) return
-            adapter.handle(message)
+            log.trace('Received message', message)
+            if (message.test_run_uuid === uuid) adapters.handle(message)
           })
 
           child.on('error', (error) => reject(error))
@@ -60,6 +62,27 @@ export class Test implements Plug {
       })
     }
 
+    /* Nice report! */
+    const results: string[] = []
+    if (reporter.passed) results.push(`${$grn(reporter.passed)} passed`)
+    if (reporter.failed) results.push(`${$red(reporter.failed)} failed`)
+    if (reporter.skipped) results.push(`${$ylw(reporter.skipped)} skipped`)
+    const message = results.length ? `${$gry('(')}${results.join($gry(', '))}}${$gry(')')}` : ''
+
+    log.info('Ran', $blu(reporter.total), 'tests', message)
+
+    for (const failure of reporter.failures) {
+      log.error('Failure detected in')
+      let prefix = ' *'
+      for (const label of failure.labels) {
+        log.error(prefix, label)
+        prefix = '  ' + prefix
+      }
+      log.error(failure.failure)
+    }
+
+    if (reporter.failed) fail('Failed', reporter.failed, 'tests')
+
     /* Always return some empty results */
     return new Files(run) // empty results!
   }
@@ -69,62 +92,151 @@ export function test() {
   return new Test()
 }
 
-class TestAdapter {
-  readonly id: number
-  readonly parent: TestAdapter
-  readonly label: string
-  readonly adapters: Record<number, TestAdapter>
-  readonly indent: number
-  started = false
+class TestReporter {
+  readonly #failures: TestFailure[] = []
+  #total: number = 0
+  #passed: number = 0
+  #skipped: number = 0
 
-  constructor()
-  constructor(id: number, label: string, parent: TestAdapter)
-  constructor(id?: number, label?: string, parent?: TestAdapter) {
-    if (id && label && parent) {
-      this.id = id
-      this.label = label
-      this.parent = parent
-      this.adapters = parent.adapters
-      this.indent = parent.indent + 1
-    } else {
-      this.id = 0
-      this.label = ''
-      this.parent = this
-      this.adapters = {}
-      this.indent = 0
-      this.started = true
+  constructor() {
+    /* Nothing to do */
+  }
+
+  reportStarted() {
+    this.#total ++
+  }
+
+  reportPassed() {
+    this.#passed ++
+  }
+
+  reportSkipped() {
+    this.#skipped ++
+  }
+
+  reportFailed(failure: TestFailure) {
+    this.#failures.push(failure)
+  }
+
+  get total(): number {
+    return this.#total
+  }
+
+  get passed(): number {
+    return this.#passed
+  }
+
+  get skipped(): number {
+    return this.#skipped
+  }
+
+  get failed(): number {
+    return this.#failures.length
+  }
+
+  get failures(): TestFailure[] {
+    return [ ...this.#failures ]
+  }
+}
+
+class TestFailure {
+  readonly labels: readonly string[]
+  readonly failure: any
+
+  constructor(adapter: TestLogAdapter, failure: any) {
+    const labels: string[] = []
+
+    while (adapter != adapter.parent) {
+      labels.unshift(adapter.label)
+      adapter = adapter.parent
     }
-    this.adapters[this.id] = this
-  }
 
-  get pad(): string {
-    return ''.padStart((this.indent * 2) - 1, ' ')
+    this.failure = failure
+    this.labels = labels
   }
+}
 
-  start() {
-    if (this.started) return
-    log.info(this.pad, $blu('\u2022'), this.label)
-    this.started = true
+class TestLogAdapters {
+  readonly #adapters: Record<number, TestLogAdapter> = {}
+  readonly #reporter: TestReporter
+
+  constructor(reporter: TestReporter) {
+    this.#reporter = reporter
   }
 
   handle(message: TestMessage) {
     if (message.event === 'start') {
-      new TestAdapter(message.id, message.label, this.adapters[message.parent])
-    } else if (message.id !== this.id) {
-      const adapter = this.adapters[message.id]
+      const adapter = new TestLogAdapter(message.id, message.label, this.#adapters[message.parent])
+      this.#adapters[message.id] = adapter
+      this.#reporter.reportStarted()
+
+    } else {
+      const adapter = this.#adapters[message.id]
       assert(adapter, `No test started with id ${message.id}`)
+
+      switch(message.event) {
+        case 'skip': this.#reporter.reportSkipped(); break
+        case 'pass': this.#reporter.reportPassed(); break
+        case 'fail':
+          const failure = new TestFailure(adapter, message.failure)
+          this.#reporter.reportFailed(failure)
+          break
+      }
+
       adapter.handle(message)
-    } else if (message.event === 'pass') {
-      this.parent.start()
-      log.info(this.pad, $grn('\u2714'), this.label)
+    }
+  }
+}
+
+class TestLogAdapter {
+  readonly id: number
+  readonly parent: TestLogAdapter
+  readonly label: string
+
+  readonly #indent: string
+  #started: boolean
+
+  constructor(id: number, label: string, parent?: TestLogAdapter) {
+    this.id = id
+    this.label = label
+
+    if (parent) {
+      this.parent = parent
+      this.#indent = parent.#indent + '  '
+      this.#started = parent.id === id
+    } else {
+      this.parent = this
+      this.#indent = ''
+      this.#started = true
+    }
+  }
+
+  #start() {
+    if (this.#started) return
+    const extra = `${$gry('(')}${$blu('\u2026')}${$gry(')')}`
+    log.info(this.#indent + $blu('\u2022'), this.label, extra)
+    this.#started = true
+  }
+
+  handle(message: TestMessage): void {
+    if (this.parent === this) return
+
+    if (message.event === 'pass') {
+      this.parent.#start()
+      log.info(this.#indent + $grn('\u2714'), this.label)
+
     } else if (message.event === 'skip') {
-      this.parent.start()
+      this.parent.#start()
       const extra = `${$gry('(')}${$ylw('skipped')}${$gry(')')}`
-      log.info(this.pad, $ylw('\u25aa'), this.label, extra)
+      log.info(this.#indent + $ylw('\u25aa'), this.label, extra)
+
     } else if (message.event === 'fail') {
-      this.parent.start()
+      this.parent.#start()
       const extra = `${$gry('(')}${$red('failed')}${$gry(')')}`
-      log.info(this.pad, $red('\u2716'), this.label, extra)
+      log.info(this.#indent + $red('\u2716'), this.label, extra)
+
+    } else {
+      log.warn('Unhandled message', message)
     }
   }
 }
