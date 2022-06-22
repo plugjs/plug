@@ -77,11 +77,15 @@ let logWidth = logOutput.columns || 80
 let logDepth = 2
 /* The maximum width of all registered tasks */
 let taskWidth = 0
+/** Last task name emitted by the log */
+let lastTask: string | undefined
+/** True after the first log line is emitted */
+let logStarted: boolean = false
 
 /** Used internally to register task names, for width calculation and colors */
 export function registerTask(task: Task) {
   if (task.name.length > taskWidth) taskWidth = task.name.length
-  taskColor(task.name) // register the color already
+  tsk(task.name) // register the color already
 }
 
 /* ========================================================================== *
@@ -199,89 +203,6 @@ export class TaskLogger implements Logger {
 }
 
 /* ========================================================================== *
- * PRETTY COLORS                                                              *
- * ========================================================================== */
-
-const zap = '\u001b[0G\u001b[2K' // clear line and set column 0
-const rst = '\u001b[0m' // reset all colors to default
-
-const uon = '\u001b[4m' // underline on
-const uof = '\u001b[24m' // underline off
-
-const gry = '\u001b[38;5;240m' // somewhat gray
-const red = '\u001b[38;5;203m' // light red (Leo's favorite)
-const grn = '\u001b[38;5;76m' // greenish
-const ylw = '\u001b[38;5;220m' // yellow
-const blu = '\u001b[38;5;69m' // brighter blue
-const mgt = '\u001b[38;5;213m' // pinky magenta
-const cyn = '\u001b[38;5;81m' // darker cyan
-
-const gryBg = '\u001b[48;5;239;38;5;16m' // gray background
-const redBg = '\u001b[48;5;196;38;5;16m' // red background
-const ylwBg = '\u001b[48;5;226;38;5;16m' // yellow background
-
-/** Wrap a task name in its color */
-const tsk = (() => {
-  const colors: string[] = [
-    64, 69, 76, 81, 124, 129, 136, 141,
-    148, 153, 201, 208, 213, 220 ]
-      .map((color) => `\u001b[38;5;${color}m`)
-
-  let index = 0
-
-  const tasks: Record<string, string> = {}
-
-  return function taskColor(task: string): string {
-    const mapped = tasks[task]
-    if (mapped) return mapped
-
-    const color = colors[(index ++) % colors.length]
-    const wrapped = `\u001b[38;5;${color}m${task}${rst}`
-    return tasks[task] = wrapped
-  }
-})()
-
-/* ========================================================================== */
-
-export function $p(path: string): string {
-  return logColor ? `${uon}${path}${uof}` : `"${path}"`
-}
-
-export function $t(task: Task): string {
-  return logColor ?
-    `${gry}"${taskColor(task.name)}${task.name}${gry}"${rst}` :
-    `"${task.name}"`
-}
-
-export function $gry(string: any): string {
-  return logColor ? `${gry}${string}${rst}` : string
-}
-
-export function $red(string: any) {
-  return logColor ? `${red}${string}${rst}` : string
-}
-
-export function $grn(string: any) {
-  return logColor ? `${grn}${string}${rst}` : string
-}
-
-export function $ylw(string: any) {
-  return logColor ? `${ylw}${string}${rst}` : string
-}
-
-export function $blu(string: any) {
-  return logColor ? `${blu}${string}${rst}` : string
-}
-
-export function $mgt(string: any) {
-  return logColor ? `${mgt}${string}${rst}` : string
-}
-
-export function $cyn(string: any) {
-  return logColor ? `${cyn}${string}${rst}` : string
-}
-
-/* ========================================================================== *
  * BUILD FAILURES                                                             *
  * ========================================================================== */
 
@@ -316,85 +237,164 @@ export function fail(causeOrReason: unknown, ...args: any[]): never {
 }
 
 /* ========================================================================== *
+ * PRETTY COLORS                                                              *
+ * ========================================================================== */
+
+const zap = '\u001b[0G\u001b[2K' // clear line and set column 0
+const rst = '\u001b[0m' // reset all colors to default
+
+const uon = '\u001b[4m' // underline on
+const uof = '\u001b[24m' // underline off
+
+const gry = '\u001b[38;5;240m' // somewhat gray
+const red = '\u001b[38;5;203m' // light red (Leo's favorite)
+const grn = '\u001b[38;5;76m' // greenish
+const ylw = '\u001b[38;5;220m' // yellow
+const blu = '\u001b[38;5;69m' // brighter blue
+const mgt = '\u001b[38;5;213m' // pinky magenta
+const cyn = '\u001b[38;5;81m' // darker cyan
+
+const gryBg = '\u001b[48;5;239;38;5;16m' // gray background
+const redBg = '\u001b[48;5;196;38;5;16m' // red background
+const ylwBg = '\u001b[48;5;226;38;5;16m' // yellow background
+
+/** Prefix a task name with its color (remember, color is NOT reset) */
+const tsk = (() => {
+  const tasks: Record<string, string> = {}
+  const colors = [ 64, 69, 76, 81, 124, 129, 136, 141, 148, 153, 201, 208, 213, 220 ]
+  let index = 0
+
+  return function tsk(task: string): string {
+    const mapped = tasks[task]
+    if (mapped) return mapped
+
+    const color = colors[(index ++) % colors.length]
+    const wrapped = `\u001b[38;5;${color}m${task}`
+    return tasks[task] = wrapped
+  }
+})()
+
+/* ========================================================================== */
+
+export function $p(path: string): string {
+  return logColor ? `${uon}${path}${uof}` : `"${path}"`
+}
+
+export function $t(task: Task): string {
+  return logColor ?
+    `${gry}"${tsk(task.name)}${gry}"${rst}` :
+    `"${task}"`
+}
+
+export function $gry(string: any): string {
+  return logColor ? `${gry}${string}${rst}` : string
+}
+
+export function $red(string: any) {
+  return logColor ? `${red}${string}${rst}` : string
+}
+
+export function $grn(string: any) {
+  return logColor ? `${grn}${string}${rst}` : string
+}
+
+export function $ylw(string: any) {
+  return logColor ? `${ylw}${string}${rst}` : string
+}
+
+export function $blu(string: any) {
+  return logColor ? `${blu}${string}${rst}` : string
+}
+
+export function $mgt(string: any) {
+  return logColor ? `${mgt}${string}${rst}` : string
+}
+
+export function $cyn(string: any) {
+  return logColor ? `${cyn}${string}${rst}` : string
+}
+
+/* ========================================================================== *
  * SPINNER                                                                    *
  * ========================================================================== */
 
-const spins = [
-  '\u2809', // ⠉ - 14
-  '\u2819', // ⠙ - 145
-  '\u2818', // ⠘ - 45
-  '\u2838', // ⠸ - 456
-  '\u2830', // ⠰ - 56
-  '\u2834', // ⠴ - 356
-  '\u2824', // ⠤ - 36
-  '\u2826', // ⠦ - 236
-  '\u2806', // ⠆ - 23
-  '\u2807', // ⠇ - 123
-  '\u2803', // ⠃ - 12
-  '\u280b', // ⠋ - 124
-]
+const nextSpin = (() => {
+  const spins = [
+    '\u2809', // ⠉ - 14
+    '\u2819', // ⠙ - 145
+    '\u2818', // ⠘ - 45
+    '\u2838', // ⠸ - 456
+    '\u2830', // ⠰ - 56
+    '\u2834', // ⠴ - 356
+    '\u2824', // ⠤ - 36
+    '\u2826', // ⠦ - 236
+    '\u2806', // ⠆ - 23
+    '\u2807', // ⠇ - 123
+    '\u2803', // ⠃ - 12
+    '\u280b', // ⠋ - 124
+  ]
 
-let nextSpin = 0
+  let nextSpin = 0
+
+  return () => spins[(nextSpin ++) % spins.length]
+})()
 
 setInterval(() => {
   if (! logColor) return
   const tasks = runningTasks()
   if (! tasks.length) return
 
-  const spin = `${red}${spins[(nextSpin ++) % spins.length]}${gry}`
+  const pad = ''.padStart(taskWidth, ' ')
+  const names = tasks.map((task) => tsk(task.name)).join(`${gry}, `) + gry
 
-  const names = tasks
-    .map((task) => `${taskColor(task.name)}${task.name}`)
-    .join(`${gry}, `) + gry
-
-  const count = `${red}${tasks.length}${gry}`
-  write(`${zap}  ${spin} Running ${count} tasks (${names})${rst}`)
-}, 100).unref()
+  write(`${zap}${pad} ${nextSpin()}  Running ${tasks.length} tasks (${names})${rst}`)
+}, 50).unref()
 
 /* ========================================================================== *
  * INTERNALS                                                                  *
  * ========================================================================== */
 
+const whiteSquare = '\u25a1'
+const blackSquare = '\u25a0'
 
+/** Emit either plain or color */
 function emit(task: Task | undefined, level: number, ...args: any[]) {
-  return logColor ? emitColor(task, level, ...args) : emitPlain(task, level, ...args)
+  return logColor ? emitColor(task?.name, level, ...args) : emitPlain(task, level, ...args)
 }
 
-function emitColor(task: Task | undefined, level: number, ...args: any[]) {
-  const prefixStrings: string[] = []
-  let prefixLength = 0
+/** Emit in full colors! */
+function emitColor(task: string | undefined, level: number, ...args: any[]) {
+  /* Separate between different tasks */
+  if ((lastTask !== task) && logStarted) {
+    const pad = ''.padStart(taskWidth, ' ')
+    write(`${zap}${pad} ${gry}${whiteSquare}${rst}\n`)
+    lastTask = task
+  }
+
+  logStarted = true
+
+  const prefixes: string[] = []
 
   if (task) {
-    const name = task.name
-    const pad = ''.padStart(taskWidth - task.name.length, ' ')
-    const msg = `${pad}${taskColor(name)}${name} ${gry}|${rst}`
-    prefixStrings.push(msg)
-    prefixLength += name.length + pad.length + 2
+    const pad = ''.padStart(taskWidth - task.length, ' ')
+    prefixes.push(`${pad}${tsk(task)}`)
   } else {
-    const pad = ''.padStart(taskWidth, ' ')
-    const msg = `${pad} ${gry}|${rst}`
-    prefixStrings.push(msg)
-    prefixLength += taskWidth + 2
+    prefixes.push(''.padStart(taskWidth, ' '))
   }
 
-  if (level < levels.DEBUG) {
-    prefixStrings.push(`${gryBg} TRACE ${rst}`)
-    prefixLength += 7
-  } else if (level < levels.INFO) {
-    prefixStrings.push(`${gryBg} DEBUG ${rst}`)
-    prefixLength += 7
-  } else if (level >= levels.ERROR) {
-    prefixStrings.push(`${redBg} ERROR ${rst}`)
-    prefixLength += 7
-  } else if (level >= levels.WARN) {
-    prefixStrings.push(`${ylwBg} WARNING ${rst}`)
-    prefixLength += 9
+  if (level <= levels.DEBUG) {
+    prefixes.push(`${gry}${whiteSquare}${rst}`) // trace/debug: gray open
+  } else if (level <= levels.INFO) {
+    prefixes.push(`${gry}${blackSquare}${rst}`) // info: gray
+  } else if (level <= levels.WARN) {
+    prefixes.push(`${ylw}${blackSquare}${rst}`) // warning: yellow
+  } else {
+    prefixes.push(`${red}${blackSquare}${rst}`) // error: red
   }
 
-  const prefix = prefixStrings.length ? `${prefixStrings.join(' ')} ` : ''
-  prefixLength += prefixStrings.length
+  const prefix = prefixes.join(' ') + '  '
 
-  const breakLength = logWidth - prefixLength - 1
+  const breakLength = logWidth - taskWidth - 3
   const strings = stringifyArgs(args, breakLength)
 
   const message = strings.join(' ')
