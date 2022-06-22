@@ -69,12 +69,12 @@ type TestNotify = <T extends TestNotifyMessage>(message: T) => void
 
 class Test {
   static #lastId = 0
-  #flag?: 'skip' | 'only' | undefined
 
   readonly id = Test.#lastId ++
   readonly label
   readonly fn: TestFunction
   readonly tests: Test[] = []
+  #flag?: 'skip' | 'only' | undefined
 
   constructor(label: string, fn: TestFunction) {
     this.label = label
@@ -102,34 +102,41 @@ class Test {
     return this
   }
 
-  async run(send: TestNotify, parent?: Test): Promise<boolean> {
-    if (this.skip) return true
-
-    await storage.run(this, this.fn)
-
-    if (this.skip) {
-      this.tests.forEach((test) => test.skip = true)
-    } else {
-      const only = this.tests.reduce((p, t) => p || t.only, false)
-      if (only) this.tests.forEach((t) => t.skip = ! t.only)
-    }
-
-    for (const test of this.tests) {
-      send({ event: 'start', id: test.id, parent: this.id, label: test.label })
-
-      let message: TestNotifyMessage
-      try {
-        const skipped = await test.run(send)
-        message = { event: skipped ? 'skip' : 'pass', id: test.id, parent: this.id }
-      } catch (error) {
-        message = { event: 'fail', id: test.id, failure: error }
-      } finally {
-        send(message!)
+  async run(notify: TestNotify, parent?: Test): Promise<void> {
+    notify({ event: 'start', id: this.id, parent: parent?.id || 0, label: this.label })
+    try {
+      /* If this is skipped, simply notify and return */
+      if (this.skip) {
+        notify({ event: 'skip', id: this.id })
+        return
       }
 
-    }
+      /* Run the function, it _may_ contextualize other tasks */
+      try {
+        await storage.run(this, this.fn)
+      } catch (error) {
+        notify({ event: 'fail', id: this.id, failure: error })
+        return
+      }
 
-    return this.skip
+      /* We might have called "skip()" in our context */
+      if (this.skip) {
+        notify({ event: 'skip', id: this.id })
+        return
+      }
+
+      /* If any test is "only" all other tests will be skipped */
+      const only = this.tests.reduce((p, t) => p || t.only, false)
+      if (only) this.tests.forEach((t) => t.skip = ! t.only)
+
+      /* Now run all other tests */
+      for (const test of this.tests) await test.run(notify, this)
+
+      /* All done! */
+      notify({ event: 'pass', id: this.id })
+    } catch (error) {
+      console.error('Unhandled error running test', error)
+    }
   }
 }
 
