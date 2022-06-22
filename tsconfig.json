@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "lib": [ "esnext", "webworker" ],
+    "lib": [ "esnext" ],
     "types": [ "node" ],
     "target": "esnext",
-    "outDir": "./types",
+    "outDir": "./build/tsc",
     "rootDir": ".",
     "strict": true,
     "module": "commonjs",
@@ -12,10 +12,11 @@
     "emitDeclarationOnly": true,
     "noImplicitReturns": true,
     "esModuleInterop": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
   },
   "include": [
     "src/**/*.ts",
+    "test/**/*.ts",
   ]
 }
