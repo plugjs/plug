@@ -39,8 +39,8 @@ export class Test implements Plug {
 
           const stdout = readline.createInterface(child.stdout)
           const stderr = readline.createInterface(child.stderr)
-          stdout.on('line', (line) => log.info(`${$blu('\u25b6')} ${$gry(line)}`))
-          stderr.on('line', (line) => log.info(`${$ylw('\u25b6')} ${$gry(line)}`))
+          stdout.on('line', (line) => log.info(`${$blu('\u25b7')} ${$gry(line)}`))
+          stderr.on('line', (line) => log.info(`${$red('\u25b7')} ${$gry(line)}`))
 
           const adapters = new TestLogAdapters(reporter)
 
@@ -218,8 +218,8 @@ class TestLogAdapter {
 
   #start() {
     if (this.#started) return
-    const extra = `${$gry('(')}${$blu('\u2026')}${$gry(')')}`
-    log.info(this.#indent + $blu('\u2022'), this.label, extra)
+    this.parent.#start()
+    log.info(this.#indent + $blu('\u22ef'), this.label)
     this.#started = true
   }
 
@@ -239,6 +239,11 @@ class TestLogAdapter {
       this.parent.#start()
       const extra = `${$gry('(')}${$red('failed')}${$gry(')')}`
       log.info(this.#indent + $red('\u2716'), this.label, extra)
+
+    } else if (message.event === 'log') {
+      this.#start()
+      const { level, args } = message
+      log.pfx(this.#indent + $gry('  \u2502 '))[level](...args as [ string, ...any[] ])
 
     } else {
       log.warn('Unhandled message', message)
