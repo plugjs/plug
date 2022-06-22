@@ -22,7 +22,7 @@ export class Test implements Plug {
 
     for (const file of files.absolutePaths()) {
       await new Promise<void>((resolve, reject) => {
-        log.debug('Executing', $p(file))
+        log.sep().debug('Executing', $p(file))
         let child: ChildProcess | undefined = undefined
 
         try {
@@ -69,14 +69,14 @@ export class Test implements Plug {
     if (reporter.skipped) results.push(`${$ylw(reporter.skipped)} skipped`)
     const message = results.length ? `${$gry('(')}${results.join($gry(', '))}}${$gry(')')}` : ''
 
-    log.info('Ran', $blu(reporter.total), 'tests', message)
+    log.sep().info(`Ran ${reporter.total} tests`, message)
 
     for (const failure of reporter.failures) {
-      log.error('Failure detected in')
-      let prefix = ' *'
+      log.sep().error('Failure detected in')
+      let prefix = ` ${$gry('\u2514\u2500')}`
       for (const label of failure.labels) {
         log.error(prefix, label)
-        prefix = '  ' + prefix
+        prefix = '   ' + prefix
       }
       log.error(failure.failure)
     }
