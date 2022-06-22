@@ -186,9 +186,7 @@ function makeTaskCall(
         return createPipe(async (): Promise<Files> => {
           const task = build[name]
           if (! task) fail(`No such task "${name}"`)
-
-          log.info('Calling task', $t(task))
-
+          log.debug('Calling task', $t(task))
           return run.run(task)
         })
       }
