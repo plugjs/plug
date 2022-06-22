@@ -34,8 +34,6 @@ export interface Logger {
   warn: (message: string, ...data: any[]) => void
   /** Log an `ERROR` message */
   error: (message: string, ...data: any[]) => void
-  /** Separate logs */
-  sep: () => void
 }
 
 /** Our {@link Log} interface */
@@ -123,10 +121,6 @@ export const log: Log = {
     if (logLevel > levels.ERROR) return
     emit(currentTask(), levels.ERROR, ...args)
   },
-
-  sep(): void {
-    emit(undefined, levels.INFO, '')
-  }
 }
 
 export class TaskLogger implements Logger {
@@ -160,10 +154,6 @@ export class TaskLogger implements Logger {
     if (logLevel > levels.ERROR) return
     emit(this.#task, levels.ERROR, ...args)
   }
-
-  sep(): void {
-    emit(undefined, levels.INFO, '')
-  }
 }
 
 export function registerTask(task: Task) {
@@ -179,10 +169,10 @@ export function $p(path: string): string {
   return logColor ? `\u001b[4m${path}\u001b[24m` : `"${path}"`
 }
 
-export function $t(...tasks: Task[]): string {
+export function $t(task: Task): string {
   return logColor ?
-    tasks.map((task) => `${taskColor(task.name)}${task.name}${rst}`).join(', ') :
-    tasks.map((task) => `"${task.name}"`).join(', ')
+    `${gry}"${taskColor(task.name)}${task.name}${gry}"${rst}` :
+    `"${task.name}"`
 }
 
 export function $gry(string: any): string {
@@ -360,6 +350,11 @@ function emitColor(task: Task | undefined, level: number, ...args: any[]) {
     const msg = `${pad}${taskColor(name)}${name} ${gry}|${rst}`
     prefixStrings.push(msg)
     prefixLength += name.length + pad.length + 2
+  } else {
+    const pad = ''.padStart(taskWidth, ' ')
+    const msg = `${pad} ${gry}|${rst}`
+    prefixStrings.push(msg)
+    prefixLength += taskWidth + 2
   }
 
   if (level < levels.DEBUG) {
