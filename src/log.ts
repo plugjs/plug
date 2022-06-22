@@ -38,8 +38,12 @@ export interface Logger {
   sep: () => this
 }
 
+export interface PrefixedLogger extends Logger {
+  pfx: (prefix: string) => Logger
+}
+
 /** Our {@link Log} interface */
-export interface Log extends Logger {
+export interface Log extends PrefixedLogger {
   /* The current logging options */
   options: {
     /** The {@link LogLevel} currently being logged */
@@ -144,37 +148,41 @@ export const log: Log = {
 
   trace(...args: any[]): Log {
     if (logLevel > levels.TRACE) return log
-    emit(currentTask(), levels.TRACE, ...args)
+    emit(currentTask(), '', levels.TRACE, ...args)
     return log
   },
 
   debug(...args: any[]): Log {
     if (logLevel > levels.DEBUG) return log
-    emit(currentTask(), levels.DEBUG, ...args)
+    emit(currentTask(), '', levels.DEBUG, ...args)
     return log
   },
 
   info(...args: any[]): Log {
     if (logLevel > levels.INFO) return log
-    emit(currentTask(), levels.INFO, ...args)
+    emit(currentTask(), '', levels.INFO, ...args)
     return log
   },
 
   warn(...args: any[]): Log {
     if (logLevel > levels.WARN) return log
-    emit(currentTask(), levels.WARN, ...args)
+    emit(currentTask(), '', levels.WARN, ...args)
     return log
   },
 
   error(...args: any[]): Log {
     if (logLevel > levels.ERROR) return log
-    emit(currentTask(), levels.ERROR, ...args)
+    emit(currentTask(), '', levels.ERROR, ...args)
     return log
   },
 
   sep(): Log {
     separateLines = true
     return this
+  },
+
+  pfx(prefix: string): Logger {
+    return new TaskLogger().pfx(prefix)
   }
 }
 
@@ -183,46 +191,53 @@ export const log: Log = {
  * task inferred at construction, and is useful when handling callbacks that
  * normally de-associate the calling execution stack.
  */
-export class TaskLogger implements Logger {
+export class TaskLogger implements PrefixedLogger {
   #task = currentTask()
+  #prefix = ''
 
   constructor() {
-    /* Empty constructor */
+    /* Nothing to do */
   }
 
   trace(...args: any[]): this {
     if (logLevel > levels.TRACE) return this
-    emit(this.#task, levels.TRACE, ...args)
+    emit(this.#task, this.#prefix, levels.TRACE, ...args)
     return this
   }
 
   debug(...args: any[]): this {
     if (logLevel > levels.DEBUG) return this
-    emit(this.#task, levels.DEBUG, ...args)
+    emit(this.#task, this.#prefix, levels.DEBUG, ...args)
     return this
   }
 
   info(...args: any[]): this {
     if (logLevel > levels.INFO) return this
-    emit(this.#task, levels.INFO, ...args)
+    emit(this.#task, this.#prefix, levels.INFO, ...args)
     return this
   }
 
   warn(...args: any[]): this {
     if (logLevel > levels.WARN) return this
-    emit(this.#task, levels.WARN, ...args)
+    emit(this.#task, this.#prefix, levels.WARN, ...args)
     return this
   }
 
   error(...args: any[]): this {
     if (logLevel > levels.ERROR) return this
-    emit(this.#task, levels.ERROR, ...args)
+    emit(this.#task, this.#prefix, levels.ERROR, ...args)
     return this
   }
 
   sep(): this {
     separateLines = true
     return this
+  }
+
+  pfx(prefix: string): Logger {
+    const logger = new TaskLogger()
+    logger.#prefix = prefix
+    return logger
   }
 }
 
@@ -382,12 +397,14 @@ const whiteSquare = '\u25a1'
 const blackSquare = '\u25a0'
 
 /** Emit either plain or color */
-function emit(task: Task | undefined, level: number, ...args: any[]) {
-  return logColor ? emitColor(task?.name, level, ...args) : emitPlain(task, level, ...args)
+function emit(task: Task | undefined, prefix: string, level: number, ...args: any[]) {
+  return logColor ?
+    emitColor(task?.name, prefix, level, ...args) :
+    emitPlain(task?.name, prefix, level, ...args)
 }
 
 /** Emit in full colors! */
-function emitColor(task: string | undefined, level: number, ...args: any[]) {
+function emitColor(task: string | undefined, prefix: string, level: number, ...args: any[]) {
   /* Separate between different tasks */
   if ((lastTask !== task) && logStarted) {
     const pad = ''.padStart(taskWidth, ' ')
@@ -404,71 +421,95 @@ function emitColor(task: string | undefined, level: number, ...args: any[]) {
 
   /* Task name or blank padding */
   if (task) {
-    const pad = ''.padStart(taskWidth - task.length, ' ')
-    prefixes.push(`${pad}${tsk(task)}`)
+    prefixes.push(''.padStart(taskWidth - task.length, ' ')) // padding
+    prefixes.push(tsk(task)) // task name
   } else {
-    prefixes.push(''.padStart(taskWidth, ' '))
+    prefixes.push(''.padStart(taskWidth, ' ')) // full width padding
   }
 
   /* Level indicator (our little colorful squares) */
   if (level <= levels.DEBUG) {
-    prefixes.push(`${gry}${whiteSquare}${rst}`) // trace/debug: gray open
+    prefixes.push(` ${gry}${whiteSquare}${rst}`) // trace/debug: gray open
   } else if (level <= levels.INFO) {
-    prefixes.push(`${gry}${blackSquare}${rst}`) // info: gray
+    prefixes.push(` ${gry}${blackSquare}${rst}`) // info: gray
   } else if (level <= levels.WARN) {
-    prefixes.push(`${ylw}${blackSquare}${rst}`) // warning: yellow
+    prefixes.push(` ${ylw}${blackSquare}${rst}`) // warning: yellow
   } else {
-    prefixes.push(`${red}${blackSquare}${rst}`) // error: red
+    prefixes.push(` ${red}${blackSquare}${rst}`) // error: red
   }
 
-  /* The prefix to be prepended to all log entries */
-  const prefix = prefixes.join(' ') + '  '
+  /* The prefix (task name and level) */
+  const prefix0 = prefixes.join('')
 
   /* If we need to separate entries, do it now */
   if (separateLines) {
-    write(`${zap}${prefix}\n`)
+    write(`${zap}${prefix0}\n`)
     separateLines = false
   }
 
+  /* The prefix (task name, level, and log prefix) */
+  const prefix1 = prefix0 + '  ' + prefix
+
   /* Now for the normal logging of all our parameters */
-  const breakLength = logWidth - taskWidth - 3
+  const breakLength = logWidth - prefix1.replace(/\u001b\[[^m]+m/g, '').length
   const strings = stringifyArgs(args, breakLength)
 
   const message = strings.join(' ')
-  const prefixed = prefix ? message.replace(/^/gm, prefix) : message
+  const prefixed = prefix1 ? message.replace(/^/gm, prefix1) : message
   write(`${zap}${prefixed}\n`)
 }
 
-function emitPlain(task: Task | undefined, level: number, ...args: any[]) {
-  const prefixStrings: string[] = []
-  let prefixLength = 0
+function emitPlain(task: string | undefined, prefix: string, level: number, ...args: any[]) {
+  /* Separate between different tasks */
+  if ((lastTask !== task) && logStarted) {
+    const pad1 = ''.padStart(taskWidth + 1, '\u2500')
+    const pad2 = ''.padStart(7, '\u2500')
+    write(`${pad1}\u253c${pad2}\u2524\n`)
+    separateLines = false
+    lastTask = task
+  }
+
+  /* Definitely started */
+  logStarted = true
+
+  const prefixes: string[] = []
 
   if (task) {
-    const name = task.name
-    const pad = ''.padStart(taskWidth - task.name.length, ' ')
-    prefixStrings.push(`${pad}[${name}]`)
-    prefixLength += name.length + pad.length + 2
+    const pad = ''.padStart(taskWidth - task.length, ' ')
+    prefixes.push(`${pad}${task} \u2502`)
+  } else {
+    prefixes.push(''.padStart(taskWidth + 1, ' ') + '\u2502')
   }
 
-  if (level < levels.INFO) {
-    prefixStrings.push(`(DEBUG)`)
-    prefixLength += 7
-  } else if (level >= levels.ERROR) {
-    prefixStrings.push(`(ERROR)`)
-    prefixLength += 7
-  } else if (level >= levels.WARN) {
-    prefixStrings.push(`(WARNING)`)
-    prefixLength += 9
+  if (level <= levels.TRACE) {
+    prefixes.push( 'trace \u2502 ')
+  } else if (level <= levels.DEBUG) {
+    prefixes.push( 'debug \u2502 ')
+  } else if (level <= levels.INFO) {
+    prefixes.push(`  info \u2502 `)
+  } else if (level <= levels.WARN) {
+    prefixes.push(`  warn \u2502 `)
+  } else {
+    prefixes.push(` error \u2502 `)
   }
 
-  const prefix = prefixStrings.length ? `${prefixStrings.join(' ')} ` : ''
-  prefixLength += prefixStrings.length
+  /* The prefix (task name and level) */
+  const prefix0 = prefixes.join('')
 
-  const breakLength = 79 - prefixLength
+  /* If we need to separate entries, do it now */
+  if (separateLines) {
+    write(`${prefix0}\n`)
+    separateLines = false
+  }
+
+  /* The prefix (task name, level, and log prefix) */
+  const prefix1 = prefix0 + prefix
+
+  const breakLength = 80 - prefix1.length
   const strings = stringifyArgs(args, breakLength)
 
   const message = strings.join(' ')
-  const prefixed = prefix ? message.replace(/^/gm, prefix) : message
+  const prefixed = prefix0 ? message.replace(/^/gm, prefix1) : message
   write(`${prefixed}\n`)
 }
 
