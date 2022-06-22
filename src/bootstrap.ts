@@ -15,7 +15,7 @@ const b = build({
       // .plug(debug())
   },
   async compile_tests() {
-    this.call('compile_sources')
+    await this.call('compile_sources')
     this.find('test/**/*.ts')
       // .plug(debug())
       .plug(esbuild({ outdir: 'build' }))
@@ -27,7 +27,9 @@ const b = build({
       .plug(test())
   },
   async default() {
-    this.parallel('compile_tests' , 'test')
+    await this.call('compile_sources')
+    await this.call('compile_tests')
+    await this.call('test')
   }
 })
 
