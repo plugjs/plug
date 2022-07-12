@@ -1,13 +1,15 @@
 import { describe, it } from '../src/test'
+import { log } from '../src/log'
 
 describe('Basic test', () => {
   it('Test number one', (context) => {
-    console.log('This goes to standard output')
-    context.log.trace('Hello, trace!')
-    context.log.debug('Hello, debug!')
-    context.log.info('Hello, info!')
-    context.log.warn('Hello, warn!')
-    context.log.error('Hello, error!', new Error('FooBarBaz'))
+    // console.log('This goes to standard output')
+    log.trace('Hello, trace!')
+    log.debug('Hello, debug!')
+    log.info('Hello, info!')
+    log.warn('Hello, warn!')
+    log.error('Hello, error!', new SyntaxError('FooBarBaz'))
+    // console.log(new SyntaxError('Gonzooo!'))
   })
 
   describe('Test number two', () => {
@@ -18,10 +20,10 @@ describe('Basic test', () => {
   })
 
   it('This test fails', () => {
-    throw new Error('FooBar')
+    throw new SyntaxError('FooBar')
   })
 
   it('Test number three', () => {
-    console.error('This\ngoes\nto\nstandard\nerror')
+    // console.error('This\ngoes\nto\nstandard\nerror')
   })
 })
