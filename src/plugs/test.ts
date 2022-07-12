@@ -29,18 +29,18 @@ export class Test implements Plug {
 
         try {
           child = fork(file, [], {
-            stdio: [ 'ignore', 'pipe', 'pipe', 'ipc' ],
+            stdio: [ 'ignore', 'inherit', 'inherit', 'ipc' ],
             env: { ...process.env, __TEST_RUN_UUID__: uuid },
             serialization: 'advanced',
           })
 
-          assert(child.stdout, 'No standard output from child process')
-          assert(child.stderr, 'No standard error from child process')
+          // assert(child.stdout, 'No standard output from child process')
+          // assert(child.stderr, 'No standard error from child process')
 
-          const stdout = readline.createInterface(child.stdout)
-          const stderr = readline.createInterface(child.stderr)
-          stdout.on('line', (line) => log.info(`${$blu('\u25b7')} ${$gry(line)}`))
-          stderr.on('line', (line) => log.info(`${$red('\u25b7')} ${$gry(line)}`))
+          // const stdout = readline.createInterface(child.stdout)
+          // const stderr = readline.createInterface(child.stderr)
+          // stdout.on('line', (line) => log.info(`${$blu('\u25b7')} ${$gry(line)}`))
+          // stderr.on('line', (line) => log.info(`${$red('\u25b7')} ${$gry(line)}`))
 
           const adapters = new TestLogAdapters(reporter)
 
@@ -83,7 +83,7 @@ export class Test implements Plug {
         log.error(prefix, label)
         prefix = '   ' + prefix
       }
-      log.error(failure.failure)
+      log.error(typeof failure.failure, failure.failure.__proto__.constructor, failure.failure)
     }
 
     if (reporter.failed) fail('Failed', reporter.failed, 'tests')
@@ -240,10 +240,10 @@ class TestLogAdapter {
       const extra = `${$gry('(')}${$red('failed')}${$gry(')')}`
       log.info(this.#indent + $red('\u2716'), this.label, extra)
 
-    } else if (message.event === 'log') {
-      this.#start()
-      const { level, args } = message
-      log.pfx(this.#indent + $gry('  \u2502 '))[level](...args as [ string, ...any[] ])
+    // } else if (message.event === 'log') {
+    //   this.#start()
+    //   const { level, args } = message
+    //   log.pfx(this.#indent + $gry('  \u2502 '))[level](...args as [ string, ...any[] ])
 
     } else {
       log.warn('Unhandled message', message)
