@@ -1,10 +1,12 @@
 import type fs from 'node:fs'
 import type tty from 'node:tty'
 
+import { sep } from 'node:path'
 import { inspect } from 'node:util'
 import { currentTask, runningTasks } from './async'
 
 import type { Task } from './build'
+import { AbsolutePath, getRelativeChildPath } from './files'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -38,12 +40,8 @@ export interface Logger {
   sep: () => this
 }
 
-export interface PrefixedLogger extends Logger {
-  pfx: (prefix: string) => Logger
-}
-
 /** Our {@link Log} interface */
-export interface Log extends PrefixedLogger {
+export interface Log extends Logger {
   /* The current logging options */
   options: {
     /** The {@link LogLevel} currently being logged */
@@ -180,10 +178,6 @@ export const log: Log = {
     separateLines = true
     return this
   },
-
-  pfx(prefix: string): Logger {
-    return new TaskLogger().pfx(prefix)
-  }
 }
 
 /**
@@ -191,7 +185,7 @@ export const log: Log = {
  * task inferred at construction, and is useful when handling callbacks that
  * normally de-associate the calling execution stack.
  */
-export class TaskLogger implements PrefixedLogger {
+export class TaskLogger implements Logger {
   #task = currentTask()
   #prefix = ''
 
@@ -232,12 +226,6 @@ export class TaskLogger implements PrefixedLogger {
   sep(): this {
     separateLines = true
     return this
-  }
-
-  pfx(prefix: string): Logger {
-    const logger = new TaskLogger()
-    logger.#prefix = prefix
-    return logger
   }
 }
 
@@ -282,8 +270,7 @@ export function fail(causeOrReason: unknown, ...args: any[]): never {
 const zap = '\u001b[0G\u001b[2K' // clear line and set column 0
 const rst = '\u001b[0m' // reset all colors to default
 
-const uon = '\u001b[4m' // underline on
-const uof = '\u001b[24m' // underline off
+const und = '\u001b[4m' // underline on
 
 const gry = '\u001b[38;5;240m' // somewhat gray
 const red = '\u001b[38;5;203m' // light red (Leo's favorite)
@@ -315,8 +302,11 @@ const tsk = (() => {
 
 /* ========================================================================== */
 
-export function $p(path: string): string {
-  return logColor ? `${uon}${path}${uof}` : `"${path}"`
+export function $p(path: AbsolutePath): string {
+  const directory = process.cwd() as AbsolutePath
+  const relative = getRelativeChildPath(directory, path)
+  const resolved = relative == null ? path : `.${sep}${relative}`
+  return logColor ? `${und}${gry}${resolved}${rst}` : `"${resolved}"`
 }
 
 export function $t(task: Task): string {
