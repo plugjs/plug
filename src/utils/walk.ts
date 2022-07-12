@@ -5,6 +5,7 @@ import { match } from './match'
 
 import type { MatchOptions } from './match'
 import { $p, log } from '../log'
+import { AbsolutePath, RelativePath } from '../files'
 
 /** Specific options for walking a directory */
 export interface WalkOptions extends MatchOptions {
@@ -31,13 +32,13 @@ export interface WalkOptions extends MatchOptions {
 }
 
 /** The {@link AsyncGenerator} yielding results for our matches. */
-export type WalkGenerator = AsyncGenerator<string, void, void>
+export type WalkGenerator = AsyncGenerator<RelativePath, void, void>
 
 /**
  * Walk the specified directory, returning an asynchronous iterator over all
  * the files found matching the specified globs and matching options.
  */
- export function walk(directory: string, globs: string[], options: WalkOptions = {}):  WalkGenerator {
+ export function walk(directory: AbsolutePath, globs: string[], options: WalkOptions = {}):  WalkGenerator {
   const {
     maxDepth = Infinity,
     followSymlinks = true,
@@ -46,7 +47,7 @@ export type WalkGenerator = AsyncGenerator<string, void, void>
   } = options
 
   /* Make sure to also ignore node modules or dot directories if we have to */
-  const onDirectory = (directory: string) => {
+  const onDirectory = (directory: AbsolutePath) => {
     const name = path.basename(directory)
     if (name === 'node_modules') return !!allowNodeModules
     if (name.startsWith('.')) return !!opts.dot
@@ -74,10 +75,10 @@ export type WalkGenerator = AsyncGenerator<string, void, void>
  * ========================================================================== */
 
 interface WalkerArguments {
-  directory: string,
+  directory: AbsolutePath,
   relative: string,
   matcher: (path: string) => boolean,
-  onDirectory: (directory: string) => boolean,
+  onDirectory: (directory: AbsolutePath) => boolean,
   followSymlinks: boolean,
   maxDepth: number,
   depth: number,
@@ -96,7 +97,7 @@ async function* walker(args: WalkerArguments): WalkGenerator {
   } = args
 
   /* Read the directory, including file types */
-  const dir = join(directory, relative)
+  const dir = join(directory, relative) as AbsolutePath
   if (! onDirectory(dir)) return
   log.trace('Reading directory', $p(dir))
   const dirents = await fs.readdir(dir, { withFileTypes: true })
@@ -106,7 +107,7 @@ async function* walker(args: WalkerArguments): WalkGenerator {
     const path = join(relative, dirent.name)
 
     /* If the entry is a file and matches, yield it */
-    if (dirent.isFile() && positiveMatcher(path)) yield path
+    if (dirent.isFile() && positiveMatcher(path)) yield path as RelativePath
 
     /* If the entry is a directory within our depth, walk it recursively */
     else if (dirent.isDirectory() && (depth < maxDepth)) {
@@ -118,7 +119,7 @@ async function* walker(args: WalkerArguments): WalkGenerator {
       const stat = await fs.stat(join(directory, path))
 
       /* If the link is a file and matches, yield it */
-      if (stat.isFile() && positiveMatcher(path)) yield path
+      if (stat.isFile() && positiveMatcher(path)) yield path as RelativePath
 
       /* If the link is a directory within our depth, walk it recursively */
       else if (stat.isDirectory() && (depth < maxDepth)) {

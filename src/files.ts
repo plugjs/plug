@@ -32,7 +32,7 @@ export class Files {
    * relative to the specified {@link Run}'s directory.
    */
   constructor(run: Run, directory?: string) {
-    this.#directory = (directory ? path.resolve(run.directory, directory) : run.directory) as AbsolutePath
+    this.#directory = (directory ? resolveAbsolutePath(run.directory, directory) : run.directory)
     this.#files = []
   }
 
@@ -52,12 +52,12 @@ export class Files {
 
   /** Return an iterator over all _absolute_ files of this instance */
   *absolutePaths(): Generator<AbsolutePath> {
-    for (const file of this) yield path.resolve(this.#directory, file) as AbsolutePath
+    for (const file of this) yield resolveAbsolutePath(this.#directory, file)
   }
 
   /** Return an iterator over all _relative_ to _absolute_ mappings */
   *pathMappings(): Generator<[ relative: RelativePath, absolute: AbsolutePath ]> {
-    for (const file of this) yield [ file, path.resolve(this.#directory, file) as AbsolutePath ]
+    for (const file of this) yield [ file, resolveAbsolutePath(this.#directory, file) ]
   }
 
   /* Nicety for logging */
@@ -110,6 +110,12 @@ export class Files {
       },
     }
   }
+}
+
+export function resolveAbsolutePath(directory: AbsolutePath, file: string): AbsolutePath {
+  const resolved = path.resolve(directory, file) as AbsolutePath
+  assert(path.isAbsolute(resolved), `Path "${file}" resolved in "${directory}" is not absolute`)
+  return resolved
 }
 
 export function assertRelativeChildPath(directory: string, file: string): RelativePath {
