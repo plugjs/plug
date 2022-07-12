@@ -20,7 +20,7 @@ export type TestMessage = TestNotifyMessage & { test_run_uuid: string }
 export interface TestContext {
   // timeout(): void
   skip(): void
-  log: Logger
+  // log: Logger
 }
 
 export type TestFunction = (context: TestContext) => void | Promise<void>
@@ -110,22 +110,8 @@ class Test {
         return
       }
 
-      /* Create our context */
-      const log = (level: keyof Logger, args: any[]): Logger => {
-        notify({ event: 'log', id: this.id, level, args })
-        return context.log
-      }
-
       const context: TestContext = {
         skip: () => void (this.skip = true),
-        log: {
-          trace: (...args: any[]) => log('trace', args),
-          debug: (...args: any[]) => log('debug', args),
-          info: (...args: any[]) => log('info', args),
-          warn: (...args: any[]) => log('warn', args),
-          error: (...args: any[]) => log('error', args),
-          sep: () => log('sep', []),
-        }
       }
 
       const fn = this.fn.bind(context, context)
