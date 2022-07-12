@@ -1,9 +1,9 @@
 import assert from 'assert'
-import path from 'path'
+import path, { resolve } from 'path'
 
-import { $p, fail, log } from '../log'
-import { build, BuildOptions } from 'esbuild'
-import { Files, FilesBuilder } from '../files'
+import { $cyn, $p, fail, log } from '../log'
+import { build, BuildOptions, formatMessages } from 'esbuild'
+import { Files, FilesBuilder, resolveAbsolutePath } from '../files'
 
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
@@ -28,6 +28,8 @@ export class ESBuild implements Plug {
       format: 'cjs',
       outbase: absWorkingDir,
 
+      logLevel: 'silent',
+
       /* Our options */
       ...this.#options,
 
@@ -45,9 +47,11 @@ export class ESBuild implements Plug {
     if (options.bundle && options.outfile && (entryPoints.length === 1)) {
 
       builder = Files.builder(run, absWorkingDir)
-      options.outfile = path.resolve(absWorkingDir, options.outfile)
+      const outputFile = resolveAbsolutePath(absWorkingDir, options.outfile)
+      const entryPoint = resolveAbsolutePath(absWorkingDir, entryPoints[0])
+      options.outfile = outputFile
 
-      log.debug('Bundling', $p(entryPoints[0]), 'into', $p(options.outfile))
+      log.debug('Bundling', $p(entryPoint), 'into', $p(outputFile))
     } else {
       assert(options.outdir, 'Option "outdir" must be specified')
 
@@ -78,9 +82,9 @@ export class ESBuild implements Plug {
 
     const outputs = esbuild.metafile.outputs
     for (const file in outputs) {
-      const source = path.resolve(absWorkingDir, outputs[file].entryPoint!)
-      const target = path.resolve(absWorkingDir, file)
-      log.trace('Transpiled', $p(source), 'to', $p(target))
+      const source = resolveAbsolutePath(absWorkingDir, outputs[file].entryPoint!)
+      const target = resolveAbsolutePath(absWorkingDir, file)
+      log.debug('Transpiled', $p(source), 'to', $p(target))
       builder.add(target)
     }
 
