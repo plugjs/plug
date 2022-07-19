@@ -2,7 +2,7 @@ import { build } from './build'
 import { log } from './log'
 import { debug } from './plugs/debug'
 import { esbuild } from './plugs/esbuild'
-import { test } from './plugs/test'
+// import { test } from './plugs/test'
 
 // log.options.level = 'DEBUG'
 // log.options.depth = 10
@@ -28,7 +28,7 @@ const b = build({
   async test() {
     this.call('compile_tests')
       // .plug(debug())
-      .plug(test())
+      // .plug(test())
   },
   async default() {
     await sleep()
@@ -40,6 +40,8 @@ const b = build({
     await sleep()
   }
 })
+
+log.info('Build starting...').sep()
 
 b.default()
   .then((result) => log.info('All done!', result))
