@@ -48,10 +48,10 @@ export interface Log extends Logger {
     level: LogLevel,
     /** Whether to log with colors or not */
     colors: boolean,
-    /** The current output */
-    output: WriteStream
     /** The depth for object inspection */
     depth: number,
+
+    readonly env: Record<string, any>,
   }
 }
 
@@ -61,37 +61,35 @@ export interface Log extends Logger {
 
 /* Our level numbers (internal) */
 const levels = {
-  TRACE: 0,
-  DEBUG: 10,
-  INFO: 20,
-  WARN: 30,
-  ERROR: 40,
+  TRACE: 10,
+  DEBUG: 20,
+  INFO: 30,
+  WARN: 40,
+  ERROR: 50,
   OFF: Number.MAX_SAFE_INTEGER,
 } as const
 
 /* The current log level */
 let logLevel: number = levels.INFO
-/* The current log output */
-let logOutput: WriteStream = process.stderr
 /* Log colors (default is stderr is a TTY) */
-let logColor = logOutput.isTTY
+let logColor = process.stderr.isTTY
 /* Log width (if it's a tty, or 80) */
-let logWidth = logOutput.columns || 80
+let logWidth = process.stderr.columns || 80
 /* Log depth (defaults to 2 as node) */
 let logDepth = 2
 /* The maximum width of all registered tasks */
-let taskWidth = 0
+let taskWidth = parseInt(process.env['LOG_TASK_WIDTH'] || '0') || 0
 /** Last task name emitted by the log */
 let lastTask: string | undefined
-/** True after the first log line is emitted */
-let logStarted: boolean = false
 /** A marker to indicate that the next line must be separated */
 let separateLines: boolean = false
+
+/** The "default" task name */
+const defaultTask: string | undefined = process.env['LOG_TASK_NAME']
 
 /** Used internally to register task names, for width calculation and colors */
 export function registerTask(task: Task) {
   if (task.name.length > taskWidth) taskWidth = task.name.length
-  tsk(task.name) // register the color already
 }
 
 /* ========================================================================== *
@@ -122,24 +120,21 @@ export const log: Log = {
       logColor = !! color
     },
 
-    get output() {
-      return logOutput
-    },
-
-    set output(output: WriteStream) {
-      logColor = 'isTTY' in output ? !! output.isTTY : false
-      logWidth = 'columns' in output ? output.columns : 80
-      logOutput = output
-    },
-
     get depth() {
       return logDepth
     },
 
     set depth(depth: number) {
       logDepth = Math.floor(depth)
-      if (logDepth < 0) logDepth = 2
+      if (logDepth <= 0) logDepth = 2
     },
+
+    get env() {
+      return {
+        LOG_TASK_NAME: currentTask()?.name,
+        LOG_TASK_WIDTH: taskWidth,
+      }
+    }
   },
 
   /* ------------------------------------------------------------------------ */
@@ -234,7 +229,7 @@ export class TaskLogger implements Logger {
  * ========================================================================== */
 
 /** A constant thrown by `Run` indicating a build failure already logged */
-export const buildFailed = Symbol('Build failed')
+const buildFailed = Symbol('Build failed')
 
 /** Fail this `Run` giving a descriptive reason */
 export function fail(reason: string, ...data: any[]): never
@@ -254,9 +249,9 @@ export function fail(causeOrReason: unknown, ...args: any[]): never {
   /* Log our error if we have to */
   if (reason) {
     if (cause) args.push(cause)
-    log.sep().error(reason, ...args)
+    log.sep().error(reason, ...args).sep()
   } else if (cause) {
-    log.sep().error('Error', cause)
+    log.sep().error('Error', cause).sep()
   }
 
   /* Failure handled, never log it again */
@@ -280,25 +275,7 @@ const blu = '\u001b[38;5;69m' // brighter blue
 const mgt = '\u001b[38;5;213m' // pinky magenta
 const cyn = '\u001b[38;5;81m' // darker cyan
 
-const gryBg = '\u001b[48;5;239;38;5;16m' // gray background
-const redBg = '\u001b[48;5;196;38;5;16m' // red background
-const ylwBg = '\u001b[48;5;226;38;5;16m' // yellow background
-
-/** Prefix a task name with its color (remember, color is NOT reset) */
-const tsk = (() => {
-  const tasks: Record<string, string> = {}
-  const colors = [ 64, 69, 76, 81, 124, 129, 136, 141, 148, 153, 201, 208, 213, 220 ]
-  let index = 0
-
-  return function tsk(task: string): string {
-    const mapped = tasks[task]
-    if (mapped) return mapped
-
-    const color = colors[(index ++) % colors.length]
-    const wrapped = `\u001b[38;5;${color}m${task}`
-    return tasks[task] = wrapped
-  }
-})()
+const tsk = '\u001b[38;5;141m' // the color for tasks (purple)
 
 /* ========================================================================== */
 
@@ -311,7 +288,7 @@ export function $p(path: AbsolutePath): string {
 
 export function $t(task: Task): string {
   return logColor ?
-    `${gry}"${tsk(task.name)}${gry}"${rst}` :
+    `${gry}"${tsk}${task.name}${gry}"${rst}` :
     `"${task}"`
 }
 
@@ -340,7 +317,7 @@ export function $mgt(string: any) {
 }
 
 export function $cyn(string: any) {
-  return logColor ? `${cyn}${string}${rst}` : string
+  return logColor ? `${tsk}${string}${rst}` : string
 }
 
 /* ========================================================================== *
@@ -374,7 +351,7 @@ setInterval(() => {
   if (! tasks.length) return
 
   const pad = ''.padStart(taskWidth, ' ')
-  const names = tasks.map((task) => tsk(task.name)).join(`${gry}, `) + gry
+  const names = tasks.map((task) => $t(task)).join(`${gry}, `) + gry
 
   write(`${zap}${pad} ${nextSpin()}  Running ${tasks.length} tasks (${names})${rst}`)
 }, 50).unref()
@@ -389,30 +366,19 @@ const blackSquare = '\u25a0'
 /** Emit either plain or color */
 function emit(task: Task | undefined, prefix: string, level: number, ...args: any[]) {
   return logColor ?
-    emitColor(task?.name, prefix, level, ...args) :
-    emitPlain(task?.name, prefix, level, ...args)
+    emitColor(task?.name || defaultTask, prefix, level, ...args) :
+    emitPlain(task?.name || defaultTask, prefix, level, ...args)
 }
 
 /** Emit in full colors! */
 function emitColor(task: string | undefined, prefix: string, level: number, ...args: any[]) {
-  /* Separate between different tasks */
-  if ((lastTask !== task) && logStarted) {
-    const pad = ''.padStart(taskWidth, ' ')
-    write(`${zap}${pad} ${gry}${whiteSquare}${rst}\n`)
-    separateLines = false
-    lastTask = task
-  }
-
-  /* Definitely started */
-  logStarted = true
-
   /* Prefixes, to prepend at the beginning of each line */
   const prefixes: string[] = []
 
   /* Task name or blank padding */
   if (task) {
     prefixes.push(''.padStart(taskWidth - task.length, ' ')) // padding
-    prefixes.push(tsk(task)) // task name
+    prefixes.push(`${tsk}${task}`) // task name
   } else {
     prefixes.push(''.padStart(taskWidth, ' ')) // full width padding
   }
@@ -433,9 +399,14 @@ function emitColor(task: string | undefined, prefix: string, level: number, ...a
 
   /* If we need to separate entries, do it now */
   if (separateLines) {
-    write(`${zap}${prefix0}\n`)
+    if (lastTask != task) {
+      write(`${zap}\n`)
+    } else {
+      write(`${zap}${prefix0}\n`)
+    }
     separateLines = false
   }
+  lastTask = task
 
   /* The prefix (task name, level, and log prefix) */
   const prefix1 = prefix0 + '  ' + prefix
@@ -450,18 +421,6 @@ function emitColor(task: string | undefined, prefix: string, level: number, ...a
 }
 
 function emitPlain(task: string | undefined, prefix: string, level: number, ...args: any[]) {
-  /* Separate between different tasks */
-  if ((lastTask !== task) && logStarted) {
-    const pad1 = ''.padStart(taskWidth + 1, '\u2500')
-    const pad2 = ''.padStart(7, '\u2500')
-    write(`${pad1}\u253c${pad2}\u2524\n`)
-    separateLines = false
-    lastTask = task
-  }
-
-  /* Definitely started */
-  logStarted = true
-
   const prefixes: string[] = []
 
   if (task) {
@@ -513,5 +472,5 @@ function stringifyArgs(args: any[], breakLength: number): string[] {
 }
 
 function write(value: string) {
-  (<any> logOutput).write(Buffer.from(value, 'utf-8'))
+  process.stderr.write(Buffer.from(value, 'utf-8'))
 }
