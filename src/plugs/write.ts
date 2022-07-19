@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from '../utils/asyncfs'
 
-import { Files } from '../files'
+import { AbsolutePath, Files, resolveAbsolutePath } from '../files'
 import { log, $p } from '../log'
 import type { Plug } from '../pipe'
 import type { Run } from '../run'
@@ -37,7 +37,7 @@ export class Write implements Plug {
     for (const [ relative, absolute ] of files.pathMappings()) {
       /* The target absolute is the (possibly) renamed relative source file
        * relocated to the the target directory */
-      const target = path.resolve(builder.directory, rename(relative))
+      const target = resolveAbsolutePath(builder.directory, rename(relative))
 
       /* We never copy a file onto itself, but not fail either */
       if (target === absolute) {
@@ -47,19 +47,19 @@ export class Write implements Plug {
 
       /* Create the parent directory, recursively */
       const directory = path.dirname(target)
-      const first = await fs.mkdir(directory, { recursive: true })
-      if (first) {
-        log.trace(`Directory ${$p(first)} created`)
+      const firstParent = await fs.mkdir(directory, { recursive: true })
+      if (firstParent) {
+        log.trace(`Directory ${$p(directory as AbsolutePath)} created`)
         if (dmode !== undefined) {
           for (let dir = directory; ; dir = path.dirname(dir)) {
-            log.trace(`Setting mode ${stringifyMode(dmode)} for dir`, $p(dir))
+            log.trace(`Setting mode ${stringifyMode(dmode)} for directory`, $p(dir as AbsolutePath))
             await fs.chmod(dir, dmode)
-            if (dir === first) break
+            if (dir === firstParent) break
           }
         }
       }
 
-      log.trace(`Copying "${absolute}" to "${target}"`)
+      log.trace(`Copying "${$p(absolute)}" to "${$p(target)}"`)
       await fs.copyFile(absolute, target, flags)
 
       if (fmode !== undefined) {
@@ -75,7 +75,6 @@ export class Write implements Plug {
 
     return builder.build()
   }
-
 }
 
 export function write(directory: string, options?: WriteOptions) {

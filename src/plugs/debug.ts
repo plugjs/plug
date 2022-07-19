@@ -13,7 +13,7 @@ export class Debug implements Plug {
     log.info('-   run directory:', $p(run.directory))
     log.info('- files directory:', $p(files.directory))
     if (files.length) {
-      const [ path, ...paths ] = [ ...files ]
+      const [ path, ...paths ] = [ ...files.absolutePaths() ]
       log.info('-           files:', $p(path))
       for (const p of paths) log.info('-                :', $p(p))
     }
