@@ -59,11 +59,11 @@ export class Run {
     /* Actually _call_ the `Task` and get a promise for it */
     const promise = runAsync(task, async () => {
       const now = Date.now()
-      log.info('Starting task').sep()
+      log.sep().info('Starting task').sep()
 
       try {
         const result = await task.task(new Run(this, task))
-        log.sep().info('Task completed in', Date.now() - now, 'ms')
+        log.sep().info('Task completed in', Date.now() - now, 'ms').sep()
         return result
       } catch (error) {
         fail(error, 'Task failed in', Date.now() - now, 'ms')
