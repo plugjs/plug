@@ -48,6 +48,7 @@ export class Run {
     if (this.#stack.includes(task)) {
       const m = [ `Circular dependency running task "${task.name}"` ]
       for (const t of this.#stack) m.push(`  - "${t.name}" defined in ${t.file}`)
+      // coverage ignore next
       m.push(`  * "${task.name}" defined in ${task.file}`)
       throw new Error(m.join('\n'))
     }
@@ -61,6 +62,7 @@ export class Run {
       const now = Date.now()
       log.sep().info('Starting task').sep()
 
+      /* coverage ignore catch */
       try {
         const result = await task.task(new Run(this, task))
         log.sep().info('Task completed in', Date.now() - now, 'ms').sep()
