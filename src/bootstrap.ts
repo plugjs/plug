@@ -1,8 +1,9 @@
 import { build } from './build'
+import { coverage } from './coverage/coverage'
 import { log } from './log'
 import { debug } from './plugs/debug'
 import { esbuild } from './plugs/esbuild'
-// import { test } from './plugs/test'
+import { exec } from './plugs/exec'
 
 // log.options.level = 'DEBUG'
 // log.options.depth = 10
@@ -28,16 +29,25 @@ const b = build({
   async test() {
     this.call('compile_tests')
       // .plug(debug())
-      // .plug(test())
+      .plug(exec({ cmd: 'ls', args: ['-la'] }))
+      .plug(exec('mocha'))
   },
   async default() {
-    await sleep()
-    await this.call('compile_sources')
-    await sleep()
-    await this.call('compile_tests')
-    await sleep()
-    await this.call('test')
-    await sleep()
+    await this.find('src/**/*.ts', {
+      // directory: '../justus/',
+    })
+      // .plug(debug())
+      .plug(coverage({
+        // coverageDir: '../justus/v8_coverage'
+        coverageDir: './coverage'
+      }))
+    // await sleep()
+    // await this.call('compile_sources')
+    // await sleep()
+    // await this.call('compile_tests')
+    // await sleep()
+    // await this.call('test')
+    // await sleep()
   }
 })
 
