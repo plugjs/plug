@@ -5,7 +5,7 @@ import { match } from './match'
 
 import type { MatchOptions } from './match'
 import { $p, log } from '../log'
-import { AbsolutePath, RelativePath } from '../files'
+import { AbsolutePath, RelativePath, resolveAbsolutePath } from '../files'
 
 /** Specific options for walking a directory */
 export interface WalkOptions extends MatchOptions {
@@ -31,14 +31,15 @@ export interface WalkOptions extends MatchOptions {
   allowNodeModules?: boolean,
 }
 
-/** The {@link AsyncGenerator} yielding results for our matches. */
-export type WalkGenerator = AsyncGenerator<RelativePath, void, void>
-
 /**
  * Walk the specified directory, returning an asynchronous iterator over all
- * the files found matching the specified globs and matching options.
+ * the _relative_ files found matching the specified globs and matching options.
  */
- export function walk(directory: AbsolutePath, globs: string[], options: WalkOptions = {}):  WalkGenerator {
+ export function walk(
+  directory: AbsolutePath,
+  globs: string[],
+  options: WalkOptions = {}
+):  AsyncGenerator<RelativePath, void, void> {
   const {
     maxDepth = Infinity,
     followSymlinks = true,
@@ -70,6 +71,20 @@ export type WalkGenerator = AsyncGenerator<RelativePath, void, void>
   })
 }
 
+/**
+ * Walk the specified directory, returning an asynchronous iterator over all
+ * the _relative_ files found matching the specified globs and matching options.
+ */
+ export async function* absoluteWalk(
+  directory: AbsolutePath,
+  globs: string[],
+  options: WalkOptions = {}
+):  AsyncGenerator<AbsolutePath, void, void> {
+  for await (const relative of walk(directory, globs, options)) {
+    yield resolveAbsolutePath(directory, relative)
+  }
+}
+
 /* ========================================================================== *
  * INTERNALS                                                                  *
  * ========================================================================== */
@@ -85,7 +100,7 @@ interface WalkerArguments {
 }
 
 /* Walk a directory and yield matching results until the given `maxDepth` */
-async function* walker(args: WalkerArguments): WalkGenerator {
+async function* walker(args: WalkerArguments): AsyncGenerator<RelativePath, void, void> {
   const {
     directory,
     relative,
