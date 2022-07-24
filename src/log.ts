@@ -280,7 +280,7 @@ const tsk = '\u001b[38;5;141m' // the color for tasks (purple)
 /* ========================================================================== */
 
 export function $p(path: AbsolutePath): string {
-  const directory = process.cwd() as AbsolutePath
+  const directory = process.cwd() as AbsolutePath // TODO: current run dir
   const relative = getRelativeChildPath(directory, path)
   const resolved = relative == null ? path : `.${sep}${relative}`
   return logColor ? `${und}${gry}${resolved}${rst}` : `"${resolved}"`
