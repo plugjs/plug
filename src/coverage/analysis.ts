@@ -11,7 +11,7 @@ import { SourceMapConsumer } from 'source-map'
  * ========================================================================== */
 
 /** Coverage range */
-export interface CoveredRange {
+export interface V8CoveredRange {
   /** The offset in the script of the first character covered */
   startOffset: number,
   /** The offset (exclusive) in the script of the last character covered */
@@ -21,7 +21,7 @@ export interface CoveredRange {
 }
 
 /** Coverage report per function as invoked by Node */
-export interface CoveredFunction {
+export interface V8CoveredFunction {
   /** The name of the function being covered */
   functionName: string,
   /** A flag indicating whether fine-grained (precise) coverage is available */
@@ -31,17 +31,17 @@ export interface CoveredFunction {
    *
    * The first range indicates the whole function.
    */
-  ranges: CoveredRange[],
+  ranges: V8CoveredRange[],
 }
 
 /** Coverage result for a particlar script as seen by Node */
-export interface CoverageResult {
+export interface V8CoverageResult {
   /** The script ID, uniquely identifying the script within the Node process */
   scriptId: string,
   /** The URL of the script (might not be unique, if the script is loaded multiple times) */
   url: string,
   /** Per-function report of coverage */
-  functions: CoveredFunction[]
+  functions: V8CoveredFunction[]
 }
 
 /** Cached source map for a coverage result */
@@ -61,7 +61,7 @@ export interface V8CoverageData {
    *
    * The first element in the array describes the coverage for the whole script.
    */
-  'result': CoverageResult[],
+  'result': V8CoverageResult[],
   /** Timestamp when coverage was taken */
   'timestamp': number,
   /** Source maps caches keyed by `result[?].url` */
@@ -84,14 +84,14 @@ export interface CoverageAnalyser {
 
 /* ========================================================================== */
 
-/** Return coverage data from a V8 {@link CoverageResult} structure */
+/** Return coverage data from a V8 {@link V8CoverageResult} structure */
 export class CoverageResultAnalyser implements CoverageAnalyser {
   /** Number of passes at each character in the result */
   protected readonly _coverage: readonly (number | undefined)[]
   /** Internal private field for init/_lineLengths getter */
   #lineLengths?: readonly number[]
 
-  constructor(protected readonly _result: CoverageResult) {
+  constructor(protected readonly _result: V8CoverageResult) {
     const _coverage: (number | undefined)[] = []
 
     for (const coveredFunction of _result.functions) {
@@ -138,11 +138,11 @@ export class CoverageResultAnalyser implements CoverageAnalyser {
 
 /* ========================================================================== */
 
-/** Return coverage from a V8 {@link CoverageResult} with a sitemap */
+/** Return coverage from a V8 {@link V8CoverageResult} with a sitemap */
 export class CoverageSitemapAnalyser extends CoverageResultAnalyser {
   #sourceMap?: SourceMapConsumer
 
-  constructor(_result: CoverageResult, protected readonly _sourceMapCache: V8SourceMapCache) {
+  constructor(_result: V8CoverageResult, protected readonly _sourceMapCache: V8SourceMapCache) {
     super(_result)
   }
 
