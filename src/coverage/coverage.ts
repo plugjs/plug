@@ -1,14 +1,18 @@
-import { AbsolutePath, Files, resolveAbsolutePath } from '../files'
-import { $p, log } from '../log'
+import { resolve, sep } from 'node:path'
+import { AbsolutePath, Files, getRelativeChildPath, resolveAbsolutePath } from '../files'
+import { $grn, $gry, $p, $red, $ylw, fail, log } from '../log'
 import { Plug } from '../pipe'
 import { Run } from '../run'
 
 import { absoluteWalk } from '../utils/walk'
-import { CoverageResult } from './analysis'
-import { coverageReport } from './report'
+import { coverageReport, CoverageResult } from './report'
 
 export interface CoverageOptions {
   coverageDir: string,
+  minimumCoverage?: number,
+  optimalCoverage?: number,
+  minimumFileCoverage?: number,
+  optimalFileCoverage?: number,
 }
 
 export class Coverage implements Plug {
@@ -22,16 +26,46 @@ export class Coverage implements Plug {
 
     const report = await coverageReport(files.absolutePaths(), coverageFiles)
 
+    const {
+      minimumCoverage = 50,
+      minimumFileCoverage = minimumCoverage,
+      optimalCoverage = Math.round((100 + minimumCoverage) / 2),
+      optimalFileCoverage = Math.round((100 + minimumFileCoverage) / 2),
+    } = this._options
+
     let max = 0
     for (const file in report) {
       if (file.length > max) max = file.length
     }
 
-    log.info('Coverage report').sep()
-    for (const [ _file, details ] of Object.entries(report)) {
-      const file = _file as AbsolutePath // TODO: WHY OH WHY TYPESCRIPT??
-      let pad = max - file.length
-      log.info('-', $p(file), ''.padStart(pad, '*'), details.nodeCoverage)
+    log.info('Coverage report:').sep()
+
+    let maxLength = 0
+    for (const file in report.results) {
+      if (file.length > maxLength) maxLength = file.length
+    }
+
+    let fileErrors = 0;
+    for (const [ file, result ] of Object.entries(report.results)) {
+      const { coverage } = result.nodeCoverage
+      const padding = ''.padEnd(maxLength - file.length, ' ')
+      const percentage = `${coverage} %`.padStart(6)
+
+      if (coverage < minimumFileCoverage) {
+        log.error($p(file as AbsolutePath), padding, $red(percentage))
+      } else if (coverage < optimalFileCoverage) {
+        log.warn($p(file as AbsolutePath), padding, $ylw(percentage))
+      } else {
+        log.info($p(file as AbsolutePath), padding, $grn(percentage))
+      }
+    }
+
+    if (fileErrors) {
+      fail(`Coverage error: ${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`)
+    }
+
+    if (report.nodes.coverage < minimumCoverage) {
+      fail(`Coverage error: ${$red(`${report.nodes.coverage}%`)} does not meet minimum coverage ${$gry(`(${minimumCoverage}%)`)}`)
     }
 
     return files
