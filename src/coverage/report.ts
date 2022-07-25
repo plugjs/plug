@@ -42,6 +42,20 @@ export const COVERAGE_SKIPPED = -2
  */
 export const COVERAGE_IGNORED = -1
 
+/** Node coverage summary */
+export interface NodeCoverageResult {
+  /** Number of _covered_ nodes (good!) */
+  coveredNodes: number,
+  /** Number of nodes with _no coverage_ (bad!) */
+  missingNodes: number,
+  /** Number of nodes ignored by comments like `coverage ignore xxx` */
+  ignoredNodes: number,
+  /** Total number of nodes (sum of `covered`, `missing` and `ignored`) */
+  totalNodes: number,
+  /** Percentage of code coverage (covered as a % of total - ignored nodes)*/
+  coverage: number,
+}
+
 /** Per-file coverage result */
 export interface CoverageResult {
   /** The actual code this coverage is for */
@@ -55,20 +69,17 @@ export interface CoverageResult {
    */
   codeCoverage: number[],
   /** Node coverage summary */
-  nodeCoverage: {
-    /** Number of _covered_ nodes (good!) */
-    coveredNodes: number,
-    /** Number of nodes with _no coverage_ (bad!) */
-    missingNodes: number,
-    /** Number of nodes ignored by comments like `coverage ignore xxx` */
-    ignoredNodes: number,
-    /** Total number of nodes (sum of `covered`, `missing` and `ignored`) */
-    totalNodes: number,
-  }
+  nodeCoverage: NodeCoverageResult,
 }
 
+/** Aggregation of {@link CoverageResult} over all files */
+export type CoverageResults = Record<AbsolutePath, CoverageResult>
+
 /** Our coverage report, per file */
-export type CoverageReport = Record<AbsolutePath, CoverageResult>
+export interface CoverageReport {
+  results: CoverageResults,
+  nodes: NodeCoverageResult,
+}
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *
@@ -101,7 +112,15 @@ export async function coverageReport(
 
   /* The coverage analyser combining all coverage files in the directory */
   const analyser = new CombiningCoverageAnalyser()
-  const report: CoverageReport = {}
+  const results: CoverageResults = {}
+  const nodes: NodeCoverageResult = {
+    coveredNodes: 0,
+    missingNodes: 0,
+    ignoredNodes: 0,
+    totalNodes: 0,
+    coverage: 0,
+  }
+
 
   /* Resolve and walk the coverage directory, finding "coverage-*.json" files */
   for await (const coverageFile of coverageFiles) {
@@ -180,11 +199,12 @@ export async function coverageReport(
     })
 
     const codeCoverage: number[] = new Array(code.length).fill(0)
-    const nodeCoverage = {
+    const nodeCoverage: NodeCoverageResult = {
       coveredNodes: 0,
       missingNodes: 0,
       ignoredNodes: 0,
       totalNodes: 0,
+      coverage: 0,
     }
 
     /* Set the code coverage for the specified node and (optionally) its children */
@@ -336,18 +356,25 @@ export async function coverageReport(
       */
     setCodeCoverage(tree.comments, COVERAGE_SKIPPED, true)
 
-    /* Update the total nodes for stats */
-    nodeCoverage.totalNodes =
-      nodeCoverage.coveredNodes +
-      nodeCoverage.missingNodes +
-      nodeCoverage.ignoredNodes
+    /* Update nodes coverage results */
+    updateNodeCoverageResult(nodeCoverage)
+
+    nodes.coveredNodes += nodeCoverage.coveredNodes
+    nodes.missingNodes += nodeCoverage.missingNodes
+    nodes.ignoredNodes += nodeCoverage.ignoredNodes
+    nodes.totalNodes += nodeCoverage.totalNodes
 
     /* This file is done, add it to the report */
-    report[file] = { code, codeCoverage, nodeCoverage }
+    results[file] = { code, codeCoverage, nodeCoverage }
   }
 
-  const q = Object.keys(report)
-
   /* All done, return the report */
-  return report
+  updateNodeCoverageResult(nodes)
+  return { results, nodes }
+}
+
+function updateNodeCoverageResult(result: NodeCoverageResult) {
+  const { coveredNodes, missingNodes, ignoredNodes } = result
+  const totalNodes = result.totalNodes = coveredNodes + missingNodes + ignoredNodes
+  result.coverage = Math.floor((100 * coveredNodes) / (totalNodes - ignoredNodes))
 }
