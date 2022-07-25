@@ -415,6 +415,7 @@ function emitColor(task: string | undefined, prefix: string, level: number, ...a
   /* Now for the normal logging of all our parameters */
   const breakLength = logWidth - prefix1.replace(/\u001b\[[^m]+m/g, '').length
   const strings = stringifyArgs(args, breakLength)
+  if (! strings.length) return // use sep()
 
   const message = strings.join(' ')
   const prefixed = prefix1 ? message.replace(/^/gm, prefix1) : message
@@ -457,6 +458,7 @@ function emitPlain(task: string | undefined, prefix: string, level: number, ...a
 
   const breakLength = 80 - prefix1.length
   const strings = stringifyArgs(args, breakLength)
+  if (! strings.length) return // use sep()
 
   const message = strings.join(' ')
   const prefixed = prefix0 ? message.replace(/^/gm, prefix1) : message
@@ -465,6 +467,7 @@ function emitPlain(task: string | undefined, prefix: string, level: number, ...a
 
 function stringifyArgs(args: any[], breakLength: number): string[] {
   let newLine = false
+
   return args.map((arg) => {
     if (arg === buildFailed) return undefined
 
