@@ -112,10 +112,14 @@ async function* walker(args: WalkerArguments): AsyncGenerator<RelativePath, void
   } = args
 
   /* Read the directory, including file types */
-  const dir = join(directory, relative) as AbsolutePath
+  const dir = resolveAbsolutePath(directory, relative)
   if (! onDirectory(dir)) return
   log.trace('Reading directory', $p(dir))
-  const dirents = await fs.readdir(dir, { withFileTypes: true })
+  const dirents = await fs.readdir(dir, { withFileTypes: true }).catch((error) => {
+    if (error.code !== 'ENOENT') throw error
+    log.warn('Directory', $p(dir), 'not found').sep()
+    return []
+  })
 
   /* For each entry we determine the full path */
   for (const dirent of dirents) {
