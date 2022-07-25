@@ -1,6 +1,7 @@
 import type fs from 'node:fs'
 import type tty from 'node:tty'
 
+import util from 'node:util'
 import { sep } from 'node:path'
 import { inspect } from 'node:util'
 import { currentTask, runningTasks } from './async'
@@ -463,11 +464,16 @@ function emitPlain(task: string | undefined, prefix: string, level: number, ...a
 }
 
 function stringifyArgs(args: any[], breakLength: number): string[] {
+  let newLine = false
   return args.map((arg) => {
     if (arg === buildFailed) return undefined
-    if (typeof arg === 'string') return arg
-    if (arg instanceof Error) return arg.stack
-    return inspect(arg, { breakLength, colors: logColor, depth: logDepth, compact: 1 })
+
+    newLine = newLine || ((arg !== null) && (typeof arg === 'object'))
+
+    const string = typeof arg === 'string' ? arg :
+      inspect(arg, { breakLength, colors: logColor, depth: logDepth, compact: 1 })
+
+    return newLine ? '\n' + string : string
   }).filter((arg) => arg !== undefined) as string[]
 }
 
