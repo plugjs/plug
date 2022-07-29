@@ -16,6 +16,7 @@
     // "noUnusedParameters": true,
   },
   "include": [
+    "bootstrap.ts",
     "src/**/*.ts",
     "test/**/*.ts",
   ]
