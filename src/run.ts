@@ -1,12 +1,12 @@
 import assert from 'assert'
 import type { Task } from './task'
 import { AbsolutePath, isAbsolutePath, resolveAbsolutePath } from './paths'
-import { BuildContext } from './build'
+import { BuildContext, ThisBuild } from './build'
 import { Files, FilesBuilder } from './files'
 import { ParseOptions, parseOptions } from './utils/options'
 import { Pipe } from './pipe'
 import { fail, log } from './log'
-import { runAsync } from './async'
+import { currentRun, runAsync } from './async'
 import { walk, WalkOptions } from './utils/walk'
 
 /**
@@ -22,31 +22,31 @@ export interface FindOptions extends WalkOptions {
    directory?: string
 }
 
-
 export interface Run extends BuildContext {
   readonly baseDir: AbsolutePath,
 
-  call(name: string): Promise<Files>
+  call(name: string): Promise<Files | void>
   resolve(path?: string): AbsolutePath
-  files(path: string): FilesBuilder
-  find(glob: string, ...args: ParseOptions<FindOptions>): Promise<Files>
-  pipe(start: (run: Run) => Pipe | Files | Promise<Files>): Pipe
+  files(path?: string): FilesBuilder
+  find(glob: string, ...args: ParseOptions<FindOptions>): Pipe
 }
 
 
 /** A {@link Run} represents the context used when invoking a {@link Task}. */
 export class RunImpl implements Run {
-  private constructor(
+  private readonly _pipes: Pipe[] = []
+
+  constructor(
     readonly baseDir: AbsolutePath,
     readonly buildDir: AbsolutePath,
     readonly buildFile: AbsolutePath,
     readonly tasks: Readonly<Record<string, Task>>,
-    private readonly _cache: Map<Task, Promise<Files>>,
+    private readonly _cache: Map<Task, Promise<Files | void>>,
     private readonly _stack: readonly Task[],
   ) {}
 
   /** Run the specified {@link Task} in the context of this {@link Run} */
-  call(name: string): Promise<Files> {
+  call(name: string): Promise<Files | void> {
     const task = this.tasks[name]
     if (! task) fail(`Task "${name}" does not exist`) // TODO: colors
 
@@ -59,23 +59,40 @@ export class RunImpl implements Run {
     const cached = this._cache.get(task)
     if (cached) return cached
 
+    const childRun = new RunImpl(
+      this.baseDir, // the "baseDir" for "@" resolutuion is always unchanged, from the original build file or arg
+      task.context.buildDir, // the "buildDir" and "buildFile", used for local resolution (e.g. "./foo.bar") are
+      task.context.buildFile, // always the ones associated with the build where the task was defined
+      { ...task.context.tasks, ...this.tasks }, // merge the tasks, starting from the ones of the original build
+      this._cache, // the cache is a singleton within the whole Run tree, it's passed unchanged
+      [ ...this._stack, task ], // the stack gets added the task being run...
+    )
+
     /* Actually _call_ the `Task` and get a promise for it */
-    const promise = runAsync(task, async () => {
+    const promise = runAsync(childRun, name, async () => {
       const now = Date.now()
       log.sep().info('Starting task').sep()
 
+      const thisBuild: ThisBuild<any> = {}
+      for (const [ name, task ] of Object.entries(childRun.tasks)) {
+        thisBuild[name] = () => {
+          const promise = childRun.call(name)
+          const pipe = new Pipe(promise, childRun)
+          childRun._pipes.push(pipe)
+          return pipe
+        }
+      }
+
       try {
-        const result = await task.call(new RunImpl(
-          this.baseDir, // the "baseDir" for "@" resolutuion is always unchanged, from the original build file or arg
-          task.context.buildDir, // the "buildDir" and "buildFile", used for local resolution (e.g. "./foo.bar") are
-          task.context.buildFile, // always the ones associated with the build where the task was defined
-          { ...task.context.tasks, ...this.tasks }, // merge the tasks, starting from the ones of the original build
-          this._cache, // the cache is a singleton within the whole Run tree, it's passed unchanged
-          [ ...this._stack, task ], // the stack gets added the task being run...
-        ))
+        const result = await task.call(thisBuild, childRun)
+
+        /* Any pipe created by calling this.xxx(...) gets awaited */
+        const results = await Promise.all(childRun._pipes)
 
         log.sep().info('Task completed in', Date.now() - now, 'ms').sep()
-        return result
+
+        /* Return the result or an empty `Files` */
+        return result || results.pop()
       } catch (error) {
         fail(error, 'Task failed in', Date.now() - now, 'ms')
       }
@@ -100,43 +117,40 @@ export class RunImpl implements Run {
     return resolveAbsolutePath(this.buildDir, path)
   }
 
-  files(path: string): FilesBuilder {
+  files(path?: string): FilesBuilder {
     return Files.builder(this.resolve(path))
   }
 
-  async find(glob: string, ...args: ParseOptions<FindOptions>): Promise<Files> {
-    const { params, options: { directory, ...options} } = parseOptions(args, {})
-    const dir = this.resolve(directory)
+  find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
+    const promise = Promise.resolve().then(async () => {
+      const { params, options: { directory, ...options} } = parseOptions(args, {})
+      const dir = this.resolve(directory)
 
-    const builder = Files.builder(dir)
-    for await (const file of walk(dir, [ glob, ...params ], options)) {
-      builder.add(file)
-    }
+      const builder = Files.builder(dir)
+      for await (const file of walk(dir, [ glob, ...params ], options)) {
+        builder.add(file)
+      }
 
-    return builder.build()
-  }
+      return builder.build()
+    })
 
-  pipe(start: (run: Run) => Files | Promise<Files>): Pipe {
-    return new Pipe(start) // TODO: remember this pipe!
-  }
-
-  private static _init(context: BuildContext, baseDir?: AbsolutePath): Run {
-    return new RunImpl(
-      baseDir || context.buildDir,
-      context.buildDir,
-      context.buildFile,
-      context.tasks,
-      new Map<Task, Promise<Files>>(),
-      [],
-    )
+    return new Pipe(promise, this)
   }
 }
 
 export function initRun(context: BuildContext, baseDir?: AbsolutePath): Run {
-  return (<any> RunImpl)._init(context, baseDir)
+  return new RunImpl(
+    baseDir || context.buildDir,
+    context.buildDir,
+    context.buildFile,
+    context.tasks,
+    new Map<Task, Promise<Files | void>>(),
+    [],
+  )
 }
 
 export function find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
-  // TODO: this pipe needs to end up in the "task"
-  return new Pipe((run) => run.pipe((run) => run.find(glob, ...args)))
+  const run = currentRun()
+  assert(run, 'Unable to find files outside a running task')
+  return run.find(glob, ...args)
 }
