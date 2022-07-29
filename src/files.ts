@@ -1,11 +1,7 @@
-import assert from 'node:assert'
-import path from 'node:path'
 import util from 'node:util'
-
-import type { Run } from './run'
-
-export type AbsolutePath = string & { __brand_absolute_path: never }
-export type RelativePath = string & { __brand_relative_path: never }
+import { AbsolutePath, convertRelativeChildPath, resolveAbsolutePath } from './paths'
+import { ParseOptions, parseOptions } from './utils/options'
+import { walk, WalkOptions } from './utils/walk'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
 export interface FilesBuilder {
@@ -25,14 +21,14 @@ export interface FilesBuilder {
  */
 export class Files {
   readonly #directory: AbsolutePath
-  readonly #files: RelativePath[]
+  readonly #files: string[]
 
   /**
    * Create a new {@link Files} instance rooted in the specified `directory`
    * relative to the specified {@link Run}'s directory.
    */
-  constructor(run: Run, directory?: string) {
-    this.#directory = (directory ? resolveAbsolutePath(run.directory, directory) : run.directory)
+  constructor(directory: AbsolutePath) {
+    this.#directory = directory
     this.#files = []
   }
 
@@ -46,7 +42,7 @@ export class Files {
   }
 
   /** Return an iterator over all _relative_ files of this instance */
-  *[Symbol.iterator](): Generator<RelativePath> {
+  *[Symbol.iterator](): Generator<string> {
     for (const file of this.#files) yield file
   }
 
@@ -56,7 +52,7 @@ export class Files {
   }
 
   /** Return an iterator over all _relative_ to _absolute_ mappings */
-  *pathMappings(): Generator<[ relative: RelativePath, absolute: AbsolutePath ]> {
+  *pathMappings(): Generator<[ relative: string, absolute: AbsolutePath ]> {
     for (const file of this) yield [ file, resolveAbsolutePath(this.#directory, file) ]
   }
 
@@ -70,9 +66,9 @@ export class Files {
   }
 
   /** Create a new {@link FilesBuilder} creating {@link Files} instances. */
-  static builder(run: Run, directory?: string): FilesBuilder {
-    const instance = new Files(run, directory)
-    const set = new Set<RelativePath>()
+  static builder(directory: AbsolutePath): FilesBuilder {
+    const instance = new Files(directory)
+    const set = new Set<string>()
     let built = false
 
     return {
@@ -83,7 +79,7 @@ export class Files {
 
         if (typeof files === 'string') files = [ files ]
         for (const file of files) {
-          const relative = assertRelativeChildPath(instance.directory, file)
+          const relative = convertRelativeChildPath(instance.directory, file)
           set.add(relative)
         }
         return this
@@ -110,26 +106,21 @@ export class Files {
       },
     }
   }
-}
 
-export function resolveAbsolutePath(directory: AbsolutePath, file: string): AbsolutePath {
-  const resolved = path.resolve(directory, file) as AbsolutePath
-  assert(path.isAbsolute(resolved), `Path "${file}" resolved in "${directory}" is not absolute`)
-  return resolved
-}
+  static async find(
+    directory: AbsolutePath,
+    glob: string,
+    ...args: ParseOptions<WalkOptions>
+  ): Promise<Files> {
+    const { params, options } = parseOptions(args)
 
-export function assertRelativeChildPath(directory: string, file: string): RelativePath {
-  const relative = getRelativeChildPath(directory, file)
-  assert(relative, `File "${file}" not relative to "${directory}"`)
-  return relative as RelativePath
-}
+    const builder = Files.builder(directory)
+    const globs = [ glob, ...params ]
 
-export function getRelativeChildPath(directory: string, file: string): RelativePath | undefined {
-  assert(path.isAbsolute(directory), `Directory "${directory}" not absolute`)
-  const abs = path.resolve(directory, file)
-  const rel = path.relative(directory, abs)
-  if (path.isAbsolute(rel) || (rel === '..') || rel.startsWith(`..${path.sep}`)) {
-    return undefined
+    for await (const file of walk(directory, globs, options)) {
+      builder.add(file)
+    }
+
+    return builder.build()
   }
-  return rel as RelativePath
 }
