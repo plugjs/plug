@@ -7,40 +7,44 @@ export interface Plug {
 
 export type PlugFunction = Plug['pipe']
 
-export interface Pipe {
+export interface Pipe extends Promise<Files> {
   plug(plug: Plug): this
   plug(plug: PlugFunction): this
 }
 
 export class Pipe implements Pipe {
-  readonly #plugs: Plug[] = [] // esplicitly hidden to allow pipes extension
-  readonly #start: (run: Run) => Pipe | Files | Promise<Files>
+  #promise: Promise<Files>
+  readonly #run: Run
 
-  constructor(start: ((run: Run) => Pipe | Files | Promise<Files>)) {
-    if (typeof start === 'function') {
-      this.#start = start
-    } else {
-      this.#start = (run: Run) => Pipe._run(start, run)
-    }
+  constructor(start: Files | Promise<Files>, run: Run) {
+    this.#promise = Promise.resolve().then(() => start)
+    this.#run = run
   }
 
   plug(plug: Plug): this
   plug(plug: PlugFunction): this
-  plug(plug: Plug | PlugFunction): this {
-    this.#plugs.push(typeof plug === 'function' ? { pipe: plug } : plug)
+  plug(arg: Plug | PlugFunction): this {
+    const plug = typeof arg === 'function' ? { pipe: arg } : arg
+    this.#promise = this.#promise.then((files) => plug.pipe(files, this.#run))
     return this
   }
 
-  private static _run(pipe: Pipe, run: Run): Promise<Files> {
-    return pipe.#plugs.reduce((prev, plug) => {
-      return prev.then((curr) => plug.pipe(curr, run))
-    }, Promise.resolve().then(async () => {
-      const result = await pipe.#start(run)
-      return 'plug' in result ? Pipe._run(result, run) : result
-    }))
+  then<T1 = Files, T2 = never>(
+    onfulfilled?: ((value: Files) => T1 | PromiseLike<T1>) | null | undefined,
+    onrejected?: ((reason: any) => T2 | PromiseLike<T2>) | null | undefined
+  ): Promise<T1 | T2> {
+    return this.#promise.then(onfulfilled, onrejected)
   }
-}
 
-export function runPipe(pipe: Pipe, run: Run): Promise<Files> {
-  return (<any> Pipe)._run(pipe, run)
+  catch<T = never>(
+    onrejected?: ((reason: any) => T | PromiseLike<T>) | null | undefined
+  ): Promise<Files | T> {
+    return this.#promise.catch(onrejected)
+  }
+
+  finally(
+    onfinally?: (() => void) | null | undefined
+  ): Promise<Files> {
+    return this.#promise.finally(onfinally)
+  }
 }
