@@ -24,6 +24,7 @@ export interface FindOptions extends WalkOptions {
 
 export interface Run extends BuildContext {
   readonly baseDir: AbsolutePath,
+  readonly taskName?: string
 
   call(name: string): Promise<Files | void>
   resolve(path?: string): AbsolutePath
@@ -43,6 +44,7 @@ export class RunImpl implements Run {
     readonly tasks: Readonly<Record<string, Task>>,
     private readonly _cache: Map<Task, Promise<Files | void>>,
     private readonly _stack: readonly Task[],
+    readonly taskName?: string,
   ) {}
 
   /** Run the specified {@link Task} in the context of this {@link Run} */
@@ -66,6 +68,7 @@ export class RunImpl implements Run {
       { ...task.context.tasks, ...this.tasks }, // merge the tasks, starting from the ones of the original build
       this._cache, // the cache is a singleton within the whole Run tree, it's passed unchanged
       [ ...this._stack, task ], // the stack gets added the task being run...
+      name,
     )
 
     /* Actually _call_ the `Task` and get a promise for it */
@@ -134,7 +137,9 @@ export class RunImpl implements Run {
       return builder.build()
     })
 
-    return new Pipe(promise, this)
+    const pipe = new Pipe(promise, this)
+    this._pipes.push(pipe)
+    return pipe
   }
 }
 
