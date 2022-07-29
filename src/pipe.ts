@@ -1,55 +1,23 @@
-import type { Run } from './run'
-import type { Files } from './files'
+import { Files } from './files'
+import { Plug, PlugContext, PlugFunction } from './plug'
 
-export interface Plug {
-  pipe(run: Run, files: Files): Files | Promise<Files>
-}
+export class Pipe {
+  private readonly _plugs: Plug[] = []
 
-export type PlugFunction = Plug['pipe']
-
-export class Pipe implements Promise<Files> {
-  #promise: Promise<Files>
-  #run: Run
-
-  constructor(run: Run, files: Files)
-  constructor(run: Run, fn: () => Files | Promise<Files>)
-  constructor(run: Run, filesOrFn: Files | (() => Files | Promise<Files>)) {
-    if (typeof filesOrFn === 'function') {
-      this.#promise = Promise.resolve().then(() => filesOrFn())
-    } else {
-      this.#promise = Promise.resolve(filesOrFn)
-    }
-    this.#run = run
-  }
+  constructor(
+    private readonly _start: () => Files | Promise<Files>,
+  ) {}
 
   plug(plug: Plug): this
   plug(plug: PlugFunction): this
-  plug(arg: Plug | PlugFunction): this {
-    /* Normalize our argument as a `Plug` instance */
-    const plug = typeof arg === 'function' ? { pipe: arg } : arg
-
-    /* Attach this plug to the promise chain and return */
-    this.#promise = this.#promise.then((files) => plug.pipe(this.#run, files))
+  plug(plug: Plug | PlugFunction): this {
+    this._plugs.push(typeof plug === 'function' ? { pipe: plug } : plug)
     return this
   }
 
-  then<R1 = Files, R2 = never>(
-    onfulfilled?: ((value: Files) => R1 | PromiseLike<R1>) | null,
-    onrejected?: ((reason: any) => R2 | PromiseLike<R2>) | null,
-  ): Promise<R1 | R2> {
-    return this.#promise.then(onfulfilled, onrejected)
+  run(context: PlugContext): Promise<Files> {
+    return this._plugs.reduce((prev, plug) => {
+      return prev.then((curr) => plug.pipe(curr, context))
+    }, Promise.resolve().then(() => this._start()))
   }
-
-  catch<R = never>(
-    onrejected?: ((reason: any) => R | PromiseLike<R>) | null,
-  ): Promise<Files | R> {
-    return this.#promise.catch(onrejected)
-  }
-
-  finally(onfinally?: (() => void) | null): Promise<Files> {
-    return this.#promise.finally(onfinally)
-  }
-
-  /** Promises must always have a `Symbol.toStringTag` */
-  readonly [Symbol.toStringTag] = 'Pipe'
 }
