@@ -3,62 +3,27 @@ import type { Run } from './run'
 
 import { Files } from './files'
 import { TaskLogger } from './log'
-import { Pipe, runPipe } from './pipe'
+import { Pipe } from './pipe'
 
 /* ========================================================================== *
  * TASK                                                                       *
  * ========================================================================== */
 
- export interface Task {
-  /**
-   * The _original_ name of the task.
-   *
-   * Task names can change across different builds, and in the following
-   * example, this property will always be `"original"` and never `"renamed"`.
-   *
-   * ```
-   * const build1 = build({ original() { ... } })
-   * const build2 = build({ renamed: build1.original })
-   * ```
-   */
-  readonly name: string
-
-  /**
-   * The {@link BuildContext} of the _build_ where this task was originally
-   * defined.
-   */
+export interface Task {
+  /** The {@link BuildContext} of where this task was originally defined */
   readonly context: BuildContext
 
   /** Invoked by the {@link Run} when actually executing this {@link Task} */
-  call(run: Run): Promise<Files>
+  call(thisBuild: ThisBuild<any>, run: Run): Promise<Files | void>
 }
 
 export class TaskImpl implements Task {
   constructor(
-    readonly name: string,
     readonly context: BuildContext,
     private readonly _definition: TaskDefinition<any>,
   ) {}
 
-  async call(run: Run): Promise<Files> {
-    const pipes: Pipe[] = []
-
-    const thisBuild: ThisBuild<any> = {}
-    for (const [ name, task ] of Object.entries(run.tasks)) {
-      thisBuild[name] = () => {
-        const pipe = new Pipe(() => run.call(name))
-        pipes.push(pipe)
-        return pipe
-      }
-    }
-
-    const r = await this._definition.call(thisBuild, run) // TODO
-    const result = r && 'plug' in r ? await runPipe(r, run) : r
-
-    /* Any pipe created by calling this.xxx(...) gets awaited */
-    const results = await Promise.all(pipes.map((pipe) => runPipe(pipe, run)))
-
-    /* Return the result or an empty `Files` */
-    return result || results.pop() || new Files(run.buildDir)
+  async call(self: ThisBuild<any>, run: Run): Promise<Files | void> {
+    return await this._definition.call(self, self, run)
   }
 }
