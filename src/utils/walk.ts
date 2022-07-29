@@ -5,7 +5,7 @@ import { match } from './match'
 
 import type { MatchOptions } from './match'
 import { $p, log } from '../log'
-import { AbsolutePath, RelativePath, resolveAbsolutePath } from '../files'
+import { AbsolutePath, resolveAbsolutePath } from '../paths'
 
 /** Specific options for walking a directory */
 export interface WalkOptions extends MatchOptions {
@@ -39,7 +39,7 @@ export interface WalkOptions extends MatchOptions {
   directory: AbsolutePath,
   globs: string[],
   options: WalkOptions = {}
-):  AsyncGenerator<RelativePath, void, void> {
+):  AsyncGenerator<string, void, void> {
   const {
     maxDepth = Infinity,
     followSymlinks = true,
@@ -100,7 +100,7 @@ interface WalkerArguments {
 }
 
 /* Walk a directory and yield matching results until the given `maxDepth` */
-async function* walker(args: WalkerArguments): AsyncGenerator<RelativePath, void, void> {
+async function* walker(args: WalkerArguments): AsyncGenerator<string, void, void> {
   const {
     directory,
     relative,
@@ -126,7 +126,7 @@ async function* walker(args: WalkerArguments): AsyncGenerator<RelativePath, void
     const path = join(relative, dirent.name)
 
     /* If the entry is a file and matches, yield it */
-    if (dirent.isFile() && positiveMatcher(path)) yield path as RelativePath
+    if (dirent.isFile() && positiveMatcher(path)) yield path
 
     /* If the entry is a directory within our depth, walk it recursively */
     else if (dirent.isDirectory() && (depth < maxDepth)) {
@@ -138,7 +138,7 @@ async function* walker(args: WalkerArguments): AsyncGenerator<RelativePath, void
       const stat = await fs.stat(join(directory, path))
 
       /* If the link is a file and matches, yield it */
-      if (stat.isFile() && positiveMatcher(path)) yield path as RelativePath
+      if (stat.isFile() && positiveMatcher(path)) yield path
 
       /* If the link is a directory within our depth, walk it recursively */
       else if (stat.isDirectory() && (depth < maxDepth)) {
