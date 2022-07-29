@@ -1,30 +1,29 @@
 import fs from '../utils/asyncfs'
 
-import { AbsolutePath } from '../files'
-import { log, $p } from '../log'
 import { parse } from '@babel/parser'
 import { pathToFileURL } from 'url'
+import { $p, log } from '../log'
 
 import {
   CombiningCoverageAnalyser,
   CoverageResultAnalyser,
   CoverageSitemapAnalyser,
   SourcesCoverageAnalyser,
-  V8CoverageData,
+  V8CoverageData
 } from './analysis'
 
 import {
-  Comment,
+  Comment, isDeclaration,
   isFile,
   isIfStatement,
-  isProgram,
-  isTryStatement,
+  isProgram, isTryStatement,
   isTSDeclareMethod,
   isTSTypeReference,
   isTypeScript,
   Node,
-  VISITOR_KEYS,
+  VISITOR_KEYS
 } from '@babel/types'
+import { AbsolutePath } from '../paths'
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *
@@ -276,7 +275,7 @@ export async function coverageReport(
     /* Visit a node and evaluate its coverage */
     function visitNode(node: Node, depth: number): void {
       /* See what we're doing here... */
-      log.trace('-'.padStart((depth * 2) + 1, ' '), node.type, node.loc?.start)
+      log.info('-'.padStart((depth * 2) + 1, ' '), node.type, `${node.loc?.start.line}:${node.loc?.start.column}`)
 
       /* Root nodes (file and program) simply go to their children */
       if (isFile(node)) return visitChildren(node, depth)
@@ -297,6 +296,7 @@ export async function coverageReport(
       if (isTypeScript(node)) {
         if (isTSDeclareMethod(node)) return setCodeCoverage(node, COVERAGE_SKIPPED, true)
         if (isTSTypeReference(node)) return setCodeCoverage(node, COVERAGE_SKIPPED, true)
+        if (isDeclaration(node)) return setCodeCoverage(node, COVERAGE_SKIPPED, true)
 
         /* For things like "X as Y": the "as" node wraps the expression */
         setCodeCoverage(node, COVERAGE_SKIPPED, false) // not recursive
@@ -354,7 +354,7 @@ export async function coverageReport(
       * example) a comment within a block will be shown with the coverage of
       * the block itself.
       */
-    setCodeCoverage(tree.comments, COVERAGE_SKIPPED, true)
+    // setCodeCoverage(tree.comments, COVERAGE_SKIPPED, true)
 
     /* Update nodes coverage results */
     updateNodeCoverageResult(nodeCoverage)
@@ -376,5 +376,9 @@ export async function coverageReport(
 function updateNodeCoverageResult(result: NodeCoverageResult) {
   const { coveredNodes, missingNodes, ignoredNodes } = result
   const totalNodes = result.totalNodes = coveredNodes + missingNodes + ignoredNodes
-  result.coverage = Math.floor((100 * coveredNodes) / (totalNodes - ignoredNodes))
+  if (totalNodes - ignoredNodes) {
+    result.coverage = Math.floor((100 * coveredNodes) / (totalNodes - ignoredNodes))
+  } else {
+    result.coverage = 0 // No "infinity" on division by zero...
+  }
 }
