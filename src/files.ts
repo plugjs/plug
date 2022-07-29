@@ -106,21 +106,4 @@ export class Files {
       },
     }
   }
-
-  static async find(
-    directory: AbsolutePath,
-    glob: string,
-    ...args: ParseOptions<WalkOptions>
-  ): Promise<Files> {
-    const { params, options } = parseOptions(args)
-
-    const builder = Files.builder(directory)
-    const globs = [ glob, ...params ]
-
-    for await (const file of walk(directory, globs, options)) {
-      builder.add(file)
-    }
-
-    return builder.build()
-  }
 }
