@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "lib": [ "esnext" ],
+    "types": [ "node" ],
+    "target": "esnext",
+    "outDir": "./build/tsc",
+    "rootDir": ".",
+    "strict": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noImplicitReturns": true,
+    "esModuleInterop": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+  },
+  "include": [
+    "bootstrap.ts",
+    "src/**/*.ts",
+    "test/**/*.ts",
+  ]
+}
