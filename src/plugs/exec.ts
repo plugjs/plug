@@ -1,10 +1,9 @@
 import { ChildProcess, spawn, SpawnOptions } from 'child_process'
-import reaadline from 'readline'
 import path from 'path'
+import reaadline from 'readline'
 import { Files } from '../files'
 import { TaskLogger } from '../log'
-import { Plug } from '../pipe'
-import { Run } from '../run'
+import { Plug, PlugContext } from '../plug'
 
 export interface ExecOptions<T> {
   cmd: T,
@@ -48,10 +47,10 @@ export class Exec implements Plug {
         cmdOrOptions
   }
 
-  async pipe(run: Run, files: Files): Promise<Files> {
+  async pipe(files: Files, context: PlugContext): Promise<Files> {
     const { cmd, args, env, ...options } = this.#options
 
-    const extraPath = path.join(run.directory, 'node_modules', '.bin')
+    const extraPath = path.join(context.resolve('@'), 'node_modules', '.bin')
 
     const spawnEnv = {
       ...process.env,

@@ -1,17 +1,17 @@
 import { Files } from '../files'
 import { $p, log } from '../log'
-import { Plug } from '../pipe'
-import { Run } from '../run'
+import { Plug, PlugContext } from '../plug'
 
 export class Debug implements Plug {
   constructor() {
     // nothing to do
   }
-  pipe(run: Run, files: Files): Files | Promise<Files> {
 
+  async pipe(files: Files, context: PlugContext): Promise<Files> {
     log.info('Debugging', files.length, 'files')
-    log.info('-   run directory:', $p(run.directory))
-    log.info('- files directory:', $p(files.directory))
+    log.info('-        base dir:', $p(context.resolve('@')))
+    log.info('-  build file dir:', $p(context.resolve('.')))
+    log.info('-       files dir:', $p(files.directory))
     if (files.length) {
       const [ path, ...paths ] = [ ...files.absolutePaths() ]
       log.info('-           files:', $p(path))

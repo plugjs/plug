@@ -1,10 +1,9 @@
-import { Files, getRelativeChildPath } from '../files'
-import { ParseOptions, parseOptions } from '../utils/options'
-import { MatchOptions, match } from '../utils/match'
+import { Files } from '../files'
 import { log } from '../log'
-
-import type { Plug } from '../pipe'
-import type { Run } from '../run'
+import { match, MatchOptions } from '../utils/match'
+import { ParseOptions, parseOptions } from '../utils/options'
+import { Plug, PlugContext } from '../plug'
+import { resolveRelativeChildPath } from '../paths'
 
 /**
  * The {@link FindOptions} interface defines the options available to
@@ -30,14 +29,14 @@ export class Filter implements Plug {
     this.#options = options
   }
 
-  pipe(run: Run, files: Files): Files {
+  pipe(files: Files, context: PlugContext): Files {
     const { directory, ...options } = this.#options
 
-    const builder = Files.builder(run, directory)
+    const builder = context.files(directory || '@.')
     const matcher = match(this.#globs, options)
 
     for (const file of files.absolutePaths()) {
-      const relative = getRelativeChildPath(builder.directory, file)
+      const relative = resolveRelativeChildPath(builder.directory, file)
       if (relative && matcher(relative)) builder.add(relative)
     }
 
