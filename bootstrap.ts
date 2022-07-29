@@ -4,25 +4,23 @@ import { log } from './src/log'
 import { debug } from './src/plugs/debug'
 import { esbuild } from './src/plugs/esbuild'
 import { exec } from './src/plugs/exec'
+import { find } from './src/run'
 
 // log.options.level = 'DEBUG'
 // log.options.depth = 10
 
 const b = build({
   async compile_sources() {
-    // this.find('src/**/*.ts')
-    //   // .plug(debug())
-    //   .plug(esbuild({ outdir: 'build' }))
-    //   // .plug(debug())
-    // // return 'foo'
+    find('**/*.ts', { directory: 'src' })
+      .plug(esbuild({ outdir: 'build/src' }))
+      // .plug(debug())
   },
   async compile_tests() {
-    // await this.call('compile_sources')
-    // this.find('test/**/*.ts')
-    //   // .plug(debug())
-    //   .plug(esbuild({ outdir: 'build' }))
-    //   // .plug(debug())
-  },
+    await this.compile_sources()
+    find('**/*.ts', { directory: 'test' })
+      .plug(esbuild({ outdir: 'build/test' }))
+      // .plug(debug())
+    },
   async test() {
     // this.call('compile_tests')
     //   // .plug(debug())
@@ -31,30 +29,16 @@ const b = build({
   },
   async default() {
     this.compile_sources()
-    // console.log(this, this.test, Object.keys(this))
-    // ;(<any> this).test = 'bar'
-    // console.log(this, (<any> this).test, Object.keys(this))
-    // const q = this.test()
-    // console.log('HERE1')
-    // this.find('src/**/*.ts', {
-    //   // directory: '../justus/',
-    // })
-    //   .plug(debug())
-    //   .plug(coverage({
-    //     // coverageDir: '../justus/v8_coverage'
-    //     coverageDir: './coverage',
-    //     reportDir: './coverage',
-    //     //minimumFileCoverage: 20,
-    //     //optimalCoverage: 50,
-    //   }))
-    // console.log('HERE2')
-      // await sleep()
-    // await this.call('compile_sources')
-    // await sleep()
-    // await this.call('compile_tests')
-    // await sleep()
-    // await this.call('test')
-    // await sleep()
+    this.compile_tests()
+
+    find('src/**/*.ts')
+      .plug(coverage({
+        coverageDir: './coverage',
+        reportDir: './coverage',
+        // minimumFileCoverage: 20,
+        // optimalCoverage: 50,
+      }))
+      // .plug(debug())
   }
 })
 
