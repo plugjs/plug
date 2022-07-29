@@ -3,10 +3,9 @@ import type tty from 'node:tty'
 
 import { sep } from 'node:path'
 import { inspect } from 'node:util'
-import { currentTask, runningTasks } from './async'
+import { currentRun, currentTask, runningTasks } from './async'
 
 import { AbsolutePath, resolveRelativeChildPath } from './paths'
-import type { Task } from './task'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -88,8 +87,8 @@ let separateLines: boolean = false
 const defaultTask: string | undefined = process.env['LOG_TASK_NAME']
 
 /** Used internally to register task names, for width calculation and colors */
-export function registerTask(task: Task) {
-  if (task.name.length > taskWidth) taskWidth = task.name.length
+export function registerTask(task: string) {
+  if (task.length > taskWidth) taskWidth = task.length
 }
 
 /* ========================================================================== *
@@ -131,7 +130,7 @@ export const log: Log = {
 
     get env() {
       return {
-        LOG_TASK_NAME: currentTask()?.name,
+        LOG_TASK_NAME: currentTask(),
         LOG_TASK_WIDTH: taskWidth,
       }
     }
@@ -280,15 +279,15 @@ const tsk = '\u001b[38;5;141m' // the color for tasks (purple)
 /* ========================================================================== */
 
 export function $p(path: AbsolutePath): string {
-  const directory = process.cwd() as AbsolutePath // TODO: current run dir
+  const directory = currentRun()?.baseDir || process.cwd() as AbsolutePath
   const relative = resolveRelativeChildPath(directory, path)
   const resolved = relative == null ? path : `.${sep}${relative}`
   return logColor ? `${und}${gry}${resolved}${rst}` : `"${resolved}"`
 }
 
-export function $t(task: Task): string {
+export function $t(task: string): string {
   return logColor ?
-    `${gry}"${tsk}${task.name}${gry}"${rst}` :
+    `${gry}"${tsk}${task}${gry}"${rst}` :
     `"${task}"`
 }
 
@@ -364,10 +363,10 @@ const whiteSquare = '\u25a1'
 const blackSquare = '\u25a0'
 
 /** Emit either plain or color */
-function emit(task: Task | undefined, prefix: string, level: number, ...args: any[]) {
+function emit(task: string | undefined, prefix: string, level: number, ...args: any[]) {
   return logColor ?
-    emitColor(task?.name || defaultTask, prefix, level, ...args) :
-    emitPlain(task?.name || defaultTask, prefix, level, ...args)
+    emitColor(task || defaultTask, prefix, level, ...args) :
+    emitPlain(task || defaultTask, prefix, level, ...args)
 }
 
 /** Emit in full colors! */
