@@ -228,7 +228,7 @@ export class TaskLogger implements Logger {
  * ========================================================================== */
 
 /** A constant thrown by `Run` indicating a build failure already logged */
-const buildFailed = Symbol('Build failed')
+const buildFailed = Symbol.for('plugjs.build.fail')
 
 /** Fail this `Run` giving a descriptive reason */
 export function fail(reason: string, ...data: any[]): never

@@ -1,4 +1,3 @@
-import { assert } from 'console'
 import type { Files } from './files'
 import type { Run } from './run'
 
