@@ -36,7 +36,7 @@ export type TaskDefinition<B> = (this: ThisBuild<B>, self: ThisBuild<B>, run: Ru
  * A {@link TaskCall} describe a _function_ calling a {@link Task}, and
  * it is exposed to outside users of the build.
  */
-export type TaskCall = ((baseDir?: AbsolutePath) => Promise<Files>) & { task: Task }
+export type TaskCall = ((baseDir?: AbsolutePath) => Promise<Files | void>) & { task: Task }
 
 /**
  * A {@link Build} is a collection of {@link TaskCall}s, as produced by the
