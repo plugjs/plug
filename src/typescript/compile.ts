@@ -27,7 +27,7 @@ export class Compile implements Plug {
     this.#config = config
   }
 
-  async pipe(files: Files, run: Run): Promise<Files> {
+  async pipe(files: Files, run: Run): Promise<Files | void> {
     const host = new TypeScriptHost(run.resolve('.'))
 
 
@@ -49,7 +49,5 @@ export class Compile implements Plug {
 
     // Check for errors...
     host.checkDiagnostics(result.diagnostics)
-
-    return run.files('.').build()
   }
 }
