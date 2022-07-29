@@ -1,13 +1,12 @@
 import type fs from 'node:fs'
 import type tty from 'node:tty'
 
-import util from 'node:util'
 import { sep } from 'node:path'
 import { inspect } from 'node:util'
 import { currentTask, runningTasks } from './async'
 
-import type { Task } from './build'
-import { AbsolutePath, getRelativeChildPath } from './files'
+import { AbsolutePath, resolveRelativeChildPath } from './paths'
+import type { Task } from './task'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -282,7 +281,7 @@ const tsk = '\u001b[38;5;141m' // the color for tasks (purple)
 
 export function $p(path: AbsolutePath): string {
   const directory = process.cwd() as AbsolutePath // TODO: current run dir
-  const relative = getRelativeChildPath(directory, path)
+  const relative = resolveRelativeChildPath(directory, path)
   const resolved = relative == null ? path : `.${sep}${relative}`
   return logColor ? `${und}${gry}${resolved}${rst}` : `"${resolved}"`
 }
