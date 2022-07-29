@@ -7,6 +7,7 @@ import { AbsolutePath, assertAbsolutePath, getAbsoluteParent } from './paths'
 import { Pipe } from './pipe'
 import { initRun, Run, RunImpl } from './run'
 import { Task, TaskImpl } from './task'
+import { findCaller } from './utils/caller'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -72,18 +73,18 @@ export function build<D extends BuildDefinition<D>>(
   definition: D & ThisType<ThisBuild<D>>
 ): Build<D> {
   /* Basic setup */
-  const buildFile = findCaller()
+  const buildFile = findCaller(build).file
   const buildDir = getAbsoluteParent(buildFile)
   const tasks: Record<string, Task> = {}
 
   const context: BuildContext = { buildFile, buildDir, tasks }
-  const build: Build<any> = {}
+  const result: Build<any> = {}
 
   /* Loop through all the definitions */
   for (const name in definition) {
     /* Each  entry in our definition is a `TaskDefinition` or `TaskCall` */
-    const d = definition[name]
-    const task: Task = 'task' in d ? d.task : new TaskImpl(name, context, d)
+    const def = definition[name]
+    const task: Task = 'task' in def ? def.task : new TaskImpl(context, def)
 
     /* Prepare the _new_ `TaskCall` that will wrap our `Task` */
     const call = ((baseDir?: AbsolutePath) => initRun(context, baseDir).call(name)) as TaskCall
@@ -96,36 +97,9 @@ export function build<D extends BuildDefinition<D>>(
 
     registerTask(name)
     tasks[name] = task
-    build[name] = call
+    result[name] = call
   }
 
   /* All done! */
-  return build
-}
-
-
-/* ========================================================================== *
- * INTERNALS                                                                  *
- * ========================================================================== */
-
-// TODO: extend to support full position
-function findCaller(): AbsolutePath {
-  const oldPrepareStackTrace = Error.prepareStackTrace
-
-  try {
-    Error.prepareStackTrace = (_, stackTraces) => {
-      return stackTraces[0].getFileName()
-    }
-
-    const record: { stack?: string } = {}
-    Error.captureStackTrace(record, build)
-    const filename = record.stack
-
-    assert(filename, 'Unable to determine build file name')
-    assert(statSync(filename).isFile(), `Build file "${filename}" not found`)
-    assertAbsolutePath(filename)
-    return filename
-  } finally {
-    Error.prepareStackTrace = oldPrepareStackTrace
-  }
+  return result
 }
