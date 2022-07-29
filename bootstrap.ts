@@ -1,16 +1,13 @@
-import { build } from './build'
-import { coverage } from './coverage/coverage'
-import { log } from './log'
-import { debug } from './plugs/debug'
-import { esbuild } from './plugs/esbuild'
-import { exec } from './plugs/exec'
+import { build } from './src/build'
+import { coverage } from './src/coverage/coverage'
+import { log } from './src/log'
+import { debug } from './src/plugs/debug'
+import { esbuild } from './src/plugs/esbuild'
+import { exec } from './src/plugs/exec'
 
 // log.options.level = 'DEBUG'
 // log.options.depth = 10
 
-function sleep(ms: number = 1000) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
 
 const b = build({
   async compile_sources() {
@@ -33,15 +30,20 @@ const b = build({
       .plug(exec('mocha'))
   },
   async default() {
-    await this.find('src/**/*.ts', {
+    console.log('HERE1')
+    this.find('src/**/*.ts', {
       // directory: '../justus/',
     })
-      // .plug(debug())
+      .plug(debug())
       .plug(coverage({
         // coverageDir: '../justus/v8_coverage'
-        coverageDir: './coverage'
+        coverageDir: './coverage',
+        reportDir: './coverage',
+        //minimumFileCoverage: 20,
+        //optimalCoverage: 50,
       }))
-    // await sleep()
+    console.log('HERE2')
+      // await sleep()
     // await this.call('compile_sources')
     // await sleep()
     // await this.call('compile_tests')
