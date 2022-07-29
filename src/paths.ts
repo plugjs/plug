@@ -1,36 +1,8 @@
 import assert from 'assert'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
-import { BuildContext } from './build'
-import { Run } from './run'
 import { stat } from './utils/asyncfs'
 
 export type AbsolutePath = string & { __brand_absolute_path: never }
-
-
-export class Resolver {
-  private readonly _buildDir: AbsolutePath
-  private readonly _baseDir: AbsolutePath
-
-  constructor(run: Run, context: BuildContext) {
-    this._buildDir = context.buildDir
-    this._baseDir = run.baseDir
-  }
-
-  resolve(path?: string): AbsolutePath {
-    if (! path) return this._buildDir
-
-    if (path.startsWith('@')) {
-      const relative = path.substring(1)
-      assert (! isAbsolutePath(relative), `Path component of "${path}" is absolute`)
-      return resolveAbsolutePath(this._baseDir, relative)
-    }
-
-    if (isAbsolutePath(path)) return path
-
-    return resolveAbsolutePath(this._buildDir, path)
-  }
-}
-
 
 export function resolveAbsolutePath(directory: AbsolutePath, path: string, ...paths: string[]): AbsolutePath {
   const resolved = resolve(directory, path, ...paths) as AbsolutePath
