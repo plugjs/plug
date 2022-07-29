@@ -1,60 +1,48 @@
-
-import assert from 'node:assert'
-import path from 'node:path'
-
 import { runAsync } from './async'
-import { log, fail } from './log'
+import { fail, log } from './log'
 
-import type { Task } from './build'
-import type { AbsolutePath, Files } from './files'
+import { BuildContext } from './build'
+import type { Files } from './files'
+import { AbsolutePath } from './paths'
+import type { Task } from './task'
 
 /** A {@link Run} represents the context used when invoking a {@link Task}. */
 export class Run {
-  #cache: Map<Task, Promise<Files>>
-  #directory: AbsolutePath
-  #stack: Task[]
+  private readonly _cache: Map<Task, Promise<Files>>
+  private readonly _stack: readonly Task[]
+  readonly baseDir: AbsolutePath
 
-  /** Create a {@link Run} with the specified directory (or `process.cwd()`) */
-  constructor(directory?: string)
-  /** Create a child {@link Run} for a specific {@link Task} */
+  constructor(baseDir: AbsolutePath)
   constructor(parent: Run, task: Task)
-  /* Overloaded implementation */
-  constructor(...args: [ string? ] | [ Run, Task ]) {
-    if (args[0] instanceof Run) {
+  constructor(...args: [ baseDir: AbsolutePath ] | [ parent: Run, task: Task ]) {
+    if (args.length == 2) {
       const [ parent, task ] = args
-      assert(task, 'No task specified for child run')
-
-      this.#cache = parent.#cache
-      this.#directory = parent.#directory
-      this.#stack = [ ...parent.#stack, task ]
+      this.baseDir = parent.baseDir
+      this._cache = parent._cache
+      this._stack = [ ...parent._stack, task ]
     } else {
-      const directory = args[0] || process.cwd()
-      assert(path.isAbsolute(directory), `Directory "${directory}" not absolute`)
-
-      this.#cache = new Map<Task, Promise<Files>>()
-      this.#directory = path.normalize(directory) as AbsolutePath
-      this.#stack = []
+      this.baseDir = args[0]
+      this._cache = new Map<Task, Promise<Files>>()
+      this._stack = []
     }
   }
 
-  /** Return the directory of this {@link Run} */
-  get directory(): AbsolutePath {
-    return this.#directory
-  }
-
   /** Run the specified {@link Task} in the context of this {@link Run} */
-  run(task: Task): Promise<Files> {
+  call(task: Task, context: BuildContext): Promise<Files> {
     /* Check for circular dependencies */
-    if (this.#stack.includes(task)) {
+    if (this._stack.includes(task)) {
       const m = [ `Circular dependency running task "${task.name}"` ]
-      for (const t of this.#stack) m.push(`  - "${t.name}" defined in ${t.file}`)
+      for (const t of this._stack) {
+        const file = t.buildFile
+        m.push(`  - "${t.name}" defined in ${t.buildFile}`)
+      }
       // coverage ignore next
-      m.push(`  * "${task.name}" defined in ${task.file}`)
+      m.push(`  * "${task.name}" defined in ${task.buildFile}`)
       throw new Error(m.join('\n'))
     }
 
     /* Check for cached results */
-    const cached = this.#cache.get(task)
+    const cached = this._cache.get(task)
     if (cached) return cached
 
     /* Actually _call_ the `Task` and get a promise for it */
@@ -64,7 +52,9 @@ export class Run {
 
       /* coverage ignore catch */
       try {
-        const result = await task.task(new Run(this, task))
+        const run = new Run(this, task)
+        const result = await task.call(run, context)
+
         log.sep().info('Task completed in', Date.now() - now, 'ms').sep()
         return result
       } catch (error) {
@@ -73,7 +63,7 @@ export class Run {
     })
 
     /* Cache the execution promise (never run the smae task twice) */
-    this.#cache.set(task, promise)
+    this._cache.set(task, promise)
     return promise
   }
 }
