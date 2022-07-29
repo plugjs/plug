@@ -46,3 +46,37 @@ const fs = Object.entries(fsp as any).reduce((fs, [ key, val ]) => {
 
 /* Export _our_ version of the "node:fs/promises" module */
 export default fs
+
+/* Export all the wrappers to "node:fs/promises" individually */
+export const access = fs.access
+export const copyFile = fs.copyFile
+export const cp = fs.cp
+export const open = fs.open
+export const opendir = fs.opendir
+export const rename = fs.rename
+export const truncate = fs.truncate
+export const rm = fs.rm
+export const rmdir = fs.rmdir
+export const mkdir = fs.mkdir
+export const readdir = fs.readdir
+export const readlink = fs.readlink
+export const symlink = fs.symlink
+export const lstat = fs.lstat
+export const stat = fs.stat
+export const link = fs.link
+export const unlink = fs.unlink
+export const chmod = fs.chmod
+export const lchmod = fs.lchmod
+export const lchown = fs.lchown
+export const chown = fs.chown
+export const utimes = fs.utimes
+export const lutimes = fs.lutimes
+export const realpath = fs.realpath
+export const mkdtemp = fs.mkdtemp
+export const writeFile = fs.writeFile
+export const appendFile = fs.appendFile
+export const readFile = fs.readFile
+export const watch = fs.watch
+
+/* Export constants from "node:/fs" in addition */
+export { constants } from 'node:fs'
