@@ -1,3 +1,4 @@
+import { file } from '@babel/types'
 import assert from 'node:assert'
 import { existsSync, statSync } from 'node:fs'
 import { Files } from './files'
@@ -27,8 +28,8 @@ export type BuildContext = {
 /**
  * A {@link TaskDefinition} is a _function_ defining a {@link Task}.
  */
-export type TaskDefinition<B> = (this: ThisBuild<B>, run: Run) =>
-  Files | Promise<Files> | Pipe | Promise<Pipe> | void | Promise<void>
+export type TaskDefinition<B> = (this: ThisBuild<B>, self: ThisBuild<B>, run: Run) =>
+  Files | void | Promise<Files | void>
 
 /**
  * A {@link TaskCall} describe a _function_ calling a {@link Task}, and
@@ -93,7 +94,7 @@ export function build<D extends BuildDefinition<D>>(
       task: { enumerable: true, value: task },
     })
 
-    registerTask(task)
+    registerTask(name)
     tasks[name] = task
     build[name] = call
   }
@@ -107,32 +108,23 @@ export function build<D extends BuildDefinition<D>>(
  * INTERNALS                                                                  *
  * ========================================================================== */
 
+// TODO: extend to support full position
 function findCaller(): AbsolutePath {
   const oldPrepareStackTrace = Error.prepareStackTrace
 
   try {
-    const record: { stack?: string, file?: string } = {}
-
     Error.prepareStackTrace = (_, stackTraces) => {
-      for (const stackTrace of stackTraces) {
-        const fileName = stackTrace.getFileName()
-        if (fileName == __filename) continue
-
-        if (! fileName) continue
-        if (! existsSync(fileName)) continue
-
-        record.file = fileName
-        break
-      }
+      return stackTraces[0].getFileName()
     }
 
+    const record: { stack?: string } = {}
     Error.captureStackTrace(record, build)
-    record.stack // this is a getter
+    const filename = record.stack
 
-    assert(record.file, 'Unable to determine build file name')
-    assert(statSync(record.file).isFile(), `Build file "${record.file}" not found`)
-    assertAbsolutePath(record.file)
-    return record.file
+    assert(filename, 'Unable to determine build file name')
+    assert(statSync(filename).isFile(), `Build file "${filename}" not found`)
+    assertAbsolutePath(filename)
+    return filename
   } finally {
     Error.prepareStackTrace = oldPrepareStackTrace
   }
