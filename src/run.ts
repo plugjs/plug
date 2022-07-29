@@ -120,9 +120,7 @@ export class RunImpl implements Run {
     return new Pipe(start) // TODO: remember this pipe!
   }
 
-
-
-  static init(context: BuildContext, baseDir?: AbsolutePath): Run {
+  private static _init(context: BuildContext, baseDir?: AbsolutePath): Run {
     return new RunImpl(
       baseDir || context.buildDir,
       context.buildDir,
@@ -134,8 +132,11 @@ export class RunImpl implements Run {
   }
 }
 
+export function initRun(context: BuildContext, baseDir?: AbsolutePath): Run {
+  return (<any> RunImpl)._init(context, baseDir)
+}
 
-function find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
+export function find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
   // TODO: this pipe needs to end up in the "task"
   return new Pipe((run) => run.pipe((run) => run.find(glob, ...args)))
 }

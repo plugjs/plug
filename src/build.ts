@@ -4,7 +4,7 @@ import { Files } from './files'
 import { registerTask } from './log'
 import { AbsolutePath, assertAbsolutePath, getAbsoluteParent } from './paths'
 import { Pipe } from './pipe'
-import { Run, RunImpl } from './run'
+import { initRun, Run, RunImpl } from './run'
 import { Task, TaskImpl } from './task'
 
 /* ========================================================================== *
@@ -85,7 +85,7 @@ export function build<D extends BuildDefinition<D>>(
     const task: Task = 'task' in d ? d.task : new TaskImpl(name, context, d)
 
     /* Prepare the _new_ `TaskCall` that will wrap our `Task` */
-    const call = ((baseDir?: AbsolutePath) => RunImpl.init(context, baseDir).call(name)) as TaskCall
+    const call = ((baseDir?: AbsolutePath) => initRun(context, baseDir).call(name)) as TaskCall
 
     /* Inject all the properties we need to make a function a `TaskCall` */
     Object.defineProperties(call, {

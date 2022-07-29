@@ -3,7 +3,7 @@ import type { Run } from './run'
 
 import { Files } from './files'
 import { TaskLogger } from './log'
-import { Pipe } from './pipe'
+import { Pipe, runPipe } from './pipe'
 
 /* ========================================================================== *
  * TASK                                                                       *
@@ -53,10 +53,10 @@ export class TaskImpl implements Task {
     }
 
     const r = await this._definition.call(thisBuild, run) // TODO
-    const result = r && 'plug' in r ? await Pipe.run(r, run) : r
+    const result = r && 'plug' in r ? await runPipe(r, run) : r
 
     /* Any pipe created by calling this.xxx(...) gets awaited */
-    const results = await Promise.all(pipes.map((pipe) => Pipe.run(pipe, run)))
+    const results = await Promise.all(pipes.map((pipe) => runPipe(pipe, run)))
 
     /* Return the result or an empty `Files` */
     return result || results.pop() || new Files(run.buildDir)
