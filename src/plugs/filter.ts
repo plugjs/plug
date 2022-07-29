@@ -2,13 +2,10 @@ import { Files } from '../files'
 import { log } from '../log'
 import { match, MatchOptions } from '../utils/match'
 import { ParseOptions, parseOptions } from '../utils/options'
-import { Plug, PlugContext } from '../plug'
 import { resolveRelativeChildPath } from '../paths'
+import { Plug } from '../pipe'
+import { Run } from '../run'
 
-/**
- * The {@link FindOptions} interface defines the options available to
- * {@link TaskContext.find}.
- */
  export interface FilterOptions extends MatchOptions {
   /**
    * The directory where to start looking for files.
@@ -29,10 +26,10 @@ export class Filter implements Plug {
     this.#options = options
   }
 
-  pipe(files: Files, context: PlugContext): Files {
+  pipe(files: Files, run: Run): Files {
     const { directory, ...options } = this.#options
 
-    const builder = context.files(directory || '@.')
+    const builder = run.files(directory || '@.')
     const matcher = match(this.#globs, options)
 
     for (const file of files.absolutePaths()) {

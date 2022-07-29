@@ -5,7 +5,8 @@ import assert from 'assert'
 import { Files } from '../files'
 import { $p, log } from '../log'
 import { AbsolutePath, resolveAbsolutePath } from '../paths'
-import { Plug, PlugContext } from '../plug'
+import { Plug } from '../pipe'
+import { Run } from '../run'
 
 export interface WriteOptions {
   overwrite?: boolean,
@@ -23,7 +24,7 @@ export class Write implements Plug {
     this.#options = options
   }
 
-  async pipe(files: Files, context: PlugContext): Promise<Files> {
+  async pipe(files: Files, run: Run): Promise<Files> {
     /* Destructure our options with some defaults and compute write flags */
     const { mode, dirMode, overwrite, rename = (s) => s } = this.#options
     const flags = overwrite ? fs.constants.COPYFILE_EXCL : 0
@@ -31,7 +32,7 @@ export class Write implements Plug {
     const fmode = parseMode(mode)
 
     /* Our files builder for all written files */
-    const builder = context.files(this.#directory)
+    const builder = run.files(this.#directory)
 
     /* Iterate through all the mappings of the source files */
     for (const [ relative, absolute ] of files.pathMappings()) {

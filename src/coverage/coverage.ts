@@ -3,7 +3,8 @@ import { sep } from 'node:path'
 import { Files } from '../files'
 import { $grn, $gry, $p, $red, $ylw, fail, log } from '../log'
 import { AbsolutePath, resolveAbsolutePath } from '../paths'
-import { Plug, PlugContext } from '../plug'
+import { Plug } from '../pipe'
+import { Run } from '../run'
 import { mkdir, writeFile } from '../utils/asyncfs'
 
 import { absoluteWalk } from '../utils/walk'
@@ -23,8 +24,8 @@ export class Coverage implements Plug {
   constructor(options: CoverageOptions)
   constructor(private _options: CoverageOptions) {}
 
-  async pipe(files: Files, context: PlugContext): Promise<Files> {
-    const coverageDir = context.resolve(this._options.coverageDir)
+  async pipe(files: Files, run: Run): Promise<Files> {
+    const coverageDir = run.resolve(this._options.coverageDir)
     const coverageFiles = absoluteWalk(coverageDir, [ 'coverage-*.json' ])
 
     const report = await coverageReport(files.absolutePaths(), coverageFiles)
@@ -84,9 +85,9 @@ export class Coverage implements Plug {
       fail(`Coverage error: ${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`)
     }
 
-    if (! this._options.reportDir) return context.files('.').build()
+    if (! this._options.reportDir) return run.files('.').build()
 
-    const reportDir = context.resolve(this._options.reportDir)
+    const reportDir = run.resolve(this._options.reportDir)
 
     await mkdir(reportDir, { recursive: true })
 
@@ -132,7 +133,7 @@ export class Coverage implements Plug {
     await writeFile(jsonpFile, `window.__initCoverage__(${jsonp});`)
 
     /* Add the files we generated */
-    return context.files(reportDir)
+    return run.files(reportDir)
       .add(jsonFile)
       .add(htmlFile)
       .add(jsonpFile)

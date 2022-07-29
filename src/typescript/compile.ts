@@ -2,9 +2,10 @@ import { createProgram, getPreEmitDiagnostics } from 'typescript'
 import type { CompilerOptions } from 'typescript'
 import { Files } from '../files'
 import { log } from '../log'
-import { Plug, PlugContext } from '../plug'
 import { TypeScriptHost } from './compiler'
 import { getCompilerOptions } from './options'
+import { Plug } from '../pipe'
+import { Run } from '../run'
 
 
 export class Compile implements Plug {
@@ -26,8 +27,8 @@ export class Compile implements Plug {
     this.#config = config
   }
 
-  async pipe(files: Files, context: PlugContext): Promise<Files> {
-    const host = new TypeScriptHost(context.resolve('.'))
+  async pipe(files: Files, run: Run): Promise<Files> {
+    const host = new TypeScriptHost(run.resolve('.'))
 
 
     const { options, errors } = await getCompilerOptions()
@@ -49,6 +50,6 @@ export class Compile implements Plug {
     // Check for errors...
     host.checkDiagnostics(result.diagnostics)
 
-    return context.files('.').build()
+    return run.files('.').build()
   }
 }

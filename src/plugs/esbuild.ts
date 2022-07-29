@@ -5,8 +5,9 @@ import { $cyn, $p, fail, log } from '../log'
 import { build, BuildOptions } from 'esbuild'
 import { Files, FilesBuilder } from '../files'
 
-import { Plug, PlugContext } from '../plug'
 import { resolveAbsolutePath } from '../paths'
+import { Plug } from '../pipe'
+import { Run } from '../run'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 
@@ -17,7 +18,7 @@ export class ESBuild implements Plug {
     this.#options = options
   }
 
-  async pipe(_files: Files, context: PlugContext): Promise<Files> {
+  async pipe(_files: Files, run: Run): Promise<Files> {
     const entryPoints = [ ..._files ]
     const absWorkingDir = _files.directory
 
@@ -46,7 +47,7 @@ export class ESBuild implements Plug {
     let builder: FilesBuilder
     if (options.bundle && options.outfile && (entryPoints.length === 1)) {
 
-      builder = context.files(absWorkingDir)
+      builder = run.files(absWorkingDir)
       const outputFile = resolveAbsolutePath(absWorkingDir, options.outfile)
       const entryPoint = resolveAbsolutePath(absWorkingDir, entryPoints[0])
       options.outfile = outputFile
@@ -55,7 +56,7 @@ export class ESBuild implements Plug {
     } else {
       assert(options.outdir, 'Option "outdir" must be specified')
 
-      builder = context.files(options.outdir)
+      builder = run.files(options.outdir)
       options.outdir = builder.directory
 
       const message = options.bundle ? 'Bundling' : 'Transpiling'

@@ -3,7 +3,8 @@ import path from 'path'
 import reaadline from 'readline'
 import { Files } from '../files'
 import { TaskLogger } from '../log'
-import { Plug, PlugContext } from '../plug'
+import { Plug } from '../pipe'
+import { Run } from '../run'
 
 export interface ExecOptions<T> {
   cmd: T,
@@ -47,10 +48,10 @@ export class Exec implements Plug {
         cmdOrOptions
   }
 
-  async pipe(files: Files, context: PlugContext): Promise<Files> {
+  async pipe(files: Files, run: Run): Promise<Files> {
     const { cmd, args, env, ...options } = this.#options
 
-    const extraPath = path.join(context.resolve('@'), 'node_modules', '.bin')
+    const extraPath = path.join(run.resolve('@'), 'node_modules', '.bin')
 
     const spawnEnv = {
       ...process.env,
