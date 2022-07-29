@@ -1,108 +1,64 @@
-import type { BuildContext, TaskDefinition } from './build'
+import type { BuildContext, TaskDefinition, ThisBuild } from './build'
 import type { Run } from './run'
 
 import { Files } from './files'
-import { $t, fail, log, TaskLogger } from './log'
-import { AbsolutePath, Resolver } from './paths'
+import { TaskLogger } from './log'
 import { Pipe } from './pipe'
-import { PlugContextImpl } from './plug'
-import { FindOptions } from './types'
-import { parseOptions, ParseOptions } from './utils/options'
 
 /* ========================================================================== *
  * TASK                                                                       *
  * ========================================================================== */
 
  export interface Task {
+  /**
+   * The _original_ name of the task.
+   *
+   * Task names can change across different builds, and in the following
+   * example, this property will always be `"original"` and never `"renamed"`.
+   *
+   * ```
+   * const build1 = build({ original() { ... } })
+   * const build2 = build({ renamed: build1.original })
+   * ```
+   */
   readonly name: string
-  readonly buildFile: AbsolutePath
-  readonly buildDir: AbsolutePath
 
-  call(run: Run, context: BuildContext): Promise<Files>
+  /**
+   * The {@link BuildContext} of the _build_ where this task was originally
+   * defined.
+   */
+  readonly context: BuildContext
+
+  /** Invoked by the {@link Run} when actually executing this {@link Task} */
+  call(run: Run): Promise<Files>
 }
 
 export class TaskImpl implements Task {
-  readonly buildFile: AbsolutePath
-  readonly buildDir: AbsolutePath
-
   constructor(
     readonly name: string,
-    private readonly _buildContext: BuildContext,
+    readonly context: BuildContext,
     private readonly _definition: TaskDefinition<any>,
-  ) {
-    this.buildFile = _buildContext.buildFile
-    this.buildDir = _buildContext.buildDir
-  }
+  ) {}
 
-  async call(run: Run, context: BuildContext): Promise<Files> {
+  async call(run: Run): Promise<Files> {
     const pipes: Pipe[] = []
 
-    console.log('RUNNING', this.name)
+    const thisBuild: ThisBuild<any> = {}
+    for (const [ name, task ] of Object.entries(run.tasks)) {
+      thisBuild[name] = () => {
+        const pipe = new Pipe(() => run.call(name))
+        pipes.push(pipe)
+        return pipe
+      }
+    }
 
-    const log = new TaskLogger() // TODO: logger!
-    const taskContext = new TaskContextImpl(run, context, pipes)
-    const plugContext = new PlugContextImpl(run, context, log)
-
-    /* Call the `TaskDefinition` and await for results */
-    const r = await this._definition.call(taskContext)
-
-    console.log('rESUILT', this.name, r, pipes)
-    const result = r && 'run' in r ? await r.run(plugContext) : r
+    const r = await this._definition.call(thisBuild, run) // TODO
+    const result = r && 'plug' in r ? await Pipe.run(r, run) : r
 
     /* Any pipe created by calling this.xxx(...) gets awaited */
-    const results = await Promise.all(pipes.map((pipe) => pipe.run(plugContext)))
-    console.log('RESULTS', this.name, results)
+    const results = await Promise.all(pipes.map((pipe) => Pipe.run(pipe, run)))
 
     /* Return the result or an empty `Files` */
-    return result || results.pop() || new Files(this._buildContext.buildDir)
-  }
-}
-
-/* ========================================================================== *
- * TASK CONTEXT                                                               *
- * ========================================================================== */
-
-/**
- * The {@link TaskContext} interface describes the value of `this` used
- * when calling a {@link TaskDefinition}s.
- */
- export interface TaskContext<D> {
-  resolve(path: string, ...paths: string[]): AbsolutePath
-  /** Find files {@link Pipe} with globs */
-  find(glob: string, ...args: ParseOptions<FindOptions>): Pipe
-  /** Call the specified {@link Task} from the current */
-  call(task: keyof D): Pipe
-}
-
-export class TaskContextImpl extends Resolver implements TaskContext<any> {
-  constructor(
-    private readonly _run: Run,
-    private readonly _context: BuildContext,
-    private readonly _pipes: Pipe[],
-  ) {
-    super(_run, _context)
-  }
-
-  #createPipe(start: () => Promise<Files>): Pipe {
-    const pipe = new Pipe(start)
-    this._pipes.push(pipe)
-    return pipe
-  }
-
-  find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
-    return this.#createPipe(async (): Promise<Files> => {
-      const { params, options: { directory, ...options} } = parseOptions(args, {})
-      const dir = this.resolve(directory)
-      return Files.find(dir, glob, ...params, options)
-    })
-  }
-
-  call(name: string): Pipe {
-    return this.#createPipe(async (): Promise<Files> => {
-      const task = this._context.tasks[name]
-      if (! task) fail(`No such task "${name}"`)
-      log.debug('Calling task', $t(task))
-      return this._run.call(task, this._context)
-    })
+    return result || results.pop() || new Files(run.buildDir)
   }
 }
