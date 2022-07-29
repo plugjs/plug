@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 
-import type { Task } from './build'
+import type { Task } from './task'
 
 /* ========================================================================== *
  * EXPORTED                                                                   *
