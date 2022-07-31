@@ -22,6 +22,6 @@ export class Debug implements Plug {
   }
 }
 
-export function debug() {
+export function debug(): Debug {
   return new Debug()
 }

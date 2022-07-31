@@ -207,11 +207,11 @@ export async function coverageReport(
     }
 
     /* Set the code coverage for the specified node and (optionally) its children */
-    function setCodeCoverage(
+    const setCodeCoverage = (
         node: (Node | Comment)[] | Node | Comment | undefined | null,
         coverage: number,
         recursive: boolean,
-    ): void {
+    ): void => {
       if (! node) return
 
       if (Array.isArray(node)) {
@@ -249,7 +249,7 @@ export async function coverageReport(
     }
 
     /* Recursively invoke "visitNode" on the children of a given node */
-    function visitChildren(node: Node, depth: number): void {
+    const visitChildren = (node: Node, depth: number): void => {
       const keys = VISITOR_KEYS[node.type] || []
       for (const key of keys) {
         const children: Node | Node[] = (<any> node)[key]
@@ -264,7 +264,11 @@ export async function coverageReport(
     }
 
     /* Visit a node or ignore it depending on a condition */
-    function maybeIgnoreNode(condition: boolean, node: Node | null | undefined, depth: number): void {
+    const maybeIgnoreNode = (
+        condition: boolean,
+        node: Node | null | undefined,
+        depth: number,
+    ): void => {
       if (condition) {
         setCodeCoverage(node, COVERAGE_IGNORED, true)
       } else if (node) {
@@ -273,7 +277,7 @@ export async function coverageReport(
     }
 
     /* Visit a node and evaluate its coverage */
-    function visitNode(node: Node, depth: number): void {
+    const visitNode = (node: Node, depth: number): void => {
       /* See what we're doing here... */
       log.info('-'.padStart((depth * 2) + 1, ' '), node.type, `${node.loc?.start.line}:${node.loc?.start.column}`)
 
@@ -373,7 +377,7 @@ export async function coverageReport(
   return { results, nodes }
 }
 
-function updateNodeCoverageResult(result: NodeCoverageResult) {
+function updateNodeCoverageResult(result: NodeCoverageResult): void {
   const { coveredNodes, missingNodes, ignoredNodes } = result
   const totalNodes = result.totalNodes = coveredNodes + missingNodes + ignoredNodes
   if (totalNodes - ignoredNodes) {

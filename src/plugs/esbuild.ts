@@ -1,9 +1,8 @@
 import assert from 'assert'
-import path, { resolve } from 'path'
 
-import { $cyn, $p, fail, log } from '../log'
 import { build, BuildOptions } from 'esbuild'
 import { Files, FilesBuilder } from '../files'
+import { $p, fail, log } from '../log'
 
 import { resolveAbsolutePath } from '../paths'
 import { Plug } from '../pipe'
@@ -94,6 +93,6 @@ export class ESBuild implements Plug {
   }
 }
 
-export function esbuild(options: ESBuildOptions) {
+export function esbuild(options: ESBuildOptions): ESBuild {
   return new ESBuild(options)
 }

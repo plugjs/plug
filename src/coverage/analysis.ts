@@ -222,7 +222,7 @@ abstract class CoverageCombiner {
 export class SourcesCoverageAnalyser extends CoverageCombiner implements CoverageAnalyser {
   #mappings = new Map<string, CoverageAnalyser[]>()
 
-  add(source: string, analyser: CoverageAnalyser) {
+  add(source: string, analyser: CoverageAnalyser): void {
     const analysers = this.#mappings.get(source) || []
     analysers.push(analyser)
     this.#mappings.set(source, analysers)
@@ -254,7 +254,7 @@ export class SourcesCoverageAnalyser extends CoverageCombiner implements Coverag
 export class CombiningCoverageAnalyser extends CoverageCombiner implements CoverageAnalyser {
   #analysers: CoverageAnalyser[] = []
 
-  add(analyser: CoverageAnalyser) {
+  add(analyser: CoverageAnalyser): void {
     this.#analysers.push(analyser)
   }
 

@@ -1,7 +1,5 @@
 import util from 'node:util'
 import { AbsolutePath, convertRelativeChildPath, resolveAbsolutePath } from './paths'
-import { ParseOptions, parseOptions } from './utils/options'
-import { walk, WalkOptions } from './utils/walk'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
 export interface FilesBuilder {
@@ -57,7 +55,7 @@ export class Files {
   }
 
   /* Nicety for logging */
-  [util.inspect.custom]() {
+  [util.inspect.custom](): any {
     const self = this
     return new class Files {
       directory = self.#directory

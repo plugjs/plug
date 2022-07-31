@@ -44,4 +44,4 @@ export function runningTasks(): string[] {
  * ========================================================================== */
 
 const storage = new AsyncLocalStorage<{ run: Run, task: string }>()
-const tasks = new Array<string>()
+const tasks: string[] = []

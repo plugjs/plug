@@ -26,7 +26,7 @@ export class Write implements Plug {
 
   async pipe(files: Files, run: Run): Promise<Files> {
     /* Destructure our options with some defaults and compute write flags */
-    const { mode, dirMode, overwrite, rename = (s) => s } = this.#options
+    const { mode, dirMode, overwrite, rename = (s): string => s } = this.#options
     const flags = overwrite ? fs.constants.COPYFILE_EXCL : 0
     const dmode = parseMode(dirMode)
     const fmode = parseMode(mode)
@@ -78,7 +78,7 @@ export class Write implements Plug {
   }
 }
 
-export function write(directory: string, options?: WriteOptions) {
+export function write(directory: string, options?: WriteOptions): Write {
   return new Write(directory, options)
 }
 

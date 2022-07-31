@@ -77,8 +77,8 @@ export class RunImpl implements Run {
       log.sep().info('Starting task').sep()
 
       const thisBuild: ThisBuild<any> = {}
-      for (const [ name, task ] of Object.entries(childRun.tasks)) {
-        thisBuild[name] = () => {
+      for (const name in childRun.tasks) {
+        thisBuild[name] = (): Pipe => {
           const promise = childRun.call(name)
           const pipe = new Pipe(promise, childRun)
           childRun._pipes.push(pipe)

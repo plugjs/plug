@@ -11,8 +11,8 @@ module.exports = {
     createDefaultProgram: false,
     project: [
       './tsconfig.json',
-      './test/tsconfig.json',
-      './test-d/tsconfig.json',
+      // './test/tsconfig.json',
+      // './test-d/tsconfig.json',
     ],
   },
   plugins: [
@@ -104,6 +104,7 @@ module.exports = {
     } ],
 
     // Turn off specific JavaScript rules
+    'guard-for-in': [ 'off' ], // no errors on for ... in
     'no-undef': [ 'off' ], // it'll mark global types as undefs
     'no-redeclare': [ 'off' ], // use @typescript/no-redeclare
     'no-unused-vars': [ 'off' ], // use @typescript/no-unused-vars

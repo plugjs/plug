@@ -2,8 +2,6 @@ import type { BuildContext, TaskDefinition, ThisBuild } from './build'
 import type { Run } from './run'
 
 import { Files } from './files'
-import { TaskLogger } from './log'
-import { Pipe } from './pipe'
 
 /* ========================================================================== *
  * TASK                                                                       *

@@ -44,6 +44,7 @@ export class Compile implements Plug {
     host.checkDiagnostics(diagnostics)
 
     const result = program.emit(undefined, (fileName, code) => {
+      void code // TODO!
       log.info('Should write', fileName)
     })
 

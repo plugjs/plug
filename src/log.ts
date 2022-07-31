@@ -87,7 +87,7 @@ let separateLines: boolean = false
 const defaultTask: string | undefined = process.env['LOG_TASK_NAME']
 
 /** Used internally to register task names, for width calculation and colors */
-export function registerTask(task: string) {
+export function registerTask(task: string): void {
   if (task.length > taskWidth) taskWidth = task.length
 }
 
@@ -272,7 +272,7 @@ const grn = '\u001b[38;5;76m' // greenish
 const ylw = '\u001b[38;5;220m' // yellow
 const blu = '\u001b[38;5;69m' // brighter blue
 const mgt = '\u001b[38;5;213m' // pinky magenta
-const cyn = '\u001b[38;5;81m' // darker cyan
+// const cyn = '\u001b[38;5;81m' // darker cyan
 
 const tsk = '\u001b[38;5;141m' // the color for tasks (purple)
 
@@ -295,27 +295,27 @@ export function $gry(string: any): string {
   return logColor ? `${gry}${string}${rst}` : string
 }
 
-export function $red(string: any) {
+export function $red(string: any): string {
   return logColor ? `${red}${string}${rst}` : string
 }
 
-export function $grn(string: any) {
+export function $grn(string: any): string {
   return logColor ? `${grn}${string}${rst}` : string
 }
 
-export function $ylw(string: any) {
+export function $ylw(string: any): string {
   return logColor ? `${ylw}${string}${rst}` : string
 }
 
-export function $blu(string: any) {
+export function $blu(string: any): string {
   return logColor ? `${blu}${string}${rst}` : string
 }
 
-export function $mgt(string: any) {
+export function $mgt(string: any): string {
   return logColor ? `${mgt}${string}${rst}` : string
 }
 
-export function $cyn(string: any) {
+export function $cyn(string: any): string {
   return logColor ? `${tsk}${string}${rst}` : string
 }
 
@@ -323,7 +323,7 @@ export function $cyn(string: any) {
  * SPINNER                                                                    *
  * ========================================================================== */
 
-const nextSpin = (() => {
+const nextSpin = ((): (() => string) => {
   const spins = [
     '\u2809', // ⠉ - 14
     '\u2819', // ⠙ - 145
@@ -363,14 +363,14 @@ const whiteSquare = '\u25a1'
 const blackSquare = '\u25a0'
 
 /** Emit either plain or color */
-function emit(task: string | undefined, prefix: string, level: number, ...args: any[]) {
+function emit(task: string | undefined, prefix: string, level: number, ...args: any[]): void {
   return logColor ?
     emitColor(task || defaultTask, prefix, level, ...args) :
     emitPlain(task || defaultTask, prefix, level, ...args)
 }
 
 /** Emit in full colors! */
-function emitColor(task: string | undefined, prefix: string, level: number, ...args: any[]) {
+function emitColor(task: string | undefined, prefix: string, level: number, ...args: any[]): void {
   /* Prefixes, to prepend at the beginning of each line */
   const prefixes: string[] = []
 
@@ -411,6 +411,7 @@ function emitColor(task: string | undefined, prefix: string, level: number, ...a
   const prefix1 = prefix0 + '  ' + prefix
 
   /* Now for the normal logging of all our parameters */
+  // eslint-disable-next-line no-control-regex
   const breakLength = logWidth - prefix1.replace(/\u001b\[[^m]+m/g, '').length
   const strings = stringifyArgs(args, breakLength)
   if (! strings.length) return // use sep()
@@ -420,7 +421,7 @@ function emitColor(task: string | undefined, prefix: string, level: number, ...a
   write(`${zap}${prefixed}\n`)
 }
 
-function emitPlain(task: string | undefined, prefix: string, level: number, ...args: any[]) {
+function emitPlain(task: string | undefined, prefix: string, level: number, ...args: any[]): void {
   const prefixes: string[] = []
 
   if (task) {
@@ -478,6 +479,6 @@ function stringifyArgs(args: any[], breakLength: number): string[] {
   }).filter((arg) => arg !== undefined) as string[]
 }
 
-function write(value: string) {
+function write(value: string): void {
   process.stderr.write(Buffer.from(value, 'utf-8'))
 }

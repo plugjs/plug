@@ -48,15 +48,6 @@ export class Coverage implements Plug {
       if (file.length > maxLength) maxLength = file.length
     }
 
-    const q = {
-      'src': {
-        'async.ts': 'src/async.ts',
-        'utils': {
-
-        },
-      },
-    }
-
     const fileErrors = 0
     for (const [ file, result ] of Object.entries(report.results)) {
       const { coverage } = result.nodeCoverage
@@ -143,7 +134,3 @@ export class Coverage implements Plug {
 export function coverage(options: CoverageOptions): Coverage {
   return new Coverage(options)
 }
-
-
-type IgnoreCoverage = 'test' | 'if' | 'else' | 'try' | 'catch' | 'finally' | 'next'
-const ignoreRegexp = /(coverage|istanbul)\s+ignore\s+(test|if|else|try|catch|finally|next)(\s|$)/g
