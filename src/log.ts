@@ -73,7 +73,7 @@ let logLevel: number = levels.INFO
 /* Log colors (default is stderr is a TTY) */
 let logColor = process.stderr.isTTY
 /* Log width (if it's a tty, or 80) */
-let logWidth = process.stderr.columns || 80
+const logWidth = process.stderr.columns || 80
 /* Log depth (defaults to 2 as node) */
 let logDepth = 2
 /* The maximum width of all registered tasks */
@@ -133,7 +133,7 @@ export const log: Log = {
         LOG_TASK_NAME: currentTask(),
         LOG_TASK_WIDTH: taskWidth,
       }
-    }
+    },
   },
 
   /* ------------------------------------------------------------------------ */
@@ -435,11 +435,11 @@ function emitPlain(task: string | undefined, prefix: string, level: number, ...a
   } else if (level <= levels.DEBUG) {
     prefixes.push( 'debug \u2502 ')
   } else if (level <= levels.INFO) {
-    prefixes.push(`  info \u2502 `)
+    prefixes.push('  info \u2502 ')
   } else if (level <= levels.WARN) {
-    prefixes.push(`  warn \u2502 `)
+    prefixes.push('  warn \u2502 ')
   } else {
-    prefixes.push(` error \u2502 `)
+    prefixes.push(' error \u2502 ')
   }
 
   /* The prefix (task name and level) */

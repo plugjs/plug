@@ -35,11 +35,11 @@ export interface WalkOptions extends MatchOptions {
  * Walk the specified directory, returning an asynchronous iterator over all
  * the _relative_ files found matching the specified globs and matching options.
  */
- export function walk(
-  directory: AbsolutePath,
-  globs: string[],
-  options: WalkOptions = {}
-):  AsyncGenerator<string, void, void> {
+export function walk(
+    directory: AbsolutePath,
+    globs: string[],
+    options: WalkOptions = {},
+): AsyncGenerator<string, void, void> {
   const {
     maxDepth = Infinity,
     followSymlinks = true,
@@ -67,7 +67,7 @@ export interface WalkOptions extends MatchOptions {
     onDirectory,
     followSymlinks,
     maxDepth,
-    depth: 0
+    depth: 0,
   })
 }
 
@@ -75,11 +75,11 @@ export interface WalkOptions extends MatchOptions {
  * Walk the specified directory, returning an asynchronous iterator over all
  * the _relative_ files found matching the specified globs and matching options.
  */
- export async function* absoluteWalk(
-  directory: AbsolutePath,
-  globs: string[],
-  options: WalkOptions = {}
-):  AsyncGenerator<AbsolutePath, void, void> {
+export async function* absoluteWalk(
+    directory: AbsolutePath,
+    globs: string[],
+    options: WalkOptions = {},
+): AsyncGenerator<AbsolutePath, void, void> {
   for await (const relative of walk(directory, globs, options)) {
     yield resolveAbsolutePath(directory, relative)
   }

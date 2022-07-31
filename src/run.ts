@@ -19,7 +19,7 @@ export interface FindOptions extends WalkOptions {
    *
    * @defaultValue The current {@link Run.directory}
    */
-   directory?: string
+  directory?: string
 }
 
 export interface Run extends BuildContext {
@@ -38,13 +38,13 @@ export class RunImpl implements Run {
   private readonly _pipes: Pipe[] = []
 
   constructor(
-    readonly baseDir: AbsolutePath,
-    readonly buildDir: AbsolutePath,
-    readonly buildFile: AbsolutePath,
-    readonly tasks: Readonly<Record<string, Task>>,
-    private readonly _cache: Map<Task, Promise<Files | void>>,
-    private readonly _stack: readonly Task[],
-    readonly taskName?: string,
+      readonly baseDir: AbsolutePath,
+      readonly buildDir: AbsolutePath,
+      readonly buildFile: AbsolutePath,
+      readonly tasks: Readonly<Record<string, Task>>,
+      private readonly _cache: Map<Task, Promise<Files | void>>,
+      private readonly _stack: readonly Task[],
+      readonly taskName?: string,
   ) {}
 
   /** Run the specified {@link Task} in the context of this {@link Run} */
@@ -62,13 +62,13 @@ export class RunImpl implements Run {
     if (cached) return cached
 
     const childRun = new RunImpl(
-      this.baseDir, // the "baseDir" for "@" resolutuion is always unchanged, from the original build file or arg
-      task.context.buildDir, // the "buildDir" and "buildFile", used for local resolution (e.g. "./foo.bar") are
-      task.context.buildFile, // always the ones associated with the build where the task was defined
-      { ...task.context.tasks, ...this.tasks }, // merge the tasks, starting from the ones of the original build
-      this._cache, // the cache is a singleton within the whole Run tree, it's passed unchanged
-      [ ...this._stack, task ], // the stack gets added the task being run...
-      name,
+        this.baseDir, // the "baseDir" for "@" resolutuion is always unchanged, from the original build file or arg
+        task.context.buildDir, // the "buildDir" and "buildFile", used for local resolution (e.g. "./foo.bar") are
+        task.context.buildFile, // always the ones associated with the build where the task was defined
+        { ...task.context.tasks, ...this.tasks }, // merge the tasks, starting from the ones of the original build
+        this._cache, // the cache is a singleton within the whole Run tree, it's passed unchanged
+        [ ...this._stack, task ], // the stack gets added the task being run...
+        name,
     )
 
     /* Actually _call_ the `Task` and get a promise for it */
@@ -126,7 +126,7 @@ export class RunImpl implements Run {
 
   find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
     const promise = Promise.resolve().then(async () => {
-      const { params, options: { directory, ...options} } = parseOptions(args, {})
+      const { params, options: { directory, ...options } } = parseOptions(args, {})
       const dir = this.resolve(directory)
 
       const builder = Files.builder(dir)
@@ -145,12 +145,12 @@ export class RunImpl implements Run {
 
 export function initRun(context: BuildContext, baseDir?: AbsolutePath): Run {
   return new RunImpl(
-    baseDir || context.buildDir,
-    context.buildDir,
-    context.buildFile,
-    context.tasks,
-    new Map<Task, Promise<Files | void>>(),
-    [],
+      baseDir || context.buildDir,
+      context.buildDir,
+      context.buildFile,
+      context.tasks,
+      new Map<Task, Promise<Files | void>>(),
+      [],
   )
 }
 

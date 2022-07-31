@@ -3,7 +3,7 @@ import {
   createSourceFile, Diagnostic,
   DiagnosticCategory, getDefaultCompilerOptions,
   parseConfigFileTextToJson, ScriptKind,
-  ScriptTarget
+  ScriptTarget,
 } from 'typescript'
 
 import { AbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
@@ -19,8 +19,8 @@ export type CompilerOptionsAndDiagnostics = {
 /* ========================================================================== */
 
 function mergeResults(
-  base: CompilerOptionsAndDiagnostics,
-  override: CompilerOptionsAndDiagnostics
+    base: CompilerOptionsAndDiagnostics,
+    override: CompilerOptionsAndDiagnostics,
 ): CompilerOptionsAndDiagnostics {
   return {
     options: { ...base.options, ...override.options },
@@ -39,7 +39,7 @@ async function loadOptions(
   // Load up our config file and convert is wicked JSON
   const data = await readFile(file, 'utf-8')
   const { config, error } = parseConfigFileTextToJson(file, data)
-  if (error) return { options: {}, errors: [ error] }
+  if (error) return { options: {}, errors: [ error ] }
 
   // Parse up the configuration file as options
   const { compilerOptions = {}, extends: extendsPath } = config
@@ -82,8 +82,8 @@ export async function getCompilerOptions(
 
 /** Load compiler options from a JSON file, and merge in the overrides */
 export async function getCompilerOptions(
-  file?: AbsolutePath,
-  ...override: [ CompilerOptions, AbsolutePath ] | []
+    file?: AbsolutePath,
+    ...override: [ CompilerOptions, AbsolutePath ] | []
 ): Promise<CompilerOptionsAndDiagnostics> {
   let result: CompilerOptionsAndDiagnostics = { options: getDefaultCompilerOptions(), errors: [] }
 

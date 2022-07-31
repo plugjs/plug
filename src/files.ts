@@ -42,17 +42,17 @@ export class Files {
   }
 
   /** Return an iterator over all _relative_ files of this instance */
-  *[Symbol.iterator](): Generator<string> {
+  * [Symbol.iterator](): Generator<string> {
     for (const file of this.#files) yield file
   }
 
   /** Return an iterator over all _absolute_ files of this instance */
-  *absolutePaths(): Generator<AbsolutePath> {
+  * absolutePaths(): Generator<AbsolutePath> {
     for (const file of this) yield resolveAbsolutePath(this.#directory, file)
   }
 
   /** Return an iterator over all _relative_ to _absolute_ mappings */
-  *pathMappings(): Generator<[ relative: string, absolute: AbsolutePath ]> {
+  * pathMappings(): Generator<[ relative: string, absolute: AbsolutePath ]> {
     for (const file of this) yield [ file, resolveAbsolutePath(this.#directory, file) ]
   }
 

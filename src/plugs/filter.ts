@@ -6,13 +6,13 @@ import { resolveRelativeChildPath } from '../paths'
 import { Plug } from '../pipe'
 import { Run } from '../run'
 
- export interface FilterOptions extends MatchOptions {
+export interface FilterOptions extends MatchOptions {
   /**
    * The directory where to start looking for files.
    *
    * @defaultValue The current {@link Run.directory}
    */
-   directory?: string
+  directory?: string
 }
 
 /** Filter some {@link Files} based on some globs and optional directory. */
@@ -38,7 +38,7 @@ export class Filter implements Plug {
     }
 
     const result = builder.build()
-    log.debug('Filtered', result.length, 'files (discarded', files.length - result.length,'files)', {
+    log.debug('Filtered', result.length, 'files (discarded', files.length - result.length, 'files)', {
       from: files.directory,
       into: result.directory,
       globs: this.#globs, options,

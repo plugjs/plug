@@ -30,7 +30,7 @@ export type BuildContext = {
  * A {@link TaskDefinition} is a _function_ defining a {@link Task}.
  */
 export type TaskDefinition<B> = (this: ThisBuild<B>, self: ThisBuild<B>, run: Run) =>
-  Files | void | Promise<Files | void>
+Files | void | Promise<Files | void>
 
 /**
  * A {@link TaskCall} describe a _function_ calling a {@link Task}, and
@@ -70,7 +70,7 @@ export type BuildDefinition<B> = {
 
 /** Create a new {@link Build} from its {@link BuildDefinition}. */
 export function build<D extends BuildDefinition<D>>(
-  definition: D & ThisType<ThisBuild<D>>
+    definition: D & ThisType<ThisBuild<D>>,
 ): Build<D> {
   /* Basic setup */
   const buildFile = findCaller(build).file

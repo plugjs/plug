@@ -46,7 +46,6 @@ export class ESBuild implements Plug {
     /* Where to write, where to write? */
     let builder: FilesBuilder
     if (options.bundle && options.outfile && (entryPoints.length === 1)) {
-
       builder = run.files(absWorkingDir)
       const outputFile = resolveAbsolutePath(absWorkingDir, options.outfile)
       const entryPoint = resolveAbsolutePath(absWorkingDir, entryPoints[0])

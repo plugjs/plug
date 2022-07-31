@@ -33,20 +33,20 @@ export class Pipe implements Pipe {
   }
 
   then<T1 = Files, T2 = never>(
-    onfulfilled?: ((value: Files | void) => T1 | PromiseLike<T1>) | null | undefined,
-    onrejected?: ((reason: any) => T2 | PromiseLike<T2>) | null | undefined
+      onfulfilled?: ((value: Files | void) => T1 | PromiseLike<T1>) | null | undefined,
+      onrejected?: ((reason: any) => T2 | PromiseLike<T2>) | null | undefined,
   ): Promise<T1 | T2> {
     return this.#promise.then(onfulfilled, onrejected)
   }
 
   catch<T = never>(
-    onrejected?: ((reason: any) => T | PromiseLike<T>) | null | undefined
+      onrejected?: ((reason: any) => T | PromiseLike<T>) | null | undefined,
   ): Promise<T | Files | void> {
     return this.#promise.catch(onrejected)
   }
 
   finally(
-    onfinally?: (() => void) | null | undefined
+      onfinally?: (() => void) | null | undefined,
   ): Promise<Files | void> {
     return this.#promise.finally(onfinally)
   }

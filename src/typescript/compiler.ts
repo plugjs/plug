@@ -3,7 +3,7 @@ import { CompilerHost, CompilerOptions, createSourceFile, getDefaultLibFilePath,
 import {
   DiagnosticCategory,
   formatDiagnostics,
-  formatDiagnosticsWithColorAndContext
+  formatDiagnosticsWithColorAndContext,
 } from 'typescript'
 
 import { Diagnostic, FormatDiagnosticsHost } from 'typescript'
@@ -63,7 +63,7 @@ implements FormatDiagnosticsHost, CompilerHost {
     if (sys.useCaseSensitiveFileNames) return fileName
 
     // Lifted from TypeScript sources
-    const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g;
+    const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_\. ]+/g
     return fileNameLowerCaseRegExp.test(fileName) ?
       fileName.replace(fileNameLowerCaseRegExp, (s) => s.toLowerCase()) :
       fileName
@@ -88,8 +88,8 @@ implements FormatDiagnosticsHost, CompilerHost {
     for (const diagnostic of diagnostics) {
       const message = format([ diagnostic ], this)
       switch (diagnostic.category) {
-        case DiagnosticCategory.Error: log.error(message).sep() ; errors ++; break
-        case DiagnosticCategory.Warning: log.warn(message).sep() ; break
+        case DiagnosticCategory.Error: log.error(message).sep(); errors ++; break
+        case DiagnosticCategory.Warning: log.warn(message).sep(); break
         default: log.info(message).sep()
       }
     }

@@ -9,7 +9,7 @@ import {
   CoverageResultAnalyser,
   CoverageSitemapAnalyser,
   SourcesCoverageAnalyser,
-  V8CoverageData
+  V8CoverageData,
 } from './analysis'
 
 import {
@@ -21,7 +21,7 @@ import {
   isTSTypeReference,
   isTypeScript,
   Node,
-  VISITOR_KEYS
+  VISITOR_KEYS,
 } from '@babel/types'
 import { AbsolutePath } from '../paths'
 
@@ -99,8 +99,8 @@ const ignoreRegexp = /(coverage|istanbul)\s+ignore\s+(test|if|else|try|catch|fin
  * specified coverage files and produce a {@link CoverageReport}.
  */
 export async function coverageReport(
-  sourceFiles: AsyncIterable<AbsolutePath> | Iterable<AbsolutePath>,
-  coverageFiles: AsyncIterable<AbsolutePath> | Iterable<AbsolutePath>,
+    sourceFiles: AsyncIterable<AbsolutePath> | Iterable<AbsolutePath>,
+    coverageFiles: AsyncIterable<AbsolutePath> | Iterable<AbsolutePath>,
 ): Promise<CoverageReport> {
   /* Convert our source files to an array for easy picking */
   const files: AbsolutePath[] = []
@@ -194,7 +194,7 @@ export async function coverageReport(
       strictMode: false,
       ranges: false,
       tokens: false,
-      createParenthesizedExpressions: true
+      createParenthesizedExpressions: true,
     })
 
     const codeCoverage: number[] = new Array(code.length).fill(0)
@@ -208,9 +208,9 @@ export async function coverageReport(
 
     /* Set the code coverage for the specified node and (optionally) its children */
     function setCodeCoverage(
-      node: (Node | Comment)[] | Node | Comment | undefined | null,
-      coverage: number,
-      recursive: boolean
+        node: (Node | Comment)[] | Node | Comment | undefined | null,
+        coverage: number,
+        recursive: boolean,
     ): void {
       if (! node) return
 

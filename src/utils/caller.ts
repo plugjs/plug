@@ -9,7 +9,7 @@ export interface Location {
   column?: number | undefined,
 }
 
-export function findCaller(of: (... args: any[]) => any): Location {
+export function findCaller(of: (...args: any[]) => any): Location {
   const oldPrepareStackTrace = Error.prepareStackTrace
 
   try {

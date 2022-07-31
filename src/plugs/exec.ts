@@ -33,7 +33,7 @@ function runChild(child: ChildProcess): Promise<void> {
       if (code === 0) return resolve()
       if (signal) return reject(new Error(`Child process exited with signal ${signal}`))
       if (code) return reject(new Error(`Child process exited with code ${code}`))
-      reject(new Error(`Child process failed for an unknown reason`))
+      reject(new Error('Child process failed for an unknown reason'))
     })
   })
 }
@@ -56,14 +56,14 @@ export class Exec implements Plug {
     const spawnEnv = {
       ...process.env,
       ...env,
-      PATH: `${extraPath}${path.delimiter}${process.env.PATH}`
+      PATH: `${extraPath}${path.delimiter}${process.env.PATH}`,
     }
 
     let child: ChildProcess
     const spawnOptions: SpawnOptions = {
       stdio: [ 'ignore', 'pipe', 'pipe' ],
       env: spawnEnv,
-      ...options
+      ...options,
     }
 
     if (args) {

@@ -20,7 +20,6 @@ export interface CoverageOptions {
 }
 
 export class Coverage implements Plug {
-
   constructor(options: CoverageOptions)
   constructor(private _options: CoverageOptions) {}
 
@@ -54,11 +53,11 @@ export class Coverage implements Plug {
         'async.ts': 'src/async.ts',
         'utils': {
 
-        }
-      }
+        },
+      },
     }
 
-    let fileErrors = 0;
+    const fileErrors = 0
     for (const [ file, result ] of Object.entries(report.results)) {
       const { coverage } = result.nodeCoverage
       const padding = ''.padEnd(maxLength - file.length, ' ')
@@ -134,10 +133,10 @@ export class Coverage implements Plug {
 
     /* Add the files we generated */
     return run.files(reportDir)
-      .add(jsonFile)
-      .add(htmlFile)
-      .add(jsonpFile)
-      .build()
+        .add(jsonFile)
+        .add(htmlFile)
+        .add(jsonpFile)
+        .build()
   }
 }
 

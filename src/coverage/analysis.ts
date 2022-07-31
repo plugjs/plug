@@ -117,7 +117,7 @@ export class CoverageResultAnalyser implements CoverageAnalyser {
 
   /** Length of each line in the original source file */
   protected get _lineLengths(): readonly number[] {
-    assert (this.#lineLengths, 'Analyser not initialized')
+    assert(this.#lineLengths, 'Analyser not initialized')
     return this.#lineLengths
   }
 
@@ -162,7 +162,7 @@ export class CoverageSitemapAnalyser extends CoverageResultAnalyser {
   }
 
   coverage(source: string, line: number, column: number): number {
-    assert (this.#sourceMap, 'Analyser not initialized')
+    assert(this.#sourceMap, 'Analyser not initialized')
     const generated = this.#sourceMap.generatedPositionFor({ source, line, column })
 
     if (! generated) {
@@ -191,10 +191,10 @@ abstract class CoverageCombiner {
   #loggedSources = new Set<string>()
 
   protected _combineCoverage(
-    analysers: CoverageAnalyser[],
-    source: string,
-    line: number,
-    column: number
+      analysers: CoverageAnalyser[],
+      source: string,
+      line: number,
+      column: number,
   ): number {
     /* Log out (once) if we have no coverage analyser for the source */
     if (analysers.length === 0) {

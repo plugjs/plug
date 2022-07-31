@@ -19,8 +19,8 @@ export interface Task {
 
 export class TaskImpl implements Task {
   constructor(
-    readonly context: BuildContext,
-    private readonly _definition: TaskDefinition<any>,
+      readonly context: BuildContext,
+      private readonly _definition: TaskDefinition<any>,
   ) {}
 
   async call(self: ThisBuild<any>, run: Run): Promise<Files | void> {
