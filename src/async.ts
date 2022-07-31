@@ -7,8 +7,8 @@ import type { Run } from './run'
  * ========================================================================== */
 
 /**
- * Run the specified `callback` associating the specified {@link Task} with the
- * current asynchronous invocation context.
+ * Run the specified `callback` associating the specified {@link Run} and task
+ * name with the current asynchronous invocation context.
  */
 export function runAsync<T>(run: Run, task: string, callback: () => Promise<T>): Promise<T> {
   return storage.run({ run, task }, () => {
@@ -21,19 +21,23 @@ export function runAsync<T>(run: Run, task: string, callback: () => Promise<T>):
 }
 
 /**
- * Returns the {@link Task} associated with the current asynchronous invocation
+ * Returns the _task name_ associated with the current asynchronous invocation
  * context or `undefined`.
  */
 export function currentTask(): string | undefined {
   return storage.getStore()?.task
 }
 
+/**
+ * Returns the {@link Run} associated with the current asynchronous invocation
+ * context or `undefined`.
+ */
 export function currentRun(): Run | undefined {
   return storage.getStore()?.run
 }
 
 /**
- * Return an array of all {@link Task}s currently running
+ * Return an array of all _task names_ currently running
  */
 export function runningTasks(): string[] {
   return [ ...tasks ]
