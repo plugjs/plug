@@ -6,7 +6,6 @@ import { formatWithOptions } from 'node:util'
 import { currentRun, currentTask, runningTasks } from './async'
 
 import { AbsolutePath, resolveRelativeChildPath } from './paths'
-import { EOL } from 'node:os'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -384,11 +383,9 @@ function emitColor(task: string | undefined, prefix: string, level: number, ...a
   /* Now for the normal logging of all our parameters */
   // eslint-disable-next-line no-control-regex
   const breakLength = logWidth - prefix1.replace(/\u001b\[[^m]+m/g, '').length
-  const options = { breakLength, colors: logColor, depth: logDepth, compact: 1 }
-  const strings = formatWithOptions(options, ...args).split(EOL)
-  if (! strings.length) return // use sep()
+  const options = { breakLength, colors: true, depth: logDepth, compact: 1 }
+  const message = formatWithOptions(options, ...args)
 
-  const message = strings.join(' ')
   const prefixed = prefix1 ? message.replace(/^/gm, prefix1) : message
   write(`${zap}${prefixed}\n`)
 }
@@ -428,11 +425,9 @@ function emitPlain(task: string | undefined, prefix: string, level: number, ...a
   const prefix1 = prefix0 + prefix
 
   const breakLength = 80 - prefix1.length
-  const options = { breakLength, colors: logColor, depth: logDepth, compact: 1 }
-  const strings = formatWithOptions(options, ...args).split(EOL)
-  if (! strings.length) return // use sep()
+  const options = { breakLength, colors: false, depth: logDepth, compact: 1 }
+  const message = formatWithOptions(options, ...args)
 
-  const message = strings.join(' ')
   const prefixed = prefix0 ? message.replace(/^/gm, prefix1) : message
   write(`${prefixed}\n`)
 }
