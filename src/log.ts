@@ -143,31 +143,31 @@ export const log: Log = {
 
   trace(...args: any[]): Log {
     if (logLevel > levels.TRACE) return log
-    emit(currentTask(), '', levels.TRACE, ...args)
+    emit(currentTask(), levels.TRACE, ...args)
     return log
   },
 
   debug(...args: any[]): Log {
     if (logLevel > levels.DEBUG) return log
-    emit(currentTask(), '', levels.DEBUG, ...args)
+    emit(currentTask(), levels.DEBUG, ...args)
     return log
   },
 
   info(...args: any[]): Log {
     if (logLevel > levels.INFO) return log
-    emit(currentTask(), '', levels.INFO, ...args)
+    emit(currentTask(), levels.INFO, ...args)
     return log
   },
 
   warn(...args: any[]): Log {
     if (logLevel > levels.WARN) return log
-    emit(currentTask(), '', levels.WARN, ...args)
+    emit(currentTask(), levels.WARN, ...args)
     return log
   },
 
   error(...args: any[]): Log {
     if (logLevel > levels.ERROR) return log
-    emit(currentTask(), '', levels.ERROR, ...args)
+    emit(currentTask(), levels.ERROR, ...args)
     return log
   },
 
@@ -183,40 +183,39 @@ export const log: Log = {
  * normally de-associate the calling execution stack.
  */
 export class TaskLogger implements Logger {
-  #task = currentTask()
-  #prefix = ''
+  #task
 
-  constructor() {
-    /* Nothing to do */
+  constructor(task: string | undefined = currentTask()) {
+    this.#task = task
   }
 
   trace(...args: any[]): this {
     if (logLevel > levels.TRACE) return this
-    emit(this.#task, this.#prefix, levels.TRACE, ...args)
+    emit(this.#task, levels.TRACE, ...args)
     return this
   }
 
   debug(...args: any[]): this {
     if (logLevel > levels.DEBUG) return this
-    emit(this.#task, this.#prefix, levels.DEBUG, ...args)
+    emit(this.#task, levels.DEBUG, ...args)
     return this
   }
 
   info(...args: any[]): this {
     if (logLevel > levels.INFO) return this
-    emit(this.#task, this.#prefix, levels.INFO, ...args)
+    emit(this.#task, levels.INFO, ...args)
     return this
   }
 
   warn(...args: any[]): this {
     if (logLevel > levels.WARN) return this
-    emit(this.#task, this.#prefix, levels.WARN, ...args)
+    emit(this.#task, levels.WARN, ...args)
     return this
   }
 
   error(...args: any[]): this {
     if (logLevel > levels.ERROR) return this
-    emit(this.#task, this.#prefix, levels.ERROR, ...args)
+    emit(this.#task, levels.ERROR, ...args)
     return this
   }
 
@@ -332,15 +331,14 @@ const whiteSquare = '\u25a1'
 const blackSquare = '\u25a0'
 
 /** Emit either plain or color */
-function emit(task: string | undefined, prefix: string, level: number, ...args: any[]): void {
-  // TODO: filter for `buildFailed`, check for empty lines, ...
+function emit(task: string | undefined, level: number, ...args: any[]): void {
   return logColor ?
-    emitColor(task || defaultTask, prefix, level, ...args) :
-    emitPlain(task || defaultTask, prefix, level, ...args)
+    emitColor(task || defaultTask, level, ...args) :
+    emitPlain(task || defaultTask, level, ...args)
 }
 
 /** Emit in full colors! */
-function emitColor(task: string | undefined, prefix: string, level: number, ...args: any[]): void {
+function emitColor(task: string | undefined, level: number, ...args: any[]): void {
   /* Prefixes, to prepend at the beginning of each line */
   const prefixes: string[] = []
 
@@ -354,43 +352,39 @@ function emitColor(task: string | undefined, prefix: string, level: number, ...a
 
   /* Level indicator (our little colorful squares) */
   if (level <= levels.DEBUG) {
-    prefixes.push(` ${gry}${whiteSquare}${rst}`) // trace/debug: gray open
+    prefixes.push(` ${gry}${whiteSquare}${rst} `) // trace/debug: gray open
   } else if (level <= levels.INFO) {
-    prefixes.push(` ${gry}${blackSquare}${rst}`) // info: gray
+    prefixes.push(` ${gry}${blackSquare}${rst} `) // info: gray
   } else if (level <= levels.WARN) {
-    prefixes.push(` ${ylw}${blackSquare}${rst}`) // warning: yellow
+    prefixes.push(` ${ylw}${blackSquare}${rst} `) // warning: yellow
   } else {
-    prefixes.push(` ${red}${blackSquare}${rst}`) // error: red
+    prefixes.push(` ${red}${blackSquare}${rst} `) // error: red
   }
 
   /* The prefix (task name and level) */
-  const prefix0 = prefixes.join('')
+  const prefix = prefixes.join('')
 
   /* If we need to separate entries, do it now */
   if (separateLines) {
     if (lastTask != task) {
       write(`${zap}\n`)
     } else {
-      write(`${zap}${prefix0}\n`)
+      write(`${zap}${prefix}\n`)
     }
     separateLines = false
   }
   lastTask = task
 
-  /* The prefix (task name, level, and log prefix) */
-  const prefix1 = prefix0 + '  ' + prefix
-
   /* Now for the normal logging of all our parameters */
-  // eslint-disable-next-line no-control-regex
-  const breakLength = logWidth - prefix1.replace(/\u001b\[[^m]+m/g, '').length
+  const breakLength = logWidth - taskWidth - 3 // 3 chas: space square space
   const options = { breakLength, colors: true, depth: logDepth, compact: 1 }
   const message = formatWithOptions(options, ...args)
 
-  const prefixed = prefix1 ? message.replace(/^/gm, prefix1) : message
+  const prefixed = prefix ? message.replace(/^/gm, prefix) : message
   write(`${zap}${prefixed}\n`)
 }
 
-function emitPlain(task: string | undefined, prefix: string, level: number, ...args: any[]): void {
+function emitPlain(task: string | undefined, level: number, ...args: any[]): void {
   const prefixes: string[] = []
 
   if (task) {
@@ -413,22 +407,20 @@ function emitPlain(task: string | undefined, prefix: string, level: number, ...a
   }
 
   /* The prefix (task name and level) */
-  const prefix0 = prefixes.join('')
+  const prefix = prefixes.join('')
 
   /* If we need to separate entries, do it now */
   if (separateLines) {
-    write(`${prefix0}\n`)
+    write(`${prefix}\n`)
     separateLines = false
   }
 
-  /* The prefix (task name, level, and log prefix) */
-  const prefix1 = prefix0 + prefix
-
-  const breakLength = 80 - prefix1.length
+  /* Now for the normal logging of all our parameters */
+  const breakLength = 80 - taskWidth - 11 // 11 chars: evenly spaced level
   const options = { breakLength, colors: false, depth: logDepth, compact: 1 }
   const message = formatWithOptions(options, ...args)
 
-  const prefixed = prefix0 ? message.replace(/^/gm, prefix1) : message
+  const prefixed = prefix ? message.replace(/^/gm, prefix) : message
   write(`${prefixed}\n`)
 }
 
