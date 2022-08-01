@@ -1,4 +1,5 @@
-import util from 'node:util'
+import { inspect } from 'node:util'
+
 import { AbsolutePath, convertRelativeChildPath, resolveAbsolutePath } from './paths'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
@@ -35,6 +36,7 @@ export class Files {
     return this.#directory
   }
 
+  /** Return the number of files tracked by this instance. */
   get length(): number {
     return this.#files.length
   }
@@ -55,7 +57,7 @@ export class Files {
   }
 
   /* Nicety for logging */
-  [util.inspect.custom](): any {
+  [inspect.custom](): any {
     const self = this
     return new class Files {
       directory = self.#directory
