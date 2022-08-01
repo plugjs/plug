@@ -1,3 +1,4 @@
+import { AssertionError } from 'node:assert'
 import { log } from './log'
 
 /* ========================================================================== *
@@ -35,5 +36,5 @@ export function fail(causeOrReason: unknown, ...args: any[]): never {
 }
 
 export function assert(assertion: any, message: string): asserts assertion {
-  if (! assertion) fail(message)
+  if (! assertion) fail(new AssertionError({ message, stackStartFn: assert }))
 }
