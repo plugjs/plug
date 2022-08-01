@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from '../assert'
 import fs from '../utils/asyncfs'
 
 import { fileURLToPath } from 'url'

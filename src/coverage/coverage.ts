@@ -1,11 +1,12 @@
 import html from '@plugjs/cov8-html'
 import { sep } from 'node:path'
 import { Files } from '../files'
-import { $grn, $gry, $p, $red, $ylw, fail, log } from '../log'
+import { $grn, $gry, $p, $red, $ylw, log } from '../log'
 import { AbsolutePath, resolveAbsolutePath } from '../paths'
 import { Plug } from '../pipe'
 import { Run } from '../run'
 import { mkdir, writeFile } from '../utils/asyncfs'
+import { fail } from '../assert'
 
 import { absoluteWalk } from '../utils/walk'
 import { coverageReport, CoverageResult } from './report'
