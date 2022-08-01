@@ -8,28 +8,15 @@ import { log } from './log'
 /** Constant thrown by `Run` indicating a build failure already logged */
 const buildFailed = Symbol.for('plugjs:build.failed')
 
-/** Fail this `Run` giving a descriptive reason */
-export function fail(reason: string, ...data: any[]): never
-/** Fail this `Run` for the specified cause, with an optional reason */
-export function fail(cause: unknown, reason?: string, ...args: any[]): never
-// Overload!
-export function fail(causeOrReason: unknown, ...args: any[]): never {
-  /* We never have to log `buildFailed`, so treat it as undefined */
-  if (causeOrReason === buildFailed) causeOrReason = undefined
-
-  /* Nomalize our arguments, extracting cause and reason */
-  const [ cause, reason ] =
-    typeof causeOrReason === 'string' ?
-      [ undefined, causeOrReason ] :
-      [ causeOrReason, args.shift() as string | undefined ]
-
-  /* Log our error if we have to */
-  if (reason) {
-    if (cause) args.push(cause)
-    log.sep().error(reason, ...args).sep()
-  } else if (cause) {
-    log.sep().error('Error', cause).sep()
+/** Fail a build, any argument specified will be passed to our {@link Logger} */
+export function fail(...reason: any[]): never {
+  /* If the reason contains "buildFailed", then we already logged this */
+  for (const cause of reason) {
+    if (cause === buildFailed) throw buildFailed
   }
+
+  /* Log our error */
+  log.sep().error(...reason).sep()
 
   /* Failure handled, never log it again */
   throw buildFailed
