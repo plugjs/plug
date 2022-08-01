@@ -34,18 +34,33 @@ export type TaskDefinition<B> =
  * A {@link TaskCall} describes a _function_ calling a {@link Task}, and
  * it is exposed to outside users of the {@link Build}.
  */
-export type TaskCall = ((baseDir?: AbsolutePath) => Promise<Files | void>) & { task: Task }
+export type TaskCall<T extends Files | void> = {
+  task: Task<T>
+} & (
+  (baseDir?: AbsolutePath) => Promise<void>
+)
 
 /**
  * A {@link Build} is a collection of {@link TaskCall TaskCalls}, as produced
  * by the {@link build} function from a {@link BuildDefinition}.
  */
-export type Build<B> = { [ K in keyof B ] : TaskCall }
+export type Build<B> = {
+  [ K in keyof B ]:
+    B[K] extends TaskCall<infer T> ? TaskCall<T> :
+    B[K] extends () => Files | Promise<Files> ? TaskCall<Files> :
+    B[K] extends () => void | Promise<void> ? TaskCall<void> :
+    never
+}
 
 /**
  * The type supplied as `this` to a {@link TaskDefinition} when invoking it.
  */
-export type ThisBuild<B> = { [ K in keyof B ] : () => Pipe }
+export type ThisBuild<B> = {
+  [ K in keyof B ] :
+    B[K] extends () => Files | Promise<Files> ? () => Pipe :
+    B[K] extends () => void | Promise<void> ? () => Promise<void> :
+    never
+}
 
 /**
  * A {@link BuildDefinition} is a collection of
@@ -56,7 +71,7 @@ export type ThisBuild<B> = { [ K in keyof B ] : () => Pipe }
  * thus giving the ability to extend other {@link Build Builds}.
  */
 export type BuildDefinition<B> = {
-  [ K in keyof B ] : TaskDefinition<B> | TaskCall
+  [ K in keyof B ] : TaskDefinition<B> | TaskCall<Files | void>
 }
 
 /* ========================================================================== *
@@ -82,7 +97,9 @@ export function build<D extends BuildDefinition<D>>(
     const task: Task = 'task' in def ? def.task : new TaskImpl(context, def)
 
     /* Prepare the _new_ `TaskCall` that will wrap our `Task` */
-    const call = ((baseDir?: AbsolutePath) => initRun(context, baseDir).call(name)) as TaskCall
+    const call = (async (baseDir?: AbsolutePath): Promise<void> => {
+      await initRun(context, baseDir).call(name)
+    }) as TaskCall<any>
 
     /* Inject all the properties we need to make a function a `TaskCall` */
     Object.defineProperties(call, {
