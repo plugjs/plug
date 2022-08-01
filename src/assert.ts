@@ -1,4 +1,3 @@
-import { AssertionError } from 'node:assert'
 import { log } from './log'
 
 /* ========================================================================== *
@@ -22,6 +21,32 @@ export function fail(...reason: any[]): never {
   throw buildFailed
 }
 
-export function assert(assertion: any, message: string): asserts assertion {
-  if (! assertion) fail(new AssertionError({ message, stackStartFn: assert }))
+export function assert(assertion: any, message: string, ...args: any[]): asserts assertion {
+  if (! assertion) fail(message, ...args)
+}
+
+/* ========================================================================== */
+
+type PromiseSettlementAssertion<T extends any[]> = {
+  [ K in keyof T ]:
+    T[K] extends PromiseSettledResult<infer R> ?
+      PromiseFulfilledResult<R> :
+      never
+}
+
+/** Asserts that all promise settlements are actually fullfilled. */
+export function assertSettled<T extends PromiseSettledResult<any>[]>(
+    settlements: T, message: string, ...args: any[]
+): asserts settlements is T & PromiseSettlementAssertion<T> {
+  let errors = 0
+  for (const settlement of settlements) {
+    if (settlement.status === 'fulfilled') continue
+
+    errors ++
+
+    if (settlement.reason === buildFailed) continue
+    log.sep().error(settlement.reason)
+  }
+
+  if (errors) fail(message, ...args)
 }
