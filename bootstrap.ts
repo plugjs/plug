@@ -45,6 +45,7 @@ const b = build({
   async default() {
     const r1 = this.compile_sources()
     const r2 = this.compile_tests()
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     void r1, r2
 
 
