@@ -13,7 +13,7 @@ import { registerTask } from './log'
 
 /**
  * The {@link BuildContext} interface exposes the _internal_ representation of
- * a build file, including all {@link Task}s.
+ * a build file, including all {@link Task Tasks}.
  */
 export type BuildContext = {
   /** The absolute file name of the build */
@@ -37,8 +37,8 @@ export type TaskDefinition<B> =
 export type TaskCall = ((baseDir?: AbsolutePath) => Promise<Files | void>) & { task: Task }
 
 /**
- * A {@link Build} is a collection of {@link TaskCall}s, as produced by the
- * {@link build} function from a {@link BuildDefinition}.
+ * A {@link Build} is a collection of {@link TaskCall TaskCalls}, as produced
+ * by the {@link build} function from a {@link BuildDefinition}.
  */
 export type Build<B> = { [ K in keyof B ] : TaskCall }
 
@@ -48,11 +48,12 @@ export type Build<B> = { [ K in keyof B ] : TaskCall }
 export type ThisBuild<B> = { [ K in keyof B ] : () => Pipe }
 
 /**
- * A {@link BuildDefinition} is a collection of {@link TaskDefinition}s
- * that the {@link build} function will use to prepare a {@link Build}.
+ * A {@link BuildDefinition} is a collection of
+ * {@link TaskDefinition TaskDefinitions} that the {@link build} function will
+ * use to create a {@link Build}.
  *
- * A {@link BuildDefinition} can also include other {@link TaskCall}s, thus
- * giving the ability to extend other {@link Build}s.
+ * A {@link BuildDefinition} can also include other {@link TaskCall TaskCalls},
+ * thus giving the ability to extend other {@link Build Builds}.
  */
 export type BuildDefinition<B> = {
   [ K in keyof B ] : TaskDefinition<B> | TaskCall
