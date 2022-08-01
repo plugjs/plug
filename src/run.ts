@@ -1,40 +1,72 @@
-import assert from 'assert'
+import type { BuildContext, ThisBuild } from './build'
 import type { Task } from './task'
+
+import { $t, log } from './log'
 import { AbsolutePath, isAbsolutePath, resolveAbsolutePath } from './paths'
-import { BuildContext, ThisBuild } from './build'
 import { Files, FilesBuilder } from './files'
 import { ParseOptions, parseOptions } from './utils/options'
 import { Pipe } from './pipe'
-import { fail, log } from './log'
+import { assert, fail } from './assert'
 import { currentRun, runAsync } from './async'
 import { walk, WalkOptions } from './utils/walk'
+import { join } from 'node:path'
 
-/**
- * The {@link FindOptions} interface defines the options available to
- * {@link TaskContext.find}.
- */
+/** The {@link FindOptions} interface defines the options for finding files. */
 export interface FindOptions extends WalkOptions {
   /**
-   * The directory where to start looking for files.
-   *
-   * @defaultValue The current {@link Run.directory}
+   * The directory where to start looking for files according to the rules
+   * specified in {@link Run.resolve}.
    */
   directory?: string
 }
 
+/**
+ * The {@link Run} interface defines the context in which a {@link Task} is
+ * invoked.
+ *
+ * Runs keep track of the invocation stack (to avoid circular dependencies) and
+ * of the cached results for {@link Task} invocations.
+ */
 export interface Run extends BuildContext {
+  /**
+   * The _base directory_ associated with the run - normally the directory
+   * where the initial build files is located.
+   */
   readonly baseDir: AbsolutePath,
+  /**
+   * The _name_ of the task associated with this {@link Run} (if one is).
+   *
+   * Tasks can have different names in different builds, this refers to the
+   * _task name_ in the build being executed.
+   */
   readonly taskName?: string
 
+  /** Call another {@link Task} from this one. */
   call(name: string): Promise<Files | void>
-  resolve(path?: string): AbsolutePath
-  files(path?: string): FilesBuilder
+
+  /**
+   * Resolve a path in the context of this {@link Run}.
+   *
+   * If the path starts with `@...` it is considered to be relative to this
+   * instance's `baseDir`, otherwise it will be resolved against the build file
+   * where the task was _originally_ defined in.
+   */
+  resolve(...paths: string[]): AbsolutePath
+
+  /**
+   * Create a {@link FilesBuilder} instancce resolving the directory specified
+   * according to the rules specified in {@link Run.resolve}.
+   */
+  files(...paths: string[]): FilesBuilder
+
+  /**
+   * Find files according to the globs and {@link FindOptions specified}.
+   */
   find(glob: string, ...args: ParseOptions<FindOptions>): Pipe
 }
 
-
-/** A {@link Run} represents the context used when invoking a {@link Task}. */
-export class RunImpl implements Run {
+/** Default implementation of the {@link Run} interface. */
+class RunImpl implements Run {
   private readonly _pipes: Pipe[] = []
 
   constructor(
@@ -47,15 +79,12 @@ export class RunImpl implements Run {
       readonly taskName?: string,
   ) {}
 
-  /** Run the specified {@link Task} in the context of this {@link Run} */
   call(name: string): Promise<Files | void> {
     const task = this.tasks[name]
-    if (! task) fail(`Task "${name}" does not exist`) // TODO: colors
+    if (! task) fail(`Task "${$t(name)}" does not exist`)
 
     /* Check for circular dependencies */
-    if (this._stack.includes(task)) {
-      fail(`Circular dependency running task "${name}"`) // TODO: colors & stack
-    }
+    assert(! this._stack.includes(task), `Circular dependency running task "${$t(name)}"`)
 
     /* Check for cached results */
     const cached = this._cache.get(task)
@@ -97,7 +126,7 @@ export class RunImpl implements Run {
         /* Return the result or an empty `Files` */
         return result || results.pop()
       } catch (error) {
-        fail(error, 'Task failed in', Date.now() - now, 'ms')
+        fail('Task failed in', Date.now() - now, 'ms', error)
       }
     })
 
@@ -106,7 +135,8 @@ export class RunImpl implements Run {
     return promise
   }
 
-  resolve(path?: string): AbsolutePath {
+  resolve(...paths: string[]): AbsolutePath {
+    const path = join(...paths)
     if (! path) return this.buildDir
 
     if (path.startsWith('@')) {
@@ -120,14 +150,14 @@ export class RunImpl implements Run {
     return resolveAbsolutePath(this.buildDir, path)
   }
 
-  files(path?: string): FilesBuilder {
-    return Files.builder(this.resolve(path))
+  files(...paths: string[]): FilesBuilder {
+    return Files.builder(this.resolve(...paths))
   }
 
   find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
     const promise = Promise.resolve().then(async () => {
       const { params, options: { directory, ...options } } = parseOptions(args, {})
-      const dir = this.resolve(directory)
+      const dir = this.resolve(directory || '.')
 
       const builder = Files.builder(dir)
       for await (const file of walk(dir, [ glob, ...params ], options)) {
@@ -143,6 +173,10 @@ export class RunImpl implements Run {
   }
 }
 
+/**
+ * Create a new {@link Run} associated with the given {@link BuildContext} and
+ * (optionally) forcing its {@link Run.baseDir baseDir} to the one specified.
+ */
 export function initRun(context: BuildContext, baseDir?: AbsolutePath): Run {
   return new RunImpl(
       baseDir || context.buildDir,
@@ -154,8 +188,24 @@ export function initRun(context: BuildContext, baseDir?: AbsolutePath): Run {
   )
 }
 
+/**
+ * Find files according to the globs and {@link FindOptions specified}.
+ */
 export function find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
   const run = currentRun()
   assert(run, 'Unable to find files outside a running task')
   return run.find(glob, ...args)
+}
+
+/**
+ * Resolve a path into an {@link AbsolutePath}.
+ *
+ * If the path starts with `@...` it is considered to be relative to this
+ * instance's `baseDir`, otherwise it will be resolved against the build file
+ * where the task was _originally_ defined in.
+ */
+export function resolve(...paths: string[]): AbsolutePath {
+  const run = currentRun()
+  assert(run, 'Unable to find files outside a running task')
+  return run.resolve(...paths)
 }
