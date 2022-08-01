@@ -2,17 +2,18 @@ import type fs from 'node:fs'
 import type tty from 'node:tty'
 
 import { sep } from 'node:path'
-import { inspect } from 'node:util'
+import { formatWithOptions } from 'node:util'
 import { currentRun, currentTask, runningTasks } from './async'
 
 import { AbsolutePath, resolveRelativeChildPath } from './paths'
+import { EOL } from 'node:os'
 
 /* ========================================================================== *
  * TYPES                                                                      *
  * ========================================================================== */
 
 /** Constant thrown by `Run` indicating a build failure already logged */
-const buildFailed = Symbol.for('plugjs:build.failed')
+// const buildFailed = Symbol.for('plugjs:build.failed')
 
 /** Combine {@link fs.WriteStream} and {@link tty.WriteStream} */
 export type WriteStream = fs.WriteStream | tty.WriteStream
@@ -29,15 +30,15 @@ export type LogLevel =
 /** A {@link Logger} emits log events */
 export interface Logger {
   /** Log a `TRACE` message */
-  trace: (message: string, ...data: any[]) => this
+  trace: (...data: any[]) => this
   /** Log a `DEBUG` message */
-  debug: (message: string, ...data: any[]) => this
+  debug: (...data: any[]) => this
   /** Log an `INFO` message */
-  info: (message: string, ...data: any[]) => this
+  info: (...data: any[]) => this
   /** Log a `WARNING` message */
-  warn: (message: string, ...data: any[]) => this
+  warn: (...data: any[]) => this
   /** Log an `ERROR` message */
-  error: (message: string, ...data: any[]) => this
+  error: (...data: any[]) => this
   /** Separate log entries */
   sep: () => this
 }
@@ -333,6 +334,7 @@ const blackSquare = '\u25a0'
 
 /** Emit either plain or color */
 function emit(task: string | undefined, prefix: string, level: number, ...args: any[]): void {
+  // TODO: filter for `buildFailed`, check for empty lines, ...
   return logColor ?
     emitColor(task || defaultTask, prefix, level, ...args) :
     emitPlain(task || defaultTask, prefix, level, ...args)
@@ -382,7 +384,8 @@ function emitColor(task: string | undefined, prefix: string, level: number, ...a
   /* Now for the normal logging of all our parameters */
   // eslint-disable-next-line no-control-regex
   const breakLength = logWidth - prefix1.replace(/\u001b\[[^m]+m/g, '').length
-  const strings = stringifyArgs(args, breakLength)
+  const options = { breakLength, colors: logColor, depth: logDepth, compact: 1 }
+  const strings = formatWithOptions(options, ...args).split(EOL)
   if (! strings.length) return // use sep()
 
   const message = strings.join(' ')
@@ -425,27 +428,13 @@ function emitPlain(task: string | undefined, prefix: string, level: number, ...a
   const prefix1 = prefix0 + prefix
 
   const breakLength = 80 - prefix1.length
-  const strings = stringifyArgs(args, breakLength)
+  const options = { breakLength, colors: logColor, depth: logDepth, compact: 1 }
+  const strings = formatWithOptions(options, ...args).split(EOL)
   if (! strings.length) return // use sep()
 
   const message = strings.join(' ')
   const prefixed = prefix0 ? message.replace(/^/gm, prefix1) : message
   write(`${prefixed}\n`)
-}
-
-function stringifyArgs(args: any[], breakLength: number): string[] {
-  let newLine = false
-
-  return args.map((arg) => {
-    if (arg === buildFailed) return undefined
-
-    newLine = newLine || ((arg !== null) && (typeof arg === 'object'))
-
-    const string = typeof arg === 'string' ? arg :
-      inspect(arg, { breakLength, colors: logColor, depth: logDepth, compact: 1 })
-
-    return newLine ? '\n' + string : string
-  }).filter((arg) => arg !== undefined) as string[]
 }
 
 function write(value: string): void {
