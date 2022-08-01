@@ -1,14 +1,17 @@
 import { inspect } from 'node:util'
-import { AbsolutePath, assertRelativeChildPath, resolveAbsolutePath } from './paths'
+import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths'
+import { mkdir, writeFile } from './utils/asyncfs'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
 export interface FilesBuilder {
   /** The (resolved) directory the {@link Files} will be associated with */
   readonly directory: AbsolutePath
   /** Push files into the {@link Files} instance being built */
-  add(...files: string[]): this
+  add(...files: string[]): void
   /** Merge orther {@link Files} instance to the {@link Files} being built */
-  merge(...files: Files[]): this
+  merge(...files: Files[]): void
+  /** Write a file and add it to the {@link Files} instance being built */
+  write(file: string, content: string | Buffer): Promise<void>
   /** Build and return a {@link Files} instance */
   build(): Files
 }
@@ -73,7 +76,7 @@ export class Files {
     return {
       directory: instance.directory,
 
-      add(...files: string[]): FilesBuilder {
+      add(...files: string[]): void {
         if (built) throw new Error('FileBuilder "build()" already called')
 
         if (typeof files === 'string') files = [ files ]
@@ -81,10 +84,9 @@ export class Files {
           const relative = assertRelativeChildPath(instance.directory, file)
           set.add(relative)
         }
-        return this
       },
 
-      merge(...args: Files[]): FilesBuilder {
+      merge(...args: Files[]): void {
         if (built) throw new Error('FileBuilder "build()" already called')
 
         for (const files of args) {
@@ -92,7 +94,15 @@ export class Files {
             this.add(file)
           }
         }
-        return this
+      },
+
+      async write(file: string, content: string | Buffer): Promise<void> {
+        const relative = assertRelativeChildPath(instance.directory, file)
+        const absolute = resolveAbsolutePath(instance.directory, relative)
+        const directory = getAbsoluteParent(absolute)
+
+        await mkdir(directory, { recursive: true })
+        await writeFile(absolute, content)
       },
 
       build(): Files {
