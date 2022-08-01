@@ -17,7 +17,7 @@ export type PlugFunction = Plug['pipe']
  * A {@link Pipe} represents a sequence of operations performed by
  * a series of {@link Plug Plugs}.
  */
-export interface Pipe extends Promise<Files | void> {
+export interface Pipe extends Promise<Files> {
   /** Add a new {@link Plug} to the steps of this {@link Pipe} */
   plug(plug: Plug): this
   /** Add a new {@link Plug} to the steps of this {@link Pipe} */
@@ -40,30 +40,33 @@ export class Pipe implements Pipe {
   plug(plug: PlugFunction): this
   plug(arg: Plug | PlugFunction): this {
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
-    this.#promise = this.#promise.then((files) => {
-      if (! files) files = this.#run.files().build()
-      return plug.pipe(files, this.#run)
-    })
+    this.#promise = this.#promise.then((files) => files && plug.pipe(files, this.#run))
     return this
   }
 
   then<T1 = Files, T2 = never>(
-      onfulfilled?: ((value: Files | void) => T1 | PromiseLike<T1>) | null | undefined,
+      onfulfilled?: ((value: Files) => T1 | PromiseLike<T1>) | null | undefined,
       onrejected?: ((reason: any) => T2 | PromiseLike<T2>) | null | undefined,
   ): Promise<T1 | T2> {
-    return this.#promise.then(onfulfilled, onrejected)
+    return this.#promise
+        .then((files) => files ? files : this.#run.files().build())
+        .then(onfulfilled, onrejected)
   }
 
   catch<T = never>(
       onrejected?: ((reason: any) => T | PromiseLike<T>) | null | undefined,
-  ): Promise<T | Files | void> {
-    return this.#promise.catch(onrejected)
+  ): Promise<T | Files> {
+    return this.#promise
+        .then((files) => files ? files : this.#run.files().build())
+        .catch(onrejected)
   }
 
   finally(
       onfinally?: (() => void) | null | undefined,
-  ): Promise<Files | void> {
-    return this.#promise.finally(onfinally)
+  ): Promise<Files> {
+    return this.#promise
+        .then((files) => files ? files : this.#run.files().build())
+        .finally(onfinally)
   }
 }
 
@@ -72,7 +75,7 @@ export class Pipe implements Pipe {
  * ========================================================================== */
 
 /** The names which can be installed as direct plugs. */
-export type PlugNames = string & Exclude<keyof Pipe, 'plug' | keyof Promise<Files | void>>
+export type PlugNames = string & Exclude<keyof Pipe, 'plug' | keyof Promise<Files>>
 
 /**
  * Install a {@link Plug} into our {@link Pipe} prototype.
