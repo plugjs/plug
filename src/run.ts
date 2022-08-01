@@ -6,7 +6,7 @@ import { AbsolutePath, isAbsolutePath, resolveAbsolutePath } from './paths'
 import { Files, FilesBuilder } from './files'
 import { ParseOptions, parseOptions } from './utils/options'
 import { Pipe } from './pipe'
-import { assert, fail } from './assert'
+import { assert, assertSettled, fail } from './assert'
 import { currentRun, runAsync } from './async'
 import { walk, WalkOptions } from './utils/walk'
 import { join } from 'node:path'
@@ -108,7 +108,10 @@ class RunImpl implements Run {
       const thisBuild: ThisBuild<any> = {}
       for (const name in childRun.tasks) {
         thisBuild[name] = (): Pipe => {
-          const promise = childRun.call(name)
+          const promise = Promise.resolve().then(async () => {
+            const files = await childRun.call(name)
+            return files || childRun.files().build()
+          })
           const pipe = new Pipe(promise, childRun)
           childRun._pipes.push(pipe)
           return pipe
@@ -116,15 +119,16 @@ class RunImpl implements Run {
       }
 
       try {
-        const result = await task.call(thisBuild, childRun)
-
-        /* Any pipe created by calling this.xxx(...) gets awaited */
-        const results = await Promise.all(childRun._pipes)
+        let result: Files | void
+        try {
+          result = await task.call(thisBuild, childRun)
+        } finally {
+          const settlements = await Promise.allSettled(childRun._pipes)
+          assertSettled(settlements, 'Task failed in', Date.now() - now, 'ms')
+        }
 
         log.sep().info('Task completed in', Date.now() - now, 'ms').sep()
-
-        /* Return the result or an empty `Files` */
-        return result || results.pop()
+        return result
       } catch (error) {
         fail('Task failed in', Date.now() - now, 'ms', error)
       }
