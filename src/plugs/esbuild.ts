@@ -1,8 +1,7 @@
-import assert from 'assert'
-
+import { assert, fail } from '../assert'
 import { build, BuildOptions } from 'esbuild'
 import { Files, FilesBuilder } from '../files'
-import { $p, fail, log } from '../log'
+import { $p, log } from '../log'
 
 import { resolveAbsolutePath } from '../paths'
 import { Plug } from '../pipe'

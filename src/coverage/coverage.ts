@@ -2,13 +2,11 @@ import html from '@plugjs/cov8-html'
 import { sep } from 'node:path'
 import { Files } from '../files'
 import { $grn, $gry, $p, $red, $ylw, log } from '../log'
-import { AbsolutePath, resolveAbsolutePath } from '../paths'
+import { AbsolutePath } from '../paths'
 import { Plug } from '../pipe'
 import { Run } from '../run'
-import { mkdir, writeFile } from '../utils/asyncfs'
 import { fail } from '../assert'
 
-import { absoluteWalk } from '../utils/walk'
 import { coverageReport, CoverageResult } from './report'
 
 export interface CoverageOptions {
@@ -24,11 +22,15 @@ export class Coverage implements Plug {
   constructor(options: CoverageOptions)
   constructor(private _options: CoverageOptions) {}
 
-  async pipe(files: Files, run: Run): Promise<Files> {
-    const coverageDir = run.resolve(this._options.coverageDir)
-    const coverageFiles = absoluteWalk(coverageDir, [ 'coverage-*.json' ])
+  async pipe(files: Files, run: Run): Promise<Files | void> {
+    const coverageFiles = await run.find('coverage-*.json', {
+      directory: this._options.coverageDir,
+    })
 
-    const report = await coverageReport(files.absolutePaths(), coverageFiles)
+    const report = await coverageReport(
+        files.absolutePaths(),
+        coverageFiles.absolutePaths(),
+    )
 
     const {
       minimumCoverage = 50,
@@ -49,7 +51,8 @@ export class Coverage implements Plug {
       if (file.length > maxLength) maxLength = file.length
     }
 
-    const fileErrors = 0
+    let fileErrors = 0
+    let fileWarnings = 0
     for (const [ file, result ] of Object.entries(report.results)) {
       const { coverage } = result.nodeCoverage
       const padding = ''.padEnd(maxLength - file.length, ' ')
@@ -57,8 +60,10 @@ export class Coverage implements Plug {
 
       if (coverage < minimumFileCoverage) {
         log.error($p(file as AbsolutePath), padding, $red(percentage))
+        fileErrors ++
       } else if (coverage < optimalFileCoverage) {
         log.warn($p(file as AbsolutePath), padding, $ylw(percentage))
+        fileWarnings ++
       } else {
         log.info($p(file as AbsolutePath), padding, $grn(percentage))
       }
@@ -74,13 +79,14 @@ export class Coverage implements Plug {
 
     if (fileErrors) {
       fail(`Coverage error: ${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`)
+    } else if (fileWarnings) {
+      log.sep().warn(`Coverage: ${$ylw(fileErrors)} files do not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`)
     }
 
-    if (! this._options.reportDir) return run.files('.').build()
 
-    const reportDir = run.resolve(this._options.reportDir)
+    if (! this._options.reportDir) return
 
-    await mkdir(reportDir, { recursive: true })
+    const builder = run.files(this._options.reportDir)
 
     /* Thresholds to inject in the report */
     const date = new Date().toISOString()
@@ -92,16 +98,12 @@ export class Coverage implements Plug {
     }
 
     /* The JSON file in the report has *absolute* file paths */
-    const jsonFile = resolveAbsolutePath(reportDir, 'report.json')
-    await writeFile(jsonFile, JSON.stringify({ ...report, thresholds, date }))
+    await builder.write('report.json', JSON.stringify({ ...report, thresholds, date }))
 
     /* The HTML file rendering our report */
-    const htmlFile = resolveAbsolutePath(reportDir, 'index.html')
-    await writeFile(htmlFile, html)
+    await builder.write('index.html', html)
 
     /* The JSONP file (for our HTML report) has relative files and a tree */
-    const jsonpFile = resolveAbsolutePath(reportDir, 'report.js')
-
     const results: Record<string, CoverageResult> = {}
     for (const [ rel, abs ] of files.pathMappings()) {
       results[rel] = report.results[abs]
@@ -121,14 +123,10 @@ export class Coverage implements Plug {
     }
 
     const jsonp = JSON.stringify({ ...report, results, thresholds, tree, date })
-    await writeFile(jsonpFile, `window.__initCoverage__(${jsonp});`)
+    await builder.write('report.js', `window.__initCoverage__(${jsonp});`)
 
     /* Add the files we generated */
-    return run.files(reportDir)
-        .add(jsonFile)
-        .add(htmlFile)
-        .add(jsonpFile)
-        .build()
+    return builder.build()
   }
 }
 

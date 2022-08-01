@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from '../utils/asyncfs'
 
-import assert from 'assert'
+import { assert } from '../assert'
 import { Files } from '../files'
 import { $p, log } from '../log'
 import { AbsolutePath, resolveAbsolutePath } from '../paths'

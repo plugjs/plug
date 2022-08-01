@@ -7,8 +7,9 @@ import {
 } from 'typescript'
 
 import { Diagnostic, FormatDiagnosticsHost } from 'typescript'
-import { $red, fail, log } from '../log'
+import { $red, log } from '../log'
 import { AbsolutePath, resolveAbsolutePath } from '../paths'
+import { fail } from '../assert'
 
 export class TypeScriptHost
 implements FormatDiagnosticsHost, CompilerHost {

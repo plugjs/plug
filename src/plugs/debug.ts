@@ -1,6 +1,6 @@
 import { Files } from '../files'
 import { $p, log } from '../log'
-import { Plug } from '../pipe'
+import { install, Plug } from '../pipe'
 import { Run } from '../run'
 
 export class Debug implements Plug {
@@ -22,6 +22,10 @@ export class Debug implements Plug {
   }
 }
 
-export function debug(): Debug {
-  return new Debug()
+declare module '../pipe' {
+  export interface Pipe {
+    debug(...args: ConstructorParameters<typeof Debug>): this
+  }
 }
+
+export const debug = install('debug', Debug)

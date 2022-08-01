@@ -279,7 +279,7 @@ export async function coverageReport(
     /* Visit a node and evaluate its coverage */
     const visitNode = (node: Node, depth: number): void => {
       /* See what we're doing here... */
-      log.info('-'.padStart((depth * 2) + 1, ' '), node.type, `${node.loc?.start.line}:${node.loc?.start.column}`)
+      log.trace('-'.padStart((depth * 2) + 1, ' '), node.type, `${node.loc?.start.line}:${node.loc?.start.column}`)
 
       /* Root nodes (file and program) simply go to their children */
       if (isFile(node)) return visitChildren(node, depth)
