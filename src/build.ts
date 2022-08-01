@@ -1,10 +1,11 @@
-import { Files } from './files'
-import { registerTask } from './log'
+import type { Files } from './files'
+import type { Pipe } from './pipe'
+
 import { AbsolutePath, getAbsoluteParent } from './paths'
-import { Pipe } from './pipe'
-import { initRun, Run } from './run'
 import { Task, TaskImpl } from './task'
 import { findCaller } from './utils/caller'
+import { initRun, Run } from './run'
+import { registerTask } from './log'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -26,12 +27,12 @@ export type BuildContext = {
 /**
  * A {@link TaskDefinition} is a _function_ defining a {@link Task}.
  */
-export type TaskDefinition<B> = (this: ThisBuild<B>, self: ThisBuild<B>, run: Run) =>
-Files | void | Promise<Files | void>
+export type TaskDefinition<B> =
+  (this: ThisBuild<B>, self: ThisBuild<B>, run: Run) => Files | void | Promise<Files | void>
 
 /**
- * A {@link TaskCall} describe a _function_ calling a {@link Task}, and
- * it is exposed to outside users of the build.
+ * A {@link TaskCall} describes a _function_ calling a {@link Task}, and
+ * it is exposed to outside users of the {@link Build}.
  */
 export type TaskCall = ((baseDir?: AbsolutePath) => Promise<Files | void>) & { task: Task }
 
@@ -39,16 +40,12 @@ export type TaskCall = ((baseDir?: AbsolutePath) => Promise<Files | void>) & { t
  * A {@link Build} is a collection of {@link TaskCall}s, as produced by the
  * {@link build} function from a {@link BuildDefinition}.
  */
-export type Build<B> = {
-  [ K in keyof B ] : TaskCall
-}
+export type Build<B> = { [ K in keyof B ] : TaskCall }
 
 /**
  * The type supplied as `this` to a {@link TaskDefinition} when invoking it.
  */
-export type ThisBuild<B> = {
-  [ K in keyof B ] : () => Pipe
-}
+export type ThisBuild<B> = { [ K in keyof B ] : () => Pipe }
 
 /**
  * A {@link BuildDefinition} is a collection of {@link TaskDefinition}s
