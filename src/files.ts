@@ -1,6 +1,5 @@
 import { inspect } from 'node:util'
-
-import { AbsolutePath, convertRelativeChildPath, resolveAbsolutePath } from './paths'
+import { AbsolutePath, assertRelativeChildPath, resolveAbsolutePath } from './paths'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
 export interface FilesBuilder {
@@ -79,7 +78,7 @@ export class Files {
 
         if (typeof files === 'string') files = [ files ]
         for (const file of files) {
-          const relative = convertRelativeChildPath(instance.directory, file)
+          const relative = assertRelativeChildPath(instance.directory, file)
           set.add(relative)
         }
         return this
