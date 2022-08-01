@@ -1,7 +1,6 @@
 import type { BuildContext, TaskDefinition, ThisBuild } from './build'
+import type { Files } from './files'
 import type { Run } from './run'
-
-import { Files } from './files'
 
 /* ========================================================================== *
  * TASK                                                                       *
