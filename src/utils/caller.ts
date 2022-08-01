@@ -1,4 +1,4 @@
-import assert from 'assert'
+import { assert } from '../assert'
 import { statSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { AbsolutePath, assertAbsolutePath } from '../paths'
