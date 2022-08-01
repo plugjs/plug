@@ -28,10 +28,10 @@ export interface Pipe extends Promise<Files> {
  * Implementation of our {@link Pipe} interface.
  */
 export class Pipe implements Pipe {
-  #promise: Promise<Files | void>
+  #promise: Promise<Files>
   readonly #run: Run
 
-  constructor(start: Files | void | Promise<Files | void>, run: Run) {
+  constructor(start: Files | Promise<Files>, run: Run) {
     this.#promise = Promise.resolve().then(() => start)
     this.#run = run
   }
@@ -40,7 +40,10 @@ export class Pipe implements Pipe {
   plug(plug: PlugFunction): this
   plug(arg: Plug | PlugFunction): this {
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
-    this.#promise = this.#promise.then((files) => files && plug.pipe(files, this.#run))
+    this.#promise = this.#promise.then(async (files) => {
+      const result = await plug.pipe(files, this.#run)
+      return result ? result : this.#run.files().build()
+    })
     return this
   }
 
@@ -49,7 +52,6 @@ export class Pipe implements Pipe {
       onrejected?: ((reason: any) => T2 | PromiseLike<T2>) | null | undefined,
   ): Promise<T1 | T2> {
     return this.#promise
-        .then((files) => files ? files : this.#run.files().build())
         .then(onfulfilled, onrejected)
   }
 
@@ -57,7 +59,6 @@ export class Pipe implements Pipe {
       onrejected?: ((reason: any) => T | PromiseLike<T>) | null | undefined,
   ): Promise<T | Files> {
     return this.#promise
-        .then((files) => files ? files : this.#run.files().build())
         .catch(onrejected)
   }
 
@@ -65,7 +66,6 @@ export class Pipe implements Pipe {
       onfinally?: (() => void) | null | undefined,
   ): Promise<Files> {
     return this.#promise
-        .then((files) => files ? files : this.#run.files().build())
         .finally(onfinally)
   }
 }
