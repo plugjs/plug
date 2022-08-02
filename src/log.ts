@@ -185,7 +185,7 @@ export const log: Log = {
 export class TaskLogger implements Logger {
   #task
 
-  constructor(task: string | undefined = currentTask()) {
+  constructor(task: string) {
     this.#task = task
   }
 
