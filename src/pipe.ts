@@ -1,6 +1,6 @@
 import type { Files } from './files'
 import type { Run } from './run'
-import { ConstructorArguments } from './types'
+import type { ConstructorArguments } from './types'
 
 /**
  * The {@link Plug} interface describes an extension mechanism for our build.
