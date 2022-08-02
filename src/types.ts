@@ -1,19 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-/* ========================================================================== *
- * TYPES OVERRIDES / EXTENSIONS                                               *
- * ========================================================================== */
-
-/*
- * Type definition for `WebAssembly`. This is normally provided to TypeScript
- * by `lib.dom.d.ts`, and is not defined by Node's own types.
- *
- * https://github.com/evanw/esbuild/issues/2388
- */
-declare namespace WebAssembly {
-  interface Module {} // for esbuild types
-}
-
 /**
  * When converting constructor parameters, we only want to keep known tuples
  * in our arguments list, otherwise we'll end up with an extra `unknown[]`.
