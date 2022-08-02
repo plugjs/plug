@@ -39,10 +39,131 @@ export type ConstructorArguments<T> =
     ConstructorArgument<A7> |
     ConstructorArgument<A8> |
     ConstructorArgument<A9> :
-  /* Converts the case where the constructor has no overloads */
+  T extends {
+    new (...args: infer A0): any
+    new (...args: infer A1): any
+    new (...args: infer A2): any
+    new (...args: infer A3): any
+    new (...args: infer A4): any
+    new (...args: infer A5): any
+    new (...args: infer A6): any
+    new (...args: infer A7): any
+    new (...args: infer A8): any
+  } ?
+    ConstructorArgument<A0> |
+    ConstructorArgument<A1> |
+    ConstructorArgument<A2> |
+    ConstructorArgument<A3> |
+    ConstructorArgument<A4> |
+    ConstructorArgument<A5> |
+    ConstructorArgument<A6> |
+    ConstructorArgument<A7> |
+    ConstructorArgument<A8> :
+  T extends {
+    new (...args: infer A0): any
+    new (...args: infer A1): any
+    new (...args: infer A2): any
+    new (...args: infer A3): any
+    new (...args: infer A4): any
+    new (...args: infer A5): any
+    new (...args: infer A6): any
+    new (...args: infer A7): any
+    new (...args: infer A8): any
+  } ?
+    ConstructorArgument<A0> |
+    ConstructorArgument<A1> |
+    ConstructorArgument<A2> |
+    ConstructorArgument<A3> |
+    ConstructorArgument<A4> |
+    ConstructorArgument<A5> |
+    ConstructorArgument<A6> |
+    ConstructorArgument<A7> |
+    ConstructorArgument<A8> :
+  T extends {
+    new (...args: infer A0): any
+    new (...args: infer A1): any
+    new (...args: infer A2): any
+    new (...args: infer A3): any
+    new (...args: infer A4): any
+    new (...args: infer A5): any
+    new (...args: infer A6): any
+    new (...args: infer A7): any
+  } ?
+    ConstructorArgument<A0> |
+    ConstructorArgument<A1> |
+    ConstructorArgument<A2> |
+    ConstructorArgument<A3> |
+    ConstructorArgument<A4> |
+    ConstructorArgument<A5> |
+    ConstructorArgument<A6> |
+    ConstructorArgument<A7> :
+  T extends {
+    new (...args: infer A0): any
+    new (...args: infer A1): any
+    new (...args: infer A2): any
+    new (...args: infer A3): any
+    new (...args: infer A4): any
+    new (...args: infer A5): any
+    new (...args: infer A6): any
+  } ?
+    ConstructorArgument<A0> |
+    ConstructorArgument<A1> |
+    ConstructorArgument<A2> |
+    ConstructorArgument<A3> |
+    ConstructorArgument<A4> |
+    ConstructorArgument<A5> |
+    ConstructorArgument<A6> :
+  T extends {
+    new (...args: infer A0): any
+    new (...args: infer A1): any
+    new (...args: infer A2): any
+    new (...args: infer A3): any
+    new (...args: infer A4): any
+    new (...args: infer A5): any
+  } ?
+    ConstructorArgument<A0> |
+    ConstructorArgument<A1> |
+    ConstructorArgument<A2> |
+    ConstructorArgument<A3> |
+    ConstructorArgument<A4> |
+    ConstructorArgument<A5> :
+  T extends {
+    new (...args: infer A0): any
+    new (...args: infer A1): any
+    new (...args: infer A2): any
+    new (...args: infer A3): any
+    new (...args: infer A4): any
+  } ?
+    ConstructorArgument<A0> |
+    ConstructorArgument<A1> |
+    ConstructorArgument<A2> |
+    ConstructorArgument<A3> |
+    ConstructorArgument<A4> :
+  T extends {
+    new (...args: infer A0): any
+    new (...args: infer A1): any
+    new (...args: infer A2): any
+    new (...args: infer A3): any
+  } ?
+    ConstructorArgument<A0> |
+    ConstructorArgument<A1> |
+    ConstructorArgument<A2> |
+    ConstructorArgument<A3> :
+  T extends {
+    new (...args: infer A0): any
+    new (...args: infer A1): any
+    new (...args: infer A2): any
+  } ?
+    ConstructorArgument<A0> |
+    ConstructorArgument<A1> |
+    ConstructorArgument<A2> :
+  T extends {
+    new (...args: infer A0): any
+    new (...args: infer A1): any
+  } ?
+    ConstructorArgument<A0> |
+    ConstructorArgument<A1> :
   T extends {
     new (...args: infer A): any
-  } ?
-    ConstructorArgument<A> :
-  /* Ain't a constructor, dude! */
+  } ? ConstructorArgument<A> :
   never
