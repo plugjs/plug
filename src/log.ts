@@ -319,6 +319,11 @@ export function $cyn(string: any): string {
   return _color ? `${cyn}${string}${rst}` : string
 }
 
+/** Underline. */
+export function $und(string: any): string {
+  return _color ? `${und}${string}${rst}` : string
+}
+
 /* ========================================================================== *
  * SPINNER                                                                    *
  * ========================================================================== */
