@@ -5,7 +5,7 @@ import type { Run } from './run'
  * The {@link Plug} interface describes an extension mechanism for our build.
  */
 export interface Plug {
-  pipe(files: Files, run: Run): Files | void | Promise<Files | void>
+  pipe(files: Files, run: Run): Files | Promise<Files>
 }
 
 /**
@@ -19,55 +19,51 @@ export type PlugFunction = Plug['pipe']
  */
 export interface Pipe extends Promise<Files> {
   /** Add a new {@link Plug} to the steps of this {@link Pipe} */
-  plug(plug: Plug): this
+  plug(plug: Plug): Pipe
   /** Add a new {@link Plug} to the steps of this {@link Pipe} */
-  plug(plug: PlugFunction): this
+  plug(plug: PlugFunction): Pipe
 }
 
 /**
  * Implementation of our {@link Pipe} interface.
  */
 export class Pipe implements Pipe {
-  #promise: Promise<Files>
+  readonly #promise: Promise<Files>
   readonly #run: Run
 
-  constructor(start: Files | Promise<Files>, run: Run) {
-    this.#promise = Promise.resolve().then(() => start)
+  constructor(start: Promise<Files>, run: Run) {
+    this.#promise = start
     this.#run = run
   }
 
-  plug(plug: Plug): this
-  plug(plug: PlugFunction): this
-  plug(arg: Plug | PlugFunction): this {
+  plug(plug: Plug): Pipe
+  plug(plug: PlugFunction): Pipe
+  plug(arg: Plug | PlugFunction): Pipe {
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
-    this.#promise = this.#promise.then(async (files) => {
-      const result = await plug.pipe(files, this.#run)
-      return result ? result : this.#run.files().build()
-    })
-    return this
+    const start = this.#promise.then((files) => plug.pipe(files, this.#run))
+    return new Pipe(start, this.#run)
   }
 
   then<T1 = Files, T2 = never>(
       onfulfilled?: ((value: Files) => T1 | PromiseLike<T1>) | null | undefined,
       onrejected?: ((reason: any) => T2 | PromiseLike<T2>) | null | undefined,
   ): Promise<T1 | T2> {
-    return this.#promise
-        .then(onfulfilled, onrejected)
+    return this.#promise.then(onfulfilled, onrejected)
   }
 
   catch<T = never>(
       onrejected?: ((reason: any) => T | PromiseLike<T>) | null | undefined,
   ): Promise<T | Files> {
-    return this.#promise
-        .catch(onrejected)
+    return this.#promise.catch(onrejected)
   }
 
   finally(
       onfinally?: (() => void) | null | undefined,
   ): Promise<Files> {
-    return this.#promise
-        .finally(onfinally)
+    return this.#promise.finally(onfinally)
   }
+
+  [Symbol.toStringTag] = 'Pipe'
 }
 
 /* ========================================================================== *
@@ -93,7 +89,7 @@ export type PlugNames = string & Exclude<keyof Pipe, 'plug' | keyof Promise<File
  * ```
  * declare module '../pipe' {
  *   export interface Pipe {
- *     write(...args: ConstructorParameters<typeof Write>): this
+ *     write(...args: ConstructorParameters<typeof Write>): Pipe
  *   }
  * }
  * ```
