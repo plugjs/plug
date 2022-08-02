@@ -1,7 +1,7 @@
 import type { BuildContext, ThisBuild } from './build'
 import type { Task } from './task'
 
-import { $t, log } from './log'
+import { $t, log, Logger, TaskLogger } from './log'
 import { AbsolutePath, isAbsolutePath, resolveAbsolutePath } from './paths'
 import { Files, FilesBuilder } from './files'
 import { ParseOptions, parseOptions } from './utils/options'
@@ -33,6 +33,11 @@ export interface Run extends BuildContext {
    * where the initial build files is located.
    */
   readonly baseDir: AbsolutePath,
+
+  /**
+   * The {@link Logger} associated with this instance.
+   */
+  readonly log: Logger
 
   /**
    * The _name_ of the task associated with this {@link Run} (if one is).
@@ -69,6 +74,7 @@ export interface Run extends BuildContext {
 /** Default implementation of the {@link Run} interface. */
 class RunImpl implements Run {
   private readonly _pipes: Pipe[] = []
+  readonly log: Logger
 
   constructor(
       readonly baseDir: AbsolutePath,
@@ -78,7 +84,9 @@ class RunImpl implements Run {
       private readonly _cache: Map<Task, Promise<Files | void>>,
       private readonly _stack: readonly Task[],
       readonly taskName?: string,
-  ) {}
+  ) {
+    this.log = new TaskLogger(taskName || '')
+  }
 
   call(name: string): Promise<Files | void> {
     const task = this.tasks[name]
