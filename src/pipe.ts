@@ -84,7 +84,7 @@ export type PlugName = string & Exclude<keyof Pipe, 'plug' | keyof Promise<Files
  *   // ... the plug implementation lives here
  * }
  *
- * export const write = install('write', Write)
+ * install('write', Write)
  *
  * declare module '../pipe' {
  *   export interface Pipe {
@@ -115,7 +115,7 @@ export type PipeExtension<T extends new (...args: any) => Plug> =
  *   // ... the plug implementation lives here
  * }
  *
- * export const write = install('write', Write)
+ * install('write', Write)
  *
  * declare module '../pipe' {
  *   export interface Pipe {
@@ -124,25 +124,16 @@ export type PipeExtension<T extends new (...args: any) => Plug> =
  * }
  * ```
  */
-export function install<T extends Plug, C extends new (...args: any) => T>(
+export function install<C extends new (...args: any) => Plug>(
     name: PlugName,
     ctor: C,
-): (...args: ConstructorArguments<C>) => T {
-  /* Create the function to instantiate the Plug */
-  const instantiate = function(...args: ConstructorArguments<C>): T {
-    // eslint-disable-next-line new-cap
-    return new ctor(...args)
-  }
-
+): void {
   /* Inject the creator within the Pipe prototype */
   Pipe.prototype[name] = function(this: Pipe, ...args: any): Pipe {
-    return this.plug(instantiate(...args))
+    // eslint-disable-next-line new-cap
+    return this.plug(new ctor(...args))
   }
 
-  /* Setup names so that stack traces look better */
-  Object.defineProperty(instantiate, 'name', { value: name })
+  /* Setup name so that stack traces look better */
   Object.defineProperty(Pipe.prototype[name], 'name', { value: name })
-
-  /* Return our creator */
-  return instantiate
 }
