@@ -38,6 +38,7 @@ export interface LogOptions extends InspectOptions {
   colors: boolean,
   breakLength: number,
   taskLength: number,
+  defaultTaskName: string,
 }
 
 /* ========================================================================== *
@@ -62,6 +63,8 @@ let _color = process.stderr.isTTY
 let _breakLength = process.stderr.columns || 80
 /* The maximum width of all registered tasks */
 let _taskLength = 0
+/* The default task name */
+let _defaultTaskName = ''
 
 export const logOptions: LogOptions = {
   get level(): LogLevel {
@@ -100,6 +103,14 @@ export const logOptions: LogOptions = {
   set taskLength(taskLength: number) {
     _taskLength = taskLength
   },
+
+  get defaultTaskName(): string {
+    return _defaultTaskName
+  },
+
+  set defaultTaskName(defaultTaskName: string) {
+    _defaultTaskName = defaultTaskName
+  },
 }
 
 /* Initialize from environment variables */
@@ -121,7 +132,7 @@ export const logOptions: LogOptions = {
 })()
 
 /** Last task name emitted by the log */
-let lastTask: string | undefined
+let lastTask: string = _defaultTaskName
 /** A marker to indicate that the next line must be separated */
 let separateLines: boolean = false
 
@@ -179,7 +190,7 @@ class TaskLogger implements Logger {
 
 const _loggers = new Map<string, Logger>()
 
-export function getLogger(task: string): Logger {
+export function getLogger(task: string = _defaultTaskName): Logger {
   let logger = _loggers.get(task)
   if (! logger) {
     logger = new TaskLogger(task)
@@ -193,37 +204,39 @@ export function getLogger(task: string): Logger {
  * LOGGERS, SHARED (AUTOMATIC TASK DETECTION) AND PER-TASK                    *
  * ========================================================================== */
 
-const _defaultLogger = getLogger('')
+function _defaultLogger(): Logger {
+  return currentRun()?.log || getLogger(_defaultTaskName)
+}
 
 /** Our shared {@link Log} instance */
 export const log: Logger = {
   trace(...args: any[]): Logger {
     if (_level > _levels.TRACE) return log
-    ;(currentRun()?.log || _defaultLogger).trace(...args)
+    _defaultLogger().trace(...args)
     return log
   },
 
   debug(...args: any[]): Logger {
     if (_level > _levels.DEBUG) return log
-    ;(currentRun()?.log || _defaultLogger).debug(...args)
+    _defaultLogger().debug(...args)
     return log
   },
 
   info(...args: any[]): Logger {
     if (_level > _levels.INFO) return log
-    ;(currentRun()?.log || _defaultLogger).info(...args)
+    _defaultLogger().info(...args)
     return log
   },
 
   warn(...args: any[]): Logger {
     if (_level > _levels.WARN) return log
-    ;(currentRun()?.log || _defaultLogger).warn(...args)
+    _defaultLogger().warn(...args)
     return log
   },
 
   error(...args: any[]): Logger {
     if (_level > _levels.ERROR) return log
-    ;(currentRun()?.log || _defaultLogger).error(...args)
+    _defaultLogger().error(...args)
     return log
   },
 
@@ -347,7 +360,7 @@ function emit(task: string, level: number, ...args: any[]): void {
 }
 
 /** Emit in full colors! */
-function emitColor(task: string | undefined, level: number, ...args: any[]): void {
+function emitColor(task: string, level: number, ...args: any[]): void {
   /* Prefixes, to prepend at the beginning of each line */
   const prefixes: string[] = []
 
@@ -392,7 +405,7 @@ function emitColor(task: string | undefined, level: number, ...args: any[]): voi
   write(`${zap}${prefixed}\n`)
 }
 
-function emitPlain(task: string | undefined, level: number, ...args: any[]): void {
+function emitPlain(task: string, level: number, ...args: any[]): void {
   const prefixes: string[] = []
 
   if (task) {
