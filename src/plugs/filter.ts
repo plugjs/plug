@@ -46,11 +46,11 @@ export class Filter implements Plug {
  * INSTALLATION                                                               *
  * ========================================================================== */
 
-install('debug', Filter)
+install('filter', Filter)
 
 declare module '../pipe' {
   export interface Pipe {
     /** Filter the current {@link Files} using globs. */
-    debug: PipeExtension<typeof Filter>
+    filter: PipeExtension<typeof Filter>
   }
 }
