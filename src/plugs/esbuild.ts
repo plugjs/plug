@@ -11,16 +11,16 @@ import { Run } from '../run'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 
+/**
+ * Transpile and bundle files with {@link https://esbuild.github.io/ esbuild}.
+ */
 export class ESBuild implements Plug {
-  #options: ESBuildOptions
+  constructor(options: ESBuildOptions)
+  constructor(private readonly _options: ESBuildOptions) {}
 
-  constructor(options: ESBuildOptions) {
-    this.#options = options
-  }
-
-  async pipe(_files: Files, run: Run): Promise<Files> {
-    const entryPoints = [ ..._files ]
-    const absWorkingDir = _files.directory
+  async pipe(files: Files, run: Run): Promise<Files> {
+    const entryPoints = [ ...files ]
+    const absWorkingDir = files.directory
 
     const options: BuildOptions = {
       /* Defaults */
@@ -32,16 +32,16 @@ export class ESBuild implements Plug {
       logLevel: 'silent',
 
       /* Our options */
-      ...this.#options,
+      ...this._options,
 
       /* Always override */
       absWorkingDir,
       entryPoints,
+      watch: false,
     }
 
     /* Sanity check on output file/directory */
     assert(!(options.outdir && options.outfile), 'Options "outfile" and "outdir" can not coexist')
-    assert(!(options.watch), 'Option "watch" can not work in plugs')
 
     /* Where to write, where to write? */
     let builder: FilesBuilder
@@ -94,10 +94,17 @@ export class ESBuild implements Plug {
   }
 }
 
-export const esbuild = install('esbuild', ESBuild)
+/* ========================================================================== *
+ * INSTALLATION                                                               *
+ * ========================================================================== */
+
+install('esbuild', ESBuild)
 
 declare module '../pipe' {
   export interface Pipe {
+    /**
+     * Transpile and bundle files with {@link https://esbuild.github.io/ esbuild}.
+     */
     esbuild: PipeExtension<typeof ESBuild>
   }
 }
