@@ -85,7 +85,7 @@ class RunImpl implements Run {
       private readonly _stack: readonly Task[],
       readonly taskName?: string,
   ) {
-    this.log = getLogger(taskName || '')
+    this.log = getLogger(taskName)
   }
 
   call(name: string): Promise<Files | void> {
