@@ -5,7 +5,7 @@ import { AbsolutePath, getAbsoluteParent } from './paths'
 import { Task, TaskImpl } from './task'
 import { findCaller } from './utils/caller'
 import { initRun, Run } from './run'
-import { registerTask } from './log'
+import { logOptions } from './log'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -107,7 +107,11 @@ export function build<D extends BuildDefinition<D>>(
       task: { enumerable: true, value: task },
     })
 
-    registerTask(name)
+    /* Register task length for nice logs */
+    if (name.length > logOptions.taskLength) {
+      logOptions.taskLength = name.length
+    }
+
     tasks[name] = task
     result[name] = call
   }
