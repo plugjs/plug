@@ -251,8 +251,8 @@ export type Matcher = (string: string) => boolean
  *
  * Remember that no globs here means an always-failing matcher.
  */
-export function match(globs: string[], options: MatchOptions = {}): Matcher {
-  return picomatch(globs, {
+export function match(globs: readonly string[], options: MatchOptions = {}): Matcher {
+  return picomatch([ ...globs ], {
     basename: false,
     bash: false,
     capture: false,
