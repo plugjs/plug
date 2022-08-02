@@ -33,11 +33,17 @@ export interface Logger {
   sep: () => this
 }
 
+/** Options for our {@link Logger} instances */
 export interface LogOptions extends InspectOptions {
+  /** The current level for logging. */
   level: LogLevel,
+  /** Whether to log in colors or not. */
   colors: boolean,
+  /** Width of the current terminal (if any) or `80`. */
   breakLength: number,
+  /** The maximum length of a task name (for pretty alignment). */
   taskLength: number,
+  /** The task name to be used by default if a task is not contextualized. */
   defaultTaskName: string,
 }
 
@@ -66,6 +72,7 @@ let _taskLength = 0
 /* The default task name */
 let _defaultTaskName = ''
 
+/** Shared instance of our {@link LogOptions}. */
 export const logOptions: LogOptions = {
   get level(): LogLevel {
     if (_level <= _levels.TRACE) return 'TRACE'
@@ -131,21 +138,12 @@ export const logOptions: LogOptions = {
   }
 })()
 
-/** Last task name emitted by the log */
-let lastTask: string = _defaultTaskName
-/** A marker to indicate that the next line must be separated */
-let separateLines: boolean = false
-
 /* ========================================================================== *
  * LOGGER IMPLEMENTATION                                                      *
  * ========================================================================== */
 
-/**
- * A {@link TaskLogger}  is a {@link Logger} always associated with the
- * task inferred at construction, and is useful when handling callbacks that
- * normally de-associate the calling execution stack.
- */
-class TaskLogger implements Logger {
+/** Default implementation of the {@link Logger} interface. */
+class LoggerImpl implements Logger {
   #task
 
   constructor(task: string) {
@@ -188,12 +186,14 @@ class TaskLogger implements Logger {
   }
 }
 
+/** Cache of loggers by task-name. */
 const _loggers = new Map<string, Logger>()
 
+/** Return a {@link Logger} associated with the specified task name. */
 export function getLogger(task: string = _defaultTaskName): Logger {
   let logger = _loggers.get(task)
   if (! logger) {
-    logger = new TaskLogger(task)
+    logger = new LoggerImpl(task)
     _loggers.set(task, logger)
   }
   return logger
@@ -204,6 +204,7 @@ export function getLogger(task: string = _defaultTaskName): Logger {
  * LOGGERS, SHARED (AUTOMATIC TASK DETECTION) AND PER-TASK                    *
  * ========================================================================== */
 
+/** Get the logger from the current {@link Run} or with the default task name */
 function _defaultLogger(): Logger {
   return currentRun()?.log || getLogger(_defaultTaskName)
 }
@@ -268,6 +269,7 @@ const tsk = '\u001b[38;5;141m' // the color for tasks (purple)
 
 /* ========================================================================== */
 
+/** Colorize an {@link AbsolutePath}. */
 export function $p(path: AbsolutePath): string {
   const directory = currentRun()?.baseDir || process.cwd() as AbsolutePath
   const relative = resolveRelativeChildPath(directory, path)
@@ -275,36 +277,44 @@ export function $p(path: AbsolutePath): string {
   return _color ? `${und}${gry}${resolved}${rst}` : `"${resolved}"`
 }
 
+/** Colorize a _task name_. */
 export function $t(task: string): string {
   return _color ?
     `${gry}"${tsk}${task}${gry}"${rst}` :
     `"${task}"`
 }
 
+/** Colorize in gray. */
 export function $gry(string: any): string {
   return _color ? `${gry}${string}${rst}` : string
 }
 
+/** Colorize in red. */
 export function $red(string: any): string {
   return _color ? `${red}${string}${rst}` : string
 }
 
+/** Colorize in green. */
 export function $grn(string: any): string {
   return _color ? `${grn}${string}${rst}` : string
 }
 
+/** Colorize in yellow. */
 export function $ylw(string: any): string {
   return _color ? `${ylw}${string}${rst}` : string
 }
 
+/** Colorize in blue. */
 export function $blu(string: any): string {
   return _color ? `${blu}${string}${rst}` : string
 }
 
+/** Colorize in magenta. */
 export function $mgt(string: any): string {
   return _color ? `${mgt}${string}${rst}` : string
 }
 
+/** Colorize in cyan. */
 export function $cyn(string: any): string {
   return _color ? `${cyn}${string}${rst}` : string
 }
@@ -348,6 +358,9 @@ setInterval(() => {
 /* ========================================================================== *
  * INTERNALS                                                                  *
  * ========================================================================== */
+
+let lastTask: string = _defaultTaskName
+let separateLines: boolean = false
 
 const whiteSquare = '\u25a1'
 const blackSquare = '\u25a0'
