@@ -44,7 +44,13 @@ const b = build({
   },
   async default() {
     const r1 = this.compile_sources()
+    console.log('R1', (<any> r1).plug)
+
     const r2 = this.compile_tests()
+    console.log('R2', (<any> r2).plug)
+
+    await r2.plug((f) => f)
+    await (<any> r1).plug((f: any) => f)
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     void r1, r2
 
