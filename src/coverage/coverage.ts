@@ -22,7 +22,7 @@ export class Coverage implements Plug {
   constructor(options: CoverageOptions)
   constructor(private _options: CoverageOptions) {}
 
-  async pipe(files: Files, run: Run): Promise<Files | void> {
+  async pipe(files: Files, run: Run): Promise<Files> {
     const coverageFiles = await run.find('coverage-*.json', {
       directory: this._options.coverageDir,
     })
@@ -84,7 +84,7 @@ export class Coverage implements Plug {
     }
 
 
-    if (! this._options.reportDir) return
+    if (! this._options.reportDir) return run.files().build()
 
     const builder = run.files(this._options.reportDir)
 
