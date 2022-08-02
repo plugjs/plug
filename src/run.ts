@@ -210,25 +210,3 @@ export function initRun(context: BuildContext, baseDir?: AbsolutePath): Run {
       [],
   )
 }
-
-/**
- * Find files according to the globs and {@link FindOptions} specified.
- */
-export function find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
-  const run = currentRun()
-  assert(run, 'Unable to find files outside a running task')
-  return run.find(glob, ...args)
-}
-
-/**
- * Resolve a path into an {@link AbsolutePath}.
- *
- * If the path starts with `@...` it is considered to be relative to this
- * instance's `baseDir`, otherwise it will be resolved against the build file
- * where the task was _originally_ defined in.
- */
-export function resolve(...paths: string[]): AbsolutePath {
-  const run = currentRun()
-  assert(run, 'Unable to find files outside a running task')
-  return run.resolve(...paths)
-}
