@@ -1,7 +1,7 @@
 import type { BuildContext, ThisBuild } from './build'
 import type { Task } from './task'
 
-import { $t, log, Logger, TaskLogger } from './log'
+import { $t, getLogger, Logger } from './log'
 import { AbsolutePath, isAbsolutePath, resolveAbsolutePath } from './paths'
 import { Files, FilesBuilder } from './files'
 import { ParseOptions, parseOptions } from './utils/options'
@@ -85,7 +85,7 @@ class RunImpl implements Run {
       private readonly _stack: readonly Task[],
       readonly taskName?: string,
   ) {
-    this.log = new TaskLogger(taskName || '')
+    this.log = getLogger(taskName || '')
   }
 
   call(name: string): Promise<Files | void> {
@@ -119,7 +119,7 @@ class RunImpl implements Run {
 
   async run(task: Task): Promise<Files | void> {
     const now = Date.now()
-    log.sep().info('Starting task').sep()
+    this.log.sep().info('Starting task').sep()
 
     const thisRun = this
     const thisBuild: ThisBuild<any> = {}
@@ -151,7 +151,7 @@ class RunImpl implements Run {
         assertSettled(settlements, 'Task failed in', Date.now() - now, 'ms')
       }
 
-      log.sep().info('Task completed in', Date.now() - now, 'ms').sep()
+      this.log.sep().info('Task completed in', Date.now() - now, 'ms').sep()
       return result
     } catch (error) {
       fail('Task failed in', Date.now() - now, 'ms', error)
