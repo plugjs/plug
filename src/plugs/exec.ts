@@ -2,7 +2,7 @@ import { ChildProcess, spawn, SpawnOptions } from 'child_process'
 import path from 'path'
 import reaadline from 'readline'
 import { Files } from '../files'
-import { TaskLogger } from '../log'
+import { Logger } from '../log'
 import { Plug } from '../pipe'
 import { Run } from '../run'
 
@@ -14,9 +14,7 @@ export interface ExecOptions<T> {
   shell?: string | boolean,
 }
 
-function runChild(child: ChildProcess): Promise<void> {
-  const log = new TaskLogger()
-
+function runChild(child: ChildProcess, log: Logger): Promise<void> {
   if (child.stdout) {
     const out = reaadline.createInterface(child.stdout)
     out.on('line', (line) => log.info(line))
@@ -72,7 +70,7 @@ export class Exec implements Plug {
       child = spawn(cmd, { shell: true, ...spawnOptions })
     }
 
-    await runChild(child)
+    await runChild(child, run.log)
     return files
   }
 }
