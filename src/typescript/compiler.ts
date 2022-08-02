@@ -1,4 +1,12 @@
-import { CompilerHost, CompilerOptions, createSourceFile, getDefaultLibFilePath, ScriptTarget, SourceFile, sys } from 'typescript'
+import {
+  CompilerHost,
+  CompilerOptions,
+  ScriptTarget,
+  SourceFile,
+  createSourceFile,
+  getDefaultLibFilePath,
+  sys,
+} from 'typescript'
 
 import {
   DiagnosticCategory,
@@ -7,9 +15,9 @@ import {
 } from 'typescript'
 
 import { Diagnostic, FormatDiagnosticsHost } from 'typescript'
-import { $red, log } from '../log'
-import { AbsolutePath, resolveAbsolutePath } from '../paths'
 import { fail } from '../assert'
+import { $red, log, logOptions } from '../log'
+import { AbsolutePath, resolveAbsolutePath } from '../paths'
 
 export class TypeScriptHost
 implements FormatDiagnosticsHost, CompilerHost {
@@ -81,7 +89,7 @@ implements FormatDiagnosticsHost, CompilerHost {
   checkDiagnostics(diagnostics: readonly Diagnostic[]): void {
     if (! diagnostics.length) return
 
-    const format = log.options.colors ?
+    const format = logOptions.colors ?
       formatDiagnosticsWithColorAndContext :
       formatDiagnostics
 
