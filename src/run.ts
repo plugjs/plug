@@ -1,15 +1,15 @@
 import type { BuildContext, ThisBuild } from './build'
 import type { Task } from './task'
 
+import { join } from 'node:path'
+import { assert, assertSettled, fail } from './assert'
+import { runAsync } from './async'
+import { Files, FilesBuilder } from './files'
 import { $t, getLogger, Logger } from './log'
 import { AbsolutePath, isAbsolutePath, resolveAbsolutePath } from './paths'
-import { Files, FilesBuilder } from './files'
-import { ParseOptions, parseOptions } from './utils/options'
 import { Pipe, Plug, PlugFunction } from './pipe'
-import { assert, assertSettled, fail } from './assert'
-import { currentRun, runAsync } from './async'
+import { ParseOptions, parseOptions } from './utils/options'
 import { walk, WalkOptions } from './utils/walk'
-import { join } from 'node:path'
 
 /** The {@link FindOptions} interface defines the options for finding files. */
 export interface FindOptions extends WalkOptions {
