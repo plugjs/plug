@@ -1,5 +1,6 @@
 import type { Files } from './files'
 import type { Run } from './run'
+import { ConstructorArguments } from './types'
 
 /**
  * The {@link Plug} interface describes an extension mechanism for our build.
@@ -71,10 +72,33 @@ export class Pipe implements Pipe {
  * ========================================================================== */
 
 /** The names which can be installed as direct plugs. */
-export type PlugNames = string & Exclude<keyof Pipe, 'plug' | keyof Promise<Files>>
+export type PlugName = string & Exclude<keyof Pipe, 'plug' | keyof Promise<Files>>
 
 /**
- * Install a {@link Plug} into our {@link Pipe} prototype.
+ * A convenience type to easily annotate installed {@link Plug Plugs}.
+ *
+ * See also {@link install}.
+ *
+ * ```
+ * export class Write implements Plug {
+ *   // ... the plug implementation lives here
+ * }
+ *
+ * export const write = install('write', Write)
+ *
+ * declare module '../pipe' {
+ *   export interface Pipe {
+ *     write: PipeExtension<typeof Write>
+ *   }
+ * }
+ * ```
+ */
+export type PipeExtension<T extends new (...args: any) => Plug> =
+  (...args: ConstructorArguments<T>) => Pipe
+
+/**
+ * Install a {@link Plug} into our {@link Pipe} prototype, and return a static
+ * creator function for the {@link Plug} itself.
  *
  * This allows our shorthand syntax for well-defined plugs such as:
  *
@@ -87,32 +111,38 @@ export type PlugNames = string & Exclude<keyof Pipe, 'plug' | keyof Promise<File
  * Use this alongside interface merging like:
  *
  * ```
+ * export class Write implements Plug {
+ *   // ... the plug implementation lives here
+ * }
+ *
+ * export const write = install('write', Write)
+ *
  * declare module '../pipe' {
  *   export interface Pipe {
- *     write(...args: ConstructorParameters<typeof Write>): Pipe
+ *     write: PipeExtension<typeof Write>
  *   }
  * }
  * ```
  */
-export function install<PlugName extends PlugNames, PlugExtension extends Plug>(
+export function install<T extends Plug, C extends new (...args: any) => T>(
     name: PlugName,
-    ctor: new (...args: Parameters<Pipe[PlugName]>) => PlugExtension,
-): (...args: Parameters<Pipe[PlugName]>) => PlugExtension {
+    ctor: C,
+): (...args: ConstructorArguments<C>) => T {
   /* Create the function to instantiate the Plug */
-  const creator = function(...args: Parameters<Pipe[PlugName]>): PlugExtension {
+  const instantiate = function(...args: ConstructorArguments<C>): T {
     // eslint-disable-next-line new-cap
     return new ctor(...args)
   }
 
   /* Inject the creator within the Pipe prototype */
-  Pipe.prototype[name] = function(...args: Parameters<Pipe[PlugName]>): Pipe {
-    return this.plug(creator(...args))
+  Pipe.prototype[name] = function(this: Pipe, ...args: any): Pipe {
+    return this.plug(instantiate(...args))
   }
 
   /* Setup names so that stack traces look better */
-  Object.defineProperty(creator, 'name', { value: name })
+  Object.defineProperty(instantiate, 'name', { value: name })
   Object.defineProperty(Pipe.prototype[name], 'name', { value: name })
 
   /* Return our creator */
-  return creator
+  return instantiate
 }
