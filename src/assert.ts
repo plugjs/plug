@@ -27,17 +27,17 @@ export function assert(assertion: any, message: string, ...args: any[]): asserts
 
 /* ========================================================================== */
 
-type PromiseSettlementAssertion<T extends any[]> = {
+type PromiseSettlementAssertion<T extends readonly any[]> = {
   [ K in keyof T ]:
-    T[K] extends PromiseSettledResult<infer R> ?
-      PromiseFulfilledResult<R> :
-      never
+    T[K] extends PromiseSettledResult<any> ?
+      Exclude<T[K], PromiseRejectedResult> :
+      T[K]
 }
 
 /** Asserts that all promise settlements are actually fullfilled. */
-export function assertSettled<T extends PromiseSettledResult<any>[]>(
+export function assertSettled<T extends readonly any[]>(
     settlements: T, message: string, ...args: any[]
-): asserts settlements is T & PromiseSettlementAssertion<T> {
+): asserts settlements is PromiseSettlementAssertion<T> {
   let errors = 0
   for (const settlement of settlements) {
     if (settlement.status === 'fulfilled') continue
