@@ -6,8 +6,8 @@ import {
   ScriptTarget,
 } from 'typescript'
 
-import { AbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { readFile } from '../utils/asyncfs'
+import { AbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../../paths'
+import { readFile } from '../../utils/asyncfs'
 
 /* ========================================================================== */
 

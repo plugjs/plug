@@ -15,9 +15,9 @@ import {
 } from 'typescript'
 
 import { Diagnostic, FormatDiagnosticsHost } from 'typescript'
-import { fail } from '../assert'
-import { $red, Logger, logOptions } from '../log'
-import { AbsolutePath, resolveAbsolutePath } from '../paths'
+import { fail } from '../../assert'
+import { $red, Logger, logOptions } from '../../log'
+import { AbsolutePath, resolveAbsolutePath } from '../../paths'
 
 export class TypeScriptHost
 implements FormatDiagnosticsHost, CompilerHost {

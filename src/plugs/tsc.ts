@@ -2,8 +2,8 @@ import { createProgram, getPreEmitDiagnostics } from 'typescript'
 import type { CompilerOptions } from 'typescript'
 import { Files } from '../files'
 import { log } from '../log'
-import { TypeScriptHost } from './compiler'
-import { getCompilerOptions } from './options'
+import { TypeScriptHost } from './tsc/compiler'
+import { getCompilerOptions } from './tsc/options'
 import { Plug } from '../pipe'
 import { Run } from '../run'
 
@@ -29,6 +29,7 @@ export class Compile implements Plug {
 
   async pipe(files: Files, run: Run): Promise<Files> {
     const host = new TypeScriptHost(run.resolve('.'), run.log)
+
 
 
     const { options, errors } = await getCompilerOptions()
