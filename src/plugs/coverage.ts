@@ -1,4 +1,5 @@
 import html from '@plugjs/cov8-html'
+
 import { sep } from 'node:path'
 import { Files } from '../files'
 import { $grn, $gry, $p, $red, $ylw, log } from '../log'
@@ -7,7 +8,7 @@ import { Plug } from '../pipe'
 import { Run } from '../run'
 import { fail } from '../assert'
 
-import { coverageReport, CoverageResult } from './report'
+import { coverageReport, CoverageResult } from './coverage/report'
 
 export interface CoverageOptions {
   coverageDir: string,
