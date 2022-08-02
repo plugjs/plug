@@ -5,7 +5,7 @@ import { $t, log } from './log'
 import { AbsolutePath, isAbsolutePath, resolveAbsolutePath } from './paths'
 import { Files, FilesBuilder } from './files'
 import { ParseOptions, parseOptions } from './utils/options'
-import { Pipe } from './pipe'
+import { Pipe, Plug, PlugFunction } from './pipe'
 import { assert, assertSettled, fail } from './assert'
 import { currentRun, runAsync } from './async'
 import { walk, WalkOptions } from './utils/walk'
@@ -33,6 +33,7 @@ export interface Run extends BuildContext {
    * where the initial build files is located.
    */
   readonly baseDir: AbsolutePath,
+
   /**
    * The _name_ of the task associated with this {@link Run} (if one is).
    *
@@ -101,42 +102,52 @@ class RunImpl implements Run {
     )
 
     /* Actually _call_ the `Task` and get a promise for it */
-    const promise = runAsync(childRun, name, async () => {
-      const now = Date.now()
-      log.sep().info('Starting task').sep()
-
-      const thisBuild: ThisBuild<any> = {}
-      for (const name in childRun.tasks) {
-        thisBuild[name] = (): Pipe => {
-          const promise = Promise.resolve().then(async () => {
-            const files = await childRun.call(name)
-            return files || childRun.files().build()
-          })
-          const pipe = new Pipe(promise, childRun)
-          childRun._pipes.push(pipe)
-          return pipe
-        }
-      }
-
-      try {
-        let result: Files | void
-        try {
-          result = await task.call(thisBuild, childRun)
-        } finally {
-          const settlements = await Promise.allSettled(childRun._pipes)
-          assertSettled(settlements, 'Task failed in', Date.now() - now, 'ms')
-        }
-
-        log.sep().info('Task completed in', Date.now() - now, 'ms').sep()
-        return result
-      } catch (error) {
-        fail('Task failed in', Date.now() - now, 'ms', error)
-      }
-    })
+    const promise = runAsync(childRun, name, () => childRun.run(task))
 
     /* Cache the execution promise (never run the smae task twice) */
     this._cache.set(task, promise)
     return promise
+  }
+
+  async run(task: Task): Promise<Files | void> {
+    const now = Date.now()
+    log.sep().info('Starting task').sep()
+
+    const thisRun = this
+    const thisBuild: ThisBuild<any> = {}
+
+    for (const name in this.tasks) {
+      thisBuild[name] = (): Pipe => {
+        const pipe = this.call(name) as Pipe
+
+        pipe.plug = function plug(arg: Plug | PlugFunction): Pipe {
+          const plug = typeof arg === 'function' ? { pipe: arg } : arg
+          const start = pipe.then((files: Files | undefined) => {
+            assert(files, `Task ${$t(name)} did not return any files to pipe`)
+            return plug.pipe(files, thisRun)
+          })
+          return new Pipe(start, thisRun)
+        }
+
+        this._pipes.push(pipe)
+        return pipe
+      }
+    }
+
+    try {
+      let result: Files | void
+      try {
+        result = await task.call(thisBuild, this)
+      } finally {
+        const settlements = await Promise.allSettled(this._pipes)
+        assertSettled(settlements, 'Task failed in', Date.now() - now, 'ms')
+      }
+
+      log.sep().info('Task completed in', Date.now() - now, 'ms').sep()
+      return result
+    } catch (error) {
+      fail('Task failed in', Date.now() - now, 'ms', error)
+    }
   }
 
   resolve(...paths: string[]): AbsolutePath {
