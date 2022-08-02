@@ -1,21 +1,12 @@
-import type fs from 'node:fs'
-import type tty from 'node:tty'
-
 import { sep } from 'node:path'
-import { formatWithOptions } from 'node:util'
-import { currentRun, currentTask, runningTasks } from './async'
+import { formatWithOptions, InspectOptions } from 'node:util'
 
+import { currentRun, runningTasks } from './async'
 import { AbsolutePath, resolveRelativeChildPath } from './paths'
 
 /* ========================================================================== *
  * TYPES                                                                      *
  * ========================================================================== */
-
-/** Constant thrown by `Run` indicating a build failure already logged */
-// const buildFailed = Symbol.for('plugjs:build.failed')
-
-/** Combine {@link fs.WriteStream} and {@link tty.WriteStream} */
-export type WriteStream = fs.WriteStream | tty.WriteStream
 
 /** A type identifying all our log levels */
 export type LogLevel =
@@ -42,27 +33,19 @@ export interface Logger {
   sep: () => this
 }
 
-/** Our {@link Log} interface */
-export interface Log extends Logger {
-  /* The current logging options */
-  options: {
-    /** The {@link LogLevel} currently being logged */
-    level: LogLevel,
-    /** Whether to log with colors or not */
-    colors: boolean,
-    /** The depth for object inspection */
-    depth: number,
-
-    readonly env: Record<string, any>,
-  }
+export interface LogOptions extends InspectOptions {
+  level: LogLevel,
+  colors: boolean,
+  breakLength: number,
+  taskLength: number,
 }
 
 /* ========================================================================== *
- * STATE                                                                      *
+ * OPTIONS                                                                    *
  * ========================================================================== */
 
-/* Our level numbers (internal) */
-const levels = {
+/** Our level numbers (internal) */
+const _levels = {
   TRACE: 10,
   DEBUG: 20,
   INFO: 30,
@@ -72,117 +55,86 @@ const levels = {
 } as const
 
 /* The current log level */
-let logLevel: number = levels.INFO
+let _level: number = _levels.INFO
 /* Log colors (default is stderr is a TTY) */
-let logColor = process.stderr.isTTY
+let _color = process.stderr.isTTY
 /* Log width (if it's a tty, or 80) */
-const logWidth = process.stderr.columns || 80
-/* Log depth (defaults to 2 as node) */
-let logDepth = 2
+let _breakLength = process.stderr.columns || 80
 /* The maximum width of all registered tasks */
-let taskWidth = parseInt(process.env['LOG_TASK_WIDTH'] || '0') || 0
+let _taskLength = 0
+
+export const logOptions: LogOptions = {
+  get level(): LogLevel {
+    if (_level <= _levels.TRACE) return 'TRACE'
+    if (_level <= _levels.DEBUG) return 'DEBUG'
+    if (_level <= _levels.INFO) return 'INFO'
+    if (_level <= _levels.WARN) return 'WARN'
+    if (_level <= _levels.ERROR) return 'ERROR'
+    return 'OFF'
+  },
+
+  set level(level: LogLevel) {
+    _level = level in _levels ? _levels[level] : _levels.INFO
+  },
+
+  get colors(): boolean {
+    return _color
+  },
+
+  set colors(color: boolean) {
+    _color = color
+  },
+
+  get breakLength(): number {
+    return _breakLength
+  },
+
+  set breakLength(breakLength: number) {
+    _breakLength = breakLength
+  },
+
+  get taskLength(): number {
+    return _taskLength
+  },
+
+  set taskLength(taskLength: number) {
+    _taskLength = taskLength
+  },
+}
+
+/* Initialize from environment variables */
+;(function init(): void {
+  /* The `LOG_OPTIONS` variable is a JSON-serialized `LogOptions` object */
+  Object.assign(logOptions, JSON.parse(process.env.LOG_OPTIONS || '{}'))
+
+  /* The `LOG_LEVEL` variable is one of our `debug`, `info`, ... */
+  if (process.env.LOG_LEVEL) {
+    logOptions.level = process.env.LOG_LEVEL.toUpperCase() as LogLevel
+  }
+
+  /* If the `LOG_COLOR` variable is specified, it should be `true` or `false` */
+  if (process.env.LOG_COLOR) {
+    if (process.env.LOG_COLOR.toLowerCase() === 'true') logOptions.colors = true
+    if (process.env.LOG_COLOR.toLowerCase() === 'false') logOptions.colors = false
+    // Other values don't change the value of `options.colors`
+  }
+})()
+
 /** Last task name emitted by the log */
 let lastTask: string | undefined
 /** A marker to indicate that the next line must be separated */
 let separateLines: boolean = false
 
-/** The "default" task name */
-const defaultTask: string | undefined = process.env['LOG_TASK_NAME']
-
-/** Used internally to register task names, for width calculation and colors */
-export function registerTask(task: string): void {
-  if (task.length > taskWidth) taskWidth = task.length
-}
-
 /* ========================================================================== *
- * LOGGERS, SHARED (AUTOMATIC TASK DETECTION) AND PER-TASK                    *
+ * LOGGER IMPLEMENTATION                                                      *
  * ========================================================================== */
-
-/** Our shared {@link Log} instance */
-export const log: Log = {
-  options: {
-    get level(): LogLevel {
-      if (logLevel <= levels.TRACE) return 'TRACE'
-      if (logLevel <= levels.DEBUG) return 'DEBUG'
-      if (logLevel <= levels.INFO) return 'INFO'
-      if (logLevel <= levels.WARN) return 'WARN'
-      if (logLevel <= levels.ERROR) return 'ERROR'
-      return 'OFF'
-    },
-
-    set level(level: LogLevel) {
-      logLevel = level in levels ? levels[level] : levels.INFO
-    },
-
-    get colors(): boolean {
-      return logColor
-    },
-
-    set colors(color: boolean) {
-      logColor = !! color
-    },
-
-    get depth() {
-      return logDepth
-    },
-
-    set depth(depth: number) {
-      logDepth = Math.floor(depth)
-      if (logDepth <= 0) logDepth = 2
-    },
-
-    get env() {
-      return {
-        LOG_TASK_NAME: currentTask(),
-        LOG_TASK_WIDTH: taskWidth,
-      }
-    },
-  },
-
-  /* ------------------------------------------------------------------------ */
-
-  trace(...args: any[]): Log {
-    if (logLevel > levels.TRACE) return log
-    emit(currentTask(), levels.TRACE, ...args)
-    return log
-  },
-
-  debug(...args: any[]): Log {
-    if (logLevel > levels.DEBUG) return log
-    emit(currentTask(), levels.DEBUG, ...args)
-    return log
-  },
-
-  info(...args: any[]): Log {
-    if (logLevel > levels.INFO) return log
-    emit(currentTask(), levels.INFO, ...args)
-    return log
-  },
-
-  warn(...args: any[]): Log {
-    if (logLevel > levels.WARN) return log
-    emit(currentTask(), levels.WARN, ...args)
-    return log
-  },
-
-  error(...args: any[]): Log {
-    if (logLevel > levels.ERROR) return log
-    emit(currentTask(), levels.ERROR, ...args)
-    return log
-  },
-
-  sep(): Log {
-    separateLines = true
-    return this
-  },
-}
 
 /**
  * A {@link TaskLogger}  is a {@link Logger} always associated with the
  * task inferred at construction, and is useful when handling callbacks that
  * normally de-associate the calling execution stack.
  */
-export class TaskLogger implements Logger {
+class TaskLogger implements Logger {
   #task
 
   constructor(task: string) {
@@ -190,32 +142,32 @@ export class TaskLogger implements Logger {
   }
 
   trace(...args: any[]): this {
-    if (logLevel > levels.TRACE) return this
-    emit(this.#task, levels.TRACE, ...args)
+    if (_level > _levels.TRACE) return this
+    emit(this.#task, _levels.TRACE, ...args)
     return this
   }
 
   debug(...args: any[]): this {
-    if (logLevel > levels.DEBUG) return this
-    emit(this.#task, levels.DEBUG, ...args)
+    if (_level > _levels.DEBUG) return this
+    emit(this.#task, _levels.DEBUG, ...args)
     return this
   }
 
   info(...args: any[]): this {
-    if (logLevel > levels.INFO) return this
-    emit(this.#task, levels.INFO, ...args)
+    if (_level > _levels.INFO) return this
+    emit(this.#task, _levels.INFO, ...args)
     return this
   }
 
   warn(...args: any[]): this {
-    if (logLevel > levels.WARN) return this
-    emit(this.#task, levels.WARN, ...args)
+    if (_level > _levels.WARN) return this
+    emit(this.#task, _levels.WARN, ...args)
     return this
   }
 
   error(...args: any[]): this {
-    if (logLevel > levels.ERROR) return this
-    emit(this.#task, levels.ERROR, ...args)
+    if (_level > _levels.ERROR) return this
+    emit(this.#task, _levels.ERROR, ...args)
     return this
   }
 
@@ -224,6 +176,63 @@ export class TaskLogger implements Logger {
     return this
   }
 }
+
+const _loggers = new Map<string, Logger>()
+
+export function getLogger(task: string): Logger {
+  let logger = _loggers.get(task)
+  if (! logger) {
+    logger = new TaskLogger(task)
+    _loggers.set(task, logger)
+  }
+  return logger
+}
+
+
+/* ========================================================================== *
+ * LOGGERS, SHARED (AUTOMATIC TASK DETECTION) AND PER-TASK                    *
+ * ========================================================================== */
+
+const _defaultLogger = getLogger('')
+
+/** Our shared {@link Log} instance */
+export const log: Logger = {
+  trace(...args: any[]): Logger {
+    if (_level > _levels.TRACE) return log
+    ;(currentRun()?.log || _defaultLogger).trace(...args)
+    return log
+  },
+
+  debug(...args: any[]): Logger {
+    if (_level > _levels.DEBUG) return log
+    ;(currentRun()?.log || _defaultLogger).debug(...args)
+    return log
+  },
+
+  info(...args: any[]): Logger {
+    if (_level > _levels.INFO) return log
+    ;(currentRun()?.log || _defaultLogger).info(...args)
+    return log
+  },
+
+  warn(...args: any[]): Logger {
+    if (_level > _levels.WARN) return log
+    ;(currentRun()?.log || _defaultLogger).warn(...args)
+    return log
+  },
+
+  error(...args: any[]): Logger {
+    if (_level > _levels.ERROR) return log
+    ;(currentRun()?.log || _defaultLogger).error(...args)
+    return log
+  },
+
+  sep(): Logger {
+    separateLines = true
+    return log
+  },
+}
+
 
 /* ========================================================================== *
  * PRETTY COLORS                                                              *
@@ -240,7 +249,7 @@ const grn = '\u001b[38;5;76m' // greenish
 const ylw = '\u001b[38;5;220m' // yellow
 const blu = '\u001b[38;5;69m' // brighter blue
 const mgt = '\u001b[38;5;213m' // pinky magenta
-// const cyn = '\u001b[38;5;81m' // darker cyan
+const cyn = '\u001b[38;5;81m' // darker cyan
 
 const tsk = '\u001b[38;5;141m' // the color for tasks (purple)
 
@@ -250,41 +259,41 @@ export function $p(path: AbsolutePath): string {
   const directory = currentRun()?.baseDir || process.cwd() as AbsolutePath
   const relative = resolveRelativeChildPath(directory, path)
   const resolved = relative == null ? path : `.${sep}${relative}`
-  return logColor ? `${und}${gry}${resolved}${rst}` : `"${resolved}"`
+  return _color ? `${und}${gry}${resolved}${rst}` : `"${resolved}"`
 }
 
 export function $t(task: string): string {
-  return logColor ?
+  return _color ?
     `${gry}"${tsk}${task}${gry}"${rst}` :
     `"${task}"`
 }
 
 export function $gry(string: any): string {
-  return logColor ? `${gry}${string}${rst}` : string
+  return _color ? `${gry}${string}${rst}` : string
 }
 
 export function $red(string: any): string {
-  return logColor ? `${red}${string}${rst}` : string
+  return _color ? `${red}${string}${rst}` : string
 }
 
 export function $grn(string: any): string {
-  return logColor ? `${grn}${string}${rst}` : string
+  return _color ? `${grn}${string}${rst}` : string
 }
 
 export function $ylw(string: any): string {
-  return logColor ? `${ylw}${string}${rst}` : string
+  return _color ? `${ylw}${string}${rst}` : string
 }
 
 export function $blu(string: any): string {
-  return logColor ? `${blu}${string}${rst}` : string
+  return _color ? `${blu}${string}${rst}` : string
 }
 
 export function $mgt(string: any): string {
-  return logColor ? `${mgt}${string}${rst}` : string
+  return _color ? `${mgt}${string}${rst}` : string
 }
 
 export function $cyn(string: any): string {
-  return logColor ? `${tsk}${string}${rst}` : string
+  return _color ? `${cyn}${string}${rst}` : string
 }
 
 /* ========================================================================== *
@@ -313,11 +322,11 @@ const nextSpin = ((): (() => string) => {
 })()
 
 setInterval(() => {
-  if (! logColor) return
+  if (! _color) return
   const tasks = runningTasks()
   if (! tasks.length) return
 
-  const pad = ''.padStart(taskWidth, ' ')
+  const pad = ''.padStart(_taskLength, ' ')
   const names = tasks.map((task) => $t(task)).join(`${gry}, `) + gry
 
   write(`${zap}${pad} ${nextSpin()}  Running ${tasks.length} tasks (${names})${rst}`)
@@ -331,10 +340,10 @@ const whiteSquare = '\u25a1'
 const blackSquare = '\u25a0'
 
 /** Emit either plain or color */
-function emit(task: string | undefined, level: number, ...args: any[]): void {
-  return logColor ?
-    emitColor(task || defaultTask, level, ...args) :
-    emitPlain(task || defaultTask, level, ...args)
+function emit(task: string, level: number, ...args: any[]): void {
+  return _color ?
+    emitColor(task, level, ...args) :
+    emitPlain(task, level, ...args)
 }
 
 /** Emit in full colors! */
@@ -344,18 +353,18 @@ function emitColor(task: string | undefined, level: number, ...args: any[]): voi
 
   /* Task name or blank padding */
   if (task) {
-    prefixes.push(''.padStart(taskWidth - task.length, ' ')) // padding
+    prefixes.push(''.padStart(_taskLength - task.length, ' ')) // padding
     prefixes.push(`${tsk}${task}`) // task name
   } else {
-    prefixes.push(''.padStart(taskWidth, ' ')) // full width padding
+    prefixes.push(''.padStart(_taskLength, ' ')) // full width padding
   }
 
   /* Level indicator (our little colorful squares) */
-  if (level <= levels.DEBUG) {
+  if (level <= _levels.DEBUG) {
     prefixes.push(` ${gry}${whiteSquare}${rst} `) // trace/debug: gray open
-  } else if (level <= levels.INFO) {
+  } else if (level <= _levels.INFO) {
     prefixes.push(` ${gry}${blackSquare}${rst} `) // info: gray
-  } else if (level <= levels.WARN) {
+  } else if (level <= _levels.WARN) {
     prefixes.push(` ${ylw}${blackSquare}${rst} `) // warning: yellow
   } else {
     prefixes.push(` ${red}${blackSquare}${rst} `) // error: red
@@ -376,9 +385,8 @@ function emitColor(task: string | undefined, level: number, ...args: any[]): voi
   lastTask = task
 
   /* Now for the normal logging of all our parameters */
-  const breakLength = logWidth - taskWidth - 3 // 3 chas: space square space
-  const options = { breakLength, colors: true, depth: logDepth, compact: 1 }
-  const message = formatWithOptions(options, ...args)
+  const breakLength = _breakLength - _taskLength - 3 // 3 chas: space square space
+  const message = formatWithOptions({ ...logOptions, breakLength }, ...args)
 
   const prefixed = prefix ? message.replace(/^/gm, prefix) : message
   write(`${zap}${prefixed}\n`)
@@ -388,19 +396,19 @@ function emitPlain(task: string | undefined, level: number, ...args: any[]): voi
   const prefixes: string[] = []
 
   if (task) {
-    const pad = ''.padStart(taskWidth - task.length, ' ')
+    const pad = ''.padStart(_taskLength - task.length, ' ')
     prefixes.push(`${pad}${task} \u2502`)
   } else {
-    prefixes.push(''.padStart(taskWidth + 1, ' ') + '\u2502')
+    prefixes.push(''.padStart(_taskLength + 1, ' ') + '\u2502')
   }
 
-  if (level <= levels.TRACE) {
+  if (level <= _levels.TRACE) {
     prefixes.push( 'trace \u2502 ')
-  } else if (level <= levels.DEBUG) {
+  } else if (level <= _levels.DEBUG) {
     prefixes.push( 'debug \u2502 ')
-  } else if (level <= levels.INFO) {
+  } else if (level <= _levels.INFO) {
     prefixes.push('  info \u2502 ')
-  } else if (level <= levels.WARN) {
+  } else if (level <= _levels.WARN) {
     prefixes.push('  warn \u2502 ')
   } else {
     prefixes.push(' error \u2502 ')
@@ -416,9 +424,8 @@ function emitPlain(task: string | undefined, level: number, ...args: any[]): voi
   }
 
   /* Now for the normal logging of all our parameters */
-  const breakLength = 80 - taskWidth - 11 // 11 chars: evenly spaced level
-  const options = { breakLength, colors: false, depth: logDepth, compact: 1 }
-  const message = formatWithOptions(options, ...args)
+  const breakLength = 80 - _taskLength - 11 // 11 chars: evenly spaced level
+  const message = formatWithOptions({ ...logOptions, breakLength }, ...args)
 
   const prefixed = prefix ? message.replace(/^/gm, prefix) : message
   write(`${prefixed}\n`)
