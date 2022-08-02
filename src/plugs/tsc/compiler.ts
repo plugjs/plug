@@ -16,13 +16,16 @@ import {
 
 import { Diagnostic, FormatDiagnosticsHost } from 'typescript'
 import { fail } from '../assert'
-import { $red, log, logOptions } from '../log'
+import { $red, Logger, logOptions } from '../log'
 import { AbsolutePath, resolveAbsolutePath } from '../paths'
 
 export class TypeScriptHost
 implements FormatDiagnosticsHost, CompilerHost {
-  constructor(directory: AbsolutePath)
-  constructor(private _directory: AbsolutePath) {}
+  constructor(directory: AbsolutePath, log: Logger)
+  constructor(
+      private readonly _directory: AbsolutePath,
+      private readonly _log: Logger,
+  ) {}
 
   /* ======================================================================== */
 
@@ -97,9 +100,9 @@ implements FormatDiagnosticsHost, CompilerHost {
     for (const diagnostic of diagnostics) {
       const message = format([ diagnostic ], this)
       switch (diagnostic.category) {
-        case DiagnosticCategory.Error: log.error(message).sep(); errors ++; break
-        case DiagnosticCategory.Warning: log.warn(message).sep(); break
-        default: log.info(message).sep()
+        case DiagnosticCategory.Error: this._log.error(message).sep(); errors ++; break
+        case DiagnosticCategory.Warning: this._log.warn(message).sep(); break
+        default: this._log.info(message).sep()
       }
     }
 

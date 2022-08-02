@@ -28,7 +28,7 @@ export class Compile implements Plug {
   }
 
   async pipe(files: Files, run: Run): Promise<Files> {
-    const host = new TypeScriptHost(run.resolve('.'))
+    const host = new TypeScriptHost(run.resolve('.'), run.log)
 
 
     const { options, errors } = await getCompilerOptions()
