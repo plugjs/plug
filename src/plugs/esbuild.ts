@@ -12,7 +12,7 @@ import { Run } from '../run'
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 
 /**
- * Transpile and bundle files with {@link https://esbuild.github.io/ esbuild}.
+ * Transpile and bundle files with {@link https://esbuild.github.io/ | esbuild}.
  */
 export class ESBuild implements Plug {
   constructor(options: ESBuildOptions)

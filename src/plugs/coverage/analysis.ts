@@ -1,8 +1,8 @@
-import { assert } from '../assert'
-import fs from '../utils/asyncfs'
+import { assert } from '../../assert'
+import fs from '../../utils/asyncfs'
 
 import { fileURLToPath } from 'url'
-import { log } from '../log'
+import { log } from '../../log'
 import { RawSourceMap } from 'source-map'
 import { SourceMapConsumer } from 'source-map'
 

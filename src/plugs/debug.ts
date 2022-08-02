@@ -4,10 +4,7 @@ import type { Run } from '../run'
 import { $p, log } from '../log'
 import { install, Plug } from '../pipe'
 
-/**
- * A simple {@link Plug} writing some debugging info about the {@link Files}
- * being passed around in our {@link Pipe}.
- */
+/** Writes some info about the current {@link Files} being passed around. */
 export class Debug implements Plug {
   constructor() {}
 
@@ -33,10 +30,7 @@ install('debug', Debug)
 
 declare module '../pipe' {
   export interface Pipe {
-    /**
-     * A simple {@link Plug} writing some debugging info about the {@link Files}
-     * being passed around in our {@link Pipe}.
-     */
+    /** Writes some info about the current {@link Files} being passed around. */
     debug: PipeExtension<typeof Debug>
   }
 }

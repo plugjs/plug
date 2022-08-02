@@ -12,17 +12,17 @@ import { Run } from '../run'
 
 /** Options for executing scripts */
 export interface ExecOptions {
-  /** Extra arguments to pass to {@link spawnChild} after the command */
+  /** Extra arguments to pass to `spawn` after the command */
   args?: string[],
   /** Extra environment variables, or overrides for existing ones */
   env?: Record<string, any>,
-  /** Whether to run in the context of a _shell_ or not (see {@link spawnChild}) */
+  /** Whether to run in the context of a _shell_ or not */
   shell?: string | boolean,
   /**
    * The current working directory of the process to execute.
    *
-   * Defaults to the current {@link Files.directory Files' directory} when used
-   * as a {@link Plug}, or {@link process.cwd} when used from {@link exect}.
+   * Defaults to the current {@link Files.directory | Files' directory} when
+   * used as a {@link Plug} or `process.cwd()` when used from {@link exec}.
    */
   cwd?: string
   /**

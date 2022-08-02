@@ -1,8 +1,8 @@
-import fs from '../utils/asyncfs'
+import fs from '../../utils/asyncfs'
 
 import { parse } from '@babel/parser'
 import { pathToFileURL } from 'url'
-import { $p, log } from '../log'
+import { $p, log } from '../../log'
 
 import {
   CombiningCoverageAnalyser,
@@ -23,7 +23,7 @@ import {
   Node,
   VISITOR_KEYS,
 } from '@babel/types'
-import { AbsolutePath } from '../paths'
+import { AbsolutePath } from '../../paths'
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *

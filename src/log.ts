@@ -209,7 +209,7 @@ function _defaultLogger(): Logger {
   return currentRun()?.log || getLogger(_defaultTaskName)
 }
 
-/** Our shared {@link Log} instance */
+/** Our shared {@link Logger} instance */
 export const log: Logger = {
   trace(...args: any[]): Logger {
     if (_level > _levels.TRACE) return log

@@ -66,7 +66,7 @@ export interface Run extends BuildContext {
   files(...paths: string[]): FilesBuilder
 
   /**
-   * Find files according to the globs and {@link FindOptions specified}.
+   * Find files according to the globs and {@link FindOptions} specified.
    */
   find(glob: string, ...args: ParseOptions<FindOptions>): Pipe
 }
@@ -198,7 +198,7 @@ class RunImpl implements Run {
 
 /**
  * Create a new {@link Run} associated with the given {@link BuildContext} and
- * (optionally) forcing its {@link Run.baseDir baseDir} to the one specified.
+ * (optionally) forcing its {@link Run.baseDir | baseDir} to the one specified.
  */
 export function initRun(context: BuildContext, baseDir?: AbsolutePath): Run {
   return new RunImpl(
@@ -212,7 +212,7 @@ export function initRun(context: BuildContext, baseDir?: AbsolutePath): Run {
 }
 
 /**
- * Find files according to the globs and {@link FindOptions specified}.
+ * Find files according to the globs and {@link FindOptions} specified.
  */
 export function find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
   const run = currentRun()

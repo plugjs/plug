@@ -16,7 +16,7 @@ export type PlugFunction = Plug['pipe']
 
 /**
  * A {@link Pipe} represents a sequence of operations performed by
- * a series of {@link Plug Plugs}.
+ * a series of {@link Plug | Plugs}.
  */
 export interface Pipe extends Promise<Files> {
   /** Add a new {@link Plug} to the steps of this {@link Pipe} */
