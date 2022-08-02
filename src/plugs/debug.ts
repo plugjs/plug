@@ -4,6 +4,10 @@ import type { Run } from '../run'
 import { $p, log } from '../log'
 import { install, Plug } from '../pipe'
 
+/**
+ * A simple {@link Plug} writing some debugging info about the {@link Files}
+ * being passed around in our {@link Pipe}.
+ */
 export class Debug implements Plug {
   constructor() {}
 
@@ -21,10 +25,18 @@ export class Debug implements Plug {
   }
 }
 
-export const debug = install('debug', Debug)
+/* ========================================================================== *
+ * INSTALLATION                                                               *
+ * ========================================================================== */
+
+install('debug', Debug)
 
 declare module '../pipe' {
   export interface Pipe {
+    /**
+     * A simple {@link Plug} writing some debugging info about the {@link Files}
+     * being passed around in our {@link Pipe}.
+     */
     debug: PipeExtension<typeof Debug>
   }
 }
