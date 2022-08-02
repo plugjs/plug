@@ -3,34 +3,31 @@ import { log } from '../log'
 import { match, MatchOptions } from '../utils/match'
 import { ParseOptions, parseOptions } from '../utils/options'
 import { resolveRelativeChildPath } from '../paths'
-import { Plug } from '../pipe'
+import { install, Plug } from '../pipe'
 import { Run } from '../run'
 
+/** Options for filtering {@link Files}. */
 export interface FilterOptions extends MatchOptions {
-  /**
-   * The directory where to start looking for files.
-   *
-   * @defaultValue The current {@link Run.directory}
-   */
+  /** The base directory for filtering, and relativising the resulting files. */
   directory?: string
 }
 
-/** Filter some {@link Files} based on some globs and optional directory. */
+/** Filter the current {@link Files} using globs. */
 export class Filter implements Plug {
-  #globs: [ string, ...string[] ]
-  #options: FilterOptions
+  private readonly _globs: readonly [ string, ...readonly string[] ]
+  private readonly _options: FilterOptions
 
   constructor(glob: string, ...args: ParseOptions<FilterOptions>) {
     const { params, options } = parseOptions(args, {})
-    this.#globs = [ glob, ...params ]
-    this.#options = options
+    this._globs = [ glob, ...params ]
+    this._options = options
   }
 
   pipe(files: Files, run: Run): Files {
-    const { directory, ...options } = this.#options
+    const { directory, ...options } = this._options
 
-    const builder = run.files(directory || '@.')
-    const matcher = match(this.#globs, options)
+    const builder = run.files(directory || files.directory)
+    const matcher = match(this._globs, options)
 
     for (const file of files.absolutePaths()) {
       const relative = resolveRelativeChildPath(builder.directory, file)
@@ -38,17 +35,22 @@ export class Filter implements Plug {
     }
 
     const result = builder.build()
-    log.debug('Filtered', result.length, 'files (discarded', files.length - result.length, 'files)', {
-      from: files.directory,
-      into: result.directory,
-      globs: this.#globs, options,
-    })
+    const discarded = files.length - result.length
+    log.debug('Filtered', result.length, 'files (discarded', discarded, 'files)')
 
     return result
   }
 }
 
-/** Filter some {@link Files} based on some globs and optional directory. */
-export function filter(glob: string, ...args: ParseOptions<FilterOptions>): Filter {
-  return new Filter(glob, ...args)
+/* ========================================================================== *
+ * INSTALLATION                                                               *
+ * ========================================================================== */
+
+install('debug', Filter)
+
+declare module '../pipe' {
+  export interface Pipe {
+    /** Filter the current {@link Files} using globs. */
+    debug: PipeExtension<typeof Filter>
+  }
 }
