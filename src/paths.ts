@@ -60,6 +60,12 @@ export function getAbsoluteParent(path: AbsolutePath): AbsolutePath {
   return dirname(path) as AbsolutePath
 }
 
+export function getCurrentWorkingDirectory(): AbsolutePath {
+  const cwd = process.cwd()
+  assertAbsolutePath(cwd)
+  return cwd
+}
+
 /**
  * Resolves the specified path as an {@link AbsolutePath} and checks it is a
  * _file_, returning `undefined` if it is not.
