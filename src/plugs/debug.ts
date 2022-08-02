@@ -1,12 +1,11 @@
-import { Files } from '../files'
+import type { Files } from '../files'
+import type { Run } from '../run'
+
 import { $p, log } from '../log'
 import { install, Plug } from '../pipe'
-import { Run } from '../run'
 
 export class Debug implements Plug {
-  constructor() {
-    // nothing to do
-  }
+  constructor() {}
 
   async pipe(files: Files, run: Run): Promise<Files> {
     log.info('Debugging', files.length, 'files')
@@ -22,10 +21,10 @@ export class Debug implements Plug {
   }
 }
 
+export const debug = install('debug', Debug)
+
 declare module '../pipe' {
   export interface Pipe {
-    debug(...args: ConstructorParameters<typeof Debug>): this
+    debug: PipeExtension<typeof Debug>
   }
 }
-
-export const debug = install('debug', Debug)
