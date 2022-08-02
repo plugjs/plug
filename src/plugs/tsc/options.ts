@@ -77,7 +77,7 @@ export async function getCompilerOptions(
 export async function getCompilerOptions(
   file: AbsolutePath | undefined,
   overrides: CompilerOptions,
-  overridesDir: AbsolutePath,
+  overridesFile: AbsolutePath,
 ): Promise<CompilerOptionsAndDiagnostics>
 
 /** Load compiler options from a JSON file, and merge in the overrides */
@@ -92,8 +92,9 @@ export async function getCompilerOptions(
 
   // If we have overrides, merge them
   if (override.length) {
-    const [ overrides, overridesDir ] = override
-    const options = convertCompilerOptionsFromJson(overrides, overridesDir)
+    const [ overrides, overridesFile ] = override
+    const overridesDir = getAbsoluteParent(overridesFile)
+    const options = convertCompilerOptionsFromJson(overrides, overridesDir, overridesFile)
     result = mergeResults(result, options)
   }
 
