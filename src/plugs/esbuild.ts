@@ -1,10 +1,12 @@
+/// <reference path="../../types/webassembly.d.ts" />
+
 import { assert, fail } from '../assert'
 import { build, BuildOptions } from 'esbuild'
 import { Files, FilesBuilder } from '../files'
 import { $p, log } from '../log'
 
 import { resolveAbsolutePath } from '../paths'
-import { Plug } from '../pipe'
+import { install, Plug } from '../pipe'
 import { Run } from '../run'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
@@ -92,6 +94,10 @@ export class ESBuild implements Plug {
   }
 }
 
-export function esbuild(options: ESBuildOptions): ESBuild {
-  return new ESBuild(options)
+export const esbuild = install('esbuild', ESBuild)
+
+declare module '../pipe' {
+  export interface Pipe {
+    esbuild: PipeExtension<typeof ESBuild>
+  }
 }
