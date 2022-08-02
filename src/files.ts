@@ -11,7 +11,7 @@ export interface FilesBuilder {
   /** Merge orther {@link Files} instance to the {@link Files} being built */
   merge(...files: Files[]): void
   /** Write a file and add it to the {@link Files} instance being built */
-  write(file: string, content: string | Buffer): Promise<void>
+  write(file: string, content: string | Buffer): Promise<AbsolutePath>
   /** Build and return a {@link Files} instance */
   build(): Files
 }
@@ -96,13 +96,16 @@ export class Files {
         }
       },
 
-      async write(file: string, content: string | Buffer): Promise<void> {
+      async write(file: string, content: string | Buffer): Promise<AbsolutePath> {
         const relative = assertRelativeChildPath(instance.directory, file)
         const absolute = resolveAbsolutePath(instance.directory, relative)
         const directory = getAbsoluteParent(absolute)
 
         await mkdir(directory, { recursive: true })
         await writeFile(absolute, content)
+        this.add(absolute)
+
+        return absolute
       },
 
       build(): Files {
