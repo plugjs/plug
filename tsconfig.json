@@ -1,15 +1,16 @@
 {
   "compilerOptions": {
+    // Setup our compilation type
     "lib": [ "esnext" ],
     "types": [ "node" ],
     "target": "esnext",
     "moduleResolution": "node",
-
+    "esModuleInterop": true,
+    // No emit (done with "bootstrap")
     "noEmit": true,
-
+    // Ultra strict
     "strict": true,
     "noImplicitReturns": true,
-    "esModuleInterop": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
   },
