@@ -1,5 +1,3 @@
-/// <reference path="../../types/webassembly.d.ts" />
-
 import type { Files, FilesBuilder } from '../files'
 import type { Run } from '../run'
 
@@ -108,3 +106,10 @@ declare module '../pipe' {
     esbuild: PipeExtension<typeof ESBuild>
   }
 }
+
+/* ========================================================================== *
+ * PLUGINS                                                                    *
+ * ========================================================================== */
+
+export * from './esbuild/bundle-locals'
+export * from './esbuild/fix-extensions'
