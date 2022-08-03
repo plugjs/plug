@@ -7,7 +7,7 @@ import { runAsync } from './async'
 import { Files, FilesBuilder } from './files'
 import { $t, getLogger, Logger } from './log'
 import { AbsolutePath, isAbsolutePath, resolveAbsolutePath } from './paths'
-import { Pipe, Plug, PlugFunction } from './pipe'
+import { Pipe, PipeImpl } from './pipe'
 import { ParseOptions, parseOptions } from './utils/options'
 import { walk, WalkOptions } from './utils/walk'
 
@@ -68,7 +68,12 @@ export interface Run extends BuildContext {
   /**
    * Find files according to the globs and {@link FindOptions} specified.
    */
-  find(glob: string, ...args: ParseOptions<FindOptions>): Pipe
+  find(glob: string, ...args: ParseOptions<FindOptions>): Pipe & Promise<Files>
+
+  /**
+   * Create a new {@link Pipe} wrapping the specified {@link Files}.
+   */
+  pipe(files: Files | Promise<Files>): Pipe & Promise<Files>
 }
 
 /** Default implementation of the {@link Run} interface. */
@@ -120,24 +125,12 @@ class RunImpl implements Run {
     const now = Date.now()
     this.log.sep().info('Starting task').sep()
 
-    const thisRun = this
     const thisBuild: ThisBuild<any> = {}
 
     for (const name in this.tasks) {
-      thisBuild[name] = (): Pipe => {
-        const pipe = this.call(name) as Pipe
-
-        pipe.plug = function plug(arg: Plug | PlugFunction): Pipe {
-          const plug = typeof arg === 'function' ? { pipe: arg } : arg
-          const start = pipe.then((files: Files | undefined) => {
-            assert(files, `Task ${$t(name)} did not return any files to pipe`)
-            return plug.pipe(files, thisRun)
-          })
-          return new Pipe(start, thisRun)
-        }
-
-        return pipe
-      }
+      thisBuild[name] = ((): PipeImpl<Files | void> => {
+        return new PipeImpl(this.call(name), this)
+      }) as ((() => Promise<void>) |(() => Pipe & Promise<Files>))
     }
 
     try {
@@ -168,20 +161,22 @@ class RunImpl implements Run {
     return Files.builder(this.resolve(...paths))
   }
 
-  find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
-    const promise = Promise.resolve().then(async () => {
-      const { params, options: { directory, ...options } } = parseOptions(args, {})
-      const dir = this.resolve(directory || '.')
+  find(glob: string, ...args: ParseOptions<FindOptions>): Pipe & Promise<Files> {
+    const { params, options: { directory, ...options } } = parseOptions(args, {})
 
-      const builder = Files.builder(dir)
-      for await (const file of walk(dir, [ glob, ...params ], options)) {
+    const promise = Promise.resolve().then(async () => {
+      const builder = this.files(directory || '.')
+      for await (const file of walk(builder.directory, [ glob, ...params ], options)) {
         builder.add(file)
       }
-
       return builder.build()
     })
 
-    return new Pipe(promise, this)
+    return this.pipe(promise)
+  }
+
+  pipe(files: Files | Promise<Files>): Pipe & Promise<Files> {
+    return new PipeImpl(files, this)
   }
 }
 
