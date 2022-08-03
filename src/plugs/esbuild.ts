@@ -1,20 +1,20 @@
 /// <reference path="../../types/webassembly.d.ts" />
 
-import { assert, fail } from '../assert'
-import { build, BuildOptions } from 'esbuild'
-import { Files, FilesBuilder } from '../files'
-import { $p, log } from '../log'
+import type { Files, FilesBuilder } from '../files'
+import type { Run } from '../run'
 
+import { build, BuildOptions } from 'esbuild'
+import { assert, fail } from '../assert'
+import { $p, log } from '../log'
 import { resolveAbsolutePath } from '../paths'
 import { install, Plug } from '../pipe'
-import { Run } from '../run'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 
 /**
  * Transpile and bundle files with {@link https://esbuild.github.io/ | esbuild}.
  */
-export class ESBuild implements Plug {
+export class ESBuild implements Plug<Files> {
   constructor(options: ESBuildOptions)
   constructor(private readonly _options: ESBuildOptions) {}
 
