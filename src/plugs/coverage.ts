@@ -96,22 +96,27 @@ export class Coverage<
       }
     }
 
-    if (report.nodes.coverage < minimumCoverage) {
-      fail(`Coverage error: ${$red(`${report.nodes.coverage}%`)} does not meet minimum coverage ${$gry(`(${minimumCoverage}%)`)}`)
-    } else if (report.nodes.coverage < optimalCoverage) {
-      run.log.sep().warn(`Coverage: ${$ylw(`${report.nodes.coverage}%`)} does not meet optimal coverage ${$gry(`(${optimalCoverage}%)`)}`)
-    } else {
-      run.log.sep().info(`Coverage: ${$grn(`${report.nodes.coverage}%`)}`)
-    }
+    const finalizeReport = ((): void => {
+      if (report.nodes.coverage < minimumCoverage) {
+        fail(`Coverage error: ${$red(`${report.nodes.coverage}%`)} does not meet minimum coverage ${$gry(`(${minimumCoverage}%)`)}`)
+      } else if (report.nodes.coverage < optimalCoverage) {
+        run.log.sep().warn(`Coverage: ${$ylw(`${report.nodes.coverage}%`)} does not meet optimal coverage ${$gry(`(${optimalCoverage}%)`)}`)
+      } else {
+        run.log.sep().info(`Coverage: ${$grn(`${report.nodes.coverage}%`)}`)
+      }
 
-    if (fileErrors) {
-      fail(`Coverage error: ${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`)
-    } else if (fileWarnings) {
-      run.log.sep().warn(`Coverage: ${$ylw(fileErrors)} files do not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`)
-    }
+      if (fileErrors) {
+        fail(`Coverage error: ${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`)
+      } else if (fileWarnings) {
+        run.log.sep().warn(`Coverage: ${$ylw(fileErrors)} files do not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`)
+      }
+    })
 
     /* If we don't have to write a report, pass-through the coverage files */
-    if (this._options.reportDir == null) return undefined as any
+    if (this._options.reportDir == null) {
+      finalizeReport()
+      return undefined as any
+    }
 
     /* Create a builder to emit our reports */
     const builder = run.files(this._options.reportDir)
@@ -154,6 +159,7 @@ export class Coverage<
     await builder.write('report.js', `window.__initCoverage__(${jsonp});`)
 
     /* Add the files we generated */
+    finalizeReport()
     return builder.build() as any
   }
 }
