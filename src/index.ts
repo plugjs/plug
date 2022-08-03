@@ -1,3 +1,6 @@
+import './types'
+
+// Our minimal exports
 export * from './build'
 export * from './plugs'
 export * from './log'
