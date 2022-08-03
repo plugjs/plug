@@ -5,7 +5,10 @@ import { $gry, $p, $und, log } from '../log'
 import { install, Plug } from '../pipe'
 
 /** Writes some info about the current {@link Files} being passed around. */
-export class Debug implements Plug {
+export class Debug implements Plug<Files> {
+  constructor()
+  constructor(foo: string)
+
   constructor() {}
 
   async pipe(files: Files, run: Run): Promise<Files> {
