@@ -2,7 +2,7 @@ import type { BuildContext, ThisBuild } from './build'
 import type { Task } from './task'
 
 import { join } from 'node:path'
-import { assert, assertSettled, fail } from './assert'
+import { assert, fail } from './assert'
 import { runAsync } from './async'
 import { Files, FilesBuilder } from './files'
 import { $t, getLogger, Logger } from './log'
@@ -73,7 +73,6 @@ export interface Run extends BuildContext {
 
 /** Default implementation of the {@link Run} interface. */
 class RunImpl implements Run {
-  private readonly _pipes: Pipe[] = []
   readonly log: Logger
 
   constructor(
@@ -137,20 +136,12 @@ class RunImpl implements Run {
           return new Pipe(start, thisRun)
         }
 
-        this._pipes.push(pipe)
         return pipe
       }
     }
 
     try {
-      let result: Files | void
-      try {
-        result = await task.call(thisBuild, this)
-      } finally {
-        const settlements = await Promise.allSettled(this._pipes)
-        assertSettled(settlements, 'Task failed in', Date.now() - now, 'ms')
-      }
-
+      const result = await task.call(thisBuild, this)
       this.log.sep().info('Task completed in', Date.now() - now, 'ms').sep()
       return result
     } catch (error) {
@@ -190,9 +181,7 @@ class RunImpl implements Run {
       return builder.build()
     })
 
-    const pipe = new Pipe(promise, this)
-    this._pipes.push(pipe)
-    return pipe
+    return new Pipe(promise, this)
   }
 }
 
