@@ -7,9 +7,9 @@ export interface FilesBuilder {
   /** The (resolved) directory the {@link Files} will be associated with */
   readonly directory: AbsolutePath
   /** Push files into the {@link Files} instance being built */
-  add(...files: string[]): void
+  add(...files: string[]): this
   /** Merge orther {@link Files} instance to the {@link Files} being built */
-  merge(...files: Files[]): void
+  merge(...files: Files[]): this
   /** Write a file and add it to the {@link Files} instance being built */
   write(file: string, content: string | Buffer): Promise<AbsolutePath>
   /** Build and return a {@link Files} instance */
@@ -76,7 +76,7 @@ export class Files {
     return {
       directory: instance.directory,
 
-      add(...files: string[]): void {
+      add(...files: string[]): FilesBuilder {
         if (built) throw new Error('FileBuilder "build()" already called')
 
         if (typeof files === 'string') files = [ files ]
@@ -84,9 +84,11 @@ export class Files {
           const relative = assertRelativeChildPath(instance.directory, file)
           set.add(relative)
         }
+
+        return this
       },
 
-      merge(...args: Files[]): void {
+      merge(...args: Files[]): FilesBuilder {
         if (built) throw new Error('FileBuilder "build()" already called')
 
         for (const files of args) {
@@ -94,6 +96,8 @@ export class Files {
             this.add(file)
           }
         }
+
+        return this
       },
 
       async write(file: string, content: string | Buffer): Promise<AbsolutePath> {
