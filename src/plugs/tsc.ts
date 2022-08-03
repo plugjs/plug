@@ -1,6 +1,6 @@
+import { fail } from 'assert'
 import type { CompilerOptions } from 'typescript'
 import { createProgram, getPreEmitDiagnostics } from 'typescript'
-import { assertSettled } from '../assert'
 import { Files } from '../files'
 import { $p, log } from '../log'
 import { isFile } from '../paths'
@@ -52,7 +52,7 @@ export class Tsc implements Plug<Files> {
 
     // Get our build file and create the master program
     log.info('Compiling', paths.length, 'files')
-    log.info('Compliation options', options)
+    log.debug('Compliation options', options)
 
     const program = createProgram(paths, options, host, undefined, errors)
     const diagnostics = getPreEmitDiagnostics(program)
@@ -62,7 +62,7 @@ export class Tsc implements Plug<Files> {
     const promises: Promise<void>[] = []
     const result = program.emit(undefined, (fileName, code) => {
       promises.push(builder.write(fileName, code).then((file) => {
-        log.info('Written', $p(file))
+        log.trace('Written', $p(file))
       }))
     })
 
@@ -70,7 +70,9 @@ export class Tsc implements Plug<Files> {
     host.checkDiagnostics(result.diagnostics)
 
     const settlements = await Promise.allSettled(promises)
-    assertSettled(settlements, 'Unable to write')
+    for (const settlement of settlements) {
+      if (settlement.status === 'rejected') fail('Error writing files')
+    }
 
     const outputs = builder.build()
     log.info('TSC produced', outputs.length, 'files into', $p(outputs.directory))
