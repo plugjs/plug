@@ -1,26 +1,11 @@
-import {
-  CompilerHost,
-  CompilerOptions,
-  ScriptTarget,
-  SourceFile,
-  createSourceFile,
-  getDefaultLibFilePath,
-  sys,
-} from 'typescript'
+import ts from 'typescript' // TypeScript does NOT support ESM modules
 
-import {
-  DiagnosticCategory,
-  formatDiagnostics,
-  formatDiagnosticsWithColorAndContext,
-} from 'typescript'
-
-import { Diagnostic, FormatDiagnosticsHost } from 'typescript'
 import { fail } from '../../assert'
 import { $red, Logger, logOptions } from '../../log'
 import { AbsolutePath, resolveAbsolutePath } from '../../paths'
 
 export class TypeScriptHost
-implements FormatDiagnosticsHost, CompilerHost {
+implements ts.FormatDiagnosticsHost, ts.CompilerHost {
   constructor(directory: AbsolutePath, log: Logger)
   constructor(
       private readonly _directory: AbsolutePath,
@@ -32,10 +17,10 @@ implements FormatDiagnosticsHost, CompilerHost {
   /** Get a source file parsing one of our virtual files */
   getSourceFile(
       fileName: string,
-      languageVersion: ScriptTarget,
-  ): SourceFile | undefined {
+      languageVersion: ts.ScriptTarget,
+  ): ts.SourceFile | undefined {
     const code = this.readFile(fileName)
-    return code ? createSourceFile(fileName, code, languageVersion) : void 0
+    return code ? ts.createSourceFile(fileName, code, languageVersion) : void 0
   }
 
   /** [TS] Never write any files */
@@ -44,23 +29,23 @@ implements FormatDiagnosticsHost, CompilerHost {
   }
 
   /** [TS] Get the default library associated with the given options */
-  getDefaultLibFileName(options: CompilerOptions): string {
-    return getDefaultLibFilePath(options)
+  getDefaultLibFileName(options: ts.CompilerOptions): string {
+    return ts.getDefaultLibFilePath(options)
   }
 
   /** [TS] Check for filesystem case sensitivity */
   useCaseSensitiveFileNames(): boolean {
-    return sys.useCaseSensitiveFileNames
+    return ts.sys.useCaseSensitiveFileNames
   }
 
   /** [TS] Check for the existence of a given file */
   fileExists(fileName: string): boolean {
-    return sys.fileExists(resolveAbsolutePath(this.getCurrentDirectory(), fileName))
+    return ts.sys.fileExists(resolveAbsolutePath(this.getCurrentDirectory(), fileName))
   }
 
   /** [TS] Read the file if it exists, otherwise return undefined */
   readFile(fileName: string): string | undefined {
-    return sys.readFile(resolveAbsolutePath(this.getCurrentDirectory(), fileName))
+    return ts.sys.readFile(resolveAbsolutePath(this.getCurrentDirectory(), fileName))
   }
 
   /* ======================================================================== */
@@ -72,7 +57,7 @@ implements FormatDiagnosticsHost, CompilerHost {
 
   /** [TS] Return the canonical name for the specified file */
   getCanonicalFileName(fileName: string): string {
-    if (sys.useCaseSensitiveFileNames) return fileName
+    if (ts.sys.useCaseSensitiveFileNames) return fileName
 
     // Lifted from TypeScript sources
     const fileNameLowerCaseRegExp = /[^\u0130\u0131\u00DFa-z0-9\\/:\-_. ]+/g
@@ -83,25 +68,25 @@ implements FormatDiagnosticsHost, CompilerHost {
 
   /** [TS] Return the new line sequence used by this platform */
   getNewLine(): string {
-    return sys.newLine
+    return ts.sys.newLine
   }
 
   /* ======================================================================== */
 
   /** Check diagnostics and fail on TypeScript errors */
-  checkDiagnostics(diagnostics: readonly Diagnostic[]): void {
+  checkDiagnostics(diagnostics: readonly ts.Diagnostic[]): void {
     if (! diagnostics.length) return
 
     const format = logOptions.colors ?
-      formatDiagnosticsWithColorAndContext :
-      formatDiagnostics
+      ts.formatDiagnosticsWithColorAndContext :
+      ts.formatDiagnostics
 
     let errors = 0
     for (const diagnostic of diagnostics) {
       const message = format([ diagnostic ], this)
       switch (diagnostic.category) {
-        case DiagnosticCategory.Error: this._log.error(message).sep(); errors ++; break
-        case DiagnosticCategory.Warning: this._log.warn(message).sep(); break
+        case ts.DiagnosticCategory.Error: this._log.error(message).sep(); errors ++; break
+        case ts.DiagnosticCategory.Warning: this._log.warn(message).sep(); break
         default: this._log.info(message).sep()
       }
     }

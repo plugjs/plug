@@ -1,10 +1,4 @@
-import {
-  CompilerOptions, convertCompilerOptionsFromJson,
-  createSourceFile, Diagnostic,
-  DiagnosticCategory, getDefaultCompilerOptions,
-  parseConfigFileTextToJson, ScriptKind,
-  ScriptTarget,
-} from 'typescript'
+import ts from 'typescript' // TypeScript does NOT support ESM modules
 
 import { AbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../../paths'
 import { readFile } from '../../utils/asyncfs'
@@ -12,8 +6,8 @@ import { readFile } from '../../utils/asyncfs'
 /* ========================================================================== */
 
 export type CompilerOptionsAndDiagnostics = {
-  options: CompilerOptions,
-  errors: readonly Diagnostic[],
+  options: ts.CompilerOptions,
+  errors: readonly ts.Diagnostic[],
 }
 
 /* ========================================================================== */
@@ -38,12 +32,12 @@ async function loadOptions(
 
   // Load up our config file and convert is wicked JSON
   const data = await readFile(file, 'utf-8')
-  const { config, error } = parseConfigFileTextToJson(file, data)
+  const { config, error } = ts.parseConfigFileTextToJson(file, data)
   if (error) return { options: {}, errors: [ error ] }
 
   // Parse up the configuration file as options
   const { compilerOptions = {}, extends: extendsPath } = config
-  const result = convertCompilerOptionsFromJson(compilerOptions, dir, file)
+  const result = ts.convertCompilerOptionsFromJson(compilerOptions, dir, file)
   if (result.errors.length) return result
 
   // If we don't extend, we can return our result
@@ -56,9 +50,9 @@ async function loadOptions(
   if (stack.includes(ext)) {
     return { options: {}, errors: [ {
       messageText: `Circularity detected extending from "${ext}"`,
-      category: DiagnosticCategory.Error,
+      category: ts.DiagnosticCategory.Error,
       code: 18000, // copied from typescript internals...
-      file: createSourceFile(file, data, ScriptTarget.JSON, false, ScriptKind.JSON),
+      file: ts.createSourceFile(file, data, ts.ScriptTarget.JSON, false, ts.ScriptKind.JSON),
       start: undefined,
       length: undefined,
     } ] }
@@ -76,16 +70,16 @@ export async function getCompilerOptions(
 
 export async function getCompilerOptions(
   file: AbsolutePath | undefined,
-  overrides: CompilerOptions,
+  overrides: ts.CompilerOptions,
   overridesFile: AbsolutePath,
 ): Promise<CompilerOptionsAndDiagnostics>
 
 /** Load compiler options from a JSON file, and merge in the overrides */
 export async function getCompilerOptions(
     file?: AbsolutePath,
-    ...override: [ CompilerOptions, AbsolutePath ] | []
+    ...override: [ ts.CompilerOptions, AbsolutePath ] | []
 ): Promise<CompilerOptionsAndDiagnostics> {
-  let result: CompilerOptionsAndDiagnostics = { options: getDefaultCompilerOptions(), errors: [] }
+  let result: CompilerOptionsAndDiagnostics = { options: ts.getDefaultCompilerOptions(), errors: [] }
 
   // If we have a file to parse, load it, otherwise try "tsconfig.json"
   if (file) result = mergeResults(result, await loadOptions(file))
@@ -94,7 +88,7 @@ export async function getCompilerOptions(
   if (override.length) {
     const [ overrides, overridesFile ] = override
     const overridesDir = getAbsoluteParent(overridesFile)
-    const options = convertCompilerOptionsFromJson(overrides, overridesDir, overridesFile)
+    const options = ts.convertCompilerOptionsFromJson(overrides, overridesDir, overridesFile)
     result = mergeResults(result, options)
   }
 

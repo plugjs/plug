@@ -1,6 +1,8 @@
-import { fail } from 'assert'
 import type { CompilerOptions } from 'typescript'
-import { createProgram, getPreEmitDiagnostics } from 'typescript'
+
+import ts from 'typescript' // TypeScript does NOT support ESM modules
+
+import { fail } from 'assert'
 import { Files } from '../files'
 import { $p, log } from '../log'
 import { isFile } from '../paths'
@@ -54,8 +56,8 @@ export class Tsc implements Plug<Files> {
     log.info('Compiling', paths.length, 'files')
     log.debug('Compliation options', options)
 
-    const program = createProgram(paths, options, host, undefined, errors)
-    const diagnostics = getPreEmitDiagnostics(program)
+    const program = ts.createProgram(paths, options, host, undefined, errors)
+    const diagnostics = ts.getPreEmitDiagnostics(program)
     host.checkDiagnostics(diagnostics)
 
     const builder = run.files(out)
