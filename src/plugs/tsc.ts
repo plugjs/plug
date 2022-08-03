@@ -11,7 +11,7 @@ import { TypeScriptHost } from './tsc/compiler'
 import { getCompilerOptions } from './tsc/options'
 
 
-export class Tsc implements Plug {
+export class Tsc implements Plug<Files> {
   private readonly _tsconfig?: string
   private readonly _options: CompilerOptions
 
