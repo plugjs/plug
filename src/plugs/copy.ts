@@ -20,7 +20,7 @@ export interface CopyOptions {
 }
 
 /** Copy the curent {@link Files} to a different directory */
-export class Copy implements Plug {
+export class Copy implements Plug<Files> {
   constructor(directory: string, options?: CopyOptions)
   constructor(
       private readonly _directory: string,
