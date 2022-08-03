@@ -13,7 +13,7 @@ export interface FilterOptions extends MatchOptions {
 }
 
 /** Filter the current {@link Files} using globs. */
-export class Filter implements Plug {
+export class Filter implements Plug<Files> {
   private readonly _globs: readonly [ string, ...readonly string[] ]
   private readonly _options: FilterOptions
 
