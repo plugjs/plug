@@ -1,11 +1,11 @@
 import type { Files } from './files'
 import type { Pipe } from './pipe'
 
+import { logOptions } from './log'
 import { AbsolutePath, getAbsoluteParent } from './paths'
+import { initRun, Run } from './run'
 import { Task, TaskImpl } from './task'
 import { findCaller } from './utils/caller'
-import { initRun, Run } from './run'
-import { logOptions } from './log'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -57,7 +57,7 @@ export type Build<B> = {
  */
 export type ThisBuild<B> = {
   [ K in keyof B ] :
-    B[K] extends () => Files | Promise<Files> ? () => Pipe :
+    B[K] extends () => Files | Promise<Files> ? () => Pipe & Promise<Files> :
     B[K] extends () => void | Promise<void> ? () => Promise<void> :
     never
 }
