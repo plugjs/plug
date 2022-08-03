@@ -1,11 +1,12 @@
+import type { Files } from '../files'
+import type { Run } from '../run'
+
 import fs from '../utils/asyncfs'
 
 import { assert } from '../assert'
-import { Files } from '../files'
 import { $p } from '../log'
 import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
 import { install, Plug } from '../pipe'
-import { Run } from '../run'
 
 /** Options for copying files */
 export interface CopyOptions {
