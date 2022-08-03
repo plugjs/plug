@@ -10,11 +10,10 @@ import { currentRun } from '../async'
 import { $p } from '../log'
 import { AbsolutePath, getCurrentWorkingDirectory, isDirectory } from '../paths'
 import { install, Plug } from '../pipe'
+import { parseOptions, ParseOptions } from '../utils/options'
 
 /** Options for executing scripts */
 export interface ExecOptions {
-  /** Extra arguments to pass to `spawn` after the command */
-  args?: string[],
   /** Extra environment variables, or overrides for existing ones */
   env?: Record<string, any>,
   /** Whether to run in the context of a _shell_ or not */
@@ -37,6 +36,9 @@ export interface ExecOptions {
  * Execute a shell command, adding to its _arguments_ the list of files from
  * the current pipe (much like `xargs` does on Unix systems).
  *
+ * This {@link Plug} returns the same {@link Files} it was given, so that
+ * executing a shell command doesn't interrupt a {@link Pipe}.
+ *
  * For example:
  *
  * ```
@@ -45,21 +47,26 @@ export interface ExecOptions {
  * export default build({
  *   async runme() {
  *     find('*.ts', { directory: 'src' })
- *       .plug(new Exec('ls', { args: [ '-la', '/' ] }))
+ *       .plug(new Exec('chmod', '755' }))
+ *       .plug(new Exec('chown root:root', { shell: true }))
  *   },
  * })
  * ```
  */
-export class Exec implements Plug<void> {
-  constructor(cmd: string)
-  constructor(cmd: string, options: ExecOptions)
-  constructor(
-      private readonly _cmd: string,
-      private readonly _options: ExecOptions = {},
-  ) {}
+export class Exec implements Plug<Files> {
+  private readonly _cmd: string
+  private readonly _args: readonly string[]
+  private readonly _options: ExecOptions
 
-  async pipe(files: Files, run: Run): Promise<void> {
-    const { args = [], relativePaths = true, ...options } = this._options
+  constructor(cmd: string, ...args: ParseOptions<ExecOptions>) {
+    const { params, options } = parseOptions(args, {})
+    this._cmd = cmd
+    this._args = params
+    this._options = options
+  }
+
+  async pipe(files: Files, run: Run): Promise<Files> {
+    const { relativePaths = true, ...options } = this._options
 
     if (! options.cwd) options.cwd = files.directory
 
@@ -70,7 +77,10 @@ export class Exec implements Plug<void> {
     if (options.shell) params.forEach((s, i, a) => a[i] = JSON.stringify(s))
 
     // Run our child
-    await spawnChild(this._cmd, { ...options, args: [ ...args, ...params ] }, run)
+    await spawnChild(this._cmd, [ ...this._args, ...params ], options, run)
+
+    // Return our files
+    return files
   }
 }
 
@@ -84,16 +94,18 @@ export class Exec implements Plug<void> {
  *
  * export default build({
  *   async runme() {
- *     await exec('ls', { args: [ '-la', '/' ] })
+ *     await exec('ls', '-la', '/')
  *   },
  * })
  * ```
  */
 
-export function exec(cmd: string, options: ExecOptions = {}): Promise<void> {
+export function exec(cmd: string, ...args: ParseOptions<ExecOptions>): Promise<void> {
   const run = currentRun()
   assert(run, 'Unable to execute commands outside a running task')
-  return spawnChild(cmd, options, run)
+
+  const { params, options } = parseOptions(args, {})
+  return spawnChild(cmd, params, options, run)
 }
 
 
@@ -117,7 +129,8 @@ declare module '../pipe' {
      * export default build({
      *   async runme() {
      *     find('*.ts', { directory: 'src' })
-     *       .exec('ls', { args: [ '-la', '/' ] })
+     *       .exec('chmod', '755' })
+     *       .exec('chown root:root', { shell: true })
      *   },
      * })
      * ```
@@ -130,9 +143,13 @@ declare module '../pipe' {
  * INTERNALS                                                                  *
  * ========================================================================== */
 
-async function spawnChild(cmd: string, options: ExecOptions = {}, run: Run): Promise<void> {
+async function spawnChild(
+    cmd: string,
+    args: readonly string[],
+    options: ExecOptions = {},
+    run: Run,
+): Promise<void> {
   const {
-    args = [], // default no arguments
     env = {}, // default empty environment
     shell = false, // by default do not use a shell
     cwd = undefined, // by default use "process.cwd()"
