@@ -1,14 +1,15 @@
+import type { Files } from '../files'
+import type { Run } from '../run'
+
 import path from 'node:path'
 import reaadline from 'node:readline'
 
 import { spawn, SpawnOptions } from 'child_process'
 import { assert } from '../assert'
 import { currentRun } from '../async'
-import { Files } from '../files'
 import { $p } from '../log'
 import { AbsolutePath, getCurrentWorkingDirectory, isDirectory } from '../paths'
 import { install, Plug } from '../pipe'
-import { Run } from '../run'
 
 /** Options for executing scripts */
 export interface ExecOptions {
@@ -49,7 +50,7 @@ export interface ExecOptions {
  * })
  * ```
  */
-export class Exec implements Plug {
+export class Exec implements Plug<void> {
   constructor(cmd: string)
   constructor(cmd: string, options: ExecOptions)
   constructor(
@@ -57,7 +58,7 @@ export class Exec implements Plug {
       private readonly _options: ExecOptions = {},
   ) {}
 
-  async pipe(files: Files, run: Run): Promise<Files> {
+  async pipe(files: Files, run: Run): Promise<void> {
     const { args = [], relativePaths = true, ...options } = this._options
 
     if (! options.cwd) options.cwd = files.directory
@@ -70,9 +71,6 @@ export class Exec implements Plug {
 
     // Run our child
     await spawnChild(this._cmd, { ...options, args: [ ...args, ...params ] }, run)
-
-    // Return the same files from the input
-    return files
   }
 }
 
