@@ -7,7 +7,7 @@ import type { Run } from '../run'
 import { sep } from 'node:path'
 import { fail } from '../assert'
 import { $grn, $gry, $p, $red, $ylw } from '../log'
-import { install, PipeExtension, Plug } from '../pipe'
+import { install, Plug } from '../pipe'
 import { coverageReport, CoverageResult } from './coverage/report'
 
 /** Options to analyse coverage reports */
