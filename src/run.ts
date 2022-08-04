@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { assert } from './assert'
 import { runAsync } from './async'
 import { Files, FilesBuilder } from './files'
-import { $t, getLogger, Logger } from './log'
+import { $t, buildFailed, getLogger, Logger } from './log'
 import { AbsolutePath, getCurrentWorkingDirectory, isAbsolutePath, resolveAbsolutePath } from './paths'
 import { Pipe, PipeImpl } from './pipe'
 import { ParseOptions, parseOptions } from './utils/options'
@@ -106,16 +106,16 @@ class RunImpl implements Run {
     )
 
     /* Actually _call_ the `Task` and get a promise for it */
-    const promise = runAsync(childRun, name, () => childRun.run(task))
+    const promise = runAsync(childRun, name, () => childRun._run(name, task))
 
     /* Cache the execution promise (never run the smae task twice) */
     this._cache.set(task, promise)
     return promise
   }
 
-  async run(task: Task): Promise<Files | undefined> {
+  private async _run(name: string, task: Task): Promise<Files | undefined> {
     const now = Date.now()
-    this.log.notice('Starting...')
+    this.log.notice(`Starting task ${$t(name)}...`)
 
     const thisBuild: ThisBuild<any> = {}
 
@@ -127,10 +127,11 @@ class RunImpl implements Run {
 
     try {
       const result = await task.call(thisBuild, this)
-      this.log.notice('Task completed in', Date.now() - now, 'ms')
+      this.log.notice(`Task ${$t(name)} completed in %d ms`, Date.now() - now)
       return result
     } catch (error) {
-      this.log.fail('Task failed in', Date.now() - now, 'ms', error)
+      const reason = error === buildFailed ? [] : [ error ]
+      this.log.fail(`Task ${$t(name)} failed in %d ms`, Date.now() - now, ...reason)
     }
   }
 

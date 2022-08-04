@@ -1,7 +1,7 @@
 import type { Files } from './files'
 import type { Pipe } from './pipe'
 
-import { logOptions } from './log'
+import { buildFailed, logOptions } from './log'
 import { AbsolutePath, getAbsoluteParent } from './paths'
 import { initRun, Run } from './run'
 import { Task, TaskImpl } from './task'
@@ -95,7 +95,18 @@ export function build<D extends BuildDefinition<D>>(
     const task: Task = 'task' in def ? def.task : new TaskImpl(context, def)
 
     /* Prepare the _new_ `TaskCall` that will wrap our `Task` */
-    const call = (async (): Promise<void> => void await initRun(context).call(name))
+    const call = (async (): Promise<void> => {
+      const run = initRun(context)
+      run.log.notice('Starting build...')
+      const now = Date.now()
+      try {
+        await initRun(context).call(name)
+        run.log.notice('Build completed in %d ms', Date.now() - now)
+      } catch (error) {
+        const reason = error === buildFailed ? [] : [ error ]
+        run.log.fail('Build failed in %d ms', Date.now() - now, ...reason)
+      }
+    })
 
     /* Gite the task call a proper "name" (for nicer stack  traces) */
     Object.defineProperty(call, 'name', { enumerable: true, value: name })
