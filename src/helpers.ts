@@ -10,9 +10,9 @@ import { currentRun } from './async'
 /**
  * Resolve a path into an {@link AbsolutePath}.
  *
- * If the path starts with `@...` it is considered to be relative to this
- * instance's `baseDir`, otherwise it will be resolved against the build file
- * where the task was _originally_ defined in.
+ * If the path starts with `@...` it is considered to be relative to the
+ * {@link process.cwd | current working directory}, otherwise it will be
+ * resolved against the build file where the task was originally defined in.
  */
 export function resolve(...paths: string[]): AbsolutePath {
   const run = currentRun()

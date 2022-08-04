@@ -34,11 +34,9 @@ export type TaskDefinition<B> =
  * A {@link TaskCall} describes a _function_ calling a {@link Task}, and
  * it is exposed to outside users of the {@link Build}.
  */
-export type TaskCall<T extends Files | void> = {
+export type TaskCall<T extends Files | void> = (() => Promise<void>) & {
   task: Task<T>
-} & (
-  (baseDir?: AbsolutePath) => Promise<void>
-)
+}
 
 /**
  * A {@link Build} is a collection of {@link TaskCall | TaskCalls}, as produced
@@ -97,8 +95,8 @@ export function build<D extends BuildDefinition<D>>(
     const task: Task = 'task' in def ? def.task : new TaskImpl(context, def)
 
     /* Prepare the _new_ `TaskCall` that will wrap our `Task` */
-    const call = (async (baseDir?: AbsolutePath): Promise<void> => {
-      await initRun(context, baseDir).call(name)
+    const call = (async (): Promise<void> => {
+      await initRun(context).call(name)
     }) as TaskCall<any>
 
     /* Inject all the properties we need to make a function a `TaskCall` */

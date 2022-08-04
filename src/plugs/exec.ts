@@ -162,7 +162,7 @@ async function spawnChild(
   // Figure out the PATH environment variable
   const childPaths: AbsolutePath[] = []
 
-  // The `.../node_modules/.bin` path relative to the baseDir */
+  // The `.../node_modules/.bin` path relative to the current working dir */
   const baseNodePath = run.resolve('@node_modules', '.bin')
   if (isDirectory(baseNodePath)) childPaths.push(baseNodePath)
 

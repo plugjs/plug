@@ -6,7 +6,7 @@ import { assert, fail } from './assert'
 import { runAsync } from './async'
 import { Files, FilesBuilder } from './files'
 import { $t, getLogger, Logger } from './log'
-import { AbsolutePath, isAbsolutePath, resolveAbsolutePath } from './paths'
+import { AbsolutePath, getCurrentWorkingDirectory, isAbsolutePath, resolveAbsolutePath } from './paths'
 import { Pipe, PipeImpl } from './pipe'
 import { ParseOptions, parseOptions } from './utils/options'
 import { walk, WalkOptions } from './utils/walk'
@@ -29,12 +29,6 @@ export interface FindOptions extends WalkOptions {
  */
 export interface Run extends BuildContext {
   /**
-   * The _base directory_ associated with the run - normally the directory
-   * where the initial build files is located.
-   */
-  readonly baseDir: AbsolutePath,
-
-  /**
    * The {@link Logger} associated with this instance.
    */
   readonly log: Logger
@@ -53,9 +47,9 @@ export interface Run extends BuildContext {
   /**
    * Resolve a path in the context of this {@link Run}.
    *
-   * If the path starts with `@...` it is considered to be relative to this
-   * instance's `baseDir`, otherwise it will be resolved against the build file
-   * where the task was _originally_ defined in.
+   * If the path starts with `@...` it is considered to be relative to the
+   * {@link process.cwd | current working directory}, otherwise it will be
+   * resolved against the build file where the task was originally defined in.
    */
   resolve(...paths: string[]): AbsolutePath
 
@@ -81,7 +75,6 @@ class RunImpl implements Run {
   readonly log: Logger
 
   constructor(
-      readonly baseDir: AbsolutePath,
       readonly buildDir: AbsolutePath,
       readonly buildFile: AbsolutePath,
       readonly tasks: Readonly<Record<string, Task>>,
@@ -104,7 +97,6 @@ class RunImpl implements Run {
     if (cached) return cached
 
     const childRun = new RunImpl(
-        this.baseDir, // the "baseDir" for "@" resolutuion is always unchanged, from the original build file or arg
         task.context.buildDir, // the "buildDir" and "buildFile", used for local resolution (e.g. "./foo.bar") are
         task.context.buildFile, // always the ones associated with the build where the task was defined
         { ...task.context.tasks, ...this.tasks }, // merge the tasks, starting from the ones of the original build
@@ -149,7 +141,7 @@ class RunImpl implements Run {
     if (path.startsWith('@')) {
       const relative = path.substring(1)
       assert(! isAbsolutePath(relative), `Path component of "${path}" is absolute`)
-      return resolveAbsolutePath(this.baseDir, relative)
+      return resolveAbsolutePath(getCurrentWorkingDirectory(), relative)
     }
 
     if (isAbsolutePath(path)) return path
@@ -180,13 +172,9 @@ class RunImpl implements Run {
   }
 }
 
-/**
- * Create a new {@link Run} associated with the given {@link BuildContext} and
- * (optionally) forcing its {@link Run.baseDir | baseDir} to the one specified.
- */
-export function initRun(context: BuildContext, baseDir?: AbsolutePath): Run {
+/** Create a new {@link Run} associated with the given {@link BuildContext}. */
+export function initRun(context: BuildContext): Run {
   return new RunImpl(
-      baseDir || context.buildDir,
       context.buildDir,
       context.buildFile,
       context.tasks,

@@ -2,7 +2,7 @@ import { sep } from 'node:path'
 import { formatWithOptions, InspectOptions } from 'node:util'
 
 import { currentRun, runningTasks } from './async'
-import { AbsolutePath, resolveRelativeChildPath } from './paths'
+import { AbsolutePath, getCurrentWorkingDirectory, resolveRelativeChildPath } from './paths'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -271,7 +271,7 @@ const tsk = '\u001b[38;5;141m' // the color for tasks (purple)
 
 /** Colorize an {@link AbsolutePath}. */
 export function $p(path: AbsolutePath): string {
-  const directory = currentRun()?.baseDir || process.cwd() as AbsolutePath
+  const directory = getCurrentWorkingDirectory()
   const relative = resolveRelativeChildPath(directory, path)
   const resolved = relative == null ? path : `.${sep}${relative}`
   return _color ? `${und}${gry}${resolved}${rst}` : `"${resolved}"`
