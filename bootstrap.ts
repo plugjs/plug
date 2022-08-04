@@ -18,6 +18,7 @@ const booststrap = build({
           format: 'esm',
           plugins: [ fixExtensions ],
           outExtension: { '.js': '.mjs' },
+          define: { __filename: 'import.meta.url' },
         })
 
     return files('dist').merge(cjs, esm).build()
