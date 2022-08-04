@@ -24,19 +24,19 @@ export type LogLevel =
 /** A {@link Logger} emits log events */
 export interface Logger {
   /** Log a `TRACE` message */
-  trace: (...data: any[]) => this
+  trace: (...args: [ any, ...any ]) => this
   /** Log a `DEBUG` message */
-  debug: (...data: any[]) => this
+  debug: (...args: [ any, ...any ]) => this
   /** Log an `INFO` message */
-  info: (...data: any[]) => this
+  info: (...args: [ any, ...any ]) => this
   /** Log a `NOTICE` message */
-  notice: (...data: any[]) => this
+  notice: (...args: [ any, ...any ]) => this
   /** Log a `WARNING` message */
-  warn: (...data: any[]) => this
+  warn: (...args: [ any, ...any ]) => this
   /** Log an `ERROR` message */
-  error: (...data: any[]) => this
+  error: (...args: [ any, ...any ]) => this
   /** Log a `FAIL` message and throw */
-  fail: (...data: any[]) => never
+  fail: (...args: [ any, ...any ]) => never
 }
 
 /** Options for our {@link Logger} instances */
@@ -158,43 +158,43 @@ class LoggerImpl implements Logger {
     this.#task = task
   }
 
-  trace(...args: any[]): this {
+  trace(...args: [ any, ...any ]): this {
     if (_level > _levels.TRACE) return this
     emit(this.#task, _levels.TRACE, ...args)
     return this
   }
 
-  debug(...args: any[]): this {
+  debug(...args: [ any, ...any ]): this {
     if (_level > _levels.DEBUG) return this
     emit(this.#task, _levels.DEBUG, ...args)
     return this
   }
 
-  info(...args: any[]): this {
+  info(...args: [ any, ...any ]): this {
     if (_level > _levels.INFO) return this
     emit(this.#task, _levels.INFO, ...args)
     return this
   }
 
-  notice(...args: any[]): this {
+  notice(...args: [ any, ...any ]): this {
     if (_level > _levels.NOTICE) return this
     emit(this.#task, _levels.NOTICE, ...args)
     return this
   }
 
-  warn(...args: any[]): this {
+  warn(...args: [ any, ...any ]): this {
     if (_level > _levels.WARN) return this
     emit(this.#task, _levels.WARN, ...args)
     return this
   }
 
-  error(...args: any[]): this {
+  error(...args: [ any, ...any ]): this {
     if (_level > _levels.ERROR) return this
     emit(this.#task, _levels.ERROR, ...args)
     return this
   }
 
-  fail(...args: any[]): never {
+  fail(...args: [ any, ...any ]): never {
     emit(this.#task, _levels.ERROR, ...args)
     throw buildFailed
   }
@@ -219,7 +219,7 @@ export function getLogger(task: string = _defaultTaskName): Logger {
  * ========================================================================== */
 
 /** The generic, shared `log` function type. */
-export type Log = ((...args: any[]) => Logger) & Logger
+export type Log = ((...args: [ any, ...any ]) => void) & Logger
 
 /** Our logging function (defaulting to the `NOTICE` level) */
 export const log: Log = ((): Log => {
@@ -228,43 +228,43 @@ export const log: Log = ((): Log => {
 
   /* Create a Logger wrapping the current logger */
   const wrapper: Logger = {
-    trace(...args: any[]): Logger {
+    trace(...args: [ any, ...any ]): Logger {
       if (_level > _levels.TRACE) return wrapper
       logger().trace(...args)
       return wrapper
     },
 
-    debug(...args: any[]): Logger {
+    debug(...args: [ any, ...any ]): Logger {
       if (_level > _levels.DEBUG) return wrapper
       logger().debug(...args)
       return wrapper
     },
 
-    info(...args: any[]): Logger {
+    info(...args: [ any, ...any ]): Logger {
       if (_level > _levels.INFO) return wrapper
       logger().info(...args)
       return wrapper
     },
 
-    notice(...args: any[]): Logger {
+    notice(...args: [ any, ...any ]): Logger {
       if (_level > _levels.NOTICE) return wrapper
       logger().notice(...args)
       return wrapper
     },
 
-    warn(...args: any[]): Logger {
+    warn(...args: [ any, ...any ]): Logger {
       if (_level > _levels.WARN) return wrapper
       logger().warn(...args)
       return wrapper
     },
 
-    error(...args: any[]): Logger {
+    error(...args: [ any, ...any ]): Logger {
       if (_level > _levels.ERROR) return wrapper
       logger().error(...args)
       return wrapper
     },
 
-    fail(...args: any[]): never {
+    fail(...args: [ any, ...any ]): never {
       // Dunno why TS thinks that `logger().fail(... args)` can return
       const log: Logger = logger()
       log.fail(...args)
@@ -272,7 +272,7 @@ export const log: Log = ((): Log => {
   }
 
   /* Create a function that will default logging to "NOTICE" */
-  const log = (...args: any[]): Logger => wrapper.notice(...args)
+  const log = (...args: [ any, ...any ]): void => void wrapper.notice(...args)
 
   /* Return our function, with added Logger implementation */
   return Object.assign(log, wrapper)
@@ -387,7 +387,9 @@ setInterval(() => {
   const pad = ''.padStart(_taskLength, ' ')
   const names = tasks.map((task) => $t(task)).join(`${gry}, `) + gry
 
-  write(`${zap}${pad} ${nextSpin()}  Running ${tasks.length} tasks (${names})${rst}`)
+  const task = tasks.length > 1 ? 'tasks' : 'task'
+
+  write(`${zap}${pad} ${nextSpin()}  Running ${tasks.length} ${task}: ${names}${rst}`)
 }, 50).unref()
 
 /* ========================================================================== *
@@ -399,17 +401,16 @@ const blackSquare = '\u25a0'
 
 /** Emit either plain or color */
 function emit(task: string, level: number, ...args: any[]): void {
-  /* Check if this is a `buildFailed` (logged already) */
-  for (const arg of args) if (arg === buildFailed) return
+  /* Strip any "buildFailed" argument (as it's already logged) */
+  const params = args.filter((arg) => arg !== buildFailed)
+  if (params.length === 0) return
 
   /* Log in colors or plain text */
-  return _color ?
-    emitColor(task, level, ...args) :
-    emitPlain(task, level, ...args)
+  _color ? emitColor(task, level, params) : emitPlain(task, level, params)
 }
 
 /** Emit in full colors! */
-function emitColor(task: string, level: number, ...args: any[]): void {
+function emitColor(task: string, level: number, args: any[]): void {
   /* Prefixes, to prepend at the beginning of each line */
   const prefixes: string[] = []
 
@@ -443,7 +444,7 @@ function emitColor(task: string, level: number, ...args: any[]): void {
   write(`${zap}${prefixed}\n`)
 }
 
-function emitPlain(task: string, level: number, ...args: any[]): void {
+function emitPlain(task: string, level: number, args: any[]): void {
   const prefixes: string[] = []
 
   if (task) {
