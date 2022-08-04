@@ -5,7 +5,7 @@ import type { AbsolutePath } from '../paths'
 import type { Run } from '../run'
 
 import { sep } from 'node:path'
-import { fail } from '../assert'
+
 import { $grn, $gry, $p, $red, $ylw } from '../log'
 import { install, Plug } from '../pipe'
 import { coverageReport, CoverageResult } from './coverage/report'
@@ -98,7 +98,7 @@ export class Coverage<
 
     const finalizeReport = ((): void => {
       if (report.nodes.coverage < minimumCoverage) {
-        fail(`Coverage error: ${$red(`${report.nodes.coverage}%`)} does not meet minimum coverage ${$gry(`(${minimumCoverage}%)`)}`)
+        run.log.fail(`Coverage error: ${$red(`${report.nodes.coverage}%`)} does not meet minimum coverage ${$gry(`(${minimumCoverage}%)`)}`)
       } else if (report.nodes.coverage < optimalCoverage) {
         run.log.sep().warn(`Coverage: ${$ylw(`${report.nodes.coverage}%`)} does not meet optimal coverage ${$gry(`(${optimalCoverage}%)`)}`)
       } else {
@@ -106,7 +106,7 @@ export class Coverage<
       }
 
       if (fileErrors) {
-        fail(`Coverage error: ${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`)
+        run.log.fail(`Coverage error: ${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`)
       } else if (fileWarnings) {
         run.log.sep().warn(`Coverage: ${$ylw(fileErrors)} files do not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`)
       }

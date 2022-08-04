@@ -8,6 +8,9 @@ import { AbsolutePath, getCurrentWorkingDirectory, resolveRelativeChildPath } fr
  * TYPES                                                                      *
  * ========================================================================== */
 
+/** Constant thrown indicating a build failure already logged */
+export const buildFailed = Symbol.for('plugjs:build.failed')
+
 /** A type identifying all our log levels */
 export type LogLevel =
   | 'TRACE'
@@ -32,6 +35,8 @@ export interface Logger {
   warn: (...data: any[]) => this
   /** Log an `ERROR` message */
   error: (...data: any[]) => this
+  /** Log a `FAIL` message and throw */
+  fail: (...data: any[]) => never
   /** Separate log entries */
   sep: () => this
 }
@@ -191,6 +196,11 @@ class LoggerImpl implements Logger {
     return this
   }
 
+  fail(...args: any[]): never {
+    emit(this.#task, _levels.ERROR, ...args)
+    throw buildFailed
+  }
+
   sep(): this {
     separateLines = true
     return this
@@ -259,6 +269,12 @@ export const log: Log = ((): Log => {
       if (_level > _levels.ERROR) return wrapper
       logger().error(...args)
       return wrapper
+    },
+
+    fail(...args: any[]): never {
+      // Dunno why TS thinks that `logger().fail(... args)` can return
+      const log: Logger = logger()
+      log.fail(...args)
     },
 
     sep(): Logger {
@@ -398,6 +414,10 @@ const blackSquare = '\u25a0'
 
 /** Emit either plain or color */
 function emit(task: string, level: number, ...args: any[]): void {
+  /* Check if this is a `buildFailed` (logged already) */
+  for (const arg of args) if (arg === buildFailed) return
+
+  /* Log in colors or plain text */
   return _color ?
     emitColor(task, level, ...args) :
     emitPlain(task, level, ...args)

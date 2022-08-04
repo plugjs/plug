@@ -4,8 +4,9 @@ import type { Pipe } from './pipe'
 import type { FindOptions } from './run'
 import type { ParseOptions } from './utils/options'
 
-import { assert, fail } from './assert'
+import { assert } from './assert'
 import { currentRun } from './async'
+import { log } from './log'
 
 /**
  * Resolve a path into an {@link AbsolutePath}.
@@ -57,16 +58,11 @@ export async function parallel<P extends readonly any[]>(...promises: P): Promis
       continue
     }
 
-    try {
-      fail(settlement.reason)
-    } catch (error) {
-      // we'll fail below, regardless
-    } finally {
-      errors ++
-    }
+    log.error(settlement.reason)
+    errors ++
   }
 
-  if (errors) fail('Parallel execution failed for', errors, 'tasks')
+  if (errors) log.fail('Parallel execution failed for', errors, 'tasks')
   return results as ParallelResult<P>
 }
 

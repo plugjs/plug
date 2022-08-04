@@ -2,7 +2,7 @@ import type { Files, FilesBuilder } from '../files'
 import type { Run } from '../run'
 
 import { build, BuildOptions } from 'esbuild'
-import { assert, fail } from '../assert'
+import { assert } from '../assert'
 import { $p, log } from '../log'
 import { resolveAbsolutePath } from '../paths'
 import { install, Plug } from '../pipe'
@@ -75,7 +75,7 @@ export class ESBuild implements Plug<Files> {
     }
 
     if (esbuild.errors.length) {
-      fail('ESBuild encountered', esbuild.errors.length, 'errors')
+      run.log.fail('ESBuild encountered', esbuild.errors.length, 'errors')
     }
 
     const outputs = esbuild.metafile.outputs

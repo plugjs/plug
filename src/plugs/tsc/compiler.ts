@@ -1,6 +1,5 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
 
-import { fail } from '../../assert'
 import { $red, Logger, logOptions } from '../../log'
 import { AbsolutePath, resolveAbsolutePath } from '../../paths'
 
@@ -91,6 +90,6 @@ implements ts.FormatDiagnosticsHost, ts.CompilerHost {
       }
     }
 
-    if (errors) fail(`TypeScript reported ${$red(errors)} errors`)
+    if (errors) this._log.fail(`TypeScript reported ${$red(errors)} errors`)
   }
 }

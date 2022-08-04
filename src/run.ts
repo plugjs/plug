@@ -2,7 +2,7 @@ import type { BuildContext, ThisBuild } from './build'
 import type { Task } from './task'
 
 import { join } from 'node:path'
-import { assert, fail } from './assert'
+import { assert } from './assert'
 import { runAsync } from './async'
 import { Files, FilesBuilder } from './files'
 import { $t, getLogger, Logger } from './log'
@@ -87,7 +87,7 @@ class RunImpl implements Run {
 
   call(name: string): Promise<Files | undefined> {
     const task = this.tasks[name]
-    if (! task) fail(`Task "${$t(name)}" does not exist`)
+    if (! task) this.log.fail(`Task "${$t(name)}" does not exist`)
 
     /* Check for circular dependencies */
     assert(! this._stack.includes(task), `Circular dependency running task "${$t(name)}"`)
@@ -115,7 +115,7 @@ class RunImpl implements Run {
 
   async run(task: Task): Promise<Files | undefined> {
     const now = Date.now()
-    this.log.sep().info('Starting task').sep()
+    this.log.notice('Starting...')
 
     const thisBuild: ThisBuild<any> = {}
 
@@ -127,10 +127,10 @@ class RunImpl implements Run {
 
     try {
       const result = await task.call(thisBuild, this)
-      this.log.sep().info('Task completed in', Date.now() - now, 'ms').sep()
+      this.log.notice('Task completed in', Date.now() - now, 'ms')
       return result
     } catch (error) {
-      fail('Task failed in', Date.now() - now, 'ms', error)
+      this.log.fail('Task failed in', Date.now() - now, 'ms', error)
     }
   }
 
