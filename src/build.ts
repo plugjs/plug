@@ -35,7 +35,7 @@ export type TaskDefinition<B> =
  * it is exposed to outside users of the {@link Build}.
  */
 export type TaskCall<T extends Files | undefined> = (() => Promise<void>) & {
-  task: Task<T>
+  readonly task: Task<T>
 }
 
 /**
@@ -95,23 +95,19 @@ export function build<D extends BuildDefinition<D>>(
     const task: Task = 'task' in def ? def.task : new TaskImpl(context, def)
 
     /* Prepare the _new_ `TaskCall` that will wrap our `Task` */
-    const call = (async (): Promise<void> => {
-      await initRun(context).call(name)
-    }) as TaskCall<any>
+    const call = (async (): Promise<void> => void await initRun(context).call(name))
 
-    /* Inject all the properties we need to make a function a `TaskCall` */
-    Object.defineProperties(call, {
-      name: { enumerable: true, value: name },
-      task: { enumerable: true, value: task },
-    })
+    /* Gite the task call a proper "name" (for nicer stack  traces) */
+    Object.defineProperty(call, 'name', { enumerable: true, value: name })
 
     /* Register task length for nice logs */
     if (name.length > logOptions.taskLength) {
       logOptions.taskLength = name.length
     }
 
+    /* Remember our stuff and onto the next! */
+    result[name] = Object.assign(call, { task })
     tasks[name] = task
-    result[name] = call
   }
 
   /* All done! */
