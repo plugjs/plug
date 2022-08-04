@@ -41,6 +41,7 @@ const booststrap = build({
 
   async default() {
     await this.compile_types()
+    await new Promise((resolve) => setTimeout(resolve, 5000))
     await parallel(
         this.compile_sources(),
         this.compile_tests(),

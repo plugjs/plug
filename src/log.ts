@@ -195,6 +195,7 @@ class LoggerImpl implements Logger {
   }
 
   fail(...args: [ any, ...any ]): never {
+    if (args.includes(buildFailed)) throw buildFailed
     emit(this.#task, _levels.ERROR, ...args)
     throw buildFailed
   }
