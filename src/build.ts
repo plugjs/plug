@@ -28,13 +28,13 @@ export type BuildContext = {
  * A {@link TaskDefinition} is a _function_ defining a {@link Task}.
  */
 export type TaskDefinition<B> =
-  (this: ThisBuild<B>, self: ThisBuild<B>, run: Run) => Files | void | Promise<Files | void>
+  (this: ThisBuild<B>, self: ThisBuild<B>, run: Run) => Files | undefined | void | Promise<Files | undefined | void>
 
 /**
  * A {@link TaskCall} describes a _function_ calling a {@link Task}, and
  * it is exposed to outside users of the {@link Build}.
  */
-export type TaskCall<T extends Files | void> = (() => Promise<void>) & {
+export type TaskCall<T extends Files | undefined> = (() => Promise<void>) & {
   task: Task<T>
 }
 
@@ -46,7 +46,7 @@ export type Build<B> = {
   [ K in keyof B ]:
     B[K] extends TaskCall<infer T> ? TaskCall<T> :
     B[K] extends () => Files | Promise<Files> ? TaskCall<Files> :
-    B[K] extends () => void | Promise<void> ? TaskCall<void> :
+    B[K] extends () => undefined | void | Promise<undefined | void> ? TaskCall<undefined> :
     never
 }
 
@@ -56,7 +56,7 @@ export type Build<B> = {
 export type ThisBuild<B> = {
   [ K in keyof B ] :
     B[K] extends () => Files | Promise<Files> ? () => Pipe & Promise<Files> :
-    B[K] extends () => void | Promise<void> ? () => Promise<void> :
+    B[K] extends () => undefined | void | Promise<undefined | void> ? () => Promise<undefined> :
     never
 }
 
@@ -69,7 +69,7 @@ export type ThisBuild<B> = {
  * thus giving the ability to extend other {@link Build | Builds}.
  */
 export type BuildDefinition<B> = {
-  [ K in keyof B ] : TaskDefinition<B> | TaskCall<Files | void>
+  [ K in keyof B ] : TaskDefinition<B> | TaskCall<Files | undefined>
 }
 
 /* ========================================================================== *

@@ -42,7 +42,7 @@ export interface Run extends BuildContext {
   readonly taskName?: string
 
   /** Call another {@link Task} from this one. */
-  call(name: string): Promise<Files | void>
+  call(name: string): Promise<Files | undefined>
 
   /**
    * Resolve a path in the context of this {@link Run}.
@@ -78,14 +78,14 @@ class RunImpl implements Run {
       readonly buildDir: AbsolutePath,
       readonly buildFile: AbsolutePath,
       readonly tasks: Readonly<Record<string, Task>>,
-      private readonly _cache: Map<Task, Promise<Files | void>>,
+      private readonly _cache: Map<Task, Promise<Files | undefined>>,
       private readonly _stack: readonly Task[],
       readonly taskName?: string,
   ) {
     this.log = getLogger(taskName)
   }
 
-  call(name: string): Promise<Files | void> {
+  call(name: string): Promise<Files | undefined> {
     const task = this.tasks[name]
     if (! task) fail(`Task "${$t(name)}" does not exist`)
 
@@ -113,16 +113,16 @@ class RunImpl implements Run {
     return promise
   }
 
-  async run(task: Task): Promise<Files | void> {
+  async run(task: Task): Promise<Files | undefined> {
     const now = Date.now()
     this.log.sep().info('Starting task').sep()
 
     const thisBuild: ThisBuild<any> = {}
 
     for (const name in this.tasks) {
-      thisBuild[name] = ((): PipeImpl<Files | void> => {
+      thisBuild[name] = ((): PipeImpl<Files | undefined> => {
         return new PipeImpl(this.call(name), this)
-      }) as ((() => Promise<void>) |(() => Pipe & Promise<Files>))
+      }) as ((() => Promise<undefined>) |(() => Pipe & Promise<Files>))
     }
 
     try {
@@ -178,7 +178,7 @@ export function initRun(context: BuildContext): Run {
       context.buildDir,
       context.buildFile,
       context.tasks,
-      new Map<Task, Promise<Files | void>>(),
+      new Map<Task, Promise<Files | undefined>>(),
       [],
   )
 }
