@@ -29,9 +29,9 @@ export class Tsc implements Plug<Files> {
   }
 
   async pipe(files: Files, run: Run): Promise<Files> {
-    const tsconfig =
-      this._tsconfig ? run.resolve(this._tsconfig) :
-        await isFile(files.directory, 'tsconfig.json')
+    const tsconfig = this._tsconfig ?
+      run.resolve(this._tsconfig) :
+      isFile(files.directory, 'tsconfig.json')
 
     const overrides: CompilerOptions = {
       rootDir: files.directory, // by default, our "files" directory

@@ -157,18 +157,18 @@ async function spawnChild(
   } = options
 
   const childCwd = cwd ? run.resolve(cwd) : getCurrentWorkingDirectory()
-  assert(await isDirectory(childCwd), `Current working directory ${$p(childCwd)} does not exist`)
+  assert(isDirectory(childCwd), `Current working directory ${$p(childCwd)} does not exist`)
 
   // Figure out the PATH environment variable
   const childPaths: AbsolutePath[] = []
 
   // The `.../node_modules/.bin` path relative to the baseDir */
   const baseNodePath = run.resolve('@node_modules', '.bin')
-  if (await isDirectory(baseNodePath)) childPaths.push(baseNodePath)
+  if (isDirectory(baseNodePath)) childPaths.push(baseNodePath)
 
   // The `.../node_bodules/.bin` path relative to the buildDir */
   const buildNodePath = run.resolve('./node_modules', '.bin')
-  if (await isDirectory(buildNodePath)) childPaths.push(buildNodePath)
+  if (isDirectory(buildNodePath)) childPaths.push(buildNodePath)
 
   // Any other paths either from `process.env` or `env` (which overrides it)
   const extraPath = env.PATH || process.env.PATH
