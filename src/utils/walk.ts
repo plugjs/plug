@@ -117,7 +117,7 @@ async function* walker(args: WalkerArguments): AsyncGenerator<string, void, void
   log.trace('Reading directory', $p(dir))
   const dirents = await fs.readdir(dir, { withFileTypes: true }).catch((error) => {
     if (error.code !== 'ENOENT') throw error
-    log.warn('Directory', $p(dir), 'not found').sep()
+    log.warn('Directory', $p(dir), 'not found')
     return []
   })
 

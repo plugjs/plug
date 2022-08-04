@@ -37,8 +37,6 @@ export interface Logger {
   error: (...data: any[]) => this
   /** Log a `FAIL` message and throw */
   fail: (...data: any[]) => never
-  /** Separate log entries */
-  sep: () => this
 }
 
 /** Options for our {@link Logger} instances */
@@ -200,11 +198,6 @@ class LoggerImpl implements Logger {
     emit(this.#task, _levels.ERROR, ...args)
     throw buildFailed
   }
-
-  sep(): this {
-    separateLines = true
-    return this
-  }
 }
 
 /** Cache of loggers by task-name. */
@@ -275,11 +268,6 @@ export const log: Log = ((): Log => {
       // Dunno why TS thinks that `logger().fail(... args)` can return
       const log: Logger = logger()
       log.fail(...args)
-    },
-
-    sep(): Logger {
-      separateLines = true
-      return wrapper
     },
   }
 
@@ -406,9 +394,6 @@ setInterval(() => {
  * INTERNALS                                                                  *
  * ========================================================================== */
 
-let lastTask: string = _defaultTaskName
-let separateLines: boolean = false
-
 const whiteSquare = '\u25a1'
 const blackSquare = '\u25a0'
 
@@ -450,17 +435,6 @@ function emitColor(task: string, level: number, ...args: any[]): void {
   /* The prefix (task name and level) */
   const prefix = prefixes.join('')
 
-  /* If we need to separate entries, do it now */
-  if (separateLines) {
-    if (lastTask != task) {
-      write(`${zap}\n`)
-    } else {
-      write(`${zap}${prefix}\n`)
-    }
-    separateLines = false
-  }
-  lastTask = task
-
   /* Now for the normal logging of all our parameters */
   const breakLength = _breakLength - _taskLength - 3 // 3 chas: space square space
   const message = formatWithOptions({ ...logOptions, breakLength }, ...args)
@@ -495,12 +469,6 @@ function emitPlain(task: string, level: number, ...args: any[]): void {
 
   /* The prefix (task name and level) */
   const prefix = prefixes.join('')
-
-  /* If we need to separate entries, do it now */
-  if (separateLines) {
-    write(`${prefix}\n`)
-    separateLines = false
-  }
 
   /* Now for the normal logging of all our parameters */
   const breakLength = 80 - _taskLength - 12 // 12 chars of the level above
