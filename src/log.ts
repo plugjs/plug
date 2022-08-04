@@ -13,6 +13,7 @@ export type LogLevel =
   | 'TRACE'
   | 'DEBUG'
   | 'INFO'
+  | 'NOTICE'
   | 'WARN'
   | 'ERROR'
   | 'OFF'
@@ -25,6 +26,8 @@ export interface Logger {
   debug: (...data: any[]) => this
   /** Log an `INFO` message */
   info: (...data: any[]) => this
+  /** Log a `NOTICE` message */
+  notice: (...data: any[]) => this
   /** Log a `WARNING` message */
   warn: (...data: any[]) => this
   /** Log an `ERROR` message */
@@ -56,13 +59,14 @@ const _levels = {
   TRACE: 10,
   DEBUG: 20,
   INFO: 30,
-  WARN: 40,
-  ERROR: 50,
+  NOTICE: 40,
+  WARN: 50,
+  ERROR: 60,
   OFF: Number.MAX_SAFE_INTEGER,
 } as const
 
 /* The current log level */
-let _level: number = _levels.INFO
+let _level: number = _levels.NOTICE
 /* Log colors (default is stderr is a TTY) */
 let _color = process.stderr.isTTY
 /* Log width (if it's a tty, or 80) */
@@ -78,6 +82,7 @@ export const logOptions: LogOptions = {
     if (_level <= _levels.TRACE) return 'TRACE'
     if (_level <= _levels.DEBUG) return 'DEBUG'
     if (_level <= _levels.INFO) return 'INFO'
+    if (_level <= _levels.NOTICE) return 'NOTICE'
     if (_level <= _levels.WARN) return 'WARN'
     if (_level <= _levels.ERROR) return 'ERROR'
     return 'OFF'
@@ -168,6 +173,12 @@ class LoggerImpl implements Logger {
     return this
   }
 
+  notice(...args: any[]): this {
+    if (_level > _levels.NOTICE) return this
+    emit(this.#task, _levels.NOTICE, ...args)
+    return this
+  }
+
   warn(...args: any[]): this {
     if (_level > _levels.WARN) return this
     emit(this.#task, _levels.WARN, ...args)
@@ -204,49 +215,64 @@ export function getLogger(task: string = _defaultTaskName): Logger {
  * LOGGERS, SHARED (AUTOMATIC TASK DETECTION) AND PER-TASK                    *
  * ========================================================================== */
 
-/** Get the logger from the current {@link Run} or with the default task name */
-function _defaultLogger(): Logger {
-  return currentRun()?.log || getLogger(_defaultTaskName)
-}
+/** The generic, shared `log` function type. */
+export type Log = ((...args: any[]) => Logger) & Logger
 
-/** Our shared {@link Logger} instance */
-export const log: Logger = {
-  trace(...args: any[]): Logger {
-    if (_level > _levels.TRACE) return log
-    _defaultLogger().trace(...args)
-    return log
-  },
+/** Our logging function (defaulting to the `NOTICE` level) */
+export const log: Log = ((): Log => {
+  /* Return either the current run's log, or the default task's logger */
+  const logger = (): Logger => (currentRun()?.log || getLogger(_defaultTaskName))
 
-  debug(...args: any[]): Logger {
-    if (_level > _levels.DEBUG) return log
-    _defaultLogger().debug(...args)
-    return log
-  },
+  /* Create a Logger wrapping the current logger */
+  const wrapper: Logger = {
+    trace(...args: any[]): Logger {
+      if (_level > _levels.TRACE) return wrapper
+      logger().trace(...args)
+      return wrapper
+    },
 
-  info(...args: any[]): Logger {
-    if (_level > _levels.INFO) return log
-    _defaultLogger().info(...args)
-    return log
-  },
+    debug(...args: any[]): Logger {
+      if (_level > _levels.DEBUG) return wrapper
+      logger().debug(...args)
+      return wrapper
+    },
 
-  warn(...args: any[]): Logger {
-    if (_level > _levels.WARN) return log
-    _defaultLogger().warn(...args)
-    return log
-  },
+    info(...args: any[]): Logger {
+      if (_level > _levels.INFO) return wrapper
+      logger().info(...args)
+      return wrapper
+    },
 
-  error(...args: any[]): Logger {
-    if (_level > _levels.ERROR) return log
-    _defaultLogger().error(...args)
-    return log
-  },
+    notice(...args: any[]): Logger {
+      if (_level > _levels.NOTICE) return wrapper
+      logger().notice(...args)
+      return wrapper
+    },
 
-  sep(): Logger {
-    separateLines = true
-    return log
-  },
-}
+    warn(...args: any[]): Logger {
+      if (_level > _levels.WARN) return wrapper
+      logger().warn(...args)
+      return wrapper
+    },
 
+    error(...args: any[]): Logger {
+      if (_level > _levels.ERROR) return wrapper
+      logger().error(...args)
+      return wrapper
+    },
+
+    sep(): Logger {
+      separateLines = true
+      return wrapper
+    },
+  }
+
+  /* Create a function that will default logging to "NOTICE" */
+  const log = (...args: any[]): Logger => wrapper.notice(...args)
+
+  /* Return our function, with added Logger implementation */
+  return Object.assign(log, wrapper)
+})()
 
 /* ========================================================================== *
  * PRETTY COLORS                                                              *
@@ -393,8 +419,8 @@ function emitColor(task: string, level: number, ...args: any[]): void {
   /* Level indicator (our little colorful squares) */
   if (level <= _levels.DEBUG) {
     prefixes.push(` ${gry}${whiteSquare}${rst} `) // trace/debug: gray open
-  } else if (level <= _levels.INFO) {
-    prefixes.push(` ${gry}${blackSquare}${rst} `) // info: gray
+  } else if (level <= _levels.NOTICE) {
+    prefixes.push(` ${gry}${blackSquare}${rst} `) // info/notice: gray
   } else if (level <= _levels.WARN) {
     prefixes.push(` ${ylw}${blackSquare}${rst} `) // warning: yellow
   } else {
@@ -428,21 +454,23 @@ function emitPlain(task: string, level: number, ...args: any[]): void {
 
   if (task) {
     const pad = ''.padStart(_taskLength - task.length, ' ')
-    prefixes.push(`${pad}${task} \u2502`)
+    prefixes.push(`${pad}${task}`)
   } else {
-    prefixes.push(''.padStart(_taskLength + 1, ' ') + '\u2502')
+    prefixes.push(''.padStart(_taskLength, ' '))
   }
 
   if (level <= _levels.TRACE) {
-    prefixes.push( 'trace \u2502 ')
+    prefixes.push(' \u2502  trace \u2502 ')
   } else if (level <= _levels.DEBUG) {
-    prefixes.push( 'debug \u2502 ')
+    prefixes.push(' \u2502  debug \u2502 ')
   } else if (level <= _levels.INFO) {
-    prefixes.push('  info \u2502 ')
+    prefixes.push(' \u2502   info \u2502 ')
+  } else if (level <= _levels.NOTICE) {
+    prefixes.push(' \u2502 notice \u2502 ')
   } else if (level <= _levels.WARN) {
-    prefixes.push('  warn \u2502 ')
+    prefixes.push(' \u2502   warn \u2502 ')
   } else {
-    prefixes.push(' error \u2502 ')
+    prefixes.push(' \u2502  error \u2502 ')
   }
 
   /* The prefix (task name and level) */
@@ -455,7 +483,7 @@ function emitPlain(task: string, level: number, ...args: any[]): void {
   }
 
   /* Now for the normal logging of all our parameters */
-  const breakLength = 80 - _taskLength - 11 // 11 chars: evenly spaced level
+  const breakLength = 80 - _taskLength - 12 // 12 chars of the level above
   const message = formatWithOptions({ ...logOptions, breakLength }, ...args)
 
   const prefixed = prefix ? message.replace(/^/gm, prefix) : message
