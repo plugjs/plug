@@ -84,9 +84,9 @@ implements ts.FormatDiagnosticsHost, ts.CompilerHost {
     for (const diagnostic of diagnostics) {
       const message = format([ diagnostic ], this)
       switch (diagnostic.category) {
-        case ts.DiagnosticCategory.Error: this._log.error(message).sep(); errors ++; break
-        case ts.DiagnosticCategory.Warning: this._log.warn(message).sep(); break
-        default: this._log.info(message).sep()
+        case ts.DiagnosticCategory.Error: this._log.error(message); errors ++; break
+        case ts.DiagnosticCategory.Warning: this._log.warn(message); break
+        default: this._log.info(message)
       }
     }
 

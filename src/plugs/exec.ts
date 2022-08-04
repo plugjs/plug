@@ -196,12 +196,12 @@ async function spawnChild(
 
   if (child.stdout) {
     const out = reaadline.createInterface(child.stdout)
-    out.on('line', (line) => line ? run.log.info(line) : run.log.sep())
+    out.on('line', (line) => line ? run.log.notice(line) : run.log.notice('\u00a0'))
   }
 
   if (child.stderr) {
     const err = reaadline.createInterface(child.stderr)
-    err.on('line', (line) => line ? run.log.info(line) : run.log.sep())
+    err.on('line', (line) => line ? run.log.warn(line) : run.log.warn('\u00a0'))
   }
 
   // Return our promise from the spawn events

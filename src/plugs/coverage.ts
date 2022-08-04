@@ -71,7 +71,7 @@ export class Coverage<
       if (file.length > max) max = file.length
     }
 
-    run.log.info('Coverage report:').sep()
+    run.log.info('Coverage report:')
 
     let maxLength = 0
     for (const file in report.results) {
@@ -100,15 +100,15 @@ export class Coverage<
       if (report.nodes.coverage < minimumCoverage) {
         run.log.fail(`Coverage error: ${$red(`${report.nodes.coverage}%`)} does not meet minimum coverage ${$gry(`(${minimumCoverage}%)`)}`)
       } else if (report.nodes.coverage < optimalCoverage) {
-        run.log.sep().warn(`Coverage: ${$ylw(`${report.nodes.coverage}%`)} does not meet optimal coverage ${$gry(`(${optimalCoverage}%)`)}`)
+        run.log.warn(`Coverage: ${$ylw(`${report.nodes.coverage}%`)} does not meet optimal coverage ${$gry(`(${optimalCoverage}%)`)}`)
       } else {
-        run.log.sep().info(`Coverage: ${$grn(`${report.nodes.coverage}%`)}`)
+        run.log.info(`Coverage: ${$grn(`${report.nodes.coverage}%`)}`)
       }
 
       if (fileErrors) {
         run.log.fail(`Coverage error: ${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`)
       } else if (fileWarnings) {
-        run.log.sep().warn(`Coverage: ${$ylw(fileErrors)} files do not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`)
+        run.log.warn(`Coverage: ${$ylw(fileErrors)} files do not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`)
       }
     })
 
