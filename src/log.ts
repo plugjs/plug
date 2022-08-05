@@ -56,26 +56,43 @@ export interface LogOptions extends InspectOptions {
   defaultTaskName: string,
 }
 
-/** A record for a {@link Report} */
+/** Counters for records in a {@link Report} */
 export interface ReportStats {
+  /** The number of `notice` records in this {@link Report}. */
   readonly notices: number
+  /** The number of `warning` records in this {@link Report}. */
   readonly warnings: number
+  /** The number of `error` records in this {@link Report}. */
   readonly errors: number
+  /** The number _all_ records in this {@link Report}. */
   readonly records: number
 }
 
 /** A record for a {@link Report} */
 export interface ReportRecord {
+  /** The _level_ (or _severity_) of this {@link ReportRecord}. */
   readonly level: Extract<LogLevel, 'NOTICE' | 'WARN' | 'ERROR'>,
+  /** A detail message to associate with this {@link ReportRecord}. */
   readonly message: string
 
+  /**
+   * Tags to associate with this{@link ReportRecord}.
+   *
+   * Those are error categories, or error codes and are directly related with
+   * whatever produced the {@link Report}.
+   */
   readonly tags?: string [] | string | null | undefined
 
+  /** Line number in the source code (starting at `1`) */
   readonly line?: number | null | undefined
+  /** Column number in the source code (starting at `1`) */
   readonly column?: number | null | undefined
+  /** Number of characters involved (`-1` means until the end of the line ) */
   readonly characters?: number | null | undefined
 
+  /** The {@link AbsolutePath} of the file associated with this. */
   readonly file?: AbsolutePath | null | undefined,
+  /** The _real source code_ associated with this (for error higlighting). */
   readonly source?: string | null | undefined
 }
 
