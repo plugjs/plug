@@ -1,9 +1,14 @@
-import { build, log, find, parallel, pipe, files, fixExtensions } from './src/index'
+import { build, files, find, fixExtensions, log, logOptions, parallel, pipe } from './src/index'
 
+// logOptions.level = 'TRACE'
+// logOptions.level = 'TRACE'
+void logOptions
 
 const booststrap = build({
+  find_sources: () => find('**/*.ts', { directory: 'src' }),
+
   async compile_sources() {
-    const sources = await find('**/*.ts', { directory: 'src' })
+    const sources = await this.find_sources()
 
     const cjs = await pipe(sources)
         .esbuild({
@@ -25,12 +30,12 @@ const booststrap = build({
   },
 
   async compile_tests() {
-    return find('**/*.ts', { directory: 'test' })
+    return await this.find_sources()
         .esbuild({ outdir: 'build/test' })
   },
 
   async compile_types() {
-    return find('**/*.ts', { directory: 'src' })
+    return await this.find_sources()
         .tsc('tsconfig.json', {
           noEmit: false,
           declaration: true,
@@ -39,9 +44,13 @@ const booststrap = build({
         })
   },
 
+  async lint_sources() {
+    await this.find_sources().eslint()
+  },
+
   async default() {
+    await this.lint_sources()
     await this.compile_types()
-    await new Promise((resolve) => setTimeout(resolve, 5000))
     await parallel(
         this.compile_sources(),
         this.compile_tests(),
