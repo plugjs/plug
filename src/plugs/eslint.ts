@@ -73,7 +73,7 @@ export class ESLint implements Plug<undefined> {
     }
 
     /* Emit our report and fail on errors */
-    if (report.records) report.emit()
+    if (! report.empty) report.emit()
     if (report.errors) report.fail()
     return undefined
   }
