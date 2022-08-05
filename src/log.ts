@@ -1,4 +1,3 @@
-import { fail } from 'node:assert'
 import { sep } from 'node:path'
 import { formatWithOptions, InspectOptions } from 'node:util'
 
@@ -73,7 +72,7 @@ export interface ReportRecord {
   /** The _level_ (or _severity_) of this {@link ReportRecord}. */
   readonly level: Extract<LogLevel, 'NOTICE' | 'WARN' | 'ERROR'>,
   /** A detail message to associate with this {@link ReportRecord}. */
-  readonly message: string
+  readonly message: string | string[]
 
   /**
    * Tags to associate with this{@link ReportRecord}.
@@ -88,7 +87,7 @@ export interface ReportRecord {
   /** Column number in the source code (starting at `1`) */
   readonly column?: number | null | undefined
   /** Number of characters involved (`-1` means until the end of the line ) */
-  readonly characters?: number | null | undefined
+  readonly length?: number | null | undefined
 
   /** The {@link AbsolutePath} of the file associated with this. */
   readonly file?: AbsolutePath | null | undefined,
@@ -99,9 +98,19 @@ export interface ReportRecord {
 /** A {@link Report} that will standardise the way we output information. */
 export interface Report extends ReportStats {
   /** Add a new {@link ReportRecord | record} to this {@link Report}. */
-  record(record: ReportRecord): this
+  add(...records: ReportRecord[]): this
   /** Emit this {@link Report}. */
-  emit(showSources?: boolean | undefined): ReportStats
+  emit(showSources?: boolean | undefined): this
+  /**
+   * Fail the build.
+   *
+   * Useful in chained constructs like:
+   *
+   * ```
+   * if (report.errors) report.emit().fail()
+   * ```
+   */
+  fail(...args: any[]): never
 }
 
 /* ========================================================================== *
@@ -248,7 +257,7 @@ class LoggerImpl implements Logger {
   }
 
   report(title: string): Report {
-    return new ReportImpl(this._task, title)
+    return new ReportImpl(this, this._task, title)
   }
 }
 
@@ -464,7 +473,7 @@ interface ReportInternalRecord {
   readonly tags: readonly string[]
   readonly line: number
   readonly column: number
-  readonly characters: number
+  readonly length: number
 }
 
 
@@ -476,6 +485,7 @@ class ReportImpl implements Report {
   private _errors = 0
 
   constructor(
+      private readonly _log: Logger,
       private readonly _task: string,
       private readonly _title: string,
   ) {}
@@ -496,62 +506,70 @@ class ReportImpl implements Report {
     return this._notices + this._warnings + this._errors
   }
 
-  record(record: ReportRecord): this {
-    /* Normalize the basic entries in this message */
-    const messages = record.message.trim().split('\n')
-    const file = record.file || undefined
-    const source = record.source || undefined
-    const tags = record.tags ?
-      Array.isArray(record.tags) ?
-          [ ...record.tags ] :
-          [ record.tags ] :
-          []
+  add(...records: ReportRecord[]): this {
+    for (const record of records) {
+      /* Normalize the basic entries in this message */
+      let messages =
+        Array.isArray(record.message) ?
+            [ ...record.message ] :
+            record.message.split('\n')
+      messages = messages.filter((message) => !! message)
+      if (! messages.length) this._log.fail('No message for report record')
 
-    const level =
-      record.level === 'NOTICE' ? _levels.NOTICE :
-      record.level === 'WARN' ? _levels.WARN :
-      record.level === 'ERROR' ? _levels.ERROR :
-      fail(`Wrong record level "${record.level}"`)
+      const file = record.file || undefined
+      const source = record.source || undefined
+      const tags = record.tags ?
+        Array.isArray(record.tags) ?
+            [ ...record.tags ] :
+            [ record.tags ] :
+            []
 
-    switch (level) {
-      case _levels.NOTICE: this._notices ++; break
-      case _levels.WARN: this._warnings ++; break
-      case _levels.ERROR: this._errors ++; break
-    }
+      const level =
+        record.level === 'NOTICE' ? _levels.NOTICE :
+        record.level === 'WARN' ? _levels.WARN :
+        record.level === 'ERROR' ? _levels.ERROR :
+        this._log.fail(`Wrong record level "${record.level}"`)
 
-    /* Line, column and characters are a bit more complicated */
-    let line: number = 0
-    let column: number = 0
-    let characters: number = 1
+      switch (level) {
+        case _levels.NOTICE: this._notices ++; break
+        case _levels.WARN: this._warnings ++; break
+        case _levels.ERROR: this._errors ++; break
+      }
 
-    if (file && record.line) {
-      line = record.line
-      if (record.column) {
-        column = record.column
-        if (record.characters) {
-          characters = record.characters
-          if (characters < 0) {
-            characters = Number.MAX_SAFE_INTEGER
+      /* Line, column and characters are a bit more complicated */
+      let line: number = 0
+      let column: number = 0
+      let length: number = 1
+
+      if (file && record.line) {
+        line = record.line
+        if (record.column) {
+          column = record.column
+          if (record.length) {
+            length = record.length
+            if (length < 0) {
+              length = Number.MAX_SAFE_INTEGER
+            }
           }
         }
       }
-    }
 
-    /* Remember our source code, line by line */
-    if ((file && source) && (! this._sources.has(file))) {
-      this._sources.set(file, source.split('\n'))
-    }
+      /* Remember our source code, line by line */
+      if ((file && source) && (! this._sources.has(file))) {
+        this._sources.set(file, source.split('\n'))
+      }
 
-    /* Remember this normalized report */
-    let reports = this._records.get(file)
-    if (! reports) this._records.set(file, reports = new Set())
-    reports.add({ level, messages, tags, line, column, characters })
+      /* Remember this normalized report */
+      let reports = this._records.get(file)
+      if (! reports) this._records.set(file, reports = new Set())
+      reports.add({ level, messages, tags, line, column, length: length })
+    }
 
     /* All done */
     return this
   }
 
-  emit(showSources = false): ReportStats {
+  emit(showSources = false): this {
     /* Counters for all we need to print nicely */
     let mPad = 0
     let lPad = 0
@@ -567,6 +585,7 @@ class ReportImpl implements Report {
       }
     }
 
+    mPad = mPad <= 100 ? mPad : 0 // limit length of padding for breakaway lines
     lPad = lPad.toString().length
     cPad = cPad.toString().length
 
@@ -594,7 +613,7 @@ class ReportImpl implements Report {
 
       /* Now get each message and do our magic */
       for (let r = 0; r < sortedRecords.length; r ++) {
-        const { level, messages, tags, line, column, characters } = sortedRecords[r]
+        const { level, messages, tags, line, column, length = 1 } = sortedRecords[r]
 
         /* Prefix includes line and column */
         let pfx: string
@@ -633,7 +652,6 @@ class ReportImpl implements Report {
           if (column) {
             const $col = level === _levels.NOTICE ? $blu : level === _levels.WARN ? $ylw : $red
             const offset = column - 1
-            const length = characters || 1
             const head = $gry(source[line - 1].substring(0, offset))
             const body = $und($col(source[line - 1].substring(offset, offset + length)))
             const tail = $gry(source[line - 1].substring(offset + length))
@@ -656,12 +674,12 @@ class ReportImpl implements Report {
     emit(this._task, 0, 'Found', eNumber, eLabel, 'and', wNumber, wLabel)
     emit(this._task, 0, '')
 
-    return {
-      errors: this._errors,
-      warnings: this._warnings,
-      notices: this._notices,
-      records: this._errors + this._warnings + this.notices,
-    }
+    return this
+  }
+
+  fail(...args: any[]): never {
+    emit(this._task, _levels.ERROR, ...args)
+    throw buildFailed
   }
 }
 
