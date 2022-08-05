@@ -64,12 +64,11 @@ export class ESLint implements Plug<undefined> {
         /* Severity becomes our "kind" */
         const level = severity === 0 ? 'NOTICE' : severity === 1 ? 'WARN' : 'ERROR'
 
-        /* Characters, default to a negative number (to the end of the line) */
-        const characters = endLine === line ? endColumn - column : -1
+        /* Characters */
+        const length = endLine === line ? endColumn - column : endLine > line ? -1 : 1
 
-        // console.log(record)
-
-        report.record({ level, message, tags, line, column, characters, file, source })
+        /* Add our report */
+        report.add({ level, message, tags, line, column, length, file, source })
       }
     }
 
