@@ -55,6 +55,9 @@ export interface LogOptions extends InspectOptions {
   defaultTaskName: string,
 }
 
+/** Levels used in a {@link Report}  */
+export type ReportLevel = Extract<LogLevel, 'NOTICE' | 'WARN' | 'ERROR'>
+
 /** Counters for records in a {@link Report} */
 export interface ReportStats {
   /** The number of `notice` records in this {@link Report}. */
@@ -70,7 +73,7 @@ export interface ReportStats {
 /** A record for a {@link Report} */
 export interface ReportRecord {
   /** The _level_ (or _severity_) of this {@link ReportRecord}. */
-  readonly level: Extract<LogLevel, 'NOTICE' | 'WARN' | 'ERROR'>,
+  readonly level: ReportLevel,
   /** A detail message to associate with this {@link ReportRecord}. */
   readonly message: string | string[]
 
@@ -99,8 +102,13 @@ export interface ReportRecord {
 export interface Report extends ReportStats {
   /** Add a new {@link ReportRecord | record} to this {@link Report}. */
   add(...records: ReportRecord[]): this
+
+  /** Add an annotation (small note) for a file in this report */
+  annotate(level: ReportLevel, file: AbsolutePath, note: string): this
+
   /** Emit this {@link Report}. */
   emit(showSources?: boolean | undefined): this
+
   /**
    * Fail the build.
    *
@@ -468,7 +476,7 @@ setInterval(() => {
  * ========================================================================== */
 
 interface ReportInternalRecord {
-  readonly level: typeof _levels['NOTICE' | 'WARN' |'ERROR']
+  readonly level: typeof _levels[ReportLevel]
   readonly messages: readonly string[]
   readonly tags: readonly string[]
   readonly line: number
@@ -476,9 +484,14 @@ interface ReportInternalRecord {
   readonly length: number
 }
 
+interface ReportInternalAnnotation {
+  readonly level: typeof _levels[ReportLevel]
+  readonly note: string
+}
 
 class ReportImpl implements Report {
   private readonly _sources = new Map<AbsolutePath, string[]>()
+  private readonly _annotations = new Map<AbsolutePath, ReportInternalAnnotation>()
   private readonly _records = new Map<AbsolutePath | undefined, Set<ReportInternalRecord>>()
   private _notices = 0
   private _warnings = 0
@@ -506,6 +519,20 @@ class ReportImpl implements Report {
     return this._notices + this._warnings + this._errors
   }
 
+  private _level(level: ReportLevel): typeof _levels[ReportLevel] {
+    const _level =
+        level === 'NOTICE' ? _levels.NOTICE :
+        level === 'WARN' ? _levels.WARN :
+        level === 'ERROR' ? _levels.ERROR :
+        this._log.fail(`Wrong record level "${level}"`)
+    return _level
+  }
+
+  annotate(level: ReportLevel, file: AbsolutePath, note: string): this {
+    if (note) this._annotations.set(file, { level: this._level(level), note })
+    return this
+  }
+
   add(...records: ReportRecord[]): this {
     for (const record of records) {
       /* Normalize the basic entries in this message */
@@ -524,11 +551,7 @@ class ReportImpl implements Report {
             [ record.tags ] :
             []
 
-      const level =
-        record.level === 'NOTICE' ? _levels.NOTICE :
-        record.level === 'WARN' ? _levels.WARN :
-        record.level === 'ERROR' ? _levels.ERROR :
-        this._log.fail(`Wrong record level "${record.level}"`)
+      const level = this._level(record.level)
 
       switch (level) {
         case _levels.NOTICE: this._notices ++; break
@@ -571,49 +594,67 @@ class ReportImpl implements Report {
 
   emit(showSources = false): this {
     /* Counters for all we need to print nicely */
+    let fPad = 0
+    let aPad = 0
     let mPad = 0
     let lPad = 0
     let cPad = 0
 
-    for (const records of this._records.values()) {
-      for (const record of records) {
-        if (record.line && (record.line > lPad)) lPad = record.line
-        if (record.column && (record.column > cPad)) cPad = record.column
-        for (const message of record.messages) {
-          if (message.length > mPad) mPad = message.length
-        }
-      }
-    }
+    /* This is GIANT: sort and convert our data for easy reporting */
+    const entries = [ ...this._annotations.keys(), ...this._records.keys() ]
+        .filter((file, i, a) => a.indexOf(file) === i) // dedupe
+        .sort() // sort (undefined files firs)
+        .map((file) => { // map to a [ file, record[], annotation? ]
+          // Get our annotation for the file
+          const ann = file && this._annotations.get(file)
 
+          // Get the records (or an empty record array)
+          const records = [ ...(this._records.get(file) || []) ]
+              // Sort records by line / column
+              .sort(({ line: al, column: ac }, { line: bl, column: bc }) =>
+                ((al || Number.MAX_SAFE_INTEGER) - (bl || Number.MAX_SAFE_INTEGER)) ||
+                ((ac || Number.MAX_SAFE_INTEGER) - (bc || Number.MAX_SAFE_INTEGER)) )
+
+              // Update our record padding length
+              .map((record) => {
+                if (record.line && (record.line > lPad)) lPad = record.line
+                if (record.column && (record.column > cPad)) cPad = record.column
+                for (const message of record.messages) {
+                  if (message.length > mPad) mPad = message.length
+                }
+                return record
+              })
+
+          // Update our file and annotation padding lengths
+          if (file && (file.length > fPad)) fPad = file.length
+          if (ann && (ann.note.length > aPad)) aPad = ann.note.length
+
+          // Return our entry
+          return { file, records, annotation: ann }
+        })
+
+    /* Adjust paddings... */
     mPad = mPad <= 100 ? mPad : 0 // limit length of padding for breakaway lines
     lPad = lPad.toString().length
     cPad = cPad.toString().length
 
+    console.log({ fPad, aPad, mPad, lPad, cPad })
+
     emit(this._task, 0, '')
     emit(this._task, 0, $und($wht(this._title)))
 
-    /* Sort our map of file => reports by file name (undefined first) */
-    const entries = [ ...this._records.entries() ]
-        .sort(([ a ], [ b ]) =>
-          ((a || '') < (b || '')) ? -1 : ((a || '') > (b || '')) ? 1 : 0)
 
     /* Iterate through all our [file,reports] tuple */
     for (let f = 0; f < entries.length; f ++) {
-      const [ file, unsortedRecords ] = entries[f]
+      const { file, records, annotation } = entries[f]
       const source = file && this._sources.get(file)
 
-      emit(this._task, 0, '')
-      if (file) emit(this._task, 0, $wht($und(file)))
-
-      /* Sort the report messages by line/column */
-      const sortedRecords = [ ...unsortedRecords ]
-          .sort(({ line: al, column: ac }, { line: bl, column: bc }) =>
-            ((al || Number.MAX_SAFE_INTEGER) - (bl || Number.MAX_SAFE_INTEGER)) ||
-            ((ac || Number.MAX_SAFE_INTEGER) - (bc || Number.MAX_SAFE_INTEGER)) )
+      if ((f === 0) || entries[f - 1]?.records.length) emit(this._task, 0, '')
+      if (file) emit(this._task, 0, $wht($und(file)), annotation)
 
       /* Now get each message and do our magic */
-      for (let r = 0; r < sortedRecords.length; r ++) {
-        const { level, messages, tags, line, column, length = 1 } = sortedRecords[r]
+      for (let r = 0; r < records.length; r ++) {
+        const { level, messages, tags, line, column, length = 1 } = records[r]
 
         /* Prefix includes line and column */
         let pfx: string
@@ -630,7 +671,7 @@ class ReportImpl implements Report {
 
         /* Nice tags */
         const tag = tags.length == 0 ? '' :
-          `${$gry('[')}${tags.map((tag) => $blu(tag)).join($gry('|'))}${$gry(']')}`
+          `${$gry('[')}${tags.map((tag) => $cyn(tag)).join($gry('|'))}${$gry(']')}`
 
         /* Print out our messages, one by one */
         if (messages.length === 1) {

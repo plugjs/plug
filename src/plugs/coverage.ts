@@ -27,6 +27,8 @@ export interface CoverageReportOptions extends CoverageOptions {
   reportDir: string,
 }
 
+console.log()
+
 /**
  * The {@link Coverage} plug type is inferred from the constructor, so this
  * type helps to declare the correct types as we can't really infer them from
@@ -80,21 +82,30 @@ export class Coverage<
 
     let fileErrors = 0
     let fileWarnings = 0
-    for (const [ file, result ] of Object.entries(report.results)) {
+    const _report = run.log.report('Coverage report')
+
+    for (const [ _file, result ] of Object.entries(report.results)) {
       const { coverage } = result.nodeCoverage
+      const file = _file as AbsolutePath
+
       const padding = ''.padEnd(maxLength - file.length, ' ')
       const percentage = `${coverage} %`.padStart(6)
 
       if (coverage < minimumFileCoverage) {
-        run.log.error($p(file as AbsolutePath), padding, $red(percentage))
+        _report.annotate('ERROR', file, `${coverage} %`)
+        run.log.error($p(file), padding, $red(percentage))
         fileErrors ++
       } else if (coverage < optimalFileCoverage) {
-        run.log.warn($p(file as AbsolutePath), padding, $ylw(percentage))
+        _report.annotate('WARN', file, `${coverage} %`)
+        run.log.warn($p(file), padding, $ylw(percentage))
         fileWarnings ++
       } else {
-        run.log.info($p(file as AbsolutePath), padding, $grn(percentage))
+        _report.annotate('NOTICE', file, `${coverage} %`)
+        run.log.notice($p(file), padding, $grn(percentage))
       }
     }
+
+    _report.emit()
 
     const finalizeReport = ((): void => {
       if (report.nodes.coverage < minimumCoverage) {

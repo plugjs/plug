@@ -48,7 +48,18 @@ const booststrap = build({
     await this.find_sources().eslint()
   },
 
+  async coverage() {
+    await this.find_sources()
+        .coverage('./coverage', {
+          minimumCoverage: 0,
+          optimalCoverage: 50,
+          minimumFileCoverage: 0,
+          optimalFileCoverage: 50,
+        })
+  },
+
   async default() {
+    await this.coverage()
     await this.lint_sources()
     await this.compile_types()
     await parallel(
