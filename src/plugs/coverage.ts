@@ -6,7 +6,7 @@ import type { Run } from '../run'
 
 import { sep } from 'node:path'
 
-import { $grn, $gry, $p, $red, $ylw } from '../log'
+import { $gry, $red, $ylw } from '../log'
 import { install, Plug } from '../pipe'
 import { coverageReport, CoverageResult } from './coverage/report'
 
@@ -26,8 +26,6 @@ export interface CoverageReportOptions extends CoverageOptions {
   /** If specified, a JSON and HTML report will be written to this directory */
   reportDir: string,
 }
-
-console.log()
 
 /**
  * The {@link Coverage} plug type is inferred from the constructor, so this
@@ -73,8 +71,6 @@ export class Coverage<
       if (file.length > max) max = file.length
     }
 
-    run.log.info('Coverage report:')
-
     let maxLength = 0
     for (const file in report.results) {
       if (file.length > maxLength) maxLength = file.length
@@ -88,44 +84,38 @@ export class Coverage<
       const { coverage } = result.nodeCoverage
       const file = _file as AbsolutePath
 
-      const padding = ''.padEnd(maxLength - file.length, ' ')
-      const percentage = `${coverage} %`.padStart(6)
-
       if (coverage < minimumFileCoverage) {
         _report.annotate('ERROR', file, `${coverage} %`)
-        run.log.error($p(file), padding, $red(percentage))
         fileErrors ++
       } else if (coverage < optimalFileCoverage) {
         _report.annotate('WARN', file, `${coverage} %`)
-        run.log.warn($p(file), padding, $ylw(percentage))
         fileWarnings ++
       } else {
         _report.annotate('NOTICE', file, `${coverage} %`)
-        run.log.notice($p(file), padding, $grn(percentage))
       }
     }
 
-    _report.emit()
+    if (report.nodes.coverage < minimumCoverage) {
+      const message = `${$red(`${report.nodes.coverage}%`)} does not meet minimum coverage ${$gry(`(${minimumCoverage}%)`)}`
+      _report.add({ level: 'ERROR', message })
+    } else if (report.nodes.coverage < optimalCoverage) {
+      const message = `${$ylw(`${report.nodes.coverage}%`)} does not meet optimal coverage ${$gry(`(${optimalCoverage}%)`)}`
+      _report.add({ level: 'WARN', message })
+    }
 
-    const finalizeReport = ((): void => {
-      if (report.nodes.coverage < minimumCoverage) {
-        run.log.fail(`Coverage error: ${$red(`${report.nodes.coverage}%`)} does not meet minimum coverage ${$gry(`(${minimumCoverage}%)`)}`)
-      } else if (report.nodes.coverage < optimalCoverage) {
-        run.log.warn(`Coverage: ${$ylw(`${report.nodes.coverage}%`)} does not meet optimal coverage ${$gry(`(${optimalCoverage}%)`)}`)
-      } else {
-        run.log.info(`Coverage: ${$grn(`${report.nodes.coverage}%`)}`)
-      }
-
-      if (fileErrors) {
-        run.log.fail(`Coverage error: ${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`)
-      } else if (fileWarnings) {
-        run.log.warn(`Coverage: ${$ylw(fileErrors)} files do not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`)
-      }
-    })
+    if (fileErrors) {
+      const message = `${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`
+      _report.add({ level: 'ERROR', message })
+    }
+    if (fileWarnings) {
+      const message = `${$ylw(fileWarnings)} files do not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`
+      _report.add({ level: 'WARN', message })
+    }
 
     /* If we don't have to write a report, pass-through the coverage files */
     if (this._options.reportDir == null) {
-      finalizeReport()
+      if (! _report.empty) _report.emit()
+      if (_report.errors) _report.fail()
       return undefined as any
     }
 
@@ -170,7 +160,8 @@ export class Coverage<
     await builder.write('report.js', `window.__initCoverage__(${jsonp});`)
 
     /* Add the files we generated */
-    finalizeReport()
+    if (! _report.empty) _report.emit()
+    if (_report.errors) _report.fail()
     return builder.build() as any
   }
 }
