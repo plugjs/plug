@@ -72,7 +72,7 @@ export interface CoverageResult {
 }
 
 /** Aggregation of {@link CoverageResult} over all files */
-export type CoverageResults = { [ k: AbsolutePath ] : CoverageResult } // Record<AbsolutePath, CoverageResult>
+export type CoverageResults = Record<AbsolutePath, CoverageResult>
 
 /** Our coverage report, per file */
 export interface CoverageReport {
