@@ -58,18 +58,6 @@ export interface LogOptions extends InspectOptions {
 /** Levels used in a {@link Report}  */
 export type ReportLevel = Extract<LogLevel, 'NOTICE' | 'WARN' | 'ERROR'>
 
-/** Counters for records in a {@link Report} */
-export interface ReportStats {
-  /** The number of `notice` records in this {@link Report}. */
-  readonly notices: number
-  /** The number of `warning` records in this {@link Report}. */
-  readonly warnings: number
-  /** The number of `error` records in this {@link Report}. */
-  readonly errors: number
-  /** The number _all_ records in this {@link Report}. */
-  readonly records: number
-}
-
 /** A record for a {@link Report} */
 export interface ReportRecord {
   /** The _level_ (or _severity_) of this {@link ReportRecord}. */
@@ -99,7 +87,36 @@ export interface ReportRecord {
 }
 
 /** A {@link Report} that will standardise the way we output information. */
-export interface Report extends ReportStats {
+export interface Report {
+  /** The number of `notice` records _and_ annotations in this {@link Report}. */
+  readonly notices: number
+  /** The number of `warning` records _and_ annotations in this {@link Report}. */
+  readonly warnings: number
+  /** The number of `error` records _and_ annotations in this {@link Report}. */
+  readonly errors: number
+
+  /** The number of `notice` records in this {@link Report}. */
+  readonly noticeRecords: number
+  /** The number of `warning` records in this {@link Report}. */
+  readonly warningRecords: number
+  /** The number of `error` records in this {@link Report}. */
+  readonly errorRecords: number
+
+  /** The number of `notice` annotations in this {@link Report}. */
+  readonly noticeAnnotations: number
+  /** The number of `warning` annotations in this {@link Report}. */
+  readonly warningAnnotations: number
+  /** The number of `error` annotations in this {@link Report}. */
+  readonly errorAnnotations: number
+
+  /** The number of _all_ records in this {@link Report} */
+  readonly records: number
+  /** The number of _all_ annotations in this {@link Report} */
+  readonly annotations: number
+
+  /** Checks whether this {@link Report} contains records or annotations */
+  readonly empty: boolean
+
   /** Add a new {@link ReportRecord | record} to this {@link Report}. */
   add(...records: ReportRecord[]): this
 
@@ -493,9 +510,12 @@ class ReportImpl implements Report {
   private readonly _sources = new Map<AbsolutePath, string[]>()
   private readonly _annotations = new Map<AbsolutePath, ReportInternalAnnotation>()
   private readonly _records = new Map<AbsolutePath | null, Set<ReportInternalRecord>>()
-  private _notices = 0
-  private _warnings = 0
-  private _errors = 0
+  private _noticeRecords = 0
+  private _warningRecords = 0
+  private _errorRecords = 0
+  private _noticeAnnotations = 0
+  private _warningAnnotations = 0
+  private _errorAnnotations = 0
 
   constructor(
       private readonly _log: Logger,
@@ -504,19 +524,52 @@ class ReportImpl implements Report {
   ) {}
 
   get notices(): number {
-    return this._notices
+    return this._noticeRecords + this._noticeAnnotations
   }
 
   get warnings(): number {
-    return this._warnings
+    return this._warningRecords + this._warningAnnotations
   }
 
   get errors(): number {
-    return this._errors
+    return this._errorRecords + this._errorAnnotations
+  }
+
+  get noticeRecords(): number {
+    return this._noticeRecords
+  }
+
+  get warningRecords(): number {
+    return this._warningRecords
+  }
+
+  get errorRecords(): number {
+    return this._errorRecords
+  }
+
+  get noticeAnnotations(): number {
+    return this._noticeAnnotations
+  }
+
+  get warningAnnotations(): number {
+    return this._warningAnnotations
+  }
+
+  get errorAnnotations(): number {
+    return this._errorAnnotations
   }
 
   get records(): number {
-    return this._notices + this._warnings + this._errors
+    return this._noticeRecords + this._warningRecords + this._errorRecords
+  }
+
+  get annotations(): number {
+    return this._noticeAnnotations + this._warningAnnotations + this._errorAnnotations
+  }
+
+
+  get empty(): boolean {
+    return ! (this.records + this.annotations)
   }
 
   private _level(level: ReportLevel): typeof _levels[ReportLevel] {
@@ -528,8 +581,16 @@ class ReportImpl implements Report {
     return _level
   }
 
-  annotate(level: ReportLevel, file: AbsolutePath, note: string): this {
-    if (note) this._annotations.set(file, { level: this._level(level), note })
+  annotate(annotationLevel: ReportLevel, file: AbsolutePath, note: string): this {
+    if (note) {
+      const level = this._level(annotationLevel)
+      this._annotations.set(file, { level, note })
+      switch (level) {
+        case _levels.NOTICE: this._noticeRecords ++; break
+        case _levels.WARN: this._warningRecords ++; break
+        case _levels.ERROR: this._errorRecords ++; break
+      }
+    }
     return this
   }
 
@@ -554,9 +615,9 @@ class ReportImpl implements Report {
       const level = this._level(record.level)
 
       switch (level) {
-        case _levels.NOTICE: this._notices ++; break
-        case _levels.WARN: this._warnings ++; break
-        case _levels.ERROR: this._errors ++; break
+        case _levels.NOTICE: this._noticeRecords ++; break
+        case _levels.WARN: this._warningRecords ++; break
+        case _levels.ERROR: this._errorRecords ++; break
       }
 
       /* Line, column and characters are a bit more complicated */
@@ -640,13 +701,6 @@ class ReportImpl implements Report {
           return { file, records, annotation: ann }
         })
 
-    // entries.forEach((e) => console.log('>>>', e.file))
-
-    // entries.map((e) => e.file || null).sort((a, b) => {
-    //   console.log('~~~>', a, b)
-    //   return ((a || '') < (b || '')) ? -1 : ((a || '') > (b || '')) ? 1 : 0
-    // }).forEach((e) => console.log(e))
-
     /* Adjust paddings... */
     mPad = mPad <= 100 ? mPad : 0 // limit length of padding for breakaway lines
     lPad = lPad.toString().length
@@ -727,10 +781,10 @@ class ReportImpl implements Report {
     }
 
     /* Our totals */
-    const eLabel = this._errors === 1 ? 'error' : 'errors'
-    const wLabel = this._warnings === 1 ? 'warning' : 'warnings'
-    const eNumber = this._errors ? $red(this._errors) : 'no'
-    const wNumber = this._warnings ? $ylw(this._warnings) : 'no'
+    const eLabel = this.errors === 1 ? 'error' : 'errors'
+    const wLabel = this.warnings === 1 ? 'warning' : 'warnings'
+    const eNumber = this.errors ? $red(this.errors) : 'no'
+    const wNumber = this.warnings ? $ylw(this.warnings) : 'no'
 
     emit(this._task, 0, '')
     emit(this._task, 0, 'Found', eNumber, eLabel, 'and', wNumber, wLabel)
