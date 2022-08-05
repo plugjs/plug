@@ -73,8 +73,8 @@ export class ESLint implements Plug<undefined> {
     }
 
     /* Emit our report and fail on errors */
-    const { errors } = report.emit()
-    if (errors) run.log.fail('Found ESLint errors')
+    if (report.records) report.emit()
+    if (report.errors) report.fail()
     return undefined
   }
 }
