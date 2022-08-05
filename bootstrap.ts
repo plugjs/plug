@@ -1,8 +1,4 @@
-import { build, files, find, fixExtensions, log, logOptions, parallel, pipe } from './src/index'
-
-// logOptions.level = 'TRACE'
-// logOptions.level = 'TRACE'
-void logOptions
+import { build, files, find, fixExtensions, log, parallel, pipe } from './src/index'
 
 const booststrap = build({
   find_sources: () => find('**/*.ts', { directory: 'src' }),
