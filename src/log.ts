@@ -57,6 +57,14 @@ export interface LogOptions extends InspectOptions {
 }
 
 /** A record for a {@link Report} */
+export interface ReportStats {
+  readonly notices: number
+  readonly warnings: number
+  readonly errors: number
+  readonly records: number
+}
+
+/** A record for a {@link Report} */
 export interface ReportRecord {
   readonly level: Extract<LogLevel, 'NOTICE' | 'WARN' | 'ERROR'>,
   readonly message: string
@@ -72,11 +80,11 @@ export interface ReportRecord {
 }
 
 /** A {@link Report} that will standardise the way we output information. */
-export interface Report {
+export interface Report extends ReportStats {
   /** Add a new {@link ReportRecord | record} to this {@link Report}. */
   record(record: ReportRecord): this
   /** Emit this {@link Report}. */
-  emit(showSources?: boolean | undefined): void
+  emit(showSources?: boolean | undefined): ReportStats
 }
 
 /* ========================================================================== *
@@ -443,14 +451,33 @@ interface ReportInternalRecord {
 }
 
 
-class ReportImpl {
+class ReportImpl implements Report {
   private readonly _sources = new Map<AbsolutePath, string[]>()
   private readonly _records = new Map<AbsolutePath | undefined, Set<ReportInternalRecord>>()
+  private _notices = 0
+  private _warnings = 0
+  private _errors = 0
 
   constructor(
       private readonly _task: string,
       private readonly _title: string,
   ) {}
+
+  get notices(): number {
+    return this._notices
+  }
+
+  get warnings(): number {
+    return this._warnings
+  }
+
+  get errors(): number {
+    return this._errors
+  }
+
+  get records(): number {
+    return this._notices + this._warnings + this._errors
+  }
 
   record(record: ReportRecord): this {
     /* Normalize the basic entries in this message */
@@ -468,6 +495,12 @@ class ReportImpl {
       record.level === 'WARN' ? _levels.WARN :
       record.level === 'ERROR' ? _levels.ERROR :
       fail(`Wrong record level "${record.level}"`)
+
+    switch (level) {
+      case _levels.NOTICE: this._notices ++; break
+      case _levels.WARN: this._warnings ++; break
+      case _levels.ERROR: this._errors ++; break
+    }
 
     /* Line, column and characters are a bit more complicated */
     let line: number = 0
@@ -501,19 +534,14 @@ class ReportImpl {
     return this
   }
 
-  emit(showSources = false): void {
-    /* Counters for errors, warnings, and all we need to print nicely */
-    let warnings = 0
-    let errors = 0
-
+  emit(showSources = false): ReportStats {
+    /* Counters for all we need to print nicely */
     let mPad = 0
     let lPad = 0
     let cPad = 0
 
     for (const records of this._records.values()) {
       for (const record of records) {
-        if (record.level >= _levels.ERROR) errors ++
-        else if (record.level >= _levels.WARN) warnings ++
         if (record.line && (record.line > lPad)) lPad = record.line
         if (record.column && (record.column > cPad)) cPad = record.column
         for (const message of record.messages) {
@@ -525,7 +553,6 @@ class ReportImpl {
     lPad = lPad.toString().length
     cPad = cPad.toString().length
 
-    void ({ warnings, errors, mPad, lPad, cPad })
     emit(this._task, 0, $und($wht(this._title)))
 
     /* Sort our map of file => reports by file name (undefined first) */
@@ -602,12 +629,19 @@ class ReportImpl {
     }
 
     /* Our totals */
-    const eLabel = errors === 1 ? 'error' : 'errors'
-    const wLabel = warnings === 1 ? 'warning' : 'warnings'
-    const eNumber = errors ? $red(errors) : 'no'
-    const wNumber = warnings ? $ylw(warnings) : 'no'
+    const eLabel = this._errors === 1 ? 'error' : 'errors'
+    const wLabel = this._warnings === 1 ? 'warning' : 'warnings'
+    const eNumber = this._errors ? $red(this._errors) : 'no'
+    const wNumber = this._warnings ? $ylw(this._warnings) : 'no'
     emit(this._task, 0, '')
     emit(this._task, 0, 'Found', eNumber, eLabel, 'and', wNumber, wLabel)
+
+    return {
+      errors: this._errors,
+      warnings: this._warnings,
+      notices: this._notices,
+      records: this._errors + this._warnings + this.notices,
+    }
   }
 }
 
