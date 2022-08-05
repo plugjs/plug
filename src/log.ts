@@ -1,3 +1,4 @@
+import { fail } from 'node:assert'
 import { sep } from 'node:path'
 import { formatWithOptions, InspectOptions } from 'node:util'
 
@@ -37,6 +38,8 @@ export interface Logger {
   error: (...args: [ any, ...any ]) => this
   /** Log a `FAIL` message and throw */
   fail: (...args: [ any, ...any ]) => never
+  /** Log a `FAIL` message and throw */
+  report: (title: string) => Report
 }
 
 /** Options for our {@link Logger} instances */
@@ -51,6 +54,29 @@ export interface LogOptions extends InspectOptions {
   taskLength: number,
   /** The task name to be used by default if a task is not contextualized. */
   defaultTaskName: string,
+}
+
+/** A record for a {@link Report} */
+export interface ReportRecord {
+  readonly level: Extract<LogLevel, 'NOTICE' | 'WARN' | 'ERROR'>,
+  readonly message: string
+
+  readonly tags?: string [] | string | null | undefined
+
+  readonly line?: number | null | undefined
+  readonly column?: number | null | undefined
+  readonly characters?: number | null | undefined
+
+  readonly file?: AbsolutePath | null | undefined,
+  readonly source?: string | null | undefined
+}
+
+/** A {@link Report} that will standardise the way we output information. */
+export interface Report {
+  /** Add a new {@link ReportRecord | record} to this {@link Report}. */
+  record(record: ReportRecord): this
+  /** Emit this {@link Report}. */
+  emit(showSources?: boolean | undefined): void
 }
 
 /* ========================================================================== *
@@ -152,52 +178,52 @@ export const logOptions: LogOptions = {
 
 /** Default implementation of the {@link Logger} interface. */
 class LoggerImpl implements Logger {
-  #task
-
-  constructor(task: string) {
-    this.#task = task
-  }
+  constructor(private readonly _task: string) {}
 
   trace(...args: [ any, ...any ]): this {
     if (_level > _levels.TRACE) return this
-    emit(this.#task, _levels.TRACE, ...args)
+    emit(this._task, _levels.TRACE, ...args)
     return this
   }
 
   debug(...args: [ any, ...any ]): this {
     if (_level > _levels.DEBUG) return this
-    emit(this.#task, _levels.DEBUG, ...args)
+    emit(this._task, _levels.DEBUG, ...args)
     return this
   }
 
   info(...args: [ any, ...any ]): this {
     if (_level > _levels.INFO) return this
-    emit(this.#task, _levels.INFO, ...args)
+    emit(this._task, _levels.INFO, ...args)
     return this
   }
 
   notice(...args: [ any, ...any ]): this {
     if (_level > _levels.NOTICE) return this
-    emit(this.#task, _levels.NOTICE, ...args)
+    emit(this._task, _levels.NOTICE, ...args)
     return this
   }
 
   warn(...args: [ any, ...any ]): this {
     if (_level > _levels.WARN) return this
-    emit(this.#task, _levels.WARN, ...args)
+    emit(this._task, _levels.WARN, ...args)
     return this
   }
 
   error(...args: [ any, ...any ]): this {
     if (_level > _levels.ERROR) return this
-    emit(this.#task, _levels.ERROR, ...args)
+    emit(this._task, _levels.ERROR, ...args)
     return this
   }
 
   fail(...args: [ any, ...any ]): never {
     if (args.includes(buildFailed)) throw buildFailed
-    emit(this.#task, _levels.ERROR, ...args)
+    emit(this._task, _levels.ERROR, ...args)
     throw buildFailed
+  }
+
+  report(title: string): Report {
+    return new ReportImpl(this._task, title)
   }
 }
 
@@ -270,6 +296,10 @@ export const log: Log = ((): Log => {
       const log: Logger = logger()
       log.fail(...args)
     },
+
+    report(title: string): Report {
+      return logger().report(title)
+    },
   }
 
   /* Create a function that will default logging to "NOTICE" */
@@ -295,6 +325,7 @@ const ylw = '\u001b[38;5;220m' // yellow
 const blu = '\u001b[38;5;69m' // brighter blue
 const mgt = '\u001b[38;5;213m' // pinky magenta
 const cyn = '\u001b[38;5;81m' // darker cyan
+const wht = '\u001b[1;38;5;255m' // full-bright white
 
 const tsk = '\u001b[38;5;141m' // the color for tasks (purple)
 
@@ -350,6 +381,11 @@ export function $cyn(string: any): string {
   return _color ? `${cyn}${string}${rst}` : string
 }
 
+/** Colorize in white. */
+export function $wht(string: any): string {
+  return _color ? `${wht}${string}${rst}` : string
+}
+
 /** Underline. */
 export function $und(string: any): string {
   return _color ? `${und}${string}${rst}` : string
@@ -394,6 +430,189 @@ setInterval(() => {
 }, 50).unref()
 
 /* ========================================================================== *
+ * REPORT IMPLEMENTATION                                                      *
+ * ========================================================================== */
+
+interface ReportInternalRecord {
+  readonly level: typeof _levels['NOTICE' | 'WARN' |'ERROR']
+  readonly messages: readonly string[]
+  readonly tags: readonly string[]
+  readonly line: number
+  readonly column: number
+  readonly characters: number
+}
+
+
+class ReportImpl {
+  private readonly _sources = new Map<AbsolutePath, string[]>()
+  private readonly _records = new Map<AbsolutePath | undefined, Set<ReportInternalRecord>>()
+
+  constructor(
+      private readonly _task: string,
+      private readonly _title: string,
+  ) {}
+
+  record(record: ReportRecord): this {
+    /* Normalize the basic entries in this message */
+    const messages = record.message.trim().split('\n')
+    const file = record.file || undefined
+    const source = record.source || undefined
+    const tags = record.tags ?
+      Array.isArray(record.tags) ?
+          [ ...record.tags ] :
+          [ record.tags ] :
+          []
+
+    const level =
+      record.level === 'NOTICE' ? _levels.NOTICE :
+      record.level === 'WARN' ? _levels.WARN :
+      record.level === 'ERROR' ? _levels.ERROR :
+      fail(`Wrong record level "${record.level}"`)
+
+    /* Line, column and characters are a bit more complicated */
+    let line: number = 0
+    let column: number = 0
+    let characters: number = 1
+
+    if (file && record.line) {
+      line = record.line
+      if (record.column) {
+        column = record.column
+        if (record.characters) {
+          characters = record.characters
+          if (characters < 0) {
+            characters = Number.MAX_SAFE_INTEGER
+          }
+        }
+      }
+    }
+
+    /* Remember our source code, line by line */
+    if ((file && source) && (! this._sources.has(file))) {
+      this._sources.set(file, source.split('\n'))
+    }
+
+    /* Remember this normalized report */
+    let reports = this._records.get(file)
+    if (! reports) this._records.set(file, reports = new Set())
+    reports.add({ level, messages, tags, line, column, characters })
+
+    /* All done */
+    return this
+  }
+
+  emit(showSources = false): void {
+    /* Counters for errors, warnings, and all we need to print nicely */
+    let warnings = 0
+    let errors = 0
+
+    let mPad = 0
+    let lPad = 0
+    let cPad = 0
+
+    for (const records of this._records.values()) {
+      for (const record of records) {
+        if (record.level >= _levels.ERROR) errors ++
+        else if (record.level >= _levels.WARN) warnings ++
+        if (record.line && (record.line > lPad)) lPad = record.line
+        if (record.column && (record.column > cPad)) cPad = record.column
+        for (const message of record.messages) {
+          if (message.length > mPad) mPad = message.length
+        }
+      }
+    }
+
+    lPad = lPad.toString().length
+    cPad = cPad.toString().length
+
+    void ({ warnings, errors, mPad, lPad, cPad })
+    emit(this._task, 0, $und($wht(this._title)))
+
+    /* Sort our map of file => reports by file name (undefined first) */
+    const entries = [ ...this._records.entries() ]
+        .sort(([ a ], [ b ]) =>
+          ((a || '') < (b || '')) ? -1 : ((a || '') > (b || '')) ? 1 : 0)
+
+    /* Iterate through all our [file,reports] tuple */
+    for (let f = 0; f < entries.length; f ++) {
+      const [ file, unsortedRecords ] = entries[f]
+      const source = file && this._sources.get(file)
+
+      emit(this._task, 0, '')
+      if (file) emit(this._task, 0, $wht($und(file)))
+
+      /* Sort the report messages by line/column */
+      const sortedRecords = [ ...unsortedRecords ]
+          .sort(({ line: al, column: ac }, { line: bl, column: bc }) =>
+            ((al || Number.MAX_SAFE_INTEGER) - (bl || Number.MAX_SAFE_INTEGER)) ||
+            ((ac || Number.MAX_SAFE_INTEGER) - (bc || Number.MAX_SAFE_INTEGER)) )
+
+      /* Now get each message and do our magic */
+      for (let r = 0; r < sortedRecords.length; r ++) {
+        const { level, messages, tags, line, column, characters } = sortedRecords[r]
+
+        /* Prefix includes line and column */
+        let pfx: string
+        if (file && line) {
+          if (column) {
+            pfx = `  ${line.toString().padStart(lPad)}:${column.toString().padEnd(cPad)} `
+          } else {
+            pfx = `  ${line.toString().padStart(lPad)}:${'-'.padEnd(cPad)} `
+          }
+        } else {
+          pfx = `  ${'-'.padStart(lPad)}:${'-'.padEnd(cPad)} `
+        }
+        const pfx2 = ''.padStart(pfx.length)
+
+        /* Nice tags */
+        const tag = tags.length == 0 ? '' :
+          `${$gry('[')}${tags.map((tag) => $blu(tag)).join($gry('|'))}${$gry(']')}`
+
+        /* Print out our messages, one by one */
+        if (messages.length === 1) {
+          emit(this._task, level, $gry(pfx), messages[0].padEnd(mPad), tag)
+        } else {
+          for (let m = 0; m < messages.length; m ++) {
+            if (! m) { // first line
+              emit(this._task, level, $gry(pfx), messages[m])
+            } else if (m === messages.length - 1) { // last line
+              emit(this._task, level, $gry(pfx2), messages[m].padEnd(mPad), tag)
+            } else { // in between lines
+              emit(this._task, level, $gry(pfx2), messages[m])
+            }
+          }
+        }
+
+        /* See if we have to / can print out the source */
+        if (showSources && source && source[line - 1]) {
+          if (column) {
+            const $col = level === _levels.NOTICE ? $blu : level === _levels.WARN ? $ylw : $red
+            const offset = column - 1
+            const length = characters || 1
+            const head = $gry(source[line - 1].substring(0, offset))
+            const body = $und($col(source[line - 1].substring(offset, offset + length)))
+            const tail = $gry(source[line - 1].substring(offset + length))
+
+            emit(this._task, level, pfx2, $gry(`| ${head}${body}${tail}`))
+          } else {
+            emit(this._task, level, pfx2, $gry(`| ${source[line - 1]}`))
+          }
+        }
+      }
+    }
+
+    /* Our totals */
+    const eLabel = errors === 1 ? 'error' : 'errors'
+    const wLabel = warnings === 1 ? 'warning' : 'warnings'
+    const eNumber = errors ? $red(errors) : 'no'
+    const wNumber = warnings ? $ylw(warnings) : 'no'
+    emit(this._task, 0, '')
+    emit(this._task, 0, 'Found', eNumber, eLabel, 'and', wNumber, wLabel)
+  }
+}
+
+
+/* ========================================================================== *
  * INTERNALS                                                                  *
  * ========================================================================== */
 
@@ -424,10 +643,14 @@ function emitColor(task: string, level: number, args: any[]): void {
   }
 
   /* Level indicator (our little colorful squares) */
-  if (level <= _levels.DEBUG) {
-    prefixes.push(` ${gry}${whiteSquare}${rst} `) // trace/debug: gray open
+  if (level <= _levels.TRACE) {
+    prefixes.push(` ${gry}${whiteSquare}${rst} `) // trace: gray open
+  } else if (level <= _levels.DEBUG) {
+    prefixes.push(` ${gry}${blackSquare}${rst} `) // debug: gray
+  } else if (level <= _levels.INFO) {
+    prefixes.push(` ${grn}${blackSquare}${rst} `) // info: green
   } else if (level <= _levels.NOTICE) {
-    prefixes.push(` ${gry}${blackSquare}${rst} `) // info/notice: gray
+    prefixes.push(` ${blu}${blackSquare}${rst} `) // notice: blue
   } else if (level <= _levels.WARN) {
     prefixes.push(` ${ylw}${blackSquare}${rst} `) // warning: yellow
   } else {
@@ -455,7 +678,9 @@ function emitPlain(task: string, level: number, args: any[]): void {
     prefixes.push(''.padStart(_taskLength, ' '))
   }
 
-  if (level <= _levels.TRACE) {
+  if (level <= 0) {
+    prefixes.push(' \u2502        \u2502 ')
+  } else if (level <= _levels.TRACE) {
     prefixes.push(' \u2502  trace \u2502 ')
   } else if (level <= _levels.DEBUG) {
     prefixes.push(' \u2502  debug \u2502 ')
