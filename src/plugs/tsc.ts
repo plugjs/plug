@@ -1,6 +1,5 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
 
-import { fail } from 'assert'
 import { Files } from '../files'
 import { $p, log, Report, ReportRecord } from '../log'
 import { AbsolutePath, getCurrentWorkingDirectory, isFile, resolveAbsolutePath } from '../paths'
@@ -70,21 +69,26 @@ export class Tsc implements Plug<Files> {
     const builder = run.files(out)
     const promises: Promise<void>[] = []
     const result = program.emit(undefined, (fileName, code) => {
-      console.log('FILENAME', fileName)
-      void code
-      // promises.push(builder.write(fileName, code).then((file) => {
-      //   log.trace('Written', $p(file))
-      // }))
+      promises.push(builder.write(fileName, code).then((file) => {
+        log.trace('Written', $p(file))
+      }))
     })
 
+    // Update report and fail on errors
     updateReport(report, result.diagnostics, root)
     if (report.errors) report.emit(true).fail()
 
+    // Await for all files to be written and check
     const settlements = await Promise.allSettled(promises)
+    let failures = 0
     for (const settlement of settlements) {
-      if (settlement.status === 'rejected') fail('Error writing files')
+      if (settlement.status === 'fulfilled') continue
+      run.log.error('Error writing file', settlement.reason)
+      failures ++
     }
+    if (failures) run.log.fail('Error writing files')
 
+    // All done, build our files and return it
     const outputs = builder.build()
     log.info('TSC produced', outputs.length, 'files into', $p(outputs.directory))
     return outputs
