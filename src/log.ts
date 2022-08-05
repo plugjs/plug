@@ -492,7 +492,7 @@ interface ReportInternalAnnotation {
 class ReportImpl implements Report {
   private readonly _sources = new Map<AbsolutePath, string[]>()
   private readonly _annotations = new Map<AbsolutePath, ReportInternalAnnotation>()
-  private readonly _records = new Map<AbsolutePath | undefined, Set<ReportInternalRecord>>()
+  private readonly _records = new Map<AbsolutePath | null, Set<ReportInternalRecord>>()
   private _notices = 0
   private _warnings = 0
   private _errors = 0
@@ -543,7 +543,7 @@ class ReportImpl implements Report {
       messages = messages.filter((message) => !! message)
       if (! messages.length) this._log.fail('No message for report record')
 
-      const file = record.file || undefined
+      const file = record.file || null // use "null" as "undefined" doesn't get sorted!
       const source = record.source || undefined
       const tags = record.tags ?
         Array.isArray(record.tags) ?
@@ -602,9 +602,16 @@ class ReportImpl implements Report {
 
     /* This is GIANT: sort and convert our data for easy reporting */
     const entries = [ ...this._annotations.keys(), ...this._records.keys() ]
+        // dedupe
         .filter((file, i, a) => a.indexOf(file) === i) // dedupe
-        .sort() // sort (undefined files firs)
-        .map((file) => { // map to a [ file, record[], annotation? ]
+
+        // sort ("null" files first - remember, "undefined" never gets sorted)
+        .sort((a, b) => {
+          return ((a || '') < (b || '')) ? -1 : ((a || '') > (b || '')) ? 1 : 0
+        })
+
+        // map to a [ file, record[], annotation? ]
+        .map((file) => {
           // Get our annotation for the file
           const ann = file && this._annotations.get(file)
 
@@ -633,12 +640,17 @@ class ReportImpl implements Report {
           return { file, records, annotation: ann }
         })
 
+    // entries.forEach((e) => console.log('>>>', e.file))
+
+    // entries.map((e) => e.file || null).sort((a, b) => {
+    //   console.log('~~~>', a, b)
+    //   return ((a || '') < (b || '')) ? -1 : ((a || '') > (b || '')) ? 1 : 0
+    // }).forEach((e) => console.log(e))
+
     /* Adjust paddings... */
     mPad = mPad <= 100 ? mPad : 0 // limit length of padding for breakaway lines
     lPad = lPad.toString().length
     cPad = cPad.toString().length
-
-    console.log({ fPad, aPad, mPad, lPad, cPad })
 
     emit(this._task, 0, '')
     emit(this._task, 0, $und($wht(this._title)))
@@ -650,7 +662,16 @@ class ReportImpl implements Report {
       const source = file && this._sources.get(file)
 
       if ((f === 0) || entries[f - 1]?.records.length) emit(this._task, 0, '')
-      if (file) emit(this._task, 0, $wht($und(file)), annotation)
+      if (file && annotation) {
+        const { level, note } = annotation
+        const $col = level === _levels.NOTICE ? $blu : level === _levels.WARN ? $ylw : $red
+        const ann = `${$gry('[')}${$col(note.padStart(aPad))}${$gry(']')}`
+        const pad = ''.padStart(fPad - file.length) // file is underlined
+
+        emit(this._task, level, $wht($und(file)), pad, ann)
+      } else if (file) {
+        emit(this._task, 0, $wht($und(file)))
+      }
 
       /* Now get each message and do our magic */
       for (let r = 0; r < records.length; r ++) {
