@@ -570,6 +570,7 @@ class ReportImpl implements Report {
     lPad = lPad.toString().length
     cPad = cPad.toString().length
 
+    emit(this._task, 0, '')
     emit(this._task, 0, $und($wht(this._title)))
 
     /* Sort our map of file => reports by file name (undefined first) */
@@ -650,8 +651,10 @@ class ReportImpl implements Report {
     const wLabel = this._warnings === 1 ? 'warning' : 'warnings'
     const eNumber = this._errors ? $red(this._errors) : 'no'
     const wNumber = this._warnings ? $ylw(this._warnings) : 'no'
+
     emit(this._task, 0, '')
     emit(this._task, 0, 'Found', eNumber, eLabel, 'and', wNumber, wLabel)
+    emit(this._task, 0, '')
 
     return {
       errors: this._errors,
