@@ -174,12 +174,13 @@ class RunImpl implements Run {
 }
 
 /** Create a new {@link Run} associated with the given {@link BuildContext}. */
-export function initRun(context: BuildContext): Run {
+export function initRun(context: BuildContext, taskName?: string): Run {
   return new RunImpl(
       context.buildDir,
       context.buildFile,
       context.tasks,
       new Map<Task, Promise<Files | undefined>>(),
       [],
+      taskName,
   )
 }
