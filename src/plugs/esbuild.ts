@@ -1,10 +1,10 @@
 import type { Files, FilesBuilder } from '../files'
 import type { Run } from '../run'
 
-import { build, BuildOptions } from 'esbuild'
+import { build, BuildOptions, Message } from 'esbuild'
 import { assert } from '../assert'
-import { $p, log } from '../log'
-import { resolveAbsolutePath } from '../paths'
+import { $p, ReportRecord } from '../log'
+import { AbsolutePath, resolveAbsolutePath } from '../paths'
 import { install, Plug } from '../pipe'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
@@ -49,7 +49,7 @@ export class ESBuild implements Plug<Files> {
       const entryPoint = resolveAbsolutePath(absWorkingDir, entryPoints[0])
       options.outfile = outputFile
 
-      log.debug('Bundling', $p(entryPoint), 'into', $p(outputFile))
+      run.log.debug('Bundling', $p(entryPoint), 'into', $p(outputFile))
     } else {
       assert(options.outdir, 'Option "outdir" must be specified')
 
@@ -57,39 +57,48 @@ export class ESBuild implements Plug<Files> {
       options.outdir = builder.directory
 
       const message = options.bundle ? 'Bundling' : 'Transpiling'
-      log.debug(message, entryPoints.length, 'files to', $p(builder.directory))
+      run.log.debug(message, entryPoints.length, 'files to', $p(builder.directory))
     }
 
-    log.trace('Running ESBuild', options)
+    run.log.trace('Running ESBuild', options)
     const esbuild = await build({ ...options, metafile: true })
-    log.trace('ESBuild Results', esbuild)
+    run.log.trace('ESBuild Results', esbuild)
 
-    for (const warning of esbuild.warnings) {
-      const { id, text, ...details } = warning
-      log.warn(`${text} [${id}]`, details)
-    }
+    const report = run.log.report('ESBuild Report')
 
-    for (const error of esbuild.errors) {
-      const { id, text, ...details } = error
-      log.error(`${text} [${id}]`, details)
-    }
+    report.add(...esbuild.warnings.map((m) => convertMessage('WARN', m, absWorkingDir)))
+    report.add(...esbuild.errors.map((m) => convertMessage('ERROR', m, absWorkingDir)))
 
-    if (esbuild.errors.length) {
-      run.log.fail('ESBuild encountered', esbuild.errors.length, 'errors')
-    }
+    await report.loadSources()
+    if (! report.empty) report.emit(true)
+    if (report.errors) report.fail()
 
     const outputs = esbuild.metafile.outputs
     for (const file in outputs) {
       const source = resolveAbsolutePath(absWorkingDir, outputs[file].entryPoint!)
       const target = resolveAbsolutePath(absWorkingDir, file)
-      log.debug('Transpiled', $p(source), 'to', $p(target))
+      run.log.debug('Transpiled', $p(source), 'to', $p(target))
       builder.add(target)
     }
 
     const result = builder.build()
-    log.info('ESBuild produced', result.length, 'files into', $p(result.directory))
+    run.log.info('ESBuild produced', result.length, 'files into', $p(result.directory))
     return result
   }
+}
+
+function convertMessage(level: 'ERROR' | 'WARN', message: Message, directory: AbsolutePath): ReportRecord {
+  const record: ReportRecord = { level, message: message.text }
+  record.tags = [ message.id, message.pluginName ].filter((tag) => !! tag)
+
+  if (message.location) {
+    record.line = message.location.line,
+    record.column = message.location.column + 1
+    record.length = message.location.length
+    record.file = resolveAbsolutePath(directory, message.location.file)
+  }
+
+  return record
 }
 
 /* ========================================================================== *
