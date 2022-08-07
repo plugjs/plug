@@ -3,6 +3,7 @@ import { formatWithOptions, InspectOptions } from 'node:util'
 
 import { currentRun, runningTasks } from './async'
 import { AbsolutePath, getCurrentWorkingDirectory, resolveRelativeChildPath } from './paths'
+import { readFile } from './utils/asyncfs'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -61,9 +62,9 @@ export type ReportLevel = Extract<LogLevel, 'NOTICE' | 'WARN' | 'ERROR'>
 /** A record for a {@link Report} */
 export interface ReportRecord {
   /** The _level_ (or _severity_) of this {@link ReportRecord}. */
-  readonly level: ReportLevel,
+  level: ReportLevel,
   /** A detail message to associate with this {@link ReportRecord}. */
-  readonly message: string | string[]
+  message: string | string[]
 
   /**
    * Tags to associate with this{@link ReportRecord}.
@@ -71,19 +72,19 @@ export interface ReportRecord {
    * Those are error categories, or error codes and are directly related with
    * whatever produced the {@link Report}.
    */
-  readonly tags?: string [] | string | null | undefined
+  tags?: string [] | string | null | undefined
 
   /** Line number in the source code (starting at `1`) */
-  readonly line?: number | null | undefined
+  line?: number | null | undefined
   /** Column number in the source code (starting at `1`) */
-  readonly column?: number | null | undefined
+  column?: number | null | undefined
   /** Number of characters involved (`-1` means until the end of the line ) */
-  readonly length?: number | null | undefined
+  length?: number | null | undefined
 
   /** The {@link AbsolutePath} of the file associated with this. */
-  readonly file?: AbsolutePath | null | undefined,
+  file?: AbsolutePath | null | undefined,
   /** The _real source code_ associated with this (for error higlighting). */
-  readonly source?: string | null | undefined
+  source?: string | null | undefined
 }
 
 /** A {@link Report} that will standardise the way we output information. */
@@ -122,6 +123,9 @@ export interface Report {
 
   /** Add an annotation (small note) for a file in this report */
   annotate(level: ReportLevel, file: AbsolutePath, note: string): this
+
+  /** Attempt to load any source file missing from the reports */
+  loadSources(): Promise<void>
 
   /** Emit this {@link Report}. */
   emit(showSources?: boolean | undefined): this
@@ -651,6 +655,23 @@ class ReportImpl implements Report {
 
     /* All done */
     return this
+  }
+
+  async loadSources(): Promise<void> {
+    // Read files in parallel
+    const promises: Promise<any>[] = []
+
+    // Iterate through all the files having records
+    for (const file of this._records.keys()) {
+      if (! file) continue // no "null" file
+      if (this._sources.has(file)) continue
+      promises.push(readFile(file, 'utf-8')
+          .then((source) => source.split('\n'))
+          .then((lines) => this._sources.set(file, lines)))
+    }
+
+    // Await _all_ promise, ignore errors
+    await Promise.allSettled(promises)
   }
 
   emit(showSources = false): this {
