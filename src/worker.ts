@@ -102,7 +102,7 @@ export function executeWorker<
   const worker =
     extname(script) !== '.ts' ?
       new Worker(script, { workerData }) :
-      new Worker(` throw new Error('byebye');
+      new Worker(`'use strict';
         require('ts-node/register/transpile-only');
         const { parentPort } = require('node:worker_threads');
         const script = ${JSON.stringify(script)};
