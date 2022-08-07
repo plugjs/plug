@@ -40,7 +40,7 @@ export function currentRun(): Run | undefined {
  * Return an array of all _task names_ currently running
  */
 export function runningTasks(): string[] {
-  return [ ...tasks ]
+  return [ ...tasks ].sort()
 }
 
 /* ========================================================================== *
