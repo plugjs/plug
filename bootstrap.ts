@@ -55,10 +55,10 @@ const booststrap = build({
   },
 
   async default() {
-    await this.coverage()
-    await this.lint_sources()
-    await this.compile_types()
+    // await this.coverage()
     await parallel(
+        this.lint_sources(),
+        this.compile_types(),
         this.compile_sources(),
         this.compile_tests(),
     )
