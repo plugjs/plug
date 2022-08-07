@@ -21,49 +21,49 @@ export interface FilesBuilder {
  * identifying some _files_ rooted in a given _directory_.
  */
 export class Files {
-  readonly #directory: AbsolutePath
-  readonly #files: string[]
+  readonly _directory: AbsolutePath
+  readonly _files: string[]
 
   /**
    * Create a new {@link Files} instance rooted in the specified `directory`
    * relative to the specified {@link Run}'s directory.
    */
   constructor(directory: AbsolutePath) {
-    this.#directory = directory
-    this.#files = []
+    this._directory = directory
+    this._files = []
   }
 
   /** Return the _directory_ where this {@link Files} is rooted */
   get directory(): AbsolutePath {
-    return this.#directory
+    return this._directory
   }
 
   /** Return the number of files tracked by this instance. */
   get length(): number {
-    return this.#files.length
+    return this._files.length
   }
 
   /** Return an iterator over all _relative_ files of this instance */
   * [Symbol.iterator](): Generator<string> {
-    for (const file of this.#files) yield file
+    for (const file of this._files) yield file
   }
 
   /** Return an iterator over all _absolute_ files of this instance */
   * absolutePaths(): Generator<AbsolutePath> {
-    for (const file of this) yield resolveAbsolutePath(this.#directory, file)
+    for (const file of this) yield resolveAbsolutePath(this._directory, file)
   }
 
   /** Return an iterator over all _relative_ to _absolute_ mappings */
   * pathMappings(): Generator<[ relative: string, absolute: AbsolutePath ]> {
-    for (const file of this) yield [ file, resolveAbsolutePath(this.#directory, file) ]
+    for (const file of this) yield [ file, resolveAbsolutePath(this._directory, file) ]
   }
 
   /* Nicety for logging */
   [inspect.custom](): any {
     const self = this
     return new class Files {
-      directory = self.#directory
-      files = [ ...self.#files ]
+      directory = self._directory
+      files = [ ...self._files ]
     }
   }
 
@@ -116,8 +116,8 @@ export class Files {
         if (built) throw new Error('FileBuilder "build()" already called')
 
         built = true
-        instance.#files.push(...set)
-        instance.#files.sort()
+        instance._files.push(...set)
+        instance._files.sort()
         return instance
       },
     }
