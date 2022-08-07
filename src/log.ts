@@ -486,7 +486,7 @@ setInterval(() => {
   const task = tasks.length > 1 ? 'tasks' : 'task'
 
   write(`${zap}${pad} ${nextSpin()}  Running ${tasks.length} ${task}: ${names}${rst}`)
-}, 50).unref()
+}, 150).unref()
 
 /* ========================================================================== *
  * REPORT IMPLEMENTATION                                                      *
