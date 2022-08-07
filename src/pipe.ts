@@ -83,7 +83,7 @@ export class PipeImpl<T extends Files | undefined> extends Pipe implements Promi
 type PlugName = string & Exclude<keyof Pipe, 'plug' | keyof Promise<Files>>
 
 /** A convenience type identifying a {@link Plug} constructor. */
-type PlugConstructor = new (...args: any) => Plug<Files | undefined>
+export type PlugConstructor = new (...args: any) => Plug<Files | undefined>
 
 /** Convert the resulting type of a {@link Plug} for use in a {@link Pipe} */
 type PlugReturnForPipe<T> =
@@ -228,5 +228,5 @@ export function install<C extends PlugConstructor>(name: PlugName, ctor: C): voi
   Object.defineProperty(create, 'name', { value: name })
 
   /* Inject the create function in the Pipe's prototype */
-  Pipe.prototype[name] = create as any
+  Object.defineProperty(Pipe.prototype, name, { value: create })
 }
