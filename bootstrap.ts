@@ -1,4 +1,4 @@
-import { build, files, find, fixExtensions, log, parallel, pipe } from './src/index'
+import { build, checkDependencies, files, find, fixExtensions, log, parallel, pipe } from './src/index'
 
 const booststrap = build({
   find_sources: () => find('**/*.ts', { directory: 'src' }),
@@ -10,14 +10,14 @@ const booststrap = build({
         .esbuild({
           outdir: 'dist',
           format: 'cjs',
-          plugins: [ fixExtensions ],
+          plugins: [ checkDependencies(), fixExtensions() ],
         })
 
     const esm = await pipe(sources)
         .esbuild({
           outdir: 'dist',
           format: 'esm',
-          plugins: [ fixExtensions ],
+          plugins: [ fixExtensions() ],
           outExtension: { '.js': '.mjs' },
           define: { __filename: 'import.meta.url' },
         })
