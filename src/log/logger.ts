@@ -6,7 +6,9 @@ import { logLevels, logOptions } from './options'
 
 /* Initial value of log colors, and subscribe to changes */
 let _level = logOptions.logLevel
-logOptions.on('changed', ({ logLevel }) => {
+let _defaultTaskName = logOptions.defaultTaskName
+logOptions.on('changed', ({ defaultTaskName, logLevel }) => {
+  _defaultTaskName = defaultTaskName
   _level = logLevel
 })
 
@@ -33,7 +35,7 @@ export interface Logger {
 }
 
 /** Return a {@link Logger} associated with the specified task name. */
-export function getLogger(task: string = ''): Logger {
+export function getLogger(task: string = _defaultTaskName): Logger {
   let logger = _loggers.get(task)
   if (! logger) {
     logger = new LoggerImpl(task)
