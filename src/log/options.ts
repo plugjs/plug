@@ -36,6 +36,8 @@ export interface LogOptions extends InspectOptions {
   breakLength: number,
   /** The maximum length of a task name (for pretty alignment). */
   taskLength: number,
+  /** The number of spaces used for indenting. */
+  indentSize: number,
   /** The task name to be used by default if a task is not contextualized. */
   defaultTaskName: string,
   /** Log level as a number from {@link logLevels} */
@@ -64,6 +66,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   private _breakLength = (<NodeJS.WriteStream> this._output).columns || 80
   private _taskLength = 0
   private _defaultTaskName = ''
+  private _indentSize = 2
 
   constructor() {
     super()
@@ -172,6 +175,15 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
   set taskLength(taskLength: number) {
     this._taskLength = taskLength
+    this._notifyListeners()
+  }
+
+  get indentSize(): number {
+    return this._indentSize
+  }
+
+  set indentSize(indentSize: number) {
+    this._indentSize = indentSize
     this._notifyListeners()
   }
 

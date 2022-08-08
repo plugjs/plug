@@ -55,43 +55,43 @@ class LoggerImpl implements Logger {
 
   trace(...args: [ any, ...any ]): this {
     if (_level > logLevels.TRACE) return this
-    emit(this._task, logLevels.TRACE, ...args)
+    emit(this._task, logLevels.TRACE, { indent: 0 }, args)
     return this
   }
 
   debug(...args: [ any, ...any ]): this {
     if (_level > logLevels.DEBUG) return this
-    emit(this._task, logLevels.DEBUG, ...args)
+    emit(this._task, logLevels.DEBUG, { indent: 0 }, args)
     return this
   }
 
   info(...args: [ any, ...any ]): this {
     if (_level > logLevels.INFO) return this
-    emit(this._task, logLevels.INFO, ...args)
+    emit(this._task, logLevels.INFO, { indent: 0 }, args)
     return this
   }
 
   notice(...args: [ any, ...any ]): this {
     if (_level > logLevels.NOTICE) return this
-    emit(this._task, logLevels.NOTICE, ...args)
+    emit(this._task, logLevels.NOTICE, { indent: 0 }, args)
     return this
   }
 
   warn(...args: [ any, ...any ]): this {
     if (_level > logLevels.WARN) return this
-    emit(this._task, logLevels.WARN, ...args)
+    emit(this._task, logLevels.WARN, { indent: 0 }, args)
     return this
   }
 
   error(...args: [ any, ...any ]): this {
     if (_level > logLevels.ERROR) return this
-    emit(this._task, logLevels.ERROR, ...args)
+    emit(this._task, logLevels.ERROR, { indent: 0 }, args)
     return this
   }
 
   fail(...args: [ any, ...any ]): never {
     if (args.includes(buildFailed)) throw buildFailed
-    emit(this._task, logLevels.ERROR, ...args)
+    emit(this._task, logLevels.ERROR, { indent: 0 }, args)
     throw buildFailed
   }
 }

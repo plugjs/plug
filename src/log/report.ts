@@ -333,8 +333,8 @@ class ReportImpl implements Report {
     lPad = lPad.toString().length
     cPad = cPad.toString().length
 
-    emit(this._task, logLevels.INFO, '')
-    emit(this._task, logLevels.INFO, $und($wht(this._title)))
+    emit(this._task, logLevels.INFO, { indent: 0 }, [ '' ])
+    emit(this._task, logLevels.INFO, { indent: 0 }, [ $und($wht(this._title)) ])
 
 
     /* Iterate through all our [file,reports] tuple */
@@ -342,16 +342,19 @@ class ReportImpl implements Report {
       const { file, records, annotation } = entries[f]
       const source = file && this._sources.get(file)
 
-      if ((f === 0) || entries[f - 1]?.records.length) emit(this._task, logLevels.INFO, '')
+      if ((f === 0) || entries[f - 1]?.records.length) {
+        emit(this._task, logLevels.INFO, { indent: 0 }, [ '' ])
+      }
+
       if (file && annotation) {
         const { level, note } = annotation
         const $col = level === logLevels.NOTICE ? $blu : level === logLevels.WARN ? $ylw : $red
         const ann = `${$gry('[')}${$col(note.padStart(aPad))}${$gry(']')}`
         const pad = ''.padStart(fPad - file.length) // file is underlined
 
-        emit(this._task, level, $wht($und(file)), pad, ann)
+        emit(this._task, level, { indent: 0 }, [ $wht($und(file)), pad, ann ])
       } else if (file) {
-        emit(this._task, logLevels.INFO, $wht($und(file)))
+        emit(this._task, logLevels.INFO, { indent: 0 }, [ $wht($und(file)) ])
       }
 
       /* Now get each message and do our magic */
@@ -377,15 +380,15 @@ class ReportImpl implements Report {
 
         /* Print out our messages, one by one */
         if (messages.length === 1) {
-          emit(this._task, level, $gry(pfx), messages[0].padEnd(mPad), tag)
+          emit(this._task, level, { indent: 0 }, [ $gry(pfx), messages[0].padEnd(mPad), tag ])
         } else {
           for (let m = 0; m < messages.length; m ++) {
             if (! m) { // first line
-              emit(this._task, level, $gry(pfx), messages[m])
+              emit(this._task, level, { indent: 0 }, [ $gry(pfx), messages[m] ])
             } else if (m === messages.length - 1) { // last line
-              emit(this._task, level, $gry(pfx2), messages[m].padEnd(mPad), tag)
+              emit(this._task, level, { indent: 0 }, [ $gry(pfx2), messages[m].padEnd(mPad), tag ])
             } else { // in between lines
-              emit(this._task, level, $gry(pfx2), messages[m])
+              emit(this._task, level, { indent: 0 }, [ $gry(pfx2), messages[m] ])
             }
           }
         }
@@ -399,9 +402,9 @@ class ReportImpl implements Report {
             const body = $und($col(source[line - 1].substring(offset, offset + length)))
             const tail = $gry(source[line - 1].substring(offset + length))
 
-            emit(this._task, level, pfx2, $gry(`| ${head}${body}${tail}`))
+            emit(this._task, level, { indent: 0 }, [ pfx2, $gry(`| ${head}${body}${tail}`) ])
           } else {
-            emit(this._task, level, pfx2, $gry(`| ${source[line - 1]}`))
+            emit(this._task, level, { indent: 0 }, [ pfx2, $gry(`| ${source[line - 1]}`) ])
           }
         }
       }
@@ -413,15 +416,15 @@ class ReportImpl implements Report {
     const eNumber = this.errors ? $red(this.errors) : 'no'
     const wNumber = this.warnings ? $ylw(this.warnings) : 'no'
 
-    emit(this._task, logLevels.INFO, '')
-    emit(this._task, logLevels.INFO, 'Found', eNumber, eLabel, 'and', wNumber, wLabel)
-    emit(this._task, logLevels.INFO, '')
+    emit(this._task, logLevels.INFO, { indent: 0 }, [ '' ])
+    emit(this._task, logLevels.INFO, { indent: 0 }, [ 'Found', eNumber, eLabel, 'and', wNumber, wLabel ])
+    emit(this._task, logLevels.INFO, { indent: 0 }, [ '' ])
 
     return this
   }
 
   fail(...args: any[]): never {
-    emit(this._task, logLevels.ERROR, ...args)
+    emit(this._task, logLevels.ERROR, { indent: 0 }, args)
     throw buildFailed
   }
 }

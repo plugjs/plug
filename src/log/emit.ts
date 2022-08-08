@@ -10,11 +10,13 @@ import { zapSpinner } from './spinner'
 /* Initial value of log colors, and subscribe to changes */
 let _output = logOptions.output
 let _colors = logOptions.colors
+let _indentSize = logOptions.indentSize
 let _taskLength = logOptions.taskLength
 let _breakLength = logOptions.breakLength
-logOptions.on('changed', ({ output, colors, taskLength, breakLength }) => {
+logOptions.on('changed', ({ output, colors, indentSize, taskLength, breakLength }) => {
   _output = output
   _colors = colors
+  _indentSize = indentSize
   _taskLength = taskLength
   _breakLength = breakLength
 })
@@ -26,20 +28,29 @@ logOptions.on('changed', ({ output, colors, taskLength, breakLength }) => {
 const whiteSquare = '\u25a1'
 const blackSquare = '\u25a0'
 
+type Indent = { indent: number } | { prefix: string }
+
 /** Emit either plain or color */
-export function emit(task: string, level: LogLevelNumber, ...args: any[]): void {
+export function emit(
+    task: string,
+    level: LogLevelNumber,
+    indent: Indent,
+    args: any[],
+): void {
   /* Strip any "buildFailed" argument (as it's already logged) */
   const params = args.filter((arg) => arg !== buildFailed)
   if (params.length === 0) return
 
+  const prefix = 'indent' in indent ? ''.padStart(indent.indent * _indentSize) : indent.prefix
+
   /* Log in colors or plain text */
-  _colors ? emitColor(task, level, params) : emitPlain(task, level, params)
+  _colors ? emitColor(task, level, prefix, params) : emitPlain(task, level, prefix, params)
 }
 
 /* ========================================================================== */
 
 /** Emit in full colors! */
-function emitColor(task: string, level: LogLevelNumber, args: any[]): void {
+function emitColor(task: string, level: LogLevelNumber, indent: string, args: any[]): void {
   /* Prefixes, to prepend at the beginning of each line */
   const prefixes: string[] = []
 
@@ -67,6 +78,7 @@ function emitColor(task: string, level: LogLevelNumber, args: any[]): void {
   }
 
   /* The prefix (task name and level) */
+  prefixes.push(indent)
   const prefix = prefixes.join('')
 
   /* Now for the normal logging of all our parameters */
@@ -79,7 +91,7 @@ function emitColor(task: string, level: LogLevelNumber, args: any[]): void {
 
 /* ========================================================================== */
 
-function emitPlain(task: string, level: LogLevelNumber, args: any[]): void {
+function emitPlain(task: string, level: LogLevelNumber, indent: string, args: any[]): void {
   const prefixes: string[] = []
 
   if (task) {
@@ -106,6 +118,7 @@ function emitPlain(task: string, level: LogLevelNumber, args: any[]): void {
   }
 
   /* The prefix (task name and level) */
+  prefixes.push(indent)
   const prefix = prefixes.join('')
 
   /* Now for the normal logging of all our parameters */
