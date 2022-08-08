@@ -96,11 +96,11 @@ export function build<D extends BuildDefinition<D>>(
 
     /* Prepare the _new_ `TaskCall` that will wrap our `Task` */
     const call = (async (): Promise<void> => {
-      const run = initRun(context)
+      const run = initRun(context, '')
       run.log.notice('Starting build...')
       const now = Date.now()
       try {
-        await initRun(context).call(name)
+        await run.call(name)
         run.log.notice('Build completed in %d ms', Date.now() - now)
       } catch (error) {
         const reason = error === buildFailed ? [] : [ error ]
