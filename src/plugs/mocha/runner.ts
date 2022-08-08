@@ -68,7 +68,15 @@ class MochaRunner implements Plug<undefined> {
  * RUNNER STARTUP                                                             *
  * ========================================================================== */
 
+const timeout = setTimeout(() => {
+  // eslint-disable-next-line no-console
+  console.error('Mocha not initialized in 5 seconds')
+  process.exit(2)
+}, 5000)
+
 process.on('message', async (message: MochaMessage) => {
+  clearTimeout(timeout)
+
   const run = new RunImpl({
     buildDir: message.buildDir,
     buildFile: message.buildFile,
