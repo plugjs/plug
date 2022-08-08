@@ -131,3 +131,4 @@ declare module '../pipe' {
 
 export * from './esbuild/bundle-locals'
 export * from './esbuild/fix-extensions'
+export * from './esbuild/check-dependencies'
