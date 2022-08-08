@@ -4,7 +4,7 @@ import type { AbsolutePath } from '../../paths'
 import Mocha from 'mocha'
 
 import { runAsync } from '../../async'
-import { buildFailed, log, logOptions } from '../../log'
+import { buildFailed, logOptions } from '../../log'
 import { Plug } from '../../pipe'
 import { Run, RunImpl } from '../../run'
 
@@ -58,7 +58,6 @@ class MochaRunner implements Plug<undefined> {
           }
         })
       } catch (error) {
-        run.log.error('Mocha error', error)
         reject(buildFailed)
       }
     })
@@ -70,8 +69,6 @@ class MochaRunner implements Plug<undefined> {
  * ========================================================================== */
 
 process.on('message', async (message: MochaMessage) => {
-  log.warn('Child received message', message)
-
   const run = new RunImpl({
     buildDir: message.buildDir,
     buildFile: message.buildFile,
@@ -80,9 +77,10 @@ process.on('message', async (message: MochaMessage) => {
 
   const files = run.files(message.filesDir).add(...message.files).build()
 
-  await runAsync(run, message.taskName, async () => {
-    await new MochaRunner().pipe(files, run)
-  })
-
-  process.exit(0)
+  await runAsync(run, message.taskName, () => new MochaRunner().pipe(files, run))
+      .then(() => process.exit(0))
+      .catch((error) => {
+        run.log.error('Mocha error', error)
+        process.exit(0)
+      })
 })
