@@ -30,6 +30,8 @@ export interface LogOptions extends InspectOptions {
   level: LogLevel,
   /** Whether to log in colors or not. */
   colors: boolean,
+  /** Whether to enable the tasks spinner or not. */
+  spinner: boolean,
   /** Width of the current terminal (if any) or `80`. */
   breakLength: number,
   /** The maximum length of a task name (for pretty alignment). */
@@ -58,6 +60,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   private _output: Writable = process.stderr
   private _level: LogLevelNumber = logLevels.NOTICE
   private _colors = (<NodeJS.WriteStream> this._output).isTTY
+  private _spinner = true // by default, the spinner is enabled
   private _breakLength = (<NodeJS.WriteStream> this._output).columns || 80
   private _taskLength = 0
   private _defaultTaskName = ''
@@ -92,6 +95,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
       breakLength: this._breakLength,
       taskLength: this._taskLength,
       defaultTaskName: taskName || this._defaultTaskName,
+      spinner: false, // forked spinner is always false
     }
   }
 
@@ -141,6 +145,15 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
   set colors(color: boolean) {
     this._colors = color
+    this._notifyListeners()
+  }
+
+  get spinner(): boolean {
+    return this._spinner
+  }
+
+  set spinner(spinner: boolean) {
+    this._spinner = spinner
     this._notifyListeners()
   }
 

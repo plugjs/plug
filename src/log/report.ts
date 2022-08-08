@@ -97,7 +97,7 @@ export interface Report {
 
 /** Create a new {@link Report} with the given title */
 export function createReport(title: string, run: Run): Report {
-  return new ReportImpl(run.taskName || '', title)
+  return new ReportImpl(run.taskName, title)
 }
 
 /* ========================================================================== *
