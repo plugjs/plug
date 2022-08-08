@@ -55,7 +55,9 @@ const booststrap = build({
   },
 
   async default() {
-    // await this.coverage()
+    await find('./test/**/*.test.ts')
+        .mocha()
+    await this.coverage()
     await parallel(
         this.lint_sources(),
         this.compile_types(),
