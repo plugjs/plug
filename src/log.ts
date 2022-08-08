@@ -19,8 +19,13 @@ setupSpinner()
  * LOGGER                                                                     *
  * ========================================================================== */
 
+/** The generic, shared `log` object. */
+type SingletonLogger = {
+  [ k in Exclude<keyof Logger, 'enter' | 'leave'>]: (...args: Parameters<Logger[k]>) => SingletonLogger
+}
+
 /** The generic, shared `log` function type. */
-export type Log = ((...args: [ any, ...any ]) => void) & Logger
+type Log = ((...args: [ any, ...any ]) => void) & SingletonLogger
 
 /** Our logging function (defaulting to the `NOTICE` level) */
 export const log: Log = ((): Log => {
@@ -28,33 +33,33 @@ export const log: Log = ((): Log => {
   const logger = (): Logger => (currentRun()?.log || getLogger())
 
   /* Create a Logger wrapping the current logger */
-  const wrapper: Logger = {
-    trace(...args: [ any, ...any ]): Logger {
+  const wrapper: SingletonLogger = {
+    trace(...args: [ any, ...any ]): SingletonLogger {
       logger().trace(...args)
       return wrapper
     },
 
-    debug(...args: [ any, ...any ]): Logger {
+    debug(...args: [ any, ...any ]): SingletonLogger {
       logger().debug(...args)
       return wrapper
     },
 
-    info(...args: [ any, ...any ]): Logger {
+    info(...args: [ any, ...any ]): SingletonLogger {
       logger().info(...args)
       return wrapper
     },
 
-    notice(...args: [ any, ...any ]): Logger {
+    notice(...args: [ any, ...any ]): SingletonLogger {
       logger().notice(...args)
       return wrapper
     },
 
-    warn(...args: [ any, ...any ]): Logger {
+    warn(...args: [ any, ...any ]): SingletonLogger {
       logger().warn(...args)
       return wrapper
     },
 
-    error(...args: [ any, ...any ]): Logger {
+    error(...args: [ any, ...any ]): SingletonLogger {
       logger().error(...args)
       return wrapper
     },

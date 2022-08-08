@@ -32,6 +32,9 @@ export interface Logger {
   error: (...args: [ any, ...any ]) => this
   /** Log a `FAIL` message and throw */
   fail: (...args: [ any, ...any ]) => never
+
+  enter: (...args: [ any, ...any ]) => this
+  leave: (...args: [ any, ...any ]) => this
 }
 
 /** Return a {@link Logger} associated with the specified task name. */
@@ -51,47 +54,62 @@ const _loggers = new Map<string, Logger>()
 
 /** Default implementation of the {@link Logger} interface. */
 class LoggerImpl implements Logger {
+  private _indent = { indent: 0 }
+
   constructor(private readonly _task: string) {}
 
   trace(...args: [ any, ...any ]): this {
     if (_level > logLevels.TRACE) return this
-    emit(this._task, logLevels.TRACE, { indent: 0 }, args)
+    emit(this._task, logLevels.TRACE, this._indent, args)
     return this
   }
 
   debug(...args: [ any, ...any ]): this {
     if (_level > logLevels.DEBUG) return this
-    emit(this._task, logLevels.DEBUG, { indent: 0 }, args)
+    emit(this._task, logLevels.DEBUG, this._indent, args)
     return this
   }
 
   info(...args: [ any, ...any ]): this {
     if (_level > logLevels.INFO) return this
-    emit(this._task, logLevels.INFO, { indent: 0 }, args)
+    emit(this._task, logLevels.INFO, this._indent, args)
     return this
   }
 
   notice(...args: [ any, ...any ]): this {
     if (_level > logLevels.NOTICE) return this
-    emit(this._task, logLevels.NOTICE, { indent: 0 }, args)
+    emit(this._task, logLevels.NOTICE, this._indent, args)
     return this
   }
 
   warn(...args: [ any, ...any ]): this {
     if (_level > logLevels.WARN) return this
-    emit(this._task, logLevels.WARN, { indent: 0 }, args)
+    emit(this._task, logLevels.WARN, this._indent, args)
     return this
   }
 
   error(...args: [ any, ...any ]): this {
     if (_level > logLevels.ERROR) return this
-    emit(this._task, logLevels.ERROR, { indent: 0 }, args)
+    emit(this._task, logLevels.ERROR, this._indent, args)
     return this
   }
 
   fail(...args: [ any, ...any ]): never {
     if (args.includes(buildFailed)) throw buildFailed
-    emit(this._task, logLevels.ERROR, { indent: 0 }, args)
+    emit(this._task, logLevels.ERROR, this._indent, args)
     throw buildFailed
+  }
+
+  enter(...args: [ any, ...any ]): this {
+    emit(this._task, logLevels.INFO, this._indent, args)
+    this._indent.indent ++
+    return this
+  }
+
+  leave(...args: [ any, ...any ]): this {
+    this._indent.indent --
+    if (this._indent.indent < 0) this._indent.indent = 0
+    emit(this._task, logLevels.INFO, this._indent, args)
+    return this
   }
 }

@@ -184,6 +184,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
   set indentSize(indentSize: number) {
     this._indentSize = indentSize
+    if (this._indentSize < 1) this._indentSize = 1
     this._notifyListeners()
   }
 
