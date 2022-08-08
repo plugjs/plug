@@ -17,7 +17,7 @@ import { extname } from 'node:path'
 /** Worker data, from main thread to worker thread */
 interface WorkerData<T extends any[]> {
   /** Log options from main thread */
-  logOptions: LogOptions,
+  logOptions: Partial<LogOptions>,
   /** Task name (for logs) */
   taskName?: string | undefined,
   /** Build file name */
@@ -88,7 +88,7 @@ export function executeWorker<
     buildDir: run.buildDir,
     filesDir: files.directory,
     files: [ ...files.absolutePaths() ],
-    logOptions,
+    logOptions: logOptions.toJSON(),
     args,
   }
 
@@ -193,6 +193,7 @@ export function workerMain<
 
   // Recreate our logger in the worker (padding, colors, ...)
   Object.assign(logOptions, data.logOptions)
+  if (data.taskName) logOptions.defaultTaskName = data.taskName
 
   // Spread out our arguments
   const { taskName, buildFile, buildDir, filesDir, files, args } = data
