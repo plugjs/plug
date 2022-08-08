@@ -2,9 +2,9 @@ import type { Files } from '../../files'
 import type { Plug } from '../../pipe'
 import type { Run } from '../../run'
 
-import { ESLint as RealESLint } from 'eslint'
+import { ESLint } from 'eslint'
 import { $p } from '../../log'
-import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../../paths'
+import { AbsolutePath, getCurrentWorkingDirectory, resolveAbsolutePath } from '../../paths'
 import { readFile } from '../../utils/asyncfs'
 import { workerMain } from '../../worker'
 
@@ -12,22 +12,29 @@ export type ESLintWorkerType = typeof ESLintWorker
 
 /** Writes some info about the current {@link Files} being passed around. */
 class ESLintWorker implements Plug<undefined> {
-  constructor(directory?: string)
-  constructor(private readonly _directory?: string) {}
+  constructor(
+      private readonly _directory: AbsolutePath,
+      private readonly _configFile?: AbsolutePath,
+  ) {}
 
   async pipe(files: Files, run: Run): Promise<undefined> {
-    /* The directory here is where `.eslintrc` can be found */
-    const cwd = this._directory ? run.resolve(this._directory) : getCurrentWorkingDirectory()
-    const eslint = new RealESLint({ cwd })
+    /* Create our ESLint instance */
+    const eslint = new ESLint({
+      overrideConfigFile: this._configFile,
+      cwd: this._directory,
+    })
 
+    /* Lint all files in parallel */
     const paths = [ ...files.absolutePaths() ]
     const promises = paths.map(async (filePath) => {
       const code = await readFile(filePath, 'utf-8')
       return eslint.lintText(code, { filePath })
     })
 
+    /* Await for all promises to be settled */
     const settlements = await Promise.allSettled(promises)
 
+    /* Run through all promises settlements */
     const summary = settlements.reduce((summary, settlement, i) => {
       /* Promise rejected, meaining hard failure */
       if (settlement.status === 'rejected') {
@@ -40,10 +47,11 @@ class ESLintWorker implements Plug<undefined> {
       summary.results.push(...settlement.value)
       return summary
     }, {
-      results: [] as RealESLint.LintResult[],
+      results: [] as ESLint.LintResult[],
       failures: 0,
     })
 
+    /* In case of failures from promises, fail! */
     const { results, failures } = summary
     if (failures) run.log.fail('ESLint failed linting')
 
