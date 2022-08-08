@@ -190,8 +190,6 @@ export function workerMain<
   // Recreate our logger in the worker (padding, colors, ...)
   Object.assign(logOptions, data.logOptions)
 
-  console.log(data.logOptions)
-
   // Spread out our arguments
   const { taskName, buildFile, buildDir, filesDir, files, args } = data
 
