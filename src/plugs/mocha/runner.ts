@@ -1,12 +1,12 @@
 import type { Files } from '../../files'
-import { Run, RunImpl } from '../../run'
+import type { AbsolutePath } from '../../paths'
 
 import Mocha from 'mocha'
 
+import { runAsync } from '../../async'
 import { buildFailed, log, logOptions } from '../../log'
 import { Plug } from '../../pipe'
-import type { AbsolutePath } from '../../paths'
-import { runAsync } from '../../async'
+import { Run, RunImpl } from '../../run'
 
 /** Worker data, from main thread to worker thread */
 export interface MochaMessage {
@@ -30,7 +30,7 @@ class MochaRunner implements Plug<undefined> {
     const mocha = new Mocha({
       allowUncaught: false,
       bail: false, // expose
-      color: logOptions.colors,
+      color: logOptions.colors, // ??? reporter option?
       delay: false,
       diff: true, // expose
       dryRun: false, // expose
@@ -81,9 +81,7 @@ process.on('message', async (message: MochaMessage) => {
   const files = run.files(message.filesDir).add(...message.files).build()
 
   await runAsync(run, message.taskName, async () => {
-    run.log.notice('STARTING')
     await new MochaRunner().pipe(files, run)
-    run.log.notice('FINISHED')
   })
 
   process.exit(0)
