@@ -1,6 +1,5 @@
 import { currentRun } from './async'
 import { getLogger, Logger } from './log/logger'
-import { logLevels, logOptions } from './log/options'
 import { setupSpinner } from './log/spinner'
 
 export * from './log/colors'
@@ -9,13 +8,9 @@ export * from './log/logger'
 export * from './log/options'
 export * from './log/report'
 
-/* ========================================================================== */
-
-/* Initial value of log colors, and subscribe to changes */
-let _level = logOptions.logLevel
-logOptions.on('changed', ({ logLevel }) => {
-  _level = logLevel
-})
+/* ========================================================================== *
+ * INITIALIZATION                                                             *
+ * ========================================================================== */
 
 /* Remember to setup the spinner */
 setupSpinner()
@@ -35,37 +30,31 @@ export const log: Log = ((): Log => {
   /* Create a Logger wrapping the current logger */
   const wrapper: Logger = {
     trace(...args: [ any, ...any ]): Logger {
-      if (_level > logLevels.TRACE) return wrapper
       logger().trace(...args)
       return wrapper
     },
 
     debug(...args: [ any, ...any ]): Logger {
-      if (_level > logLevels.DEBUG) return wrapper
       logger().debug(...args)
       return wrapper
     },
 
     info(...args: [ any, ...any ]): Logger {
-      if (_level > logLevels.INFO) return wrapper
       logger().info(...args)
       return wrapper
     },
 
     notice(...args: [ any, ...any ]): Logger {
-      if (_level > logLevels.NOTICE) return wrapper
       logger().notice(...args)
       return wrapper
     },
 
     warn(...args: [ any, ...any ]): Logger {
-      if (_level > logLevels.WARN) return wrapper
       logger().warn(...args)
       return wrapper
     },
 
     error(...args: [ any, ...any ]): Logger {
-      if (_level > logLevels.ERROR) return wrapper
       logger().error(...args)
       return wrapper
     },
