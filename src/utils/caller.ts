@@ -1,6 +1,7 @@
+import { statSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+
 import { assert } from '../assert'
-import { statSync } from 'fs'
-import { fileURLToPath } from 'url'
 import { AbsolutePath, assertAbsolutePath } from '../paths'
 
 export interface Location {

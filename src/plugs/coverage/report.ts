@@ -1,17 +1,8 @@
-import fs from '../../utils/asyncfs'
+import type { AbsolutePath } from '../../paths'
+
+import { pathToFileURL } from 'node:url'
 
 import { parse } from '@babel/parser'
-import { pathToFileURL } from 'url'
-import { $p, log } from '../../log'
-
-import {
-  CombiningCoverageAnalyser,
-  CoverageResultAnalyser,
-  CoverageSitemapAnalyser,
-  SourcesCoverageAnalyser,
-  V8CoverageData,
-} from './analysis'
-
 import {
   Comment, isDeclaration,
   isFile,
@@ -21,9 +12,18 @@ import {
   isTSTypeReference,
   isTypeScript,
   Node,
-  VISITOR_KEYS,
+  VISITOR_KEYS
 } from '@babel/types'
-import { AbsolutePath } from '../../paths'
+
+import { $p, log } from '../../log'
+import { readFile } from '../../utils/asyncfs'
+import {
+  CombiningCoverageAnalyser,
+  CoverageResultAnalyser,
+  CoverageSitemapAnalyser,
+  SourcesCoverageAnalyser,
+  V8CoverageData
+} from './analysis'
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *
@@ -129,7 +129,7 @@ export async function coverageReport(
 
     /* Parse our coverage file from JSON */
     log.debug('Parsing coverage file', $p(coverageFile))
-    const contents = await fs.readFile(coverageFile, 'utf-8')
+    const contents = await readFile(coverageFile, 'utf-8')
     const coverage: V8CoverageData = JSON.parse(contents)
 
     /* Let's look inside of the coverage file... */
@@ -176,7 +176,7 @@ export async function coverageReport(
   for (const file of files) {
     /* Read up the file and parse the tree in the most liberal way possible */
     const url = pathToFileURL(file).toString()
-    const code = await fs.readFile(file, 'utf-8')
+    const code = await readFile(file, 'utf-8')
 
     const tree = parse(code, {
       allowImportExportEverywhere: true,

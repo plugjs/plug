@@ -1,10 +1,10 @@
-import { assert } from '../../assert'
-import fs from '../../utils/asyncfs'
+import { fileURLToPath } from 'node:url'
 
-import { fileURLToPath } from 'url'
+import { RawSourceMap, SourceMapConsumer } from 'source-map'
+
+import { assert } from '../../assert'
 import { log } from '../../log'
-import { RawSourceMap } from 'source-map'
-import { SourceMapConsumer } from 'source-map'
+import { readFile } from '../../utils/asyncfs'
 
 /* ========================================================================== *
  * V8 COVERAGE TYPES                                                          *
@@ -107,7 +107,7 @@ export class CoverageResultAnalyser implements CoverageAnalyser {
 
   async init(): Promise<void> {
     const filename = fileURLToPath(this._result.url)
-    const source = await fs.readFile(filename, 'utf-8')
+    const source = await readFile(filename, 'utf-8')
     this.#lineLengths = source.split('\n').map((line) => line.length)
   }
 

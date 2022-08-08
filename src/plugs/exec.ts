@@ -1,10 +1,10 @@
 import type { Files } from '../files'
 import type { Run } from '../run'
 
+import { spawn, SpawnOptions } from 'node:child_process'
 import path from 'node:path'
 import reaadline from 'node:readline'
 
-import { spawn, SpawnOptions } from 'child_process'
 import { assert } from '../assert'
 import { currentRun } from '../async'
 import { $p, logOptions } from '../log'
