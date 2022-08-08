@@ -174,22 +174,3 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
 /** Shared instance of our {@link LogOptions}. */
 export const logOptions: LogOptions = new LogOptionsImpl()
-
-
-/* Initialize from environment variables */
-;(function init(): void {
-  /* The `LOG_OPTIONS` variable is a JSON-serialized `LogOptions` object */
-  Object.assign(logOptions, JSON.parse(process.env.LOG_OPTIONS || '{}'))
-
-  /* The `LOG_LEVEL` variable is one of our `debug`, `info`, ... */
-  if (process.env.LOG_LEVEL) {
-    logOptions.level = process.env.LOG_LEVEL.toUpperCase() as LogLevel
-  }
-
-  /* If the `LOG_COLOR` variable is specified, it should be `true` or `false` */
-  if (process.env.LOG_COLOR) {
-    if (process.env.LOG_COLOR.toLowerCase() === 'true') logOptions.colors = true
-    if (process.env.LOG_COLOR.toLowerCase() === 'false') logOptions.colors = false
-    // Other values don't change the value of `options.colors`
-  }
-})()
