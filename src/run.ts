@@ -1,11 +1,7 @@
-import type { BuildContext, ThisBuild } from './build'
-import type { Task } from './task'
-
 import { join } from 'node:path'
 import { assert } from './assert'
-import { runAsync } from './async'
 import { Files, FilesBuilder } from './files'
-import { $t, buildFailed, createReport, getLogger, Logger, Report } from './log'
+import { createReport, getLogger, Logger, Report } from './log'
 import { AbsolutePath, getCurrentWorkingDirectory, isAbsolutePath, resolveAbsolutePath } from './paths'
 import { Pipe, PipeImpl } from './pipe'
 import { ParseOptions, parseOptions } from './utils/options'
@@ -27,15 +23,7 @@ export interface FindOptions extends WalkOptions {
  * Runs keep track of the invocation stack (to avoid circular dependencies) and
  * of the cached results for {@link Task} invocations.
  */
-export interface Run extends BuildContext {
-  /**
-   * The {@link Logger} associated with this instance.
-   */
-  readonly log: Logger
-
-  /** Create a new {@link Report} with the given _title_ */
-  report(title: string): Report
-
+export interface Run {
   /**
    * The _name_ of the task associated with this {@link Run} (if one is).
    *
@@ -43,9 +31,18 @@ export interface Run extends BuildContext {
    * _task name_ in the build being executed.
    */
   readonly taskName: string
+  /** The absolute file name of the build */
+  readonly buildFile: AbsolutePath,
+  /** For convenience, the directory of the build file */
+  readonly buildDir: AbsolutePath,
+  /** The {@link Logger} associated with this instance. */
+  readonly log: Logger
 
   /** Call another {@link Task} from this one. */
   call(name: string): Promise<Files | undefined>
+
+  /** Create a new {@link Report} with the given _title_ */
+  report(title: string): Report
 
   /**
    * Resolve a path in the context of this {@link Run}.
@@ -73,73 +70,32 @@ export interface Run extends BuildContext {
   pipe(files: Files | Promise<Files>): Pipe & Promise<Files>
 }
 
-/** Default implementation of the {@link Run} interface. */
-class RunImpl implements Run {
+/** Constructor options for our default {@link Run} implementation */
+export interface RunConstructionOptions {
+  readonly taskName: string,
+  readonly buildDir: AbsolutePath,
+  readonly buildFile: AbsolutePath,
+  readonly log?: Logger,
+}
+
+/** Our default {@link Run} implementation */
+export class RunImpl implements Run {
+  readonly taskName: string
+  readonly buildFile: AbsolutePath
+  readonly buildDir: AbsolutePath
   readonly log: Logger
 
-  constructor(
-      readonly buildDir: AbsolutePath,
-      readonly buildFile: AbsolutePath,
-      readonly tasks: Readonly<Record<string, Task>>,
-      private readonly _cache: Map<Task, Promise<Files | undefined>>,
-      private readonly _stack: readonly Task[],
-      readonly taskName: string,
-  ) {
-    this.log = getLogger(taskName)
+  constructor(options: RunConstructionOptions)
+
+  constructor({ taskName, buildDir, buildFile, log }: RunConstructionOptions) {
+    this.taskName = taskName
+    this.buildDir = buildDir
+    this.buildFile = buildFile
+    this.log = log || getLogger(taskName)
   }
 
   report(title: string): Report {
-    return createReport(title, this)
-  }
-
-  call(name: string): Promise<Files | undefined> {
-    const task = this.tasks[name]
-    if (! task) this.log.fail(`Task "${$t(name)}" does not exist`)
-
-    /* Check for circular dependencies */
-    assert(! this._stack.includes(task), `Circular dependency running task "${$t(name)}"`)
-
-    /* Check for cached results */
-    const cached = this._cache.get(task)
-    if (cached) return cached
-
-    const childRun = new RunImpl(
-        task.context.buildDir, // the "buildDir" and "buildFile", used for local resolution (e.g. "./foo.bar") are
-        task.context.buildFile, // always the ones associated with the build where the task was defined
-        { ...task.context.tasks, ...this.tasks }, // merge the tasks, starting from the ones of the original build
-        this._cache, // the cache is a singleton within the whole Run tree, it's passed unchanged
-        [ ...this._stack, task ], // the stack gets added the task being run...
-        name,
-    )
-
-    /* Actually _call_ the `Task` and get a promise for it */
-    const promise = runAsync(childRun, name, () => childRun._run(name, task))
-
-    /* Cache the execution promise (never run the smae task twice) */
-    this._cache.set(task, promise)
-    return promise
-  }
-
-  private async _run(name: string, task: Task): Promise<Files | undefined> {
-    const now = Date.now()
-    this.log.notice(`Starting task ${$t(name)}...`)
-
-    const thisBuild: ThisBuild<any> = {}
-
-    for (const name in this.tasks) {
-      thisBuild[name] = ((): PipeImpl<Files | undefined> => {
-        return new PipeImpl(this.call(name), this)
-      }) as ((() => Promise<undefined>) |(() => Pipe & Promise<Files>))
-    }
-
-    try {
-      const result = await task.call(thisBuild, this)
-      this.log.notice(`Task ${$t(name)} completed in %d ms`, Date.now() - now)
-      return result
-    } catch (error) {
-      const reason = error === buildFailed ? [] : [ error ]
-      this.log.fail(`Task ${$t(name)} failed in %d ms`, Date.now() - now, ...reason)
-    }
+    return createReport(title, this.taskName)
   }
 
   resolve(...paths: string[]): AbsolutePath {
@@ -178,16 +134,8 @@ class RunImpl implements Run {
   pipe(files: Files | Promise<Files>): Pipe & Promise<Files> {
     return new PipeImpl(files, this)
   }
-}
 
-/** Create a new {@link Run} associated with the given {@link BuildContext}. */
-export function initRun(context: BuildContext, taskName: string): Run {
-  return new RunImpl(
-      context.buildDir,
-      context.buildFile,
-      context.tasks,
-      new Map<Task, Promise<Files | undefined>>(),
-      [],
-      taskName,
-  )
+  call(name: string): Promise<Files | undefined> {
+    throw new Error(`Unable to call task "${name}"`)
+  }
 }

@@ -1,11 +1,13 @@
 import type { Files } from './files'
-import type { Pipe } from './pipe'
+import { Pipe, PipeImpl } from './pipe'
 
-import { buildFailed, logOptions } from './log'
+import { $t, buildFailed, logOptions } from './log'
 import { AbsolutePath, getAbsoluteParent } from './paths'
-import { initRun, Run } from './run'
+import { Run, RunImpl } from './run'
 import { Task, TaskImpl } from './task'
 import { findCaller } from './utils/caller'
+import { assert } from './assert'
+import { runAsync } from './async'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -96,7 +98,7 @@ export function build<D extends BuildDefinition<D>>(
 
     /* Prepare the _new_ `TaskCall` that will wrap our `Task` */
     const call = (async (): Promise<void> => {
-      const run = initRun(context, '')
+      const run = new BuildRun(buildDir, buildFile, tasks)
       run.log.notice('Starting build...')
       const now = Date.now()
       try {
@@ -123,4 +125,72 @@ export function build<D extends BuildDefinition<D>>(
 
   /* All done! */
   return result
+}
+
+/* ========================================================================== *
+ * RUN IMPLEMENTATION                                                         *
+ * ========================================================================== */
+
+/** Implementation of the {@link Run} interface for builds (has tasks!). */
+class BuildRun extends RunImpl implements Run {
+  constructor(
+      buildDir: AbsolutePath,
+      buildFile: AbsolutePath,
+      private readonly _tasks: Readonly<Record<string, Task>>,
+      private readonly _cache = new Map<Task, Promise<Files | undefined>>(),
+      private readonly _stack: readonly Task[] = [],
+      taskName: string = '',
+  ) {
+    super({ taskName, buildDir, buildFile })
+  }
+
+  call(name: string): Promise<Files | undefined> {
+    const task = this._tasks[name]
+    if (! task) this.log.fail(`Task "${$t(name)}" does not exist`)
+
+    /* Check for circular dependencies */
+    assert(! this._stack.includes(task), `Circular dependency running task "${$t(name)}"`)
+
+    /* Check for cached results */
+    const cached = this._cache.get(task)
+    if (cached) return cached
+
+    const childRun = new BuildRun(
+        task.context.buildDir, // the "buildDir" and "buildFile", used for local resolution (e.g. "./foo.bar") are
+        task.context.buildFile, // always the ones associated with the build where the task was defined
+        { ...task.context.tasks, ...this._tasks }, // merge the tasks, starting from the ones of the original build
+        this._cache, // the cache is a singleton within the whole Run tree, it's passed unchanged
+        [ ...this._stack, task ], // the stack gets added the task being run...
+        name,
+    )
+
+    /* Actually _call_ the `Task` and get a promise for it */
+    const promise = runAsync(childRun, name, () => childRun._run(name, task))
+
+    /* Cache the execution promise (never run the smae task twice) */
+    this._cache.set(task, promise)
+    return promise
+  }
+
+  private async _run(name: string, task: Task): Promise<Files | undefined> {
+    const now = Date.now()
+    this.log.notice(`Starting task ${$t(name)}...`)
+
+    const thisBuild: ThisBuild<any> = {}
+
+    for (const name in this._tasks) {
+      thisBuild[name] = ((): PipeImpl<Files | undefined> => {
+        return new PipeImpl(this.call(name), this)
+      }) as ((() => Promise<undefined>) |(() => Pipe & Promise<Files>))
+    }
+
+    try {
+      const result = await task.call(thisBuild, this)
+      this.log.notice(`Task ${$t(name)} completed in %d ms`, Date.now() - now)
+      return result
+    } catch (error) {
+      const reason = error === buildFailed ? [] : [ error ]
+      this.log.fail(`Task ${$t(name)} failed in %d ms`, Date.now() - now, ...reason)
+    }
+  }
 }
