@@ -1,7 +1,7 @@
 import type { Files, FilesBuilder } from '../files'
 import type { Run } from '../run'
 
-import { build, BuildOptions, Message } from 'esbuild'
+import { build, BuildFailure, BuildOptions, BuildResult, Message, Metafile } from 'esbuild'
 import { assert } from '../assert'
 import { $p, ReportRecord } from '../log'
 import { AbsolutePath, resolveAbsolutePath } from '../paths'
@@ -60,18 +60,27 @@ export class ESBuild implements Plug<Files> {
       run.log.debug(message, entryPoints.length, 'files to', $p(builder.directory))
     }
 
-    run.log.trace('Running ESBuild', options)
-    const esbuild = await build({ ...options, metafile: true })
-    run.log.trace('ESBuild Results', esbuild)
-
     const report = run.report('ESBuild Report')
 
-    report.add(...esbuild.warnings.map((m) => convertMessage('WARN', m, absWorkingDir)))
-    report.add(...esbuild.errors.map((m) => convertMessage('ERROR', m, absWorkingDir)))
+    run.log.trace('Running ESBuild', options)
+    let esbuild: undefined | (BuildResult & { metafile: Metafile })
+    try {
+      esbuild = await build({ ...options, metafile: true })
+      run.log.trace('ESBuild Results', esbuild)
+
+      report.add(...esbuild.warnings.map((m) => convertMessage('WARN', m, absWorkingDir)))
+      report.add(...esbuild.errors.map((m) => convertMessage('ERROR', m, absWorkingDir)))
+    } catch (error: any) {
+      const e = error as BuildFailure
+      if (e.warnings) report.add(...e.warnings.map((m) => convertMessage('WARN', m, absWorkingDir)))
+      if (e.errors) report.add(...e.errors.map((m) => convertMessage('ERROR', m, absWorkingDir)))
+    }
 
     await report.loadSources()
     if (! report.empty) report.emit(true)
     if (report.errors) report.fail()
+
+    assert(esbuild, 'ESBuild did not produce any result')
 
     const outputs = esbuild.metafile.outputs
     for (const file in outputs) {
