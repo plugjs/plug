@@ -7,7 +7,7 @@ import nodeAssert from 'node:assert'
 import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads'
 import { runAsync } from './async'
 import { $p, buildFailed, logOptions, LogOptions } from './log'
-import { initRun, Run } from './run'
+import { RunImpl, Run } from './run'
 import { extname } from 'node:path'
 
 /** Worker data, from main thread to worker thread */
@@ -199,8 +199,8 @@ export function workerMain<
     parentPort.postMessage(message)
   }
 
-  // Initialize a fake `Run` with no tasks, but with a task name for logs
-  const run = initRun({ buildDir, buildFile, tasks: {} }, taskName)
+  // Initialize a `Run` with no tasks, but with a task name for logs
+  const run = new RunImpl({ taskName, buildDir, buildFile })
 
   // Run the Plug asynchronously in our context, so that `log`, `find`, ...
   // and all calls depending on our asynchronous `Run` work correctly
