@@ -1,5 +1,4 @@
 import type { AbsolutePath } from '../paths'
-import type { Run } from '../run'
 
 import { readFile } from '../utils/asyncfs'
 import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
@@ -96,8 +95,8 @@ export interface Report {
 }
 
 /** Create a new {@link Report} with the given title */
-export function createReport(title: string, run: Run): Report {
-  return new ReportImpl(run.taskName, title)
+export function createReport(title: string, taskName: string): Report {
+  return new ReportImpl(title, taskName)
 }
 
 /* ========================================================================== *
@@ -130,8 +129,8 @@ class ReportImpl implements Report {
   private _errorAnnotations = 0
 
   constructor(
-      private readonly _task: string,
       private readonly _title: string,
+      private readonly _task: string,
   ) {}
 
   get notices(): number {
