@@ -45,19 +45,11 @@ class MochaRunner implements Plug<undefined> {
       // TODO: reporter (our reporter)
     })
 
-    run.log.notice('HERE 1')
-
-    for (const file of files.absolutePaths()) {
-      mocha.addFile(file)
-    }
-
-    run.log.notice('HERE 2')
+    for (const file of files.absolutePaths()) mocha.addFile(file)
 
     return new Promise((resolve, reject) => {
-      run.log.notice('HERE 3')
       try {
         mocha.run((failures) => {
-          run.log.notice('HERE 5', failures)
           if (failures) {
             run.log.error('Mocha detected', failures, 'errors')
             reject(buildFailed)
@@ -67,8 +59,8 @@ class MochaRunner implements Plug<undefined> {
         })
       } catch (error) {
         run.log.error('Mocha error', error)
+        reject(buildFailed)
       }
-      run.log.notice('HERE 4')
     })
   }
 }
