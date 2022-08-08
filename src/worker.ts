@@ -15,7 +15,7 @@ interface WorkerData<T extends any[]> {
   /** Log options from main thread */
   logOptions: Partial<LogOptions>,
   /** Task name (for logs) */
-  taskName?: string | undefined,
+  taskName: string,
   /** Build file name */
   buildFile: AbsolutePath
   /** Build directory */
@@ -204,7 +204,7 @@ export function workerMain<
 
   // Run the Plug asynchronously in our context, so that `log`, `find`, ...
   // and all calls depending on our asynchronous `Run` work correctly
-  runAsync(run, taskName || '', async () => {
+  runAsync(run, taskName, async () => {
     // eslint-disable-next-line new-cap
     const p = new plug(...args)
     const f = run.files(filesDir).add(...files).build()

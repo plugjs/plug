@@ -42,7 +42,7 @@ export interface Run extends BuildContext {
    * Tasks can have different names in different builds, this refers to the
    * _task name_ in the build being executed.
    */
-  readonly taskName?: string
+  readonly taskName: string
 
   /** Call another {@link Task} from this one. */
   call(name: string): Promise<Files | undefined>
@@ -83,7 +83,7 @@ class RunImpl implements Run {
       readonly tasks: Readonly<Record<string, Task>>,
       private readonly _cache: Map<Task, Promise<Files | undefined>>,
       private readonly _stack: readonly Task[],
-      readonly taskName?: string,
+      readonly taskName: string,
   ) {
     this.log = getLogger(taskName)
   }
@@ -181,7 +181,7 @@ class RunImpl implements Run {
 }
 
 /** Create a new {@link Run} associated with the given {@link BuildContext}. */
-export function initRun(context: BuildContext, taskName?: string): Run {
+export function initRun(context: BuildContext, taskName: string): Run {
   return new RunImpl(
       context.buildDir,
       context.buildFile,
