@@ -46,8 +46,8 @@ export interface LogOptions extends InspectOptions {
   /** Remove an event listener for the specified event. */
   off(eventName: 'changed', listener: (logOptions: this) => void): this;
 
-  /** Convert for serialization */
-  toJSON(): Partial<LogOptions>
+  /** Convert for serialization, optionally overriding the default task name. */
+  fork(taskName?: string): Partial<LogOptions>
 }
 
 /* ========================================================================== *
@@ -85,13 +85,13 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
     super.emit('changed', this)
   }
 
-  toJSON(): Record<string, any> {
+  fork(taskName?: string): Partial<LogOptions> {
     return {
-      level: this._level, // yes, as a number!
+      level: this.level,
       colors: this._colors,
       breakLength: this._breakLength,
       taskLength: this._taskLength,
-      defaultTaskName: this._defaultTaskName,
+      defaultTaskName: taskName || this._defaultTaskName,
     }
   }
 

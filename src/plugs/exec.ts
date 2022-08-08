@@ -7,7 +7,7 @@ import reaadline from 'node:readline'
 import { spawn, SpawnOptions } from 'child_process'
 import { assert } from '../assert'
 import { currentRun } from '../async'
-import { $p } from '../log'
+import { $p, logOptions } from '../log'
 import { AbsolutePath, getCurrentWorkingDirectory, isDirectory } from '../paths'
 import { install, Plug } from '../pipe'
 import { parseOptions, ParseOptions } from '../utils/options'
@@ -174,11 +174,10 @@ async function spawnChild(
   const extraPath = env.PATH || process.env.PATH
   if (extraPath) childPaths.push(extraPath)
 
-  // Build our PATH environment variable
-  const childPath = childPaths.join(path.delimiter)
-
   // Build our environment variables record
-  const childEnv = { ...process.env, ...env, PATH: childPath }
+  const PATH = childPaths.join(path.delimiter)
+  const LOG_OPTIONS = JSON.stringify(logOptions.fork(run.taskName))
+  const childEnv = { ...process.env, ...env, PATH, LOG_OPTIONS }
 
   // Prepare the options for calling `spawn`
   const childOptions: SpawnOptions = {

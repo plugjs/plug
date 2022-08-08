@@ -10,10 +10,6 @@ import { $p, buildFailed, logOptions, LogOptions } from './log'
 import { initRun, Run } from './run'
 import { extname } from 'node:path'
 
-// import r from 'ts-node'
-
-// r.register({})
-
 /** Worker data, from main thread to worker thread */
 interface WorkerData<T extends any[]> {
   /** Log options from main thread */
@@ -88,7 +84,7 @@ export function executeWorker<
     buildDir: run.buildDir,
     filesDir: files.directory,
     files: [ ...files.absolutePaths() ],
-    logOptions: logOptions.toJSON(),
+    logOptions: logOptions.fork(run.taskName),
     args,
   }
 
@@ -193,7 +189,8 @@ export function workerMain<
 
   // Recreate our logger in the worker (padding, colors, ...)
   Object.assign(logOptions, data.logOptions)
-  if (data.taskName) logOptions.defaultTaskName = data.taskName
+
+  console.log(data.logOptions)
 
   // Spread out our arguments
   const { taskName, buildFile, buildDir, filesDir, files, args } = data
