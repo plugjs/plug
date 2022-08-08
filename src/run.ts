@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { assert } from './assert'
 import { runAsync } from './async'
 import { Files, FilesBuilder } from './files'
-import { $t, buildFailed, getLogger, Logger } from './log'
+import { $t, buildFailed, createReport, getLogger, Logger, Report } from './log'
 import { AbsolutePath, getCurrentWorkingDirectory, isAbsolutePath, resolveAbsolutePath } from './paths'
 import { Pipe, PipeImpl } from './pipe'
 import { ParseOptions, parseOptions } from './utils/options'
@@ -32,6 +32,9 @@ export interface Run extends BuildContext {
    * The {@link Logger} associated with this instance.
    */
   readonly log: Logger
+
+  /** Create a new {@link Report} with the given _title_ */
+  report(title: string): Report
 
   /**
    * The _name_ of the task associated with this {@link Run} (if one is).
@@ -83,6 +86,10 @@ class RunImpl implements Run {
       readonly taskName?: string,
   ) {
     this.log = getLogger(taskName)
+  }
+
+  report(title: string): Report {
+    return createReport(title, this)
   }
 
   call(name: string): Promise<Files | undefined> {

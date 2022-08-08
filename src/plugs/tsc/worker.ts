@@ -38,7 +38,7 @@ class TscWorker implements Plug<Files> {
         overrides, // overrides from constructor, might be an empty object
         run.buildFile) // overrides are defined in the build file, sooo.....
 
-    const report = run.log.report('TypeScript Report')
+    const report = run.report('TypeScript Report')
 
     // Update report and fail on errors
     updateReport(report, errors, getCurrentWorkingDirectory())

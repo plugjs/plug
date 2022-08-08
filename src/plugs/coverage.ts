@@ -78,7 +78,7 @@ export class Coverage<
 
     let fileErrors = 0
     let fileWarnings = 0
-    const _report = run.log.report('Coverage report')
+    const _report = run.report('Coverage report')
 
     for (const [ _file, result ] of Object.entries(report.results)) {
       const { coverage } = result.nodeCoverage

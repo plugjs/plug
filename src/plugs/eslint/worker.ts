@@ -48,7 +48,7 @@ class ESLintWorker implements Plug<undefined> {
     if (failures) run.log.fail('ESLint failed linting')
 
     /* Create our report */
-    const report = run.log.report('ESLint Report')
+    const report = run.report('ESLint Report')
 
     /* Convert ESLint results into our report records */
     for (const result of results) {

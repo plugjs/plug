@@ -64,7 +64,7 @@ export class ESBuild implements Plug<Files> {
     const esbuild = await build({ ...options, metafile: true })
     run.log.trace('ESBuild Results', esbuild)
 
-    const report = run.log.report('ESBuild Report')
+    const report = run.report('ESBuild Report')
 
     report.add(...esbuild.warnings.map((m) => convertMessage('WARN', m, absWorkingDir)))
     report.add(...esbuild.errors.map((m) => convertMessage('ERROR', m, absWorkingDir)))
