@@ -5,10 +5,9 @@ import type { MochaOptions } from '../mocha'
 import type { Plug } from '../../pipe'
 
 import Mocha from 'mocha'
-import ms from 'ms'
 import { diffJson } from 'diff'
 
-import { $blu, $grn, $gry, $red, $wht, $ylw, buildFailed, Logger } from '../../log'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, buildFailed, Logger } from '../../log'
 import { Run, RunImpl } from '../../run'
 import { runAsync } from '../../async'
 
@@ -190,7 +189,7 @@ class PlugReporter extends Mocha.reporters.Base {
         log.notice('')
         const { passes, pending, failures, duration = 0 } = runner.stats
         const fmt = (n: number): string => n === 1 ? `${n} test` : `${n} tests`
-        if (passes) log.notice($grn(fmt(passes)), 'passing', $gry(`[${ms(duration)}]`))
+        if (passes) log.notice($grn(fmt(passes)), 'passing', $ms(duration))
         if (pending) log.warn($ylw(fmt(pending)), 'pending')
         if (failures) log.error($red(fmt(failures)), 'pending')
       }
