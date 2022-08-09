@@ -209,7 +209,7 @@ class ReportImpl implements Report {
       /* Normalize the basic entries in this message */
       let messages =
         Array.isArray(record.message) ?
-            [ ...record.message ] :
+            [ ...record.message.map((msg) => msg.split('\n')).flat(1) ] :
             record.message.split('\n')
       messages = messages.filter((message) => !! message)
       if (! messages.length) this.fail('No message for report record')
@@ -375,7 +375,7 @@ class ReportImpl implements Report {
         } else {
           pfx = `  ${'-'.padStart(lPad)}:${'-'.padEnd(cPad)} `
         }
-        const pfx2 = ''.padStart(pfx.length)
+        const prefix = ''.padStart(pfx.length + 1)
 
         /* Nice tags */
         const tag = tags.length == 0 ? '' :
@@ -389,9 +389,9 @@ class ReportImpl implements Report {
             if (! m) { // first line
               emit({ ...options, level }, [ $gry(pfx), messages[m] ])
             } else if (m === messages.length - 1) { // last line
-              emit({ ...options, level }, [ $gry(pfx2), messages[m].padEnd(mPad), tag ])
+              emit({ ...options, level, prefix }, [ messages[m].padEnd(mPad), tag ])
             } else { // in between lines
-              emit({ ...options, level }, [ $gry(pfx2), messages[m] ])
+              emit({ ...options, level, prefix }, [ messages[m] ])
             }
           }
         }
@@ -405,9 +405,9 @@ class ReportImpl implements Report {
             const body = $und($col(source[line - 1].substring(offset, offset + length)))
             const tail = $gry(source[line - 1].substring(offset + length))
 
-            emit({ ...options, level }, [ pfx2, $gry(`| ${head}${body}${tail}`) ])
+            emit({ ...options, level, prefix }, [ $gry(`| ${head}${body}${tail}`) ])
           } else {
-            emit({ ...options, level }, [ pfx2, $gry(`| ${source[line - 1]}`) ])
+            emit({ ...options, level, prefix }, [ $gry(`| ${source[line - 1]}`) ])
           }
         }
       }
