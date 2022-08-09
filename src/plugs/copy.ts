@@ -80,7 +80,7 @@ export class Copy implements Plug<Files> {
 
     const result = builder.build()
     run.log.info('Copied', result.length, 'files to', $p(builder.directory))
-    return builder.build()
+    return result
   }
 }
 
