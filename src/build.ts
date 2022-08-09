@@ -2,12 +2,13 @@ import type { Files } from './files'
 
 import { assert } from './assert'
 import { runAsync } from './async'
-import { $ms, $t, buildFailed, logOptions } from './log'
+import { $ms, $t, logOptions } from './log'
 import { AbsolutePath, getAbsoluteParent } from './paths'
 import { Pipe, PipeImpl } from './pipe'
 import { Run, RunImpl } from './run'
 import { Task, TaskImpl } from './task'
 import { findCaller } from './utils/caller'
+import { buildFailed, buildMarker } from './symbols'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -78,6 +79,11 @@ export type BuildDefinition<B> = {
  * BUILD                                                                      *
  * ========================================================================== */
 
+/** Check if the specified build is actually a {@link Build} */
+export function isBuild(build: any): build is Build<any> {
+  return build && build[buildMarker] === buildMarker
+}
+
 /** Create a new {@link Build} from its {@link BuildDefinition}. */
 export function build<D extends BuildDefinition<D>>(
     definition: D & ThisType<ThisBuild<D>>,
@@ -124,6 +130,7 @@ export function build<D extends BuildDefinition<D>>(
   }
 
   /* All done! */
+  Object.defineProperty(result, buildMarker, { value: buildMarker })
   return result
 }
 
