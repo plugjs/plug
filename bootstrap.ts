@@ -1,69 +1,155 @@
-import { build, checkDependencies, files, find, fixExtensions, log, parallel, pipe } from './src/index'
+import { build, checkDependencies, find, fixExtensions, log, parallel, rmrf } from './src/index'
 
 const booststrap = build({
   find_sources: () => find('**/*.ts', { directory: 'src' }),
+  find_tests: () => find('**/*.ts', { directory: 'test' }),
 
-  async compile_sources() {
-    const sources = await this.find_sources()
-
-    const cjs = await pipe(sources)
-        .esbuild({
-          outdir: 'dist',
-          format: 'cjs',
-          plugins: [ checkDependencies(), fixExtensions() ],
-        })
-
-    const esm = await pipe(sources)
-        .esbuild({
-          outdir: 'dist',
-          format: 'esm',
-          plugins: [ fixExtensions() ],
-          outExtension: { '.js': '.mjs' },
-          define: { __filename: 'import.meta.url' },
-        })
-
-    return files('dist').merge(cjs, esm).build()
-  },
+  /* ======================================================================== *
+   * COMPILE AND RUN TESTS IN "./build"                                       *
+   * ======================================================================== */
 
   async compile_tests() {
-    return await this.find_sources()
-        .esbuild({ outdir: 'build/test' })
+    await rmrf('build')
+
+    await find('src/**', 'test/**', { ignore: '**/*.ts' })
+        .copy('build')
+
+    /* compile sources in "build/src", needed by tests */
+    await this.find_sources()
+        .esbuild({
+          outdir: 'build/src',
+          format: 'cjs',
+          outExtension: { '.js': '.cjs' },
+          sourcemap: 'inline',
+          plugins: [ fixExtensions() ],
+        })
+
+    /* compile tests in "build/test", return them */
+    return this.find_tests()
+        .esbuild({
+          outdir: 'build/test',
+          format: 'cjs',
+          outExtension: { '.js': '.cjs' },
+          sourcemap: 'inline',
+          plugins: [
+            checkDependencies({ allowDev: true, allowUnused: true }),
+            fixExtensions(),
+          ],
+        })
+  },
+
+  async test() {
+    await rmrf('build/coverage')
+
+    await this.compile_tests().mocha({
+      coverageDir: 'build/coverage',
+    })
+  },
+
+  /* ======================================================================== *
+   * EXTRA CHECKS (dependencies, linting, coverage)                           *
+   * ======================================================================== */
+
+  async check_dependencies_sources() {
+    await this.find_sources().esbuild({
+      plugins: [ checkDependencies({ allowDev: false, allowUnused: false }) ],
+      write: false,
+    })
+  },
+
+  async check_dependencies_tests() {
+    await this.find_tests().esbuild({
+      plugins: [ checkDependencies({ allowDev: true, allowUnused: true }) ],
+      write: false,
+    })
+  },
+
+  async check_coverage() {
+    await this.test() // no coverage without tests, right?
+
+    await rmrf('coverage')
+    await this.find_sources().coverage('build/coverage', {
+      reportDir: 'coverage',
+    })
+  },
+
+  async check_format() {
+    await this.find_sources().eslint()
+    await this.find_tests().eslint()
+  },
+
+  async check() {
+    await parallel([
+      this.check_dependencies_sources(),
+      this.check_dependencies_tests(),
+      this.check_coverage(),
+      this.check_format(),
+    ])
+  },
+
+  /* ======================================================================== *
+   * COMPILE TYPES IN "./types" AND SOURCES IN "./dist" (esm and cjs)         *
+   * ======================================================================== */
+
+  async compile_sources_cjs() {
+    await this.find_sources().esbuild({
+      outdir: 'dist',
+      format: 'cjs',
+      outExtension: { '.js': '.cjs' },
+      sourcemap: 'external',
+      plugins: [ fixExtensions() ],
+    })
+  },
+
+  async compile_sources_mjs() {
+    await this.find_sources().esbuild({
+      outdir: 'dist',
+      format: 'esm',
+      outExtension: { '.js': '.mjs' },
+      sourcemap: 'external',
+      plugins: [ fixExtensions() ],
+      define: { __filename: 'import.meta.url' },
+    })
+  },
+
+  async copy_resources() {
+    await find('!**/*.ts', { directory: 'src' })
+        .copy('dist')
   },
 
   async compile_types() {
-    return await this.find_sources()
-        .tsc('tsconfig.json', {
-          noEmit: false,
-          declaration: true,
-          emitDeclarationOnly: true,
-          outDir: './types',
-        })
+    await this.find_sources().tsc('tsconfig.json', {
+      noEmit: false,
+      declaration: true,
+      emitDeclarationOnly: true,
+      outDir: './types',
+    })
   },
 
-  async lint_sources() {
-    await this.find_sources().eslint()
+  async compile() {
+    await rmrf('dist')
+    await rmrf('types')
+
+    await parallel([
+      this.copy_resources(),
+      this.compile_sources_cjs(),
+      this.compile_sources_mjs(),
+      this.compile_types(),
+    ])
   },
 
-  async coverage() {
-    await this.find_sources()
-        .coverage('./coverage', {
-          minimumCoverage: 0,
-          optimalCoverage: 50,
-          minimumFileCoverage: 0,
-          optimalFileCoverage: 50,
-        })
-  },
+  /* ======================================================================== *
+   * DEFAULT TASK                                                             *
+   * ======================================================================== */
 
   async default() {
-    await find('./test/**/*.test.ts')
-        .mocha()
-    await this.coverage()
-    await parallel(
-        this.lint_sources(),
-        this.compile_types(),
-        this.compile_sources(),
-        this.compile_tests(),
-    )
+    try {
+      await this.test()
+    } finally {
+      await this.check()
+    }
+
+    await this.compile()
   },
 })
 
