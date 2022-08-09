@@ -4,7 +4,8 @@
   "main": "build/index.js",
   "types": "types/index.d.ts",
   "scripts": {
-    "bootstrap": "npx ts-node ./src/cli.ts"
+    "bootstrap": "node --require=./extra/ts-loader.cjs ./src/cli.ts compile",
+    "build": "node ./dist/cli"
   },
   "author": "",
   "license": "ISC",
