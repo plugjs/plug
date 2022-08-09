@@ -12,13 +12,15 @@ let _output = logOptions.output
 let _colors = logOptions.colors
 let _indentSize = logOptions.indentSize
 let _taskLength = logOptions.taskLength
-let _breakLength = logOptions.breakLength
-logOptions.on('changed', ({ output, colors, indentSize, taskLength, breakLength }) => {
-  _output = output
-  _colors = colors
-  _indentSize = indentSize
-  _taskLength = taskLength
-  _breakLength = breakLength
+let _lineLength = logOptions.lineLength
+let _inspectOptions = logOptions.inspectOptions
+logOptions.on('changed', (options) => {
+  _output = options.output
+  _colors = options.colors
+  _indentSize = options.indentSize
+  _taskLength = options.taskLength
+  _lineLength = options.lineLength
+  _inspectOptions = options.inspectOptions
 })
 
 /* ========================================================================== *
@@ -32,24 +34,28 @@ interface EmitOptions {
   taskName: string,
   level: LogLevelNumber,
   indent?: number,
+  prefix?: string,
 }
 
 /** Emit either plain or color */
 export function emit(options: EmitOptions, args: any[]): void {
-  const { taskName: task, level, indent = 0 } = options
+  const { taskName: task, level, prefix, indent = 0 } = options
 
   /* Strip any "buildFailed" argument (as it's already logged) */
   const params = args.filter((arg) => arg !== buildFailed)
   if (params.length === 0) return
 
+  /* Prefix, either specified or from indenting level */
+  const pfx = prefix ? prefix : indent ? ''.padStart(indent * _indentSize) : ''
+
   /* Log in colors or plain text */
-  _colors ? emitColor(task, level, indent, params) : emitPlain(task, level, indent, params)
+  _colors ? emitColor(task, level, pfx, params) : emitPlain(task, level, pfx, params)
 }
 
 /* ========================================================================== */
 
 /** Emit in full colors! */
-function emitColor(task: string, level: LogLevelNumber, indent: number, args: any[]): void {
+function emitColor(task: string, level: LogLevelNumber, pfx: string, args: any[]): void {
   /* Prefixes, to prepend at the beginning of each line */
   const prefixes: string[] = []
 
@@ -77,13 +83,12 @@ function emitColor(task: string, level: LogLevelNumber, indent: number, args: an
   }
 
   /* The prefix (task name and level) */
-  indent = indent * _indentSize
-  prefixes.push(''.padStart(indent))
+  prefixes.push(pfx)
   const prefix = prefixes.join('')
 
   /* Now for the normal logging of all our parameters */
-  const breakLength = _breakLength - _taskLength - indent - 3 // 3 chas: space square space
-  const message = formatWithOptions({ ...logOptions, breakLength }, ...args)
+  const breakLength = _lineLength - _taskLength - pfx.length - 3 // 3 chas: space square space
+  const message = formatWithOptions({ ..._inspectOptions, breakLength }, ...args)
 
   const prefixed = prefix ? message.replace(/^/gm, prefix) : message
   _output.write(`${zapSpinner}${prefixed}\n`)
@@ -91,7 +96,7 @@ function emitColor(task: string, level: LogLevelNumber, indent: number, args: an
 
 /* ========================================================================== */
 
-function emitPlain(task: string, level: LogLevelNumber, indent: number, args: any[]): void {
+function emitPlain(task: string, level: LogLevelNumber, pfx: string, args: any[]): void {
   const prefixes: string[] = []
 
   if (task) {
@@ -118,13 +123,12 @@ function emitPlain(task: string, level: LogLevelNumber, indent: number, args: an
   }
 
   /* The prefix (task name and level) */
-  indent = indent * _indentSize
-  prefixes.push(''.padStart(indent))
+  prefixes.push(pfx)
   const prefix = prefixes.join('')
 
   /* Now for the normal logging of all our parameters */
-  const breakLength = _breakLength - _taskLength - indent - 12 // 12 chars of the level above
-  const message = formatWithOptions({ ...logOptions, breakLength }, ...args)
+  const breakLength = _lineLength - _taskLength - pfx.length - 12 // 12 chars of the level above
+  const message = formatWithOptions({ ..._inspectOptions, breakLength }, ...args)
 
   const prefixed = prefix ? message.replace(/^/gm, prefix) : message
   _output.write(`${prefixed}\n`)
