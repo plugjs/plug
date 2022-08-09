@@ -1,13 +1,15 @@
 import type { Files } from './files'
-import { Pipe, PipeImpl } from './pipe'
 
+import ms from 'ms'
+
+import { assert } from './assert'
+import { runAsync } from './async'
 import { $t, buildFailed, logOptions } from './log'
 import { AbsolutePath, getAbsoluteParent } from './paths'
+import { Pipe, PipeImpl } from './pipe'
 import { Run, RunImpl } from './run'
 import { Task, TaskImpl } from './task'
 import { findCaller } from './utils/caller'
-import { assert } from './assert'
-import { runAsync } from './async'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -186,11 +188,11 @@ class BuildRun extends RunImpl implements Run {
 
     try {
       const result = await task.call(thisBuild, this)
-      this.log.notice(`Task ${$t(name)} completed in %d ms`, Date.now() - now)
+      this.log.notice(`Task ${$t(name)} completed in`, ms(Date.now() - now))
       return result
     } catch (error) {
       const reason = error === buildFailed ? [] : [ error ]
-      this.log.fail(`Task ${$t(name)} failed in %d ms`, Date.now() - now, ...reason)
+      this.log.fail(`Task ${$t(name)} failed in`, ms(Date.now() - now), ...reason)
     }
   }
 }
