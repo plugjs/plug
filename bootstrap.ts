@@ -50,18 +50,17 @@ const booststrap = build({
    * EXTRA CHECKS (dependencies, linting, coverage)                           *
    * ======================================================================== */
 
-  async check_dependencies_sources() {
-    await this.find_sources().esbuild({
-      plugins: [ checkDependencies({ allowDev: false, allowUnused: false }) ],
-      write: false,
-    })
-  },
-
-  async check_dependencies_tests() {
-    await this.find_tests().esbuild({
-      plugins: [ checkDependencies({ allowDev: true, allowUnused: true }) ],
-      write: false,
-    })
+  async check_deps() {
+    await parallel([
+      await this.find_sources().esbuild({
+        plugins: [ checkDependencies({ allowDev: false, allowUnused: false }) ],
+        write: false,
+      }),
+      await this.find_tests().esbuild({
+        plugins: [ checkDependencies({ allowDev: true, allowUnused: true }) ],
+        write: false,
+      }),
+    ])
   },
 
   async check_coverage() {
@@ -80,8 +79,7 @@ const booststrap = build({
 
   async check() {
     await parallel([
-      this.check_dependencies_sources(),
-      this.check_dependencies_tests(),
+      this.check_deps(),
       this.check_coverage(),
       this.check_format(),
     ])
