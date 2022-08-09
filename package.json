@@ -4,7 +4,7 @@
   "main": "build/index.js",
   "types": "types/index.d.ts",
   "scripts": {
-    "bootstrap": "ts-node ./bootstrap.ts"
+    "bootstrap": "npx ts-node ./src/cli.ts"
   },
   "author": "",
   "license": "ISC",
@@ -34,7 +34,6 @@
     "@typescript-eslint/eslint-plugin": "^5.33.0",
     "@typescript-eslint/parser": "^5.33.0",
     "chai": "^4.3.6",
-    "eslint-config-google": "^0.14.0",
-    "ts-node": "^10.9.1"
+    "eslint-config-google": "^0.14.0"
   }
 }
