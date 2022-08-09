@@ -28,7 +28,7 @@ export async function rmrf(directory: string): Promise<void> {
     return
   }
 
-  log.notice('Removing', $p(dir))
+  log.info('Removing', $p(dir))
   await rm(dir, { recursive: true })
 }
 
@@ -71,7 +71,7 @@ export function pipe(files: Files | Promise<Files>): Pipe & Promise<Files> {
 }
 
 /** Await for the settlement of all the promises, then return their results. */
-export async function parallel<P extends readonly any[]>(...promises: P): Promise<ParallelResult<P>> {
+export async function parallel<P extends readonly any[]>(promises: P): Promise<ParallelResult<P>> {
   const settlements = await Promise.allSettled(promises)
   const results: any[] = []
 
