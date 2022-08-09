@@ -5,11 +5,35 @@ import { fork } from 'node:child_process'
 
 import { requireResolve } from '../paths'
 import { install, Plug } from '../pipe'
-import { logOptions } from '../log'
+import { buildFailed, logOptions } from '../log'
 import type { MochaMessage } from './mocha/runner'
 
+export interface MochaOptions {
+  /** Bail after first test failure? */
+  bail?: boolean,
+  /** Show diff on failure? */
+  diff?: boolean,
+  /** Report tests without running them? */
+  dryRun?: boolean,
+  /** Tests marked `only` fail the suite? */
+  forbidOnly?: boolean,
+  /** Pending tests fail the suite? */
+  forbidPending?: false,
+  /** Reporter name. */
+  reporter?: string
+  /** Options for the reporter */
+  reporterOptions?: Record<string, any>,
+  /** Number of times to retry failed tests. */
+  retries?: number,
+  /** Slow threshold value. */
+  slow?: number,
+  /** Timeout threshold value. */
+  timeout?: number,
+}
+
 export class Mocha implements Plug<undefined> {
-  constructor() {}
+  constructor(options?: MochaOptions)
+  constructor(private readonly _options: MochaOptions = {}) {}
 
   async pipe(files: Files, run: Run): Promise<undefined> {
     /* Get our runner script */
@@ -27,6 +51,7 @@ export class Mocha implements Plug<undefined> {
       child.on('error', (error) => reject(error))
       child.on('exit', (code, signal) => {
         if (code === 0) return resolve(undefined)
+        if (code === 1) return reject(buildFailed)
         if (signal) return reject(new Error(`Child process exited with signal ${signal}`))
         if (code) return reject(new Error(`Child process exited with code ${code}`))
         reject(new Error('Child process failed for an unknown reason'))
@@ -35,6 +60,7 @@ export class Mocha implements Plug<undefined> {
       /* After the handlers have been setup, send the message */
       try {
         const message: MochaMessage = {
+          options: this._options,
           taskName: run.taskName,
           buildDir: run.buildDir,
           buildFile: run.buildFile,
