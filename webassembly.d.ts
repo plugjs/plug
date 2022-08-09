@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/// <reference no-default-lib="true"/>
 
 /*
  * Type definition for `WebAssembly`. This is normally provided to TypeScript

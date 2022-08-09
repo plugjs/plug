@@ -1,4 +1,4 @@
-import './types'
+/// <reference path="../webassembly.d.ts" />
 
 // Our minimal exports
 export * from './build'
