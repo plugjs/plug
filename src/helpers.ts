@@ -1,12 +1,36 @@
 import type { Files, FilesBuilder } from './files'
-import type { AbsolutePath } from './paths'
+import { AbsolutePath, getCurrentWorkingDirectory, isDirectory } from './paths'
 import type { Pipe } from './pipe'
 import type { FindOptions } from './run'
 import type { ParseOptions } from './utils/options'
 
 import { assert } from './assert'
 import { currentRun } from './async'
-import { log } from './log'
+import { $p, log } from './log'
+import { rm } from './utils/asyncfs'
+
+/**
+ * Recursively remove the specified directory _**(use with care)**_.
+ */
+export async function rmrf(directory: string): Promise<void> {
+  const run = currentRun()
+  assert(run, 'Unable to find files outside a running task')
+  const dir = run.resolve(directory)
+
+  assert(dir !== getCurrentWorkingDirectory(),
+      `Cowardly refusing to wipe current working directory ${$p(dir)}`)
+
+  assert(dir !== run.buildDir,
+      `Cowardly refusing to wipe build file directory ${$p(dir)}`)
+
+  if (! isDirectory(dir)) {
+    log.info('Directory', $p(dir), 'not found')
+    return
+  }
+
+  log.notice('Removing', $p(dir))
+  await rm(dir, { recursive: true })
+}
 
 /**
  * Resolve a path into an {@link AbsolutePath}.
