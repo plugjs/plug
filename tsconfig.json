@@ -6,6 +6,7 @@
     "target": "esnext",
     "moduleResolution": "node",
     "esModuleInterop": true,
+    "module": "node16",
     // No emit (done with "bootstrap")
     "noEmit": true,
     // Ultra strict
