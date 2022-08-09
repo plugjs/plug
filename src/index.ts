@@ -1,4 +1,4 @@
-/// <reference path="../webassembly.d.ts" />
+/// <reference path="../extra/webassembly.d.ts" />
 
 // Our minimal exports
 export * from './build'
