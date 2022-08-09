@@ -23,7 +23,7 @@ export type LogLevel = keyof typeof logLevels
 export type LogLevelNumber = typeof logLevels[LogLevel]
 
 /** Options for our {@link Logger} instances */
-export interface LogOptions extends InspectOptions {
+export interface LogOptions {
   /** The current output. */
   output: Writable,
   /** The current level for logging. */
@@ -33,15 +33,20 @@ export interface LogOptions extends InspectOptions {
   /** Whether to enable the tasks spinner or not. */
   spinner: boolean,
   /** Width of the current terminal (if any) or `80`. */
-  breakLength: number,
+  lineLength: number,
   /** The maximum length of a task name (for pretty alignment). */
   taskLength: number,
   /** The number of spaces used for indenting. */
   indentSize: number,
   /** The task name to be used by default if a task is not contextualized. */
   defaultTaskName: string,
+  /** The options used by NodeJS for object inspection. */
+  readonly inspectOptions: InspectOptions,
   /** Log level as a number from {@link logLevels} */
   readonly logLevel: LogLevelNumber
+
+  /** Set an inspect option in {@link LogOptions.inspectOptions}). */
+  setInspectOption<K extends keyof InspectOptions>(key: K, value: InspectOptions[K]): void
 
   /** Add an event listener for the specified event. */
   on(eventName: 'changed', listener: (logOptions: this) => void): this;
@@ -63,9 +68,10 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   private _level: LogLevelNumber = logLevels.NOTICE
   private _colors = (<NodeJS.WriteStream> this._output).isTTY
   private _spinner = true // by default, the spinner is enabled
-  private _breakLength = (<NodeJS.WriteStream> this._output).columns || 80
-  private _taskLength = 0
+  private _lineLength = (<NodeJS.WriteStream> this._output).columns || 80
+  private _inspectOptions: InspectOptions = {}
   private _defaultTaskName = ''
+  private _taskLength = 0
   private _indentSize = 2
 
   constructor() {
@@ -95,7 +101,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
     return {
       level: this.level,
       colors: this._colors,
-      breakLength: this._breakLength,
+      lineLength: this._lineLength,
       taskLength: this._taskLength,
       defaultTaskName: taskName || this._defaultTaskName,
       spinner: false, // forked spinner is always false
@@ -109,7 +115,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   set output(output: Writable) {
     this._output = output
     this._colors = !! (<NodeJS.WriteStream> output).isTTY
-    this._breakLength = (<NodeJS.WriteStream> output).columns
+    this._lineLength = (<NodeJS.WriteStream> output).columns
     this._notifyListeners()
   }
 
@@ -160,12 +166,12 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
     this._notifyListeners()
   }
 
-  get breakLength(): number {
-    return this._breakLength
+  get lineLength(): number {
+    return this._lineLength
   }
 
-  set breakLength(breakLength: number) {
-    this._breakLength = breakLength
+  set lineLength(lineLength: number) {
+    this._lineLength = lineLength
     this._notifyListeners()
   }
 
@@ -194,6 +200,19 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
   set defaultTaskName(defaultTaskName: string) {
     this._defaultTaskName = defaultTaskName
+    this._notifyListeners()
+  }
+
+  get inspectOptions(): InspectOptions {
+    return {
+      colors: this._colors,
+      breakLength: this._lineLength,
+      ...this._inspectOptions,
+    }
+  }
+
+  setInspectOption<K extends keyof InspectOptions>(key: K, value: InspectOptions[K]): void {
+    this._inspectOptions[key] = value
     this._notifyListeners()
   }
 }
