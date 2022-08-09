@@ -36,7 +36,7 @@ if (! ('.ts' in _module._extensions)) {
   if (_debug) console.log(`Installing TS loader from "${__filename}"`)
 
   _module._extensions['.ts'] = (_mod, filename) => {
-    if (_debug) console.log(`Compiling "${__filename}"`)
+    if (_debug) console.log(`Compiling "${filename}"`)
 
     let result
     try {
