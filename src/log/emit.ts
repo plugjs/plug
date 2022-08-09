@@ -28,29 +28,28 @@ logOptions.on('changed', ({ output, colors, indentSize, taskLength, breakLength 
 const whiteSquare = '\u25a1'
 const blackSquare = '\u25a0'
 
-type Indent = { indent: number } | { prefix: string }
+interface EmitOptions {
+  taskName: string,
+  level: LogLevelNumber,
+  indent?: number,
+}
 
 /** Emit either plain or color */
-export function emit(
-    task: string,
-    level: LogLevelNumber,
-    indent: Indent,
-    args: any[],
-): void {
+export function emit(options: EmitOptions, args: any[]): void {
+  const { taskName: task, level, indent = 0 } = options
+
   /* Strip any "buildFailed" argument (as it's already logged) */
   const params = args.filter((arg) => arg !== buildFailed)
   if (params.length === 0) return
 
-  const prefix = 'indent' in indent ? ''.padStart(indent.indent * _indentSize) : indent.prefix
-
   /* Log in colors or plain text */
-  _colors ? emitColor(task, level, prefix, params) : emitPlain(task, level, prefix, params)
+  _colors ? emitColor(task, level, indent, params) : emitPlain(task, level, indent, params)
 }
 
 /* ========================================================================== */
 
 /** Emit in full colors! */
-function emitColor(task: string, level: LogLevelNumber, indent: string, args: any[]): void {
+function emitColor(task: string, level: LogLevelNumber, indent: number, args: any[]): void {
   /* Prefixes, to prepend at the beginning of each line */
   const prefixes: string[] = []
 
@@ -78,11 +77,12 @@ function emitColor(task: string, level: LogLevelNumber, indent: string, args: an
   }
 
   /* The prefix (task name and level) */
-  prefixes.push(indent)
+  indent = indent * _indentSize
+  prefixes.push(''.padStart(indent))
   const prefix = prefixes.join('')
 
   /* Now for the normal logging of all our parameters */
-  const breakLength = _breakLength - _taskLength - 3 // 3 chas: space square space
+  const breakLength = _breakLength - _taskLength - indent - 3 // 3 chas: space square space
   const message = formatWithOptions({ ...logOptions, breakLength }, ...args)
 
   const prefixed = prefix ? message.replace(/^/gm, prefix) : message
@@ -91,7 +91,7 @@ function emitColor(task: string, level: LogLevelNumber, indent: string, args: an
 
 /* ========================================================================== */
 
-function emitPlain(task: string, level: LogLevelNumber, indent: string, args: any[]): void {
+function emitPlain(task: string, level: LogLevelNumber, indent: number, args: any[]): void {
   const prefixes: string[] = []
 
   if (task) {
@@ -118,11 +118,12 @@ function emitPlain(task: string, level: LogLevelNumber, indent: string, args: an
   }
 
   /* The prefix (task name and level) */
-  prefixes.push(indent)
+  indent = indent * _indentSize
+  prefixes.push(''.padStart(indent))
   const prefix = prefixes.join('')
 
   /* Now for the normal logging of all our parameters */
-  const breakLength = 80 - _taskLength - 12 // 12 chars of the level above
+  const breakLength = _breakLength - _taskLength - indent - 12 // 12 chars of the level above
   const message = formatWithOptions({ ...logOptions, breakLength }, ...args)
 
   const prefixed = prefix ? message.replace(/^/gm, prefix) : message
