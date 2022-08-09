@@ -1,7 +1,7 @@
 import { build, checkDependencies, find, fixExtensions, parallel, rmrf } from './src/index'
 
 export default build({
-  find_sources: () => find('**/*.ts', { directory: 'src' }),
+  find_sources: () => find('**/*.ts', { directory: 'src', ignore: 'cli.ts' }),
   find_tests: () => find('**/*.ts', { directory: 'test' }),
 
   /* ======================================================================== *
@@ -15,27 +15,25 @@ export default build({
         .copy('build')
 
     /* compile sources in "build/src", needed by tests */
-    await this.find_sources()
-        .esbuild({
-          outdir: 'build/src',
-          format: 'cjs',
-          outExtension: { '.js': '.cjs' },
-          sourcemap: 'inline',
-          plugins: [ fixExtensions() ],
-        })
+    await this.find_sources().esbuild({
+      outdir: 'build/src',
+      format: 'cjs',
+      sourcemap: 'inline',
+      sourcesContent: false,
+      plugins: [ fixExtensions() ],
+    })
 
     /* compile tests in "build/test", return them */
-    return this.find_tests()
-        .esbuild({
-          outdir: 'build/test',
-          format: 'cjs',
-          outExtension: { '.js': '.cjs' },
-          sourcemap: 'inline',
-          plugins: [
-            checkDependencies({ allowDev: true, allowUnused: true }),
-            fixExtensions(),
-          ],
-        })
+    return this.find_tests().esbuild({
+      outdir: 'build/test',
+      format: 'cjs',
+      sourcemap: 'inline',
+      sourcesContent: false,
+      plugins: [
+        checkDependencies({ allowDev: true, allowUnused: true }),
+        fixExtensions(),
+      ],
+    })
   },
 
   async test() {
@@ -89,12 +87,22 @@ export default build({
    * COMPILE TYPES IN "./types" AND SOURCES IN "./dist" (esm and cjs)         *
    * ======================================================================== */
 
+  async compile_cli() {
+    await find('cli.ts', { directory: 'src' }).esbuild({
+      outdir: 'dist',
+      format: 'cjs',
+      sourcemap: 'external',
+      sourcesContent: false,
+      plugins: [ fixExtensions() ],
+    })
+  },
+
   async compile_cjs() {
     await this.find_sources().esbuild({
       outdir: 'dist',
       format: 'cjs',
-      outExtension: { '.js': '.cjs' },
       sourcemap: 'external',
+      sourcesContent: false,
       plugins: [ fixExtensions() ],
     })
   },
@@ -105,6 +113,7 @@ export default build({
       format: 'esm',
       outExtension: { '.js': '.mjs' },
       sourcemap: 'external',
+      sourcesContent: false,
       plugins: [ fixExtensions() ],
       define: { __filename: 'import.meta.url' },
     })
@@ -132,6 +141,7 @@ export default build({
       this.copy_resources(),
       this.compile_cjs(),
       this.compile_mjs(),
+      this.compile_cli(),
       this.compile_types(),
     ])
   },
@@ -141,8 +151,8 @@ export default build({
    * ======================================================================== */
 
   async default() {
-    await this.test()
-    await this.check()
+    // await this.test()
+    // await this.check()
     await this.compile()
   },
 })
