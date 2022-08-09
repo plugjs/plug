@@ -1,6 +1,6 @@
-import { build, checkDependencies, find, fixExtensions, log, parallel, rmrf } from './src/index'
+import { build, checkDependencies, find, fixExtensions, parallel, rmrf } from './src/index'
 
-const booststrap = build({
+export default build({
   find_sources: () => find('**/*.ts', { directory: 'src' }),
   find_tests: () => find('**/*.ts', { directory: 'test' }),
 
@@ -141,16 +141,8 @@ const booststrap = build({
    * ======================================================================== */
 
   async default() {
-    try {
-      await this.test()
-    } finally {
-      await this.check()
-    }
-
+    await this.test()
+    await this.check()
     await this.compile()
   },
 })
-
-booststrap.default()
-    .then(() => log.info('All done!'))
-    .catch((error) => log.error('Build error', error))
