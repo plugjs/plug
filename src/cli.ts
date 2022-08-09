@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
-import { buildSync } from 'esbuild'
 
+import { fork } from 'node:child_process'
 import yargsParser from 'yargs-parser'
 
 import { Build, isBuild } from './build'
@@ -133,34 +133,9 @@ if (! buildFile) {
 if (tasks.length === 0) tasks.push('default')
 
 /* ========================================================================== *
- * HACK BEYOND REDEMPTION: TRANSPILE .ts FILES                                *
- * ========================================================================== */
-
-/* Inject only if we are _not_ running in "ts-node" */
-import nodeModule from 'module'
-const _module = nodeModule as any
-
-if (! ('.ts' in _module._extensions)) {
-  _module._extensions['.ts'] = (_mod: any, filename: string): void => {
-    const result = buildSync({
-      entryPoints: [ filename ],
-      sourcemap: 'inline',
-      platform: 'node',
-      target: `node${process.versions['node']}`,
-      format: 'cjs',
-      write: false,
-    })
-
-    if (result.outputFiles.length !== 1) {
-      throw new Error(`ESBuild produced ${result.outputFiles.length} files`)
-    }
-
-    _mod._compile(result.outputFiles[0].text, filename)
-  }
-}
-
-/* ========================================================================== *
  * LOAD BUILD, RUN TASKS                                                      *
+ * -------------------------------------------------------------------------- *
+ * NOTE: this will only run as a CJS module (for now)                         *
  * ========================================================================== */
 
 /* We have everyhing we need to start our asynchronous main! */
@@ -189,8 +164,49 @@ async function main(buildFile: AbsolutePath, tasks: string[], list: boolean): Pr
   }
 }
 
-/* Run now! */
-main(buildFile, tasks, list).then(() => process.exit(0)).catch((error) => {
-  if (error !== buildFailed) console.log(error)
-  process.exit(1)
-})
+/* Check for source maps and typescript support */
+const sourceMapsEnabled = process.execArgv.indexOf('--enable-source-maps') >= 0
+const typeScriptEnabled = !! require.extensions['.ts']
+
+if (process.env.DEBUG_CLI === 'true') {
+  console.log('SourceMaps enabled =', sourceMapsEnabled)
+  console.log('TypeScript enabled =', typeScriptEnabled)
+  console.log('         Arguments =', process.argv.join(' '))
+  console.log('               PID =', process.pid)
+}
+
+/* If both source maps and typescript are on, run! */
+if (sourceMapsEnabled && typeScriptEnabled) {
+  main(buildFile, tasks, list).then(() => process.exit(0)).catch((error) => {
+    if (error !== buildFailed) console.log(error)
+    process.exit(1)
+  })
+} else {
+  /* Fork out ourselves with new options */
+  const execArgv = [ ...process.execArgv ]
+  const typescriptLoader = require.resolve('../extra/ts-loader.cjs')
+  if (! sourceMapsEnabled) execArgv.push('--enable-source-maps')
+  if (! typeScriptEnabled) execArgv.push(`--require=${typescriptLoader}`)
+
+  const child = fork(__filename, [ ...process.argv.slice(2) ], {
+    stdio: [ 'inherit', 'inherit', 'inherit', 'ipc' ],
+    execArgv,
+  })
+
+  child.on('error', (error) => {
+    console.log('Error respawning CLI', error)
+    process.exit(1)
+  })
+
+  child.on('exit', (code, signal) => {
+    if (signal) {
+      console.log(`CLI process exited with signal ${signal}`)
+      process.exit(1)
+    } else if (code == null) {
+      console.log('CLI process failed for an unknown reason')
+      process.exit(1)
+    } else {
+      process.exit(code)
+    }
+  })
+}
