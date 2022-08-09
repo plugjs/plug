@@ -151,8 +151,8 @@ export default build({
    * ======================================================================== */
 
   async default() {
-    // await this.test()
-    // await this.check()
+    await this.test()
+    await this.check()
     await this.compile()
   },
 })
