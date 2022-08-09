@@ -9,6 +9,8 @@ import { buildFailed, logOptions } from '../log'
 import type { MochaMessage } from './mocha/runner'
 
 export interface MochaOptions {
+  /** Specify the directory where coverage data will be saved */
+  coverageDir?: string,
   /** Bail after first test failure? */
   bail?: boolean,
   /** Show diff on failure? */
@@ -33,17 +35,24 @@ export interface MochaOptions {
 
 export class Mocha implements Plug<undefined> {
   constructor(options?: MochaOptions)
-  constructor(private readonly _options: MochaOptions = {}) {}
+  constructor(private readonly _xoptions: MochaOptions = {}) {}
 
   async pipe(files: Files, run: Run): Promise<undefined> {
+    const { coverageDir, ...options } = this._xoptions
+
     /* Get our runner script */
     const script = requireResolve(__filename, './mocha/runner')
 
+    /* Environment variables */
+    const env = { ...process.env }
+    env.LOG_OPTIONS = JSON.stringify(logOptions.fork(run.taskName))
+    if (coverageDir) env.NODE_V8_COVERAGE = run.resolve(coverageDir)
+
     /* Run our script in a _separate_ process */
-    const LOG_OPTIONS = JSON.stringify(logOptions.fork(run.taskName))
     const child = fork(script, {
       stdio: [ 'ignore', 'inherit', 'inherit', 'ipc' ],
-      env: { ...process.env, LOG_OPTIONS },
+      execArgv: [ '--enable-source-maps', ...process.execArgv ],
+      env,
     })
 
     /* Return a promise from the child process events */
@@ -60,12 +69,12 @@ export class Mocha implements Plug<undefined> {
       /* After the handlers have been setup, send the message */
       try {
         const message: MochaMessage = {
-          options: this._options,
           taskName: run.taskName,
           buildDir: run.buildDir,
           buildFile: run.buildFile,
           filesDir: files.directory,
           files: [ ...files.absolutePaths() ],
+          options,
         }
         child.send(message)
       } catch (error) {
