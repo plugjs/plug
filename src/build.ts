@@ -186,11 +186,11 @@ class BuildRun extends RunImpl implements Run {
 
     try {
       const result = await task.call(thisBuild, this)
-      this.log.notice(`Task ${$t(name)} completed in`, $ms(Date.now() - now))
+      this.log.notice(`Task ${$t(name)} completed`, $ms(Date.now() - now))
       return result
     } catch (error) {
       const reason = error === buildFailed ? [] : [ error ]
-      this.log.fail(`Task ${$t(name)} failed in`, $ms(Date.now() - now), ...reason)
+      this.log.fail(`Task ${$t(name)} failed`, $ms(Date.now() - now), ...reason)
     }
   }
 }
