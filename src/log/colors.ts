@@ -29,6 +29,12 @@ const tsk = '\u001b[38;5;141m' // the color for tasks (purple)
 
 /* ========================================================================== */
 
+function colorize(color: string, string: any): string {
+  if (! _colors) return `${string}`
+  const lines = `${string}`.split('\n')
+  return lines.map((line) => `${color}${line}${rst}`).join('\n')
+}
+
 /** Colorize an {@link AbsolutePath}. */
 export function $p(path: AbsolutePath): string {
   const directory = getCurrentWorkingDirectory()
@@ -49,40 +55,40 @@ export function $gry(string: any): string {
 
 /** Colorize in red. */
 export function $red(string: any): string {
-  return _colors ? `${red}${string}${rst}` : string
+  return colorize(red, string)
 }
 
 /** Colorize in green. */
 export function $grn(string: any): string {
-  return _colors ? `${grn}${string}${rst}` : string
+  return colorize(grn, string)
 }
 
 /** Colorize in yellow. */
 export function $ylw(string: any): string {
-  return _colors ? `${ylw}${string}${rst}` : string
+  return colorize(ylw, string)
 }
 
 /** Colorize in blue. */
 export function $blu(string: any): string {
-  return _colors ? `${blu}${string}${rst}` : string
+  return colorize(blu, string)
 }
 
 /** Colorize in magenta. */
 export function $mgt(string: any): string {
-  return _colors ? `${mgt}${string}${rst}` : string
+  return colorize(mgt, string)
 }
 
 /** Colorize in cyan. */
 export function $cyn(string: any): string {
-  return _colors ? `${cyn}${string}${rst}` : string
+  return colorize(cyn, string)
 }
 
 /** Colorize in white. */
 export function $wht(string: any): string {
-  return _colors ? `${wht}${string}${rst}` : string
+  return colorize(wht, string)
 }
 
 /** Underline. */
 export function $und(string: any): string {
-  return _colors ? `${und}${string}${rst}` : string
+  return colorize(und, string)
 }
