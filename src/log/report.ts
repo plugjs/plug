@@ -2,7 +2,7 @@ import type { AbsolutePath } from '../paths'
 
 import { readFile } from '../utils/asyncfs'
 import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
-import { buildFailed } from './constants'
+import { buildFailed } from '../symbols'
 import { emit } from './emit'
 import { LogLevel, logLevels } from './options'
 

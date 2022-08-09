@@ -6,9 +6,10 @@ import nodeAssert from 'node:assert'
 
 import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads'
 import { runAsync } from './async'
-import { $p, buildFailed, logOptions, LogOptions } from './log'
+import { $p, logOptions, LogOptions } from './log'
 import { RunImpl, Run } from './run'
 import { extname } from 'node:path'
+import { buildFailed } from './symbols'
 
 /** Worker data, from main thread to worker thread */
 interface WorkerData<T extends any[]> {

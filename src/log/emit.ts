@@ -1,7 +1,7 @@
 import { formatWithOptions } from 'node:util'
 
 import { $blu, $grn, $gry, $red, $t, $ylw } from './colors'
-import { buildFailed } from './constants'
+import { buildFailed } from '../symbols'
 import { logLevels, LogLevelNumber, logOptions } from './options'
 import { zapSpinner } from './spinner'
 

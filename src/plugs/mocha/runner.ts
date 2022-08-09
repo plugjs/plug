@@ -7,9 +7,10 @@ import type { Plug } from '../../pipe'
 import Mocha from 'mocha'
 import { diffJson } from 'diff'
 
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, buildFailed, Logger } from '../../log'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, Logger } from '../../log'
 import { Run, RunImpl } from '../../run'
 import { runAsync } from '../../async'
+import { buildFailed } from '../../symbols'
 
 /** Symbol to inject `Logger` in reporter options */
 const logSymbol = Symbol()

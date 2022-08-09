@@ -1,4 +1,4 @@
-import { buildFailed } from './constants'
+import { buildFailed } from '../symbols'
 import { emit } from './emit'
 import { LogLevel, LogLevelNumber, logLevels, logOptions } from './options'
 

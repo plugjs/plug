@@ -5,8 +5,9 @@ import { fork } from 'node:child_process'
 
 import { requireResolve } from '../paths'
 import { install, Plug } from '../pipe'
-import { buildFailed, logOptions } from '../log'
+import { logOptions } from '../log'
 import type { MochaMessage } from './mocha/runner'
+import { buildFailed } from '../symbols'
 
 export interface MochaOptions {
   /** Specify the directory where coverage data will be saved */

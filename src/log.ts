@@ -3,7 +3,6 @@ import { getLogger, Logger } from './log/logger'
 import { setupSpinner } from './log/spinner'
 
 export * from './log/colors'
-export * from './log/constants'
 export * from './log/logger'
 export * from './log/options'
 export * from './log/report'
