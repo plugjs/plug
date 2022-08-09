@@ -1,6 +1,6 @@
 import { buildFailed } from './constants'
 import { emit } from './emit'
-import { logLevels, logOptions } from './options'
+import { LogLevel, LogLevelNumber, logLevels, logOptions } from './options'
 
 /* ========================================================================== */
 
@@ -19,22 +19,27 @@ logOptions.on('changed', ({ defaultTaskName, logLevel }) => {
 /** A {@link Logger} emits log events */
 export interface Logger {
   /** Log a `TRACE` message */
-  trace: (...args: [ any, ...any ]) => this
+  trace(...args: [ any, ...any ]): this
   /** Log a `DEBUG` message */
-  debug: (...args: [ any, ...any ]) => this
+  debug(...args: [ any, ...any ]): this
   /** Log an `INFO` message */
-  info: (...args: [ any, ...any ]) => this
+  info(...args: [ any, ...any ]): this
   /** Log a `NOTICE` message */
-  notice: (...args: [ any, ...any ]) => this
+  notice(...args: [ any, ...any ]): this
   /** Log a `WARNING` message */
-  warn: (...args: [ any, ...any ]) => this
+  warn(...args: [ any, ...any ]): this
   /** Log an `ERROR` message */
-  error: (...args: [ any, ...any ]) => this
+  error(...args: [ any, ...any ]): this
   /** Log a `FAIL` message and throw */
-  fail: (...args: [ any, ...any ]) => never
+  fail(...args: [ any, ...any ]): never
 
-  enter: (...args: [ any, ...any ]) => this
-  leave: (...args: [ any, ...any ]) => this
+  /** Enter a sub-level of logging, increasing indent */
+  enter(level: LogLevel, message: string): this
+
+  /** Leave a sub-level of logging, decreasing indent */
+  leave(): this
+  /** Leave a sub-level of logging, decreasing indent */
+  leave(level: LogLevel, message: string): this
 }
 
 /** Return a {@link Logger} associated with the specified task name. */
@@ -54,62 +59,84 @@ const _loggers = new Map<string, Logger>()
 
 /** Default implementation of the {@link Logger} interface. */
 class LoggerImpl implements Logger {
-  private _indent = { indent: 0 }
+  private _indent = 0
+  private _stack: { level: LogLevelNumber, message: string, indent: number }[] = []
 
   constructor(private readonly _task: string) {}
 
+  private _emitStack(): void {
+    for (const { message, ...options } of this._stack) {
+      emit({ ...options, taskName: this._task }, [ message ])
+    }
+    this._stack.splice(0)
+  }
+
   trace(...args: [ any, ...any ]): this {
     if (_level > logLevels.TRACE) return this
-    emit(this._task, logLevels.TRACE, this._indent, args)
+    this._emitStack()
+    emit({ taskName: this._task, level: logLevels.TRACE, indent: this._indent }, args)
     return this
   }
 
   debug(...args: [ any, ...any ]): this {
     if (_level > logLevels.DEBUG) return this
-    emit(this._task, logLevels.DEBUG, this._indent, args)
+    this._emitStack()
+    emit({ taskName: this._task, level: logLevels.DEBUG, indent: this._indent }, args)
     return this
   }
 
   info(...args: [ any, ...any ]): this {
     if (_level > logLevels.INFO) return this
-    emit(this._task, logLevels.INFO, this._indent, args)
+    this._emitStack()
+    emit({ taskName: this._task, level: logLevels.INFO, indent: this._indent }, args)
     return this
   }
 
   notice(...args: [ any, ...any ]): this {
     if (_level > logLevels.NOTICE) return this
-    emit(this._task, logLevels.NOTICE, this._indent, args)
+    this._emitStack()
+    emit({ taskName: this._task, level: logLevels.NOTICE, indent: this._indent }, args)
     return this
   }
 
   warn(...args: [ any, ...any ]): this {
     if (_level > logLevels.WARN) return this
-    emit(this._task, logLevels.WARN, this._indent, args)
+    this._emitStack()
+    emit({ taskName: this._task, level: logLevels.WARN, indent: this._indent }, args)
     return this
   }
 
   error(...args: [ any, ...any ]): this {
     if (_level > logLevels.ERROR) return this
-    emit(this._task, logLevels.ERROR, this._indent, args)
+    this._emitStack()
+    emit({ taskName: this._task, level: logLevels.ERROR, indent: this._indent }, args)
     return this
   }
 
   fail(...args: [ any, ...any ]): never {
     if (args.includes(buildFailed)) throw buildFailed
-    emit(this._task, logLevels.ERROR, this._indent, args)
+    this._emitStack()
+    emit({ taskName: this._task, level: logLevels.ERROR, indent: this._indent }, args)
     throw buildFailed
   }
 
-  enter(...args: [ any, ...any ]): this {
-    emit(this._task, logLevels.INFO, this._indent, args)
-    this._indent.indent ++
+  enter(level: LogLevel, message: string): this {
+    this._stack.push({ level: logLevels[level], message, indent: this._indent })
+    this._indent ++
     return this
   }
 
-  leave(...args: [ any, ...any ]): this {
-    this._indent.indent --
-    if (this._indent.indent < 0) this._indent.indent = 0
-    emit(this._task, logLevels.INFO, this._indent, args)
+  leave(): this
+  leave(level: LogLevel, message: string): this
+  leave(level?: LogLevel, message?: string): this {
+    this._stack.pop()
+    this._emitStack()
+
+    this._indent --
+    if (this._indent < 0) this._indent = 0
+    if (level && message) {
+      emit({ taskName: this._task, level: logLevels[level], indent: this._indent }, [ message ])
+    }
     return this
   }
 }
