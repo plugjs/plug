@@ -137,8 +137,11 @@ if (tasks.length === 0) tasks.push('default')
  * ========================================================================== */
 
 /* Inject only if we are _not_ running in "ts-node" */
-if (! ('.ts' in require.extensions)) {
-  require.extensions['.ts'] = (module, filename): void => {
+import nodeModule from 'module'
+const _module = nodeModule as any
+
+if (! ('.ts' in _module._extensions)) {
+  _module._extensions['.ts'] = (_mod: any, filename: string): void => {
     const result = buildSync({
       entryPoints: [ filename ],
       sourcemap: 'inline',
@@ -152,10 +155,7 @@ if (! ('.ts' in require.extensions)) {
       throw new Error(`ESBuild produced ${result.outputFiles.length} files`)
     }
 
-    // console.log(result.outputFiles[0].text)
-    const q = (<any> module)._compile(result.outputFiles[0].text, filename)
-    console.log(q, filename)
-    void module
+    _mod._compile(result.outputFiles[0].text, filename)
   }
 }
 
@@ -165,7 +165,7 @@ if (! ('.ts' in require.extensions)) {
 
 /* We have everyhing we need to start our asynchronous main! */
 async function main(buildFile: AbsolutePath, tasks: string[], list: boolean): Promise<void> {
-  const exports = await import(buildFile)
+  const exports = buildFile.endsWith('.mjs') ? await import(buildFile) : require(buildFile)
 
   const build: Build<any> | undefined = isBuild(exports) ? exports :
     'default' in exports && isBuild(exports.default) ? exports.default :
