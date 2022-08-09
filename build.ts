@@ -89,7 +89,7 @@ export default build({
    * COMPILE TYPES IN "./types" AND SOURCES IN "./dist" (esm and cjs)         *
    * ======================================================================== */
 
-  async compile_sources_cjs() {
+  async compile_cjs() {
     await this.find_sources().esbuild({
       outdir: 'dist',
       format: 'cjs',
@@ -99,7 +99,7 @@ export default build({
     })
   },
 
-  async compile_sources_mjs() {
+  async compile_mjs() {
     await this.find_sources().esbuild({
       outdir: 'dist',
       format: 'esm',
@@ -130,8 +130,8 @@ export default build({
 
     await parallel([
       this.copy_resources(),
-      this.compile_sources_cjs(),
-      this.compile_sources_mjs(),
+      this.compile_cjs(),
+      this.compile_mjs(),
       this.compile_types(),
     ])
   },
