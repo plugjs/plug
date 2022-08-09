@@ -1,6 +1,9 @@
+import ms from 'ms'
+
 import { sep } from 'node:path'
-import { logOptions } from './options'
+
 import { AbsolutePath, getCurrentWorkingDirectory, resolveRelativeChildPath } from '../paths'
+import { logOptions } from './options'
 
 /* ========================================================================== */
 
@@ -46,6 +49,11 @@ export function $p(path: AbsolutePath): string {
 /** Colorize a _task name_. */
 export function $t(task: string): string {
   return _colors ? `${tsk}${task}${rst}` : `"${task}"`
+}
+
+/** Colorize milliseconds. */
+export function $ms(millis: number): string {
+  return _colors ? `${gry}[${ms(millis)}]${rst}` : `[${ms(millis)}]`
 }
 
 /** Colorize in gray. */
