@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
 
-import { LogLevel } from 'esbuild'
 import { fork } from 'node:child_process'
+
 import yargsParser from 'yargs-parser'
 
 import { Build, isBuild } from './build'
-import { LogLevelKey, logLevels, logOptions, NOTICE } from './log'
+import { logLevels, logOptions, NOTICE } from './log'
 import { AbsolutePath, getCurrentWorkingDirectory, isFile, resolveAbsolutePath } from './paths'
 import { buildFailed } from './symbols'
 
