@@ -88,7 +88,7 @@ class ESLintWorker implements Plug<undefined> {
     }
 
     /* Emit our report and fail on errors */
-    report.done(this._showSources || false) // TODO
+    report.done(this._showSources)
     return undefined
   }
 }
