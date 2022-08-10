@@ -1,6 +1,6 @@
 import type { Files } from './files'
 
-import { assert, fail } from './assert'
+import { assert, fail, failure } from './assert'
 import { runAsync } from './async'
 import { $ms, $t, logOptions } from './log'
 import { AbsolutePath, getAbsoluteParent } from './paths'
@@ -113,8 +113,8 @@ export function build<D extends BuildDefinition<D>>(
         await run.call(name)
         run.log.notice('Build completed', $ms(Date.now() - now))
       } catch (error) {
-        // TODO: handle build failures here
-        fail('Build failed', $ms(Date.now() - now), error)
+        run.log.error(run.log, `Build failed ${$ms(Date.now() - now)}`, error)
+        throw failure()
       }
     })
 
@@ -198,8 +198,8 @@ class BuildRun extends RunImpl implements Run {
       this.log.notice(`Task ${$t(name)} completed`, $ms(Date.now() - now))
       return result
     } catch (error) {
-      // TODO: handle assertions / build failures HERE
-      fail(`Task ${$t(name)} failed`, $ms(Date.now() - now), error)
+      this.log.error(this.log, `Task ${$t(name)} failed ${$ms(Date.now() - now)}`, error)
+      throw failure()
     }
   }
 }
