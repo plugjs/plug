@@ -113,7 +113,7 @@ export function build<D extends BuildDefinition<D>>(
         await run.call(name)
         run.log.notice('Build completed', $ms(Date.now() - now))
       } catch (error) {
-        run.log.error(run.log, `Build failed ${$ms(Date.now() - now)}`, error)
+        run.log.error(`Build failed ${$ms(Date.now() - now)}`, error)
         throw failure()
       }
     })
@@ -198,7 +198,7 @@ class BuildRun extends RunImpl implements Run {
       this.log.notice(`Task ${$t(name)} completed`, $ms(Date.now() - now))
       return result
     } catch (error) {
-      this.log.error(this.log, `Task ${$t(name)} failed ${$ms(Date.now() - now)}`, error)
+      this.log.error(`Task ${$t(name)} failed ${$ms(Date.now() - now)}`, error)
       throw failure()
     }
   }
