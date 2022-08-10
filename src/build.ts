@@ -109,10 +109,10 @@ export function build<D extends BuildDefinition<D>>(
       const now = Date.now()
       try {
         await run.call(name)
-        run.log.notice('Build completed in %d ms', Date.now() - now)
+        run.log.notice('Build completed', $ms(Date.now() - now))
       } catch (error) {
         const reason = error === buildFailed ? [] : [ error ]
-        run.log.fail('Build failed in %d ms', Date.now() - now, ...reason)
+        run.log.fail('Build failed', $ms(Date.now() - now), ...reason)
       }
     })
 
