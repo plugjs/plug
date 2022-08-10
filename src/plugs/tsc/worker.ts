@@ -10,7 +10,7 @@ import { workerMain } from '../../worker'
 import { TypeScriptHost } from './compiler'
 import { getCompilerOptions } from './options'
 import { updateReport } from './report'
-import { fail, failure } from '../../assert'
+import { failure } from '../../assert'
 
 export type TscWorkerType = typeof TscWorker
 
