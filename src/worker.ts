@@ -9,7 +9,7 @@ import { runAsync } from './async'
 import { $p, logOptions, LogOptions } from './log'
 import { RunImpl, Run } from './run'
 import { extname } from 'node:path'
-import { buildFailed } from './symbols'
+import { failure } from './assert'
 
 /** Worker data, from main thread to worker thread */
 interface WorkerData<T extends any[]> {
@@ -119,19 +119,19 @@ export function executeWorker<
     let result: Result
 
     /* Worker message error */
-    worker.on('messageerror', (error) => {
+    worker.on('messageerror', (cause) => {
       if (completed) return
-      run.log.error('Message error in worker', $p(script), error)
-      reject(buildFailed)
       completed = true
+
+      reject(failure({ message: `Message error in worker ${$p(script)}`, cause }))
     })
 
     /* Worker error */
-    worker.on('error', (error) => {
+    worker.on('error', (cause) => {
       if (completed) return
-      run.log.error('Error in worker', $p(script), error)
-      reject(buildFailed)
       completed = true
+
+      reject(failure({ message: `Error in worker ${$p(script)}`, cause }))
     })
 
     /* Worker result, simply copy locally and wait for exit */
@@ -143,18 +143,16 @@ export function executeWorker<
     /* On exit let's see what happend */
     worker.on('exit', (code) => {
       if (completed) return
+      completed = true
 
       // This should be caught by "on('error')" but anyway...
       if (code != 0) {
-        run.log.error('Worker', $p(script), 'terminated with code', code)
-        reject(buildFailed)
-        completed = true
+        reject(failure({ message: `Worker ${$p(script)} terminated with code ${code}` }))
+      } else if (failed) {
+        reject(failure())
+      } else {
+        resolve(result)
       }
-
-      // Reject, resolve, and mark as completed
-      if (failed) reject(buildFailed)
-      else resolve(result!)
-      completed = true
     })
   })
 }
