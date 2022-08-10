@@ -1,10 +1,11 @@
 /* eslint-disable no-console */
 
+import { LogLevel } from 'esbuild'
 import { fork } from 'node:child_process'
 import yargsParser from 'yargs-parser'
 
 import { Build, isBuild } from './build'
-import { LogLevel, logLevels, logOptions } from './log'
+import { LogLevelKey, logLevels, logOptions, NOTICE } from './log'
 import { AbsolutePath, getCurrentWorkingDirectory, isFile, resolveAbsolutePath } from './paths'
 import { buildFailed } from './symbols'
 
@@ -90,16 +91,14 @@ if (help) {
   process.exit(1)
 }
 
-/* Log colors and verbosity */
+/* Log colors */
 if (colors != undefined) logOptions.colors = colors
 
-const levels = Object.entries(logLevels)
-    .sort(([ , l1 ], [ , l2 ]) => l2 - l1)
-    .map(([ level ]) => level as LogLevel)
-let level = levels.indexOf('NOTICE') + verbosity
+/* Log level (from verbosity) */
+const levels = Object.values(logLevels).sort()
+let level = levels.indexOf(NOTICE) + verbosity
 if (level >= levels.length) level = levels.length - 1
 else if (level < 0) level = 0
-
 logOptions.level = levels[level]
 
 /* Build file */

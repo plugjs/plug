@@ -1,15 +1,15 @@
 import type { AbsolutePath } from '../paths'
 
+import { buildFailed } from '../symbols'
 import { readFile } from '../utils/asyncfs'
 import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
-import { buildFailed } from '../symbols'
 import { emit } from './emit'
-import { LogLevel, logLevels } from './options'
+import { ERROR, INFO, LogLevels, NOTICE, WARN } from './levels'
 
 /* ========================================================================== */
 
 /** Levels used in a {@link Report}  */
-export type ReportLevel = Extract<LogLevel, 'NOTICE' | 'WARN' | 'ERROR'>
+export type ReportLevel = LogLevels['NOTICE' | 'WARN' | 'ERROR']
 
 /** A record for a {@link Report} */
 export interface ReportRecord {
@@ -104,7 +104,7 @@ export function createReport(title: string, taskName: string): Report {
  * ========================================================================== */
 
 interface ReportInternalRecord {
-  readonly level: typeof logLevels[ReportLevel]
+  readonly level: ReportLevel
   readonly messages: readonly string[]
   readonly tags: readonly string[]
   readonly line: number
@@ -113,7 +113,7 @@ interface ReportInternalRecord {
 }
 
 interface ReportInternalAnnotation {
-  readonly level: typeof logLevels[ReportLevel]
+  readonly level: ReportLevel
   readonly note: string
 }
 
@@ -182,23 +182,14 @@ class ReportImpl implements Report {
     return ! (this.records + this.annotations)
   }
 
-  private _level(level: ReportLevel): typeof logLevels[ReportLevel] {
-    const _level =
-        level === 'NOTICE' ? logLevels.NOTICE :
-        level === 'WARN' ? logLevels.WARN :
-        level === 'ERROR' ? logLevels.ERROR :
-        this.fail(`Wrong record level "${level}"`)
-    return _level
-  }
-
   annotate(annotationLevel: ReportLevel, file: AbsolutePath, note: string): this {
     if (note) {
-      const level = this._level(annotationLevel)
+      const level = annotationLevel
       this._annotations.set(file, { level, note })
       switch (level) {
-        case logLevels.NOTICE: this._noticeRecords ++; break
-        case logLevels.WARN: this._warningRecords ++; break
-        case logLevels.ERROR: this._errorRecords ++; break
+        case NOTICE: this._noticeRecords ++; break
+        case WARN: this._warningRecords ++; break
+        case ERROR: this._errorRecords ++; break
       }
     }
     return this
@@ -214,6 +205,7 @@ class ReportImpl implements Report {
       messages = messages.filter((message) => !! message)
       if (! messages.length) this.fail('No message for report record')
 
+      const level = record.level
       const file = record.file || null // use "null" as "undefined" doesn't get sorted!
       const source = record.source || undefined
       const tags = record.tags ?
@@ -222,12 +214,10 @@ class ReportImpl implements Report {
             [ record.tags ] :
             []
 
-      const level = this._level(record.level)
-
       switch (level) {
-        case logLevels.NOTICE: this._noticeRecords ++; break
-        case logLevels.WARN: this._warningRecords ++; break
-        case logLevels.ERROR: this._errorRecords ++; break
+        case NOTICE: this._noticeRecords ++; break
+        case WARN: this._warningRecords ++; break
+        case ERROR: this._errorRecords ++; break
       }
 
       /* Line, column and characters are a bit more complicated */
@@ -334,7 +324,7 @@ class ReportImpl implements Report {
     cPad = cPad.toString().length
 
     /* Basic emit options */
-    const options = { taskName: this._task, level: logLevels.INFO }
+    const options = { taskName: this._task, level: INFO }
 
     emit(options, [ '' ])
     emit(options, [ $und($wht(this._title)) ])
@@ -351,7 +341,7 @@ class ReportImpl implements Report {
 
       if (file && annotation) {
         const { level, note } = annotation
-        const $col = level === logLevels.NOTICE ? $blu : level === logLevels.WARN ? $ylw : $red
+        const $col = level === NOTICE ? $blu : level === WARN ? $ylw : $red
         const ann = `${$gry('[')}${$col(note.padStart(aPad))}${$gry(']')}`
         const pad = ''.padStart(fPad - file.length) // file is underlined
 
@@ -399,7 +389,7 @@ class ReportImpl implements Report {
         /* See if we have to / can print out the source */
         if (showSources && source && source[line - 1]) {
           if (column) {
-            const $col = level === logLevels.NOTICE ? $blu : level === logLevels.WARN ? $ylw : $red
+            const $col = level === NOTICE ? $blu : level === WARN ? $ylw : $red
             const offset = column - 1
             const head = $gry(source[line - 1].substring(0, offset))
             const body = $und($col(source[line - 1].substring(offset, offset + length)))
@@ -427,7 +417,7 @@ class ReportImpl implements Report {
   }
 
   fail(...args: any[]): never {
-    emit({ taskName: this._task, level: logLevels.ERROR }, args)
+    emit({ taskName: this._task, level: ERROR }, args)
     throw buildFailed
   }
 }

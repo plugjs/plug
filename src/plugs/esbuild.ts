@@ -3,7 +3,7 @@ import type { Run } from '../run'
 
 import { build, BuildFailure, BuildOptions, BuildResult, Message, Metafile } from 'esbuild'
 import { assert } from '../assert'
-import { $p, ReportRecord } from '../log'
+import { $p, ERROR, ReportLevel, ReportRecord, WARN } from '../log'
 import { AbsolutePath, resolveAbsolutePath } from '../paths'
 import { install, Plug } from '../pipe'
 
@@ -68,12 +68,12 @@ export class ESBuild implements Plug<Files> {
       esbuild = await build({ ...options, metafile: true })
       run.log.trace('ESBuild Results', esbuild)
 
-      report.add(...esbuild.warnings.map((m) => convertMessage('WARN', m, absWorkingDir)))
-      report.add(...esbuild.errors.map((m) => convertMessage('ERROR', m, absWorkingDir)))
+      report.add(...esbuild.warnings.map((m) => convertMessage(WARN, m, absWorkingDir)))
+      report.add(...esbuild.errors.map((m) => convertMessage(ERROR, m, absWorkingDir)))
     } catch (error: any) {
       const e = error as BuildFailure
-      if (e.warnings) report.add(...e.warnings.map((m) => convertMessage('WARN', m, absWorkingDir)))
-      if (e.errors) report.add(...e.errors.map((m) => convertMessage('ERROR', m, absWorkingDir)))
+      if (e.warnings) report.add(...e.warnings.map((m) => convertMessage(WARN, m, absWorkingDir)))
+      if (e.errors) report.add(...e.errors.map((m) => convertMessage(ERROR, m, absWorkingDir)))
     }
 
     await report.loadSources()
@@ -92,7 +92,7 @@ export class ESBuild implements Plug<Files> {
   }
 }
 
-function convertMessage(level: 'ERROR' | 'WARN', message: Message, directory: AbsolutePath): ReportRecord {
+function convertMessage(level: ReportLevel, message: Message, directory: AbsolutePath): ReportRecord {
   const record: ReportRecord = { level, message: message.text }
   record.tags = [ message.id, message.pluginName ].filter((tag) => !! tag)
 

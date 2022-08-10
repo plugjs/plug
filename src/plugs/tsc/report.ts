@@ -1,6 +1,6 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
 
-import { Report, ReportRecord } from '../../log'
+import { ERROR, NOTICE, Report, ReportLevel, ReportRecord, WARN } from '../../log'
 import { AbsolutePath, resolveAbsolutePath } from '../../paths'
 
 function convertMessageChain(chain: ts.DiagnosticMessageChain, indent = 0): string[] {
@@ -23,11 +23,11 @@ function convertDiagnostics(
     void directory
 
     // Convert the `DiagnosticCategory` to our level
-    let level: 'NOTICE' | 'ERROR' | 'WARN'
+    let level: ReportLevel
     switch (diagnostic.category) {
-      case ts.DiagnosticCategory.Error: level = 'ERROR'; break
-      case ts.DiagnosticCategory.Warning: level = 'WARN'; break
-      default: level = 'NOTICE'
+      case ts.DiagnosticCategory.Error: level = ERROR; break
+      case ts.DiagnosticCategory.Warning: level = WARN; break
+      default: level = NOTICE
     }
 
     // Convert the `messageText` to a string

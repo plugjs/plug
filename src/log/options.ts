@@ -3,24 +3,10 @@ import type { InspectOptions } from 'node:util'
 
 import { EventEmitter } from 'node:events'
 
+import { getLevelNumber, LogLevel, LogLevelString, NOTICE } from './levels'
+
 /* ========================================================================== */
 
-/** Our level numbers (internal) */
-export const logLevels = Object.freeze({
-  TRACE: 10,
-  DEBUG: 20,
-  INFO: 30,
-  NOTICE: 40,
-  WARN: 50,
-  ERROR: 60,
-  OFF: 0x1fffffffffffff, // Number.MAX_SAFE_INTEGER as a constant
-} as const)
-
-/** A type identifying all our log levels */
-export type LogLevel = keyof typeof logLevels
-
-/** A type identifying all our log level numbers */
-export type LogLevelNumber = typeof logLevels[LogLevel]
 
 /** Options for our {@link Logger} instances */
 export interface LogOptions {
@@ -42,8 +28,6 @@ export interface LogOptions {
   defaultTaskName: string,
   /** The options used by NodeJS for object inspection. */
   readonly inspectOptions: InspectOptions,
-  /** Log level as a number from {@link logLevels} */
-  readonly logLevel: LogLevelNumber
 
   /** Set an inspect option in {@link LogOptions.inspectOptions}). */
   setInspectOption<K extends keyof InspectOptions>(key: K, value: InspectOptions[K]): void
@@ -65,7 +49,7 @@ export interface LogOptions {
 
 class LogOptionsImpl extends EventEmitter implements LogOptions {
   private _output: Writable = process.stderr
-  private _level: LogLevelNumber = logLevels.NOTICE
+  private _level: LogLevel = NOTICE
   private _colors = (<NodeJS.WriteStream> this._output).isTTY
   private _spinner = true // by default, the spinner is enabled
   private _lineLength = (<NodeJS.WriteStream> this._output).columns || 80
@@ -82,7 +66,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
     /* The `LOG_LEVEL` variable is one of our `debug`, `info`, ... */
     if (process.env.LOG_LEVEL) {
-      this.level = process.env.LOG_LEVEL.toUpperCase() as LogLevel
+      this._level = getLevelNumber(process.env.LOG_LEVEL as LogLevelString)
     }
 
     /* If the `LOG_COLOR` variable is specified, it should be `true` or `false` */
@@ -99,7 +83,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
   fork(taskName?: string): Partial<LogOptions> {
     return {
-      level: this.level,
+      level: this._level,
       colors: this._colors,
       lineLength: this._lineLength,
       taskLength: this._taskLength,
@@ -120,32 +104,12 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   }
 
   get level(): LogLevel {
-    if (this._level <= logLevels.TRACE) return 'TRACE'
-    if (this._level <= logLevels.DEBUG) return 'DEBUG'
-    if (this._level <= logLevels.INFO) return 'INFO'
-    if (this._level <= logLevels.NOTICE) return 'NOTICE'
-    if (this._level <= logLevels.WARN) return 'WARN'
-    if (this._level <= logLevels.ERROR) return 'ERROR'
-    return 'OFF'
+    return this._level
   }
 
   set level(level: LogLevel) {
-    if (typeof level === 'number') {
-      if (level <= logLevels.TRACE) this._level = logLevels.TRACE
-      else if (level <= logLevels.DEBUG) this._level = logLevels.DEBUG
-      else if (level <= logLevels.INFO) this._level = logLevels.INFO
-      else if (level <= logLevels.NOTICE) this._level = logLevels.NOTICE
-      else if (level <= logLevels.WARN) this._level = logLevels.WARN
-      else if (level <= logLevels.ERROR) this._level = logLevels.ERROR
-      else this._level = logLevels.OFF
-    } else {
-      this._level = level in logLevels ? logLevels[level] : logLevels.INFO
-    }
+    this._level = level
     this._notifyListeners()
-  }
-
-  get logLevel(): LogLevelNumber {
-    return this._level
   }
 
   get colors(): boolean {

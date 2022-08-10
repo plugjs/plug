@@ -6,7 +6,7 @@ import type { Run } from '../run'
 
 import { sep } from 'node:path'
 
-import { $gry, $p, $red, $ylw } from '../log'
+import { $gry, $p, $red, $ylw, ERROR, NOTICE, WARN } from '../log'
 import { install, Plug } from '../pipe'
 import { coverageReport, CoverageResult } from './coverage/report'
 
@@ -89,31 +89,31 @@ export class Coverage<
       const file = _file as AbsolutePath
 
       if (coverage < minimumFileCoverage) {
-        _report.annotate('ERROR', file, `${coverage} %`)
+        _report.annotate(ERROR, file, `${coverage} %`)
         fileErrors ++
       } else if (coverage < optimalFileCoverage) {
-        _report.annotate('WARN', file, `${coverage} %`)
+        _report.annotate(WARN, file, `${coverage} %`)
         fileWarnings ++
       } else {
-        _report.annotate('NOTICE', file, `${coverage} %`)
+        _report.annotate(NOTICE, file, `${coverage} %`)
       }
     }
 
     if (report.nodes.coverage < minimumCoverage) {
       const message = `${$red(`${report.nodes.coverage}%`)} does not meet minimum coverage ${$gry(`(${minimumCoverage}%)`)}`
-      _report.add({ level: 'ERROR', message })
+      _report.add({ level: ERROR, message })
     } else if (report.nodes.coverage < optimalCoverage) {
       const message = `${$ylw(`${report.nodes.coverage}%`)} does not meet optimal coverage ${$gry(`(${optimalCoverage}%)`)}`
-      _report.add({ level: 'WARN', message })
+      _report.add({ level: WARN, message })
     }
 
     if (fileErrors) {
       const message = `${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`
-      _report.add({ level: 'ERROR', message })
+      _report.add({ level: ERROR, message })
     }
     if (fileWarnings) {
       const message = `${$ylw(fileWarnings)} files do not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`
-      _report.add({ level: 'WARN', message })
+      _report.add({ level: WARN, message })
     }
 
     /* If we don't have to write a report, pass-through the coverage files */

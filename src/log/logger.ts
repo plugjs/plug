@@ -1,15 +1,16 @@
 import { buildFailed } from '../symbols'
 import { emit } from './emit'
-import { LogLevel, LogLevelNumber, logLevels, logOptions } from './options'
+import { DEBUG, ERROR, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
+import { logOptions } from './options'
 
 /* ========================================================================== */
 
 /* Initial value of log colors, and subscribe to changes */
-let _level = logOptions.logLevel
+let _level = logOptions.level
 let _defaultTaskName = logOptions.defaultTaskName
-logOptions.on('changed', ({ defaultTaskName, logLevel }) => {
+logOptions.on('changed', ({ defaultTaskName, level }) => {
   _defaultTaskName = defaultTaskName
-  _level = logLevel
+  _level = level
 })
 
 /* ========================================================================== *
@@ -63,7 +64,7 @@ const _loggers = new Map<string, Logger>()
 /** Default implementation of the {@link Logger} interface. */
 class LoggerImpl implements Logger {
   private _indent = 0
-  private _stack: { level: LogLevelNumber, message: string, indent: number }[] = []
+  private _stack: { level: LogLevel, message: string, indent: number }[] = []
 
   constructor(private readonly _task: string) {}
 
@@ -75,56 +76,56 @@ class LoggerImpl implements Logger {
   }
 
   trace(...args: [ any, ...any ]): this {
-    if (_level > logLevels.TRACE) return this
+    if (_level > TRACE) return this
     this._emitStack()
-    emit({ taskName: this._task, level: logLevels.TRACE, indent: this._indent }, args)
+    emit({ taskName: this._task, level: TRACE, indent: this._indent }, args)
     return this
   }
 
   debug(...args: [ any, ...any ]): this {
-    if (_level > logLevels.DEBUG) return this
+    if (_level > DEBUG) return this
     this._emitStack()
-    emit({ taskName: this._task, level: logLevels.DEBUG, indent: this._indent }, args)
+    emit({ taskName: this._task, level: DEBUG, indent: this._indent }, args)
     return this
   }
 
   info(...args: [ any, ...any ]): this {
-    if (_level > logLevels.INFO) return this
+    if (_level > INFO) return this
     this._emitStack()
-    emit({ taskName: this._task, level: logLevels.INFO, indent: this._indent }, args)
+    emit({ taskName: this._task, level: INFO, indent: this._indent }, args)
     return this
   }
 
   notice(...args: [ any, ...any ]): this {
-    if (_level > logLevels.NOTICE) return this
+    if (_level > NOTICE) return this
     this._emitStack()
-    emit({ taskName: this._task, level: logLevels.NOTICE, indent: this._indent }, args)
+    emit({ taskName: this._task, level: NOTICE, indent: this._indent }, args)
     return this
   }
 
   warn(...args: [ any, ...any ]): this {
-    if (_level > logLevels.WARN) return this
+    if (_level > WARN) return this
     this._emitStack()
-    emit({ taskName: this._task, level: logLevels.WARN, indent: this._indent }, args)
+    emit({ taskName: this._task, level: WARN, indent: this._indent }, args)
     return this
   }
 
   error(...args: [ any, ...any ]): this {
-    if (_level > logLevels.ERROR) return this
+    if (_level > ERROR) return this
     this._emitStack()
-    emit({ taskName: this._task, level: logLevels.ERROR, indent: this._indent }, args)
+    emit({ taskName: this._task, level: ERROR, indent: this._indent }, args)
     return this
   }
 
   fail(...args: [ any, ...any ]): never {
     if (args.includes(buildFailed)) throw buildFailed
     this._emitStack()
-    emit({ taskName: this._task, level: logLevels.ERROR, indent: this._indent }, args)
+    emit({ taskName: this._task, level: ERROR, indent: this._indent }, args)
     throw buildFailed
   }
 
   enter(level: LogLevel, message: string): this {
-    this._stack.push({ level: logLevels[level], message, indent: this._indent })
+    this._stack.push({ level, message, indent: this._indent })
     this._indent ++
     return this
   }
@@ -138,7 +139,7 @@ class LoggerImpl implements Logger {
     this._indent --
     if (this._indent < 0) this._indent = 0
     if (level && message) {
-      emit({ taskName: this._task, level: logLevels[level], indent: this._indent }, [ message ])
+      emit({ taskName: this._task, level, indent: this._indent }, [ message ])
     }
     return this
   }

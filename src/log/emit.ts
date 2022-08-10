@@ -1,8 +1,9 @@
 import { formatWithOptions } from 'node:util'
 
-import { $blu, $grn, $gry, $red, $t, $ylw } from './colors'
 import { buildFailed } from '../symbols'
-import { logLevels, LogLevelNumber, logOptions } from './options'
+import { $blu, $grn, $gry, $red, $t, $ylw } from './colors'
+import { DEBUG, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
+import { logOptions } from './options'
 import { zapSpinner } from './spinner'
 
 /* ========================================================================== */
@@ -32,7 +33,7 @@ const blackSquare = '\u25a0'
 
 interface EmitOptions {
   taskName: string,
-  level: LogLevelNumber,
+  level: LogLevel,
   indent?: number,
   prefix?: string,
 }
@@ -55,7 +56,7 @@ export function emit(options: EmitOptions, args: any[]): void {
 /* ========================================================================== */
 
 /** Emit in full colors! */
-function emitColor(task: string, level: LogLevelNumber, pfx: string, args: any[]): void {
+function emitColor(task: string, level: LogLevel, pfx: string, args: any[]): void {
   /* Prefixes, to prepend at the beginning of each line */
   const prefixes: string[] = []
 
@@ -68,15 +69,15 @@ function emitColor(task: string, level: LogLevelNumber, pfx: string, args: any[]
   }
 
   /* Level indicator (our little colorful squares) */
-  if (level <= logLevels.TRACE) {
+  if (level <= TRACE) {
     prefixes.push(` ${$gry(whiteSquare)} `) // trace: gray open
-  } else if (level <= logLevels.DEBUG) {
+  } else if (level <= DEBUG) {
     prefixes.push(` ${$gry(blackSquare)} `) // debug: gray
-  } else if (level <= logLevels.INFO) {
+  } else if (level <= INFO) {
     prefixes.push(` ${$grn(blackSquare)} `) // info: green
-  } else if (level <= logLevels.NOTICE) {
+  } else if (level <= NOTICE) {
     prefixes.push(` ${$blu(blackSquare)} `) // notice: blue
-  } else if (level <= logLevels.WARN) {
+  } else if (level <= WARN) {
     prefixes.push(` ${$ylw(blackSquare)} `) // warning: yellow
   } else {
     prefixes.push(` ${$red(blackSquare)} `) // error: red
@@ -96,7 +97,7 @@ function emitColor(task: string, level: LogLevelNumber, pfx: string, args: any[]
 
 /* ========================================================================== */
 
-function emitPlain(task: string, level: LogLevelNumber, pfx: string, args: any[]): void {
+function emitPlain(task: string, level: LogLevel, pfx: string, args: any[]): void {
   const prefixes: string[] = []
 
   if (task) {
@@ -108,15 +109,15 @@ function emitPlain(task: string, level: LogLevelNumber, pfx: string, args: any[]
 
   if (level <= 0) {
     prefixes.push(' \u2502        \u2502 ')
-  } else if (level <= logLevels.TRACE) {
+  } else if (level <= TRACE) {
     prefixes.push(' \u2502  trace \u2502 ')
-  } else if (level <= logLevels.DEBUG) {
+  } else if (level <= DEBUG) {
     prefixes.push(' \u2502  debug \u2502 ')
-  } else if (level <= logLevels.INFO) {
+  } else if (level <= INFO) {
     prefixes.push(' \u2502   info \u2502 ')
-  } else if (level <= logLevels.NOTICE) {
+  } else if (level <= NOTICE) {
     prefixes.push(' \u2502 notice \u2502 ')
-  } else if (level <= logLevels.WARN) {
+  } else if (level <= WARN) {
     prefixes.push(' \u2502   warn \u2502 ')
   } else {
     prefixes.push(' \u2502  error \u2502 ')

@@ -7,7 +7,7 @@ import type { Plug } from '../../pipe'
 import Mocha from 'mocha'
 import { diffJson } from 'diff'
 
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, Logger } from '../../log'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, Logger, NOTICE, WARN } from '../../log'
 import { Run, RunImpl } from '../../run'
 import { runAsync } from '../../async'
 import { buildFailed } from '../../symbols'
@@ -41,7 +41,7 @@ class MochaRunner implements Plug<undefined> {
     // Enter log here, so that log messages called when loading files get
     // properly indented by our logger
     run.log.notice('') // empty line
-    run.log.enter('NOTICE', $wht('Starting Mocha'))
+    run.log.enter(NOTICE, $wht('Starting Mocha'))
 
     // Create the mocha runner
     const mocha = new Mocha({
@@ -96,7 +96,7 @@ class PlugReporter extends Mocha.reporters.Base {
     runner.on('suite', (suite) => {
       if (suite === rootSuite) return
       log.notice('')
-      log.enter('NOTICE', `${$wht(suite.title)}`)
+      log.enter(NOTICE, `${$wht(suite.title)}`)
     })
 
     // Leave a suite (decrease indent)
@@ -106,21 +106,21 @@ class PlugReporter extends Mocha.reporters.Base {
 
     // Enter a test (increase indent)
     runner.on('test', (test) => {
-      log.enter('NOTICE', `${$blu(_pending)} ${test.title}`)
+      log.enter(NOTICE, `${$blu(_pending)} ${test.title}`)
     })
 
     // Leave a test (handle warning/failures and decrease indent)
     runner.on('test end', (test) => {
       // TODO: slow!!!
       if (test.isPassed()) {
-        log.leave('NOTICE', `${$grn(_success)} ${test.title}`)
+        log.leave(NOTICE, `${$grn(_success)} ${test.title}`)
       } else if (test.isPending()) {
         const tag = $gry('[') + $ylw('skipped') + $gry(']')
-        log.leave('WARN', `${$ylw(_pending)} ${test.title} ${tag}`)
+        log.leave(WARN, `${$ylw(_pending)} ${test.title} ${tag}`)
       } else if (test.isFailed()) {
         const number = failures.push(test)
         const tag = $gry('[') + $red('failed') + $gry('|') + $red(number) + $gry(']')
-        log.leave('ERROR', `${$red(_failure)} ${test.title} ${tag}`)
+        log.leave(ERROR, `${$red(_failure)} ${test.title} ${tag}`)
       }
     })
 
@@ -161,7 +161,7 @@ class PlugReporter extends Mocha.reporters.Base {
               .filter((line) => !! line)
 
           // Output the message
-          log.enter('ERROR', '')
+          log.enter(ERROR, '')
           log.error($red(message))
 
           // Should we diff?
@@ -175,7 +175,7 @@ class PlugReporter extends Mocha.reporters.Base {
               return $gry(change.value)
             }).join('')
 
-            log.enter('ERROR', `${$gry('diff')} ${$grn('expected')}  ${$gry('/')} ${$red('actual')}`)
+            log.enter(ERROR, `${$gry('diff')} ${$grn('expected')}  ${$gry('/')} ${$red('actual')}`)
             log.error(diff)
             log.leave()
           }

@@ -3,7 +3,7 @@ import type { Plug } from '../../pipe'
 import type { Run } from '../../run'
 
 import { ESLint } from 'eslint'
-import { $p } from '../../log'
+import { $p, ERROR, NOTICE, WARN } from '../../log'
 import { AbsolutePath, getCurrentWorkingDirectory, resolveAbsolutePath } from '../../paths'
 import { readFile } from '../../utils/asyncfs'
 import { workerMain } from '../../worker'
@@ -75,7 +75,7 @@ class ESLintWorker implements Plug<undefined> {
         } = record
 
         /* Severity becomes our "kind" */
-        const level = severity === 0 ? 'NOTICE' : severity === 1 ? 'WARN' : 'ERROR'
+        const level = severity === 0 ? NOTICE : severity === 1 ? WARN : ERROR
 
         /* Characters */
         const length = endLine === line ? endColumn - column : endLine > line ? -1 : 1
