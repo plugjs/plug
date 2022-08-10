@@ -1,5 +1,3 @@
-import ms from 'ms'
-
 import { sep } from 'node:path'
 
 import { AbsolutePath, getCurrentWorkingDirectory, resolveRelativeChildPath } from '../paths'
@@ -53,7 +51,27 @@ export function $t(task: string): string {
 
 /** Colorize milliseconds. */
 export function $ms(millis: number): string {
-  return _colors ? `${gry}[${ms(millis)}]${rst}` : `[${ms(millis)}]`
+  let string: string
+  if (millis >= 60000) {
+    // One minute or more: style is Xm Ys
+    const minutes = Math.floor(millis / 60000)
+    const seconds = Math.floor((millis % 60000) / 1000)
+    string = `${minutes}m ${seconds}s`
+  } else if (millis >= 10000) {
+    // Ten seconds or more: style is 12.3s
+    const seconds = Math.floor(millis / 1000)
+    const decimal = Math.floor(millis % 1000 / 100)
+    string = `${seconds}.${decimal}s`
+  } else if (millis >= 1000) {
+    // One second or more: style is 1.23s
+    const seconds = Math.floor(millis / 1000)
+    const decimal = Math.floor(millis % 1000 / 10)
+    string = `${seconds}.${decimal}s`
+  } else {
+    // Milliseconds: style is 123ms
+    string = `${millis}ms`
+  }
+  return _colors ? `${gry}[${string}]${rst}` : `[${string}]`
 }
 
 /** Colorize in gray. */
