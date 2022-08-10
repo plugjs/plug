@@ -6,7 +6,7 @@ import type { Run } from '../run'
 
 import { sep } from 'node:path'
 
-import { $gry, $red, $ylw } from '../log'
+import { $gry, $p, $red, $ylw } from '../log'
 import { install, Plug } from '../pipe'
 import { coverageReport, CoverageResult } from './coverage/report'
 
@@ -53,6 +53,10 @@ export class Coverage<
     const coverageFiles = await run.find('coverage-*.json', {
       directory: this._coverageDir,
     })
+
+    if (coverageFiles.length === 0) {
+      run.log.fail('No coverage files found in', $p(coverageFiles.directory))
+    }
 
     const report = await coverageReport(
         files.absolutePaths(),
