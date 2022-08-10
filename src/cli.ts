@@ -3,6 +3,7 @@
 import { fork } from 'node:child_process'
 
 import yargsParser from 'yargs-parser'
+import { isBuildFailure } from './assert'
 
 import { Build, isBuild } from './build'
 import { logLevels, logOptions, NOTICE } from './log'
@@ -175,11 +176,12 @@ if (process.env.DEBUG_CLI === 'true') {
 
 /* If both source maps and typescript are on, run! */
 if (sourceMapsEnabled && typeScriptEnabled) {
-  main(buildFile, tasks, list).then(() => process.exit(0)).catch((error) => {
-    // TODO: handle build failures here
-    void error
-    process.exit(1)
-  })
+  main(buildFile, tasks, list)
+      .then(() => process.exit(0))
+      .catch((error) => {
+        if (! isBuildFailure(error)) console.log(error)
+        process.exit(1)
+      })
 } else {
   /* Fork out ourselves with new options */
   const execArgv = [ ...process.execArgv ]
