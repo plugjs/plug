@@ -1,6 +1,6 @@
+import { fail, failure } from '../assert'
 import type { AbsolutePath } from '../paths'
 
-import { buildFailed } from '../symbols'
 import { readFile } from '../utils/asyncfs'
 import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
 import { emitColor, emitPlain, LogEmitter } from './emit'
@@ -88,19 +88,8 @@ export interface Report {
   /** Attempt to load any source file missing from the reports */
   loadSources(): Promise<void>
 
-  /** Emit this {@link Report}. */
-  emit(showSources?: boolean | undefined): this
-
-  /**
-   * Fail the build.
-   *
-   * Useful in chained constructs like:
-   *
-   * ```
-   * if (report.errors) report.emit().fail()
-   * ```
-   */
-  fail(...args: any[]): never
+  /** Emit this {@link Report} and throw a build failure on error. */
+  done(showSources?: boolean | undefined): void
 }
 
 /** Create a new {@link Report} with the given title */
@@ -141,7 +130,7 @@ class ReportImpl implements Report {
   constructor(
       private readonly _title: string,
       private readonly _task: string,
-      private readonly _emit: LogEmitter,
+      private readonly _emitter: LogEmitter,
   ) {}
 
   get notices(): number {
@@ -214,7 +203,7 @@ class ReportImpl implements Report {
             [ ...record.message.map((msg) => msg.split('\n')).flat(1) ] :
             record.message.split('\n')
       messages = messages.filter((message) => !! message)
-      if (! messages.length) this.fail('No message for report record')
+      if (! messages.length) fail('No message for report record')
 
       const level = record.level
       const file = record.file || null // use "null" as "undefined" doesn't get sorted!
@@ -281,7 +270,14 @@ class ReportImpl implements Report {
     await Promise.allSettled(promises)
   }
 
-  emit(showSources = false): this {
+
+  done(showSources?: boolean | undefined): void {
+    if (showSources == null) showSources = logOptions.showSources
+    if (! this.empty) this._emit(showSources)
+    if (this.errors) throw failure()
+  }
+
+  private _emit(showSources: boolean): this {
     /* Counters for all we need to print nicely */
     let fPad = 0
     let aPad = 0
@@ -337,8 +333,8 @@ class ReportImpl implements Report {
     /* Basic emit options */
     const options = { taskName: this._task, level: INFO }
 
-    this._emit(options, [ '' ])
-    this._emit(options, [ $und($wht(this._title)) ])
+    this._emitter(options, [ '' ])
+    this._emitter(options, [ $und($wht(this._title)) ])
 
 
     /* Iterate through all our [file,reports] tuple */
@@ -347,7 +343,7 @@ class ReportImpl implements Report {
       const source = file && this._sources.get(file)
 
       if ((f === 0) || entries[f - 1]?.records.length) {
-        this._emit(options, [ '' ])
+        this._emitter(options, [ '' ])
       }
 
       if (file && annotation) {
@@ -356,9 +352,9 @@ class ReportImpl implements Report {
         const ann = `${$gry('[')}${$col(note.padStart(aPad))}${$gry(']')}`
         const pad = ''.padStart(fPad - file.length) // file is underlined
 
-        this._emit({ ...options, level }, [ $wht($und(file)), pad, ann ])
+        this._emitter({ ...options, level }, [ $wht($und(file)), pad, ann ])
       } else if (file) {
-        this._emit(options, [ $wht($und(file)) ])
+        this._emitter(options, [ $wht($und(file)) ])
       }
 
       /* Now get each message and do our magic */
@@ -384,15 +380,15 @@ class ReportImpl implements Report {
 
         /* Print out our messages, one by one */
         if (messages.length === 1) {
-          this._emit({ ...options, level }, [ $gry(pfx), messages[0].padEnd(mPad), tag ])
+          this._emitter({ ...options, level }, [ $gry(pfx), messages[0].padEnd(mPad), tag ])
         } else {
           for (let m = 0; m < messages.length; m ++) {
             if (! m) { // first line
-              this._emit({ ...options, level }, [ $gry(pfx), messages[m] ])
+              this._emitter({ ...options, level }, [ $gry(pfx), messages[m] ])
             } else if (m === messages.length - 1) { // last line
-              this._emit({ ...options, level, prefix }, [ messages[m].padEnd(mPad), tag ])
+              this._emitter({ ...options, level, prefix }, [ messages[m].padEnd(mPad), tag ])
             } else { // in between lines
-              this._emit({ ...options, level, prefix }, [ messages[m] ])
+              this._emitter({ ...options, level, prefix }, [ messages[m] ])
             }
           }
         }
@@ -406,9 +402,9 @@ class ReportImpl implements Report {
             const body = $und($col(source[line - 1].substring(offset, offset + length)))
             const tail = $gry(source[line - 1].substring(offset + length))
 
-            this._emit({ ...options, level, prefix }, [ $gry(`| ${head}${body}${tail}`) ])
+            this._emitter({ ...options, level, prefix }, [ $gry(`| ${head}${body}${tail}`) ])
           } else {
-            this._emit({ ...options, level, prefix }, [ $gry(`| ${source[line - 1]}`) ])
+            this._emitter({ ...options, level, prefix }, [ $gry(`| ${source[line - 1]}`) ])
           }
         }
       }
@@ -420,15 +416,10 @@ class ReportImpl implements Report {
     const eNumber = this.errors ? $red(this.errors) : 'no'
     const wNumber = this.warnings ? $ylw(this.warnings) : 'no'
 
-    this._emit(options, [ '' ])
-    this._emit(options, [ 'Found', eNumber, eLabel, 'and', wNumber, wLabel ])
-    this._emit(options, [ '' ])
+    this._emitter(options, [ '' ])
+    this._emitter(options, [ 'Found', eNumber, eLabel, 'and', wNumber, wLabel ])
+    this._emitter(options, [ '' ])
 
     return this
-  }
-
-  fail(...args: any[]): never {
-    this._emit({ taskName: this._task, level: ERROR }, args)
-    throw buildFailed
   }
 }
