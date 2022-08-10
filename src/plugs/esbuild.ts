@@ -77,8 +77,7 @@ export class ESBuild implements Plug<Files> {
     }
 
     await report.loadSources()
-    if (! report.empty) report.emit(true)
-    if (report.errors) report.fail()
+    report.done()
 
     assert(esbuild, 'ESBuild did not produce any result')
 
