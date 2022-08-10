@@ -7,7 +7,6 @@ import yargsParser from 'yargs-parser'
 import { Build, isBuild } from './build'
 import { logLevels, logOptions, NOTICE } from './log'
 import { AbsolutePath, getCurrentWorkingDirectory, isFile, resolveAbsolutePath } from './paths'
-import { buildFailed } from './symbols'
 
 /* Yargs-parse our arguments */
 const parsed = yargsParser(process.argv.slice(2), {
@@ -177,7 +176,8 @@ if (process.env.DEBUG_CLI === 'true') {
 /* If both source maps and typescript are on, run! */
 if (sourceMapsEnabled && typeScriptEnabled) {
   main(buildFile, tasks, list).then(() => process.exit(0)).catch((error) => {
-    if (error !== buildFailed) console.log(error)
+    // TODO: handle build failures here
+    void error
     process.exit(1)
   })
 } else {

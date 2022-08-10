@@ -59,7 +59,7 @@ export class Coverage<
     })
 
     if (coverageFiles.length === 0) {
-      fail('No coverage files found in', $p(coverageFiles.directory))
+      fail(`No coverage files found in ${$p(coverageFiles.directory)}`)
     }
 
     const sourceFiles = [ ...files.absolutePaths() ]

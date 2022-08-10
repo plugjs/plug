@@ -35,10 +35,10 @@ export class ESLint implements Plug<undefined> {
     const { directory, configFile } = this._options
 
     const dir = directory ? run.resolve(directory) : getCurrentWorkingDirectory()
-    assert(isDirectory(dir), 'ESLint directory', $p(dir), 'does not exist')
+    assert(isDirectory(dir), `ESLint directory ${$p(dir)} does not exist`)
 
     const cfg = configFile ? run.resolve(configFile) : undefined
-    if (cfg) assert(isFile(cfg), 'ESLint configuration', $p(cfg), 'does not exist')
+    if (cfg) assert(isFile(cfg), `ESLint configuration ${$p(cfg)} does not exist`)
 
     const script = requireResolve(__filename, './eslint/worker')
     return executeWorker<ESLintWorkerType>(script, files, run, dir, cfg, this._options.showSources)

@@ -7,7 +7,7 @@ import { $p, ERROR, NOTICE, WARN } from '../../log'
 import { AbsolutePath, getCurrentWorkingDirectory, resolveAbsolutePath } from '../../paths'
 import { readFile } from '../../utils/asyncfs'
 import { workerMain } from '../../worker'
-import { fail } from '../../assert'
+import { failure } from '../../assert'
 
 export type ESLintWorkerType = typeof ESLintWorker
 
@@ -55,7 +55,7 @@ class ESLintWorker implements Plug<undefined> {
 
     /* In case of failures from promises, fail! */
     const { results, failures } = summary
-    if (failures) fail('ESLint failed linting')
+    if (failures) throw failure() // already logged above
 
     /* Create our report */
     const report = run.report('ESLint Report')

@@ -1,6 +1,6 @@
 import type { Files } from './files'
 
-import { assert } from './assert'
+import { assert, fail } from './assert'
 import { runAsync } from './async'
 import { $ms, $t, logOptions } from './log'
 import { AbsolutePath, getAbsoluteParent } from './paths'
@@ -8,7 +8,6 @@ import { Pipe, PipeImpl } from './pipe'
 import { Run, RunImpl } from './run'
 import { Task, TaskImpl } from './task'
 import { findCaller } from './utils/caller'
-import { buildFailed, buildMarker } from './symbols'
 
 /* ========================================================================== *
  * TYPES                                                                      *
@@ -79,6 +78,9 @@ export type BuildDefinition<B> = {
  * BUILD                                                                      *
  * ========================================================================== */
 
+/** Symbol indicating that an object is a Build */
+const buildMarker = Symbol.for('plugjs:isBuild')
+
 /** Check if the specified build is actually a {@link Build} */
 export function isBuild(build: any): build is Build<any> {
   return build && build[buildMarker] === buildMarker
@@ -111,8 +113,8 @@ export function build<D extends BuildDefinition<D>>(
         await run.call(name)
         run.log.notice('Build completed', $ms(Date.now() - now))
       } catch (error) {
-        const reason = error === buildFailed ? [] : [ error ]
-        run.log.fail('Build failed', $ms(Date.now() - now), ...reason)
+        // TODO: handle build failures here
+        fail('Build failed', $ms(Date.now() - now), error)
       }
     })
 
@@ -153,7 +155,7 @@ class BuildRun extends RunImpl implements Run {
 
   call(name: string): Promise<Files | undefined> {
     const task = this._tasks[name]
-    if (! task) this.log.fail(`Task "${$t(name)}" does not exist`)
+    if (! task) fail(`Task "${$t(name)}" does not exist`)
 
     /* Check for circular dependencies */
     assert(! this._stack.includes(task), `Circular dependency running task "${$t(name)}"`)
@@ -196,8 +198,8 @@ class BuildRun extends RunImpl implements Run {
       this.log.notice(`Task ${$t(name)} completed`, $ms(Date.now() - now))
       return result
     } catch (error) {
-      const reason = error === buildFailed ? [] : [ error ]
-      this.log.fail(`Task ${$t(name)} failed`, $ms(Date.now() - now), ...reason)
+      // TODO: handle assertions / build failures HERE
+      fail(`Task ${$t(name)} failed`, $ms(Date.now() - now), error)
     }
   }
 }

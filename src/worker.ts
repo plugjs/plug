@@ -123,7 +123,7 @@ export function executeWorker<
       if (completed) return
       completed = true
 
-      reject(failure({ message: `Message error in worker ${$p(script)}`, cause }))
+      reject(failure(`Message error in worker ${$p(script)}`, cause))
     })
 
     /* Worker error */
@@ -131,7 +131,7 @@ export function executeWorker<
       if (completed) return
       completed = true
 
-      reject(failure({ message: `Error in worker ${$p(script)}`, cause }))
+      reject(failure(`Error in worker ${$p(script)}`, cause))
     })
 
     /* Worker result, simply copy locally and wait for exit */
@@ -147,7 +147,7 @@ export function executeWorker<
 
       // This should be caught by "on('error')" but anyway...
       if (code != 0) {
-        reject(failure({ message: `Worker ${$p(script)} terminated with code ${code}` }))
+        reject(failure(`Worker ${$p(script)} terminated with code ${code}`))
       } else if (failed) {
         reject(failure())
       } else {
