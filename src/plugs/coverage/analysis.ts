@@ -63,9 +63,9 @@ export interface V8CoverageData {
    */
   'result': V8CoverageResult[],
   /** Timestamp when coverage was taken */
-  'timestamp': number,
+  'timestamp'?: number,
   /** Source maps caches keyed by `result[?].url` */
-  'source-map-cache': Record<string, V8SourceMapCache>
+  'source-map-cache'?: Record<string, V8SourceMapCache>
 }
 
 /* ========================================================================== *

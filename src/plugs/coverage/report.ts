@@ -140,7 +140,7 @@ export async function coverageReport(
         * itself (same file), but embeds all the transformation information
         * between the file on disk, and what's been used by Node.JS.
         */
-      const mapping = coverage['source-map-cache'][result.url]
+      const mapping = coverage['source-map-cache']?.[result.url]
       if (mapping) {
         /*
           * If we have mapping, we want to see if any of the sourcemap's source
