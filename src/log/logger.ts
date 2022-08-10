@@ -1,3 +1,4 @@
+import { isBuildFailure } from '../assert'
 import { emitColor, emitPlain, LogEmitter } from './emit'
 import { DEBUG, ERROR, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
@@ -78,6 +79,9 @@ class LoggerImpl implements Logger {
 
   private _emit(level: LogLevel, args: [ any, ...any ]): this {
     if (this._level > level) return this
+
+    const params = args.filter((arg) => ! isBuildFailure(arg))
+    if (params.length === 0) return this // no logging only build failures
 
     if (this._stack.length) {
       for (const { message, ...options } of this._stack) {
