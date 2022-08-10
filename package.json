@@ -14,7 +14,7 @@
     "@babel/types": "^7.18.10",
     "@plugjs/cov8-html": "file:../coverage-app/plugjs-cov8-html-0.0.1.tgz",
     "diff": "^5.1.0",
-    "esbuild": "^0.14.54",
+    "esbuild": "^0.15.0",
     "eslint": "^8.21.0",
     "mocha": "^10.0.0",
     "picomatch": "^2.3.1",
