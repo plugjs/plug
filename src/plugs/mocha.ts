@@ -1,13 +1,13 @@
 import type { Files } from '../files'
 import type { Run } from '../run'
+import type { MochaMessage } from './mocha/runner'
 
 import { fork } from 'node:child_process'
 
 import { requireResolve } from '../paths'
 import { install, Plug } from '../pipe'
 import { $p, logOptions } from '../log'
-import type { MochaMessage } from './mocha/runner'
-import { buildFailed } from '../symbols'
+import { failure } from '../assert'
 
 export interface MochaOptions {
   /** Specify the directory where coverage data will be saved */
@@ -62,7 +62,7 @@ export class Mocha implements Plug<undefined> {
       child.on('error', (error) => reject(error))
       child.on('exit', (code, signal) => {
         if (code === 0) return resolve(undefined)
-        if (code === 1) return reject(buildFailed)
+        if (code === 1) return reject(failure())
         if (signal) return reject(new Error(`Child process exited with signal ${signal}`))
         if (code) return reject(new Error(`Child process exited with code ${code}`))
         reject(new Error('Child process failed for an unknown reason'))

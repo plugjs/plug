@@ -10,7 +10,7 @@ import { diffJson } from 'diff'
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, Logger, NOTICE, WARN } from '../../log'
 import { Run, RunImpl } from '../../run'
 import { runAsync } from '../../async'
-import { buildFailed } from '../../symbols'
+import { failure } from '../../assert'
 
 /** Symbol to inject `Logger` in reporter options */
 const logSymbol = Symbol()
@@ -64,7 +64,7 @@ class MochaRunner implements Plug<undefined> {
     return new Promise((resolve, reject) => {
       try {
         mocha.run((failures) => {
-          if (failures) reject(buildFailed)
+          if (failures) reject(failure())
           resolve(undefined)
         })
       } catch (error) {
