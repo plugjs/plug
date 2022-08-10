@@ -1,4 +1,4 @@
-import { isBuildFailure } from '../assert'
+import { isBuildError, isBuildFailure } from '../assert'
 import { emitColor, emitPlain, LogEmitter } from './emit'
 import { DEBUG, ERROR, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
@@ -80,17 +80,33 @@ class LoggerImpl implements Logger {
   private _emit(level: LogLevel, args: [ any, ...any ]): this {
     if (this._level > level) return this
 
+    // Filter out build failures (they are not to be logged)
     const params = args.filter((arg) => ! isBuildFailure(arg))
     if (params.length === 0) return this // no logging only build failures
 
+    // Prepare our options for logging
+    const options = { level, taskName: this._task, indent: this._indent }
+
+    // Dump any existing stack entry
     if (this._stack.length) {
-      for (const { message, ...options } of this._stack) {
-        this._emitter({ ...options, taskName: this._task }, [ message ])
+      for (const { message, ...extras } of this._stack) {
+        this._emitter({ ...options, ...extras }, [ message ])
       }
       this._stack.splice(0)
     }
 
-    this._emitter({ level, taskName: this._task, indent: this._indent }, args)
+    // Print all `BuildError`s _before_ any other entry
+    const remaining = params.filter((arg) => {
+      if (isBuildError(arg)) {
+        this._emitter({ ...options, level: ERROR }, [ arg.message ])
+        return false
+      } else {
+        return true
+      }
+    })
+
+    // If we have any leftovers, dump them out, too!
+    if (remaining) this._emitter(options, remaining)
     return this
   }
 
