@@ -5,7 +5,7 @@ import { fork } from 'node:child_process'
 
 import { requireResolve } from '../paths'
 import { install, Plug } from '../pipe'
-import { logOptions } from '../log'
+import { $p, logOptions } from '../log'
 import type { MochaMessage } from './mocha/runner'
 import { buildFailed } from '../symbols'
 
@@ -52,9 +52,10 @@ export class Mocha implements Plug<undefined> {
     /* Run our script in a _separate_ process */
     const child = fork(script, {
       stdio: [ 'ignore', 'inherit', 'inherit', 'ipc' ],
-      execArgv: [ '--enable-source-maps', ...process.execArgv ],
       env,
     })
+
+    run.log.debug('Mocha running', $p(script), `(pid=${child.pid})`)
 
     /* Return a promise from the child process events */
     return new Promise<undefined>((resolve, reject) => {
