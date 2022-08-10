@@ -79,10 +79,6 @@ class LoggerImpl implements Logger {
   private _emit(level: LogLevel, args: [ any, ...any ]): this {
     if (this._level > level) return this
 
-    // TODO: handle previously logged failures
-    // const params = args.filter((arg) => arg !== buildFailed)
-    // if (params.length === 0) return this
-
     if (this._stack.length) {
       for (const { message, ...options } of this._stack) {
         this._emitter({ ...options, taskName: this._task }, [ message ])
