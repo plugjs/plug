@@ -16,8 +16,8 @@ logOptions.on('changed', ({ defaultTaskName, logLevel }) => {
  * LOGGER                                                                     *
  * ========================================================================== */
 
-/** A {@link Logger} emits log events */
-export interface Logger {
+/** The basic interface giving access to log facilities. */
+export interface Log {
   /** Log a `TRACE` message */
   trace(...args: [ any, ...any ]): this
   /** Log a `DEBUG` message */
@@ -32,7 +32,10 @@ export interface Logger {
   error(...args: [ any, ...any ]): this
   /** Log a `FAIL` message and throw */
   fail(...args: [ any, ...any ]): never
+}
 
+/** A {@link Logger} extends the basic {@link Log} adding some state. */
+export interface Logger extends Log {
   /** Enter a sub-level of logging, increasing indent */
   enter(level: LogLevel, message: string): this
 

@@ -1,5 +1,5 @@
 import { currentRun } from './async'
-import { getLogger, Logger } from './log/logger'
+import { getLogger, Log } from './log/logger'
 import { setupSpinner } from './log/spinner'
 
 export * from './log/colors'
@@ -18,54 +18,49 @@ setupSpinner()
  * LOGGER                                                                     *
  * ========================================================================== */
 
-/** The generic, shared `log` object. */
-type SingletonLogger = {
-  [ k in Exclude<keyof Logger, 'enter' | 'leave'>]: (...args: Parameters<Logger[k]>) => SingletonLogger
-}
-
 /** The generic, shared `log` function type. */
-type Log = ((...args: [ any, ...any ]) => void) & SingletonLogger
+export type LogFunction = ((...args: [ any, ...any ]) => void) & Log
 
 /** Our logging function (defaulting to the `NOTICE` level) */
-export const log: Log = ((): Log => {
+export const log: LogFunction = ((): LogFunction => {
   /* Return either the current run's log, or the default task's logger */
-  const logger = (): Logger => (currentRun()?.log || getLogger())
+  const logger = (): Log => (currentRun()?.log || getLogger())
 
   /* Create a Logger wrapping the current logger */
-  const wrapper: SingletonLogger = {
-    trace(...args: [ any, ...any ]): SingletonLogger {
+  const wrapper: Log = {
+    trace(...args: [ any, ...any ]): Log {
       logger().trace(...args)
       return wrapper
     },
 
-    debug(...args: [ any, ...any ]): SingletonLogger {
+    debug(...args: [ any, ...any ]): Log {
       logger().debug(...args)
       return wrapper
     },
 
-    info(...args: [ any, ...any ]): SingletonLogger {
+    info(...args: [ any, ...any ]): Log {
       logger().info(...args)
       return wrapper
     },
 
-    notice(...args: [ any, ...any ]): SingletonLogger {
+    notice(...args: [ any, ...any ]): Log {
       logger().notice(...args)
       return wrapper
     },
 
-    warn(...args: [ any, ...any ]): SingletonLogger {
+    warn(...args: [ any, ...any ]): Log {
       logger().warn(...args)
       return wrapper
     },
 
-    error(...args: [ any, ...any ]): SingletonLogger {
+    error(...args: [ any, ...any ]): Log {
       logger().error(...args)
       return wrapper
     },
 
     fail(...args: [ any, ...any ]): never {
       // Dunno why TS thinks that `logger().fail(... args)` can return
-      const log: Logger = logger()
+      const log: Log = logger()
       log.fail(...args)
     },
   }
