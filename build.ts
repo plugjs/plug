@@ -8,39 +8,11 @@ export default build({
    * COMPILE AND RUN TESTS IN "./build"                                       *
    * ======================================================================== */
 
-  async compile_tests() {
-    await rmrf('build')
-
-    await find('src/**', 'test/**', { ignore: '**/*.ts' })
-        .copy('build')
-
-    /* compile sources in "build/src", needed by tests */
-    await this.find_sources().esbuild({
-      outdir: 'build/src',
-      format: 'cjs',
-      sourcemap: 'inline',
-      sourcesContent: false,
-      plugins: [ fixExtensions() ],
-    })
-
-    /* compile tests in "build/test", return them */
-    return this.find_tests().esbuild({
-      outdir: 'build/test',
-      format: 'cjs',
-      sourcemap: 'inline',
-      sourcesContent: false,
-      plugins: [
-        checkDependencies({ allowDev: true, allowUnused: true }),
-        fixExtensions(),
-      ],
-    })
-  },
-
   async test() {
-    await rmrf('build/coverage')
+    await rmrf('coverage')
 
-    await this.compile_tests().mocha({
-      coverageDir: 'build/coverage',
+    await this.find_tests().mocha({
+      coverageDir: 'coverage',
     })
   },
 
@@ -62,12 +34,13 @@ export default build({
   },
 
   async check_coverage() {
-    await this.test() // no coverage without tests, right?
-
-    await rmrf('coverage')
-    await this.find_sources().coverage('build/coverage', {
-      reportDir: 'coverage',
-    })
+    try {
+      await this.test() // no coverage without tests, right?
+    } finally {
+      await this.find_sources().coverage('coverage', {
+        reportDir: 'coverage',
+      })
+    }
   },
 
   async check_format() {

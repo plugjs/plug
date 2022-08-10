@@ -111,6 +111,7 @@ class PlugReporter extends Mocha.reporters.Base {
 
     // Leave a test (handle warning/failures and decrease indent)
     runner.on('test end', (test) => {
+      // TODO: slow!!!
       if (test.isPassed()) {
         log.leave('NOTICE', `${$grn(_success)} ${test.title}`)
       } else if (test.isPending()) {
