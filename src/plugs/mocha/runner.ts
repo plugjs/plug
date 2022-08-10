@@ -10,7 +10,7 @@ import { diffJson } from 'diff'
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, Logger, NOTICE, WARN } from '../../log'
 import { Run, RunImpl } from '../../run'
 import { runAsync } from '../../async'
-import { failure, isBuildFailure } from '../../assert'
+import { failure } from '../../assert'
 
 /** Symbol to inject `Logger` in reporter options */
 const logSymbol = Symbol()
