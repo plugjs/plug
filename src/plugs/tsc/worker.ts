@@ -10,6 +10,7 @@ import { workerMain } from '../../worker'
 import { TypeScriptHost } from './compiler'
 import { getCompilerOptions } from './options'
 import { updateReport } from './report'
+import { fail, failure } from '../../assert'
 
 export type TscWorkerType = typeof TscWorker
 
@@ -42,7 +43,7 @@ class TscWorker implements Plug<Files> {
 
     // Update report and fail on errors
     updateReport(report, errors, getCurrentWorkingDirectory())
-    if (report.errors) report.emit(true).fail()
+    if (report.errors) report.done(true)
 
     const { rootDir, outDir } = options
     const root = rootDir ? run.resolve(rootDir) : files.directory
@@ -62,29 +63,28 @@ class TscWorker implements Plug<Files> {
 
     // Update report and fail on errors
     updateReport(report, diagnostics, root)
-    if (report.errors) report.emit(true).fail()
+    if (report.errors) report.done(true)
 
     const builder = run.files(out)
     const promises: Promise<void>[] = []
     const result = program.emit(undefined, (fileName, code) => {
       promises.push(builder.write(fileName, code).then((file) => {
         log.trace('Written', $p(file))
+      }).catch((error) => {
+        run.log.error('Error writing to', fileName, error)
+        throw failure() // no more logs!
       }))
     })
 
     // Update report and fail on errors
     updateReport(report, result.diagnostics, root)
-    if (report.errors) report.emit(true).fail()
+    if (report.errors) report.done(true)
 
     // Await for all files to be written and check
     const settlements = await Promise.allSettled(promises)
-    let failures = 0
-    for (const settlement of settlements) {
-      if (settlement.status === 'fulfilled') continue
-      run.log.error('Error writing file', settlement.reason)
-      failures ++
-    }
-    if (failures) run.log.fail('Error writing files')
+    const failures = settlements
+        .reduce((failures, s) => failures + s.status === 'rejected' ? 1 : 0, 0)
+    if (failures) throw failure() // already logged above
 
     // All done, build our files and return it
     const outputs = builder.build()
