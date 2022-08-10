@@ -97,7 +97,7 @@ export async function parallel<P extends readonly any[]>(promises: P): Promise<P
     errors ++
   }
 
-  if (errors) log.fail('Parallel execution failed for', errors, 'tasks')
+  assert(! errors, 'Parallel execution failed for', errors, 'tasks')
   return results as ParallelResult<P>
 }
 
