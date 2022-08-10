@@ -10,6 +10,7 @@ import { $gry, $p, $red, $ylw, ERROR, NOTICE, WARN } from '../log'
 import { install, Plug } from '../pipe'
 import { coverageReport, CoverageResult } from './coverage/report'
 import { createAnalyser, SourceMapBias } from './coverage/analysis'
+import { fail } from '../assert'
 
 /** Options to analyse coverage reports */
 export interface CoverageOptions {
@@ -58,7 +59,7 @@ export class Coverage<
     })
 
     if (coverageFiles.length === 0) {
-      run.log.fail('No coverage files found in', $p(coverageFiles.directory))
+      fail('No coverage files found in', $p(coverageFiles.directory))
     }
 
     const sourceFiles = [ ...files.absolutePaths() ]
@@ -128,11 +129,7 @@ export class Coverage<
     }
 
     /* If we don't have to write a report, pass-through the coverage files */
-    if (this._options.reportDir == null) {
-      if (! _report.empty) _report.emit()
-      if (_report.errors) _report.fail()
-      return undefined as any
-    }
+    if (this._options.reportDir == null) return _report.done(false) as any
 
     /* Create a builder to emit our reports */
     const builder = run.files(this._options.reportDir)
@@ -174,9 +171,10 @@ export class Coverage<
     const jsonp = JSON.stringify({ ...report, results, thresholds, tree, date })
     await builder.write('report.js', `window.__initCoverage__(${jsonp});`)
 
-    /* Add the files we generated */
-    if (! _report.empty) _report.emit()
-    if (_report.errors) _report.fail()
+    /* Emit our coverage report */
+    _report.done(false)
+
+    /* Return emitted files */
     return builder.build() as any
   }
 }
