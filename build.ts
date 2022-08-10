@@ -1,4 +1,4 @@
-import { build, checkDependencies, find, fixExtensions, parallel, rmrf } from './src/index'
+import { build, checkDependencies, find, fixExtensions, parallel, rmrf, setLogLevel } from './src/index'
 
 export default build({
   find_sources: () => find('**/*.ts', { directory: 'src', ignore: 'cli.ts' }),
@@ -34,11 +34,13 @@ export default build({
   },
 
   async check_coverage() {
+    setLogLevel('debug')
     try {
       await this.test() // no coverage without tests, right?
     } finally {
       await this.find_sources().coverage('coverage', {
         reportDir: 'coverage',
+        // usePreciseMappings: true,
       })
     }
   },
@@ -124,8 +126,11 @@ export default build({
    * ======================================================================== */
 
   async default() {
-    await this.test()
-    await this.check()
-    await this.compile()
+    try {
+      await this.test()
+    } finally {
+      await this.check()
+      await this.compile()
+    }
   },
 })

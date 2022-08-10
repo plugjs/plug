@@ -5,7 +5,6 @@ import { RawSourceMap, SourceMapConsumer } from 'source-map'
 import { assert } from '../../assert'
 import { $p, Logger } from '../../log'
 import { AbsolutePath } from '../../paths'
-// import { log } from '../../log'
 import { readFile } from '../../utils/asyncfs'
 
 /* ========================================================================== *
@@ -74,12 +73,15 @@ export interface V8CoverageData {
  * COVERAGE ANALYSIS                                                          *
  * ========================================================================== */
 
+/** The bias for source map analisys (defaults to `greatest_lower_bound`) */
+export type SourceMapBias = 'greatest_lower_bound' | 'least_upper_bound' | 'none' | undefined
+
 /** Interface providing coverage data */
 export interface CoverageAnalyser {
   /** Return the number of coverage passes for the given location */
   coverage(source: string, line: number, column: number): number
   /** Destroy this instance */
-  destroy(): Promise<void>
+  destroy(): void
 }
 
 /* ========================================================================== */
@@ -89,7 +91,7 @@ abstract class CoverageAnalyserImpl implements CoverageAnalyser {
   constructor(protected readonly _log: Logger) {}
 
   abstract init(): Promise<this>
-  abstract destroy(): Promise<void>
+  abstract destroy(): void
   abstract coverage(source: string, line: number, column: number): number
 }
 
@@ -129,7 +131,7 @@ class CoverageResultAnalyser extends CoverageAnalyserImpl {
     return this
   }
 
-  async destroy(): Promise<void> {
+  destroy(): void {
     // Nothing to do
   }
 
@@ -153,30 +155,63 @@ class CoverageResultAnalyser extends CoverageAnalyserImpl {
 
 /** Return coverage from a V8 {@link V8CoverageResult} with a sitemap */
 class CoverageSitemapAnalyser extends CoverageResultAnalyser {
+  private _preciseMappings = new Map<string, { line: number, column: number }>()
   private _sourceMap?: SourceMapConsumer
 
   constructor(
       log: Logger,
       result: V8CoverageResult,
-      private readonly _sourceMapCache: V8SourceMapCache) {
+      private readonly _sourceMapCache: V8SourceMapCache,
+      private readonly _sourceMapBias: SourceMapBias,
+  ) {
     super(log, result)
     this._lineLengths = _sourceMapCache.lineLengths
+  }
+
+  private _key(source: string, line: number, column: number): string {
+    return `${line}:${column}:${source}`
   }
 
   async init(): Promise<this> {
     const sourceMap = this._sourceMapCache.data
     assert(sourceMap, 'Missing source map data from cache')
     this._sourceMap = await new SourceMapConsumer(sourceMap)
+
+    if (this._sourceMapBias === 'none') {
+      this._sourceMap.eachMapping((m) => {
+        const location = { line: m.generatedLine, column: m.generatedColumn }
+        const key = this._key(m.source, m.originalLine, m.originalColumn)
+        this._preciseMappings.set(key, location)
+      })
+    }
+
     return this
   }
 
-  async destroy(): Promise<void> {
+  destroy(): void {
     this._sourceMap?.destroy()
   }
 
   coverage(source: string, line: number, column: number): number {
     assert(this._sourceMap, 'Analyser not initialized')
-    const generated = this._sourceMap.generatedPositionFor({ source, line, column })
+
+    if (this._sourceMapBias === 'none') {
+      const key = this._key(source, line, column)
+      const location = this._preciseMappings.get(key)
+      if (! location) {
+        this._log.debug(`No precise mapping for ${source}:${line}:${column}`)
+        return 0
+      } else {
+        return super.coverage(this._result.url, location.line, location.column)
+      }
+    }
+
+    const bias =
+      this._sourceMapBias === 'greatest_lower_bound' ? SourceMapConsumer.GREATEST_LOWER_BOUND :
+      this._sourceMapBias === 'least_upper_bound' ? SourceMapConsumer.LEAST_UPPER_BOUND :
+      undefined
+
+    const generated = this._sourceMap.generatedPositionFor({ source, line, column, bias })
 
     if (! generated) {
       this._log.debug(`No position generated for ${source}:${line}:${column}`)
@@ -240,10 +275,10 @@ export class SourcesCoverageAnalyser extends CoverageAnalyserImpl {
     return this
   }
 
-  async destroy(): Promise<void> {
+  destroy(): void {
     for (const analysers of this._mappings.values()) {
       for (const analyser of analysers) {
-        await analyser.destroy()
+        analyser.destroy()
       }
     }
   }
@@ -267,8 +302,8 @@ export class CombiningCoverageAnalyser extends CoverageAnalyserImpl {
     return this
   }
 
-  async destroy(): Promise<void> {
-    for (const analyser of this.#analysers) await analyser.destroy()
+  destroy(): void {
+    for (const analyser of this.#analysers) analyser.destroy()
   }
 
   coverage(source: string, line: number, column: number): number {
@@ -285,6 +320,7 @@ export class CombiningCoverageAnalyser extends CoverageAnalyserImpl {
 export async function createAnalyser(
   sourceFiles: AbsolutePath[],
   coverageFiles: AbsolutePath[],
+  sourceMapBias: SourceMapBias,
   log: Logger,
 ): Promise<CoverageAnalyser> {
   /* Internally V8 coverage uses URLs for everything */
@@ -321,7 +357,7 @@ export async function createAnalyser(
 
         /* If we map any file, we associate it with our source map analyser */
         if (matches.length) {
-          const sourceAnalyser = new CoverageSitemapAnalyser(log, result, mapping)
+          const sourceAnalyser = new CoverageSitemapAnalyser(log, result, mapping, sourceMapBias)
           for (const match of matches) coverageFileAnalyser.add(match, sourceAnalyser)
         }
 

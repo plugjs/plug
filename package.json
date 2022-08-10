@@ -4,7 +4,7 @@
   "main": "build/index.js",
   "types": "types/index.d.ts",
   "scripts": {
-    "bootstrap": "node --require=./extra/ts-loader.cjs ./src/cli.ts compile",
+    "bootstrap": "node --require=./extra/ts-loader.cjs ./src/cli.ts",
     "build": "node ./dist/cli"
   },
   "author": "",

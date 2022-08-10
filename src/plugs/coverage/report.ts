@@ -17,7 +17,7 @@ import {
 
 import { $p, Logger } from '../../log'
 import { readFile } from '../../utils/asyncfs'
-import { createAnalyser } from './analysis'
+import { CoverageAnalyser } from './analysis'
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *
@@ -93,13 +93,10 @@ const ignoreRegexp = /(coverage|istanbul)\s+ignore\s+(test|if|else|try|catch|fin
  * specified coverage files and produce a {@link CoverageReport}.
  */
 export async function coverageReport(
+    analyser: CoverageAnalyser,
     sourceFiles: AbsolutePath[],
-    coverageFiles: AbsolutePath[],
     log: Logger,
 ): Promise<CoverageReport> {
-  /* The coverage analyser combining all coverage files in the directory */
-  const analyser = await createAnalyser(sourceFiles, coverageFiles, log)
-
   /* Some of our results */
   const results: CoverageResults = {}
   const nodes: NodeCoverageResult = {

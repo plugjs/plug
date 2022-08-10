@@ -9,9 +9,12 @@ import { sep } from 'node:path'
 import { $gry, $p, $red, $ylw, ERROR, NOTICE, WARN } from '../log'
 import { install, Plug } from '../pipe'
 import { coverageReport, CoverageResult } from './coverage/report'
+import { createAnalyser, SourceMapBias } from './coverage/analysis'
 
 /** Options to analyse coverage reports */
 export interface CoverageOptions {
+  /** The bias for source map analisys (defaults to `greatest_lower_bound`) */
+  sourceMapBias?: SourceMapBias
   /** Minimum _overall_ coverage (as a percentage) */
   minimumCoverage?: number,
   /** Optimal _overall_ coverage (as a percentage)  */
@@ -58,11 +61,18 @@ export class Coverage<
       run.log.fail('No coverage files found in', $p(coverageFiles.directory))
     }
 
-    const report = await coverageReport(
-        [ ...files.absolutePaths() ],
+    const sourceFiles = [ ...files.absolutePaths() ]
+
+    const analyser = await createAnalyser(
+        sourceFiles,
         [ ...coverageFiles.absolutePaths() ],
+        this._options.sourceMapBias,
         run.log,
     )
+
+    const report = await coverageReport(analyser, sourceFiles, run.log)
+
+    analyser.destroy()
 
     const {
       minimumCoverage = 50,
