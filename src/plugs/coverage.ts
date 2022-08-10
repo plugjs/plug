@@ -59,8 +59,9 @@ export class Coverage<
     }
 
     const report = await coverageReport(
-        files.absolutePaths(),
-        coverageFiles.absolutePaths(),
+        [ ...files.absolutePaths() ],
+        [ ...coverageFiles.absolutePaths() ],
+        run.log,
     )
 
     const {

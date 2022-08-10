@@ -1,9 +1,11 @@
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { RawSourceMap, SourceMapConsumer } from 'source-map'
 
 import { assert } from '../../assert'
-import { log } from '../../log'
+import { $p, Logger } from '../../log'
+import { AbsolutePath } from '../../paths'
+// import { log } from '../../log'
 import { readFile } from '../../utils/asyncfs'
 
 /* ========================================================================== *
@@ -74,24 +76,39 @@ export interface V8CoverageData {
 
 /** Interface providing coverage data */
 export interface CoverageAnalyser {
-  /** Asynchronously initialize this instance */
-  init(): Promise<void>
-  /** Asynchronously destroy this instance */
-  destroy(): Promise<void>
   /** Return the number of coverage passes for the given location */
   coverage(source: string, line: number, column: number): number
+  /** Destroy this instance */
+  destroy(): Promise<void>
 }
 
 /* ========================================================================== */
 
+/** Basic abstract class implementing the {@link CoverageAnalyser} class */
+abstract class CoverageAnalyserImpl implements CoverageAnalyser {
+  constructor(protected readonly _log: Logger) {}
+
+  abstract init(): Promise<this>
+  abstract destroy(): Promise<void>
+  abstract coverage(source: string, line: number, column: number): number
+}
+
+
+/* ========================================================================== */
+
 /** Return coverage data from a V8 {@link V8CoverageResult} structure */
-export class CoverageResultAnalyser implements CoverageAnalyser {
+class CoverageResultAnalyser extends CoverageAnalyserImpl {
   /** Number of passes at each character in the result */
   protected readonly _coverage: readonly (number | undefined)[]
   /** Internal private field for init/_lineLengths getter */
-  #lineLengths?: readonly number[]
+  protected _lineLengths?: readonly number[]
 
-  constructor(protected readonly _result: V8CoverageResult) {
+  constructor(
+      log: Logger,
+      protected readonly _result: V8CoverageResult,
+  ) {
+    super(log)
+
     const _coverage: (number | undefined)[] = []
 
     for (const coveredFunction of _result.functions) {
@@ -105,24 +122,20 @@ export class CoverageResultAnalyser implements CoverageAnalyser {
     this._coverage = _coverage
   }
 
-  async init(): Promise<void> {
+  async init(): Promise<this> {
     const filename = fileURLToPath(this._result.url)
     const source = await readFile(filename, 'utf-8')
-    this.#lineLengths = source.split('\n').map((line) => line.length)
+    this._lineLengths = source.split('\n').map((line) => line.length)
+    return this
   }
 
   async destroy(): Promise<void> {
     // Nothing to do
   }
 
-  /** Length of each line in the original source file */
-  protected get _lineLengths(): readonly number[] {
-    assert(this.#lineLengths, 'Analyser not initialized')
-    return this.#lineLengths
-  }
-
   /** Return the number of coverage passes for the given location */
   coverage(source: string, line: number, column: number): number {
+    assert(this._lineLengths, 'Analyser not initialized')
     assert(source === this._result.url, `Wrong source ${source} (should be ${this._result.url})`)
 
     const { _lineLengths, _coverage } = this
@@ -139,44 +152,44 @@ export class CoverageResultAnalyser implements CoverageAnalyser {
 /* ========================================================================== */
 
 /** Return coverage from a V8 {@link V8CoverageResult} with a sitemap */
-export class CoverageSitemapAnalyser extends CoverageResultAnalyser {
-  #sourceMap?: SourceMapConsumer
+class CoverageSitemapAnalyser extends CoverageResultAnalyser {
+  private _sourceMap?: SourceMapConsumer
 
-  constructor(_result: V8CoverageResult, protected readonly _sourceMapCache: V8SourceMapCache) {
-    super(_result)
+  constructor(
+      log: Logger,
+      result: V8CoverageResult,
+      private readonly _sourceMapCache: V8SourceMapCache) {
+    super(log, result)
+    this._lineLengths = _sourceMapCache.lineLengths
   }
 
-  async init(): Promise<void> {
+  async init(): Promise<this> {
     const sourceMap = this._sourceMapCache.data
     assert(sourceMap, 'Missing source map data from cache')
-    this.#sourceMap = await new SourceMapConsumer(sourceMap)
+    this._sourceMap = await new SourceMapConsumer(sourceMap)
+    return this
   }
 
   async destroy(): Promise<void> {
-    this.#sourceMap?.destroy()
-  }
-
-  /** Length of each line in the original source file */
-  protected get _lineLengths(): readonly number[] {
-    return this._sourceMapCache.lineLengths
+    this._sourceMap?.destroy()
   }
 
   coverage(source: string, line: number, column: number): number {
-    assert(this.#sourceMap, 'Analyser not initialized')
-    const generated = this.#sourceMap.generatedPositionFor({ source, line, column })
+    assert(this._sourceMap, 'Analyser not initialized')
+    const generated = this._sourceMap.generatedPositionFor({ source, line, column })
 
     if (! generated) {
-      log.debug(`No position generated for ${source}:${line}:${column}`)
+      this._log.debug(`No position generated for ${source}:${line}:${column}`)
       return 0
     }
 
     if (generated.line == null) {
-      log.debug(`No line generated for ${source}:${line}:${column}`)
+      this._log.debug(`No line generated for ${source}:${line}:${column}`)
       return 0
     }
 
     if (generated.column == null) {
-      log.debug(`No column generated for ${source}:${line}:${column}`)
+      this._log.debug(`No column generated for ${source}:${line}:${column}`)
       return 0
     }
 
@@ -186,58 +199,49 @@ export class CoverageSitemapAnalyser extends CoverageResultAnalyser {
 
 /* ========================================================================== */
 
-/** Combine coverage from multiple analysers */
-abstract class CoverageCombiner {
-  #loggedSources = new Set<string>()
+/** Combine (add) all coverage data from all analysers */
+function combineCoverage(
+    analysers: CoverageAnalyser[],
+    source: string,
+    line: number,
+    column: number,
+): number {
+  let coverage = 0
 
-  protected _combineCoverage(
-      analysers: CoverageAnalyser[],
-      source: string,
-      line: number,
-      column: number,
-  ): number {
-    /* Log out (once) if we have no coverage analyser for the source */
-    if (analysers.length === 0) {
-      if (! this.#loggedSources.has(source)) {
-        log.debug(`No coverage available for ${source}`)
-        this.#loggedSources.add(source)
-      }
-      return 0
-    }
-
-    /* Combine (add) all coverage data from all analysers */
-    let coverage = 0
-
-    for (const analyser of analysers) {
-      coverage += analyser.coverage(source, line, column)
-    }
-
-    return coverage
+  for (const analyser of analysers) {
+    coverage += analyser.coverage(source, line, column)
   }
+
+  return coverage
 }
 
 /* ========================================================================== */
 
 /** Associate one or more {@link CoverageAnalyser} with different sources */
-export class SourcesCoverageAnalyser extends CoverageCombiner implements CoverageAnalyser {
-  #mappings = new Map<string, CoverageAnalyser[]>()
+export class SourcesCoverageAnalyser extends CoverageAnalyserImpl {
+  private readonly _mappings = new Map<string, CoverageAnalyserImpl[]>()
 
-  add(source: string, analyser: CoverageAnalyser): void {
-    const analysers = this.#mappings.get(source) || []
-    analysers.push(analyser)
-    this.#mappings.set(source, analysers)
+  hasMappings(): boolean {
+    return this._mappings.size > 0
   }
 
-  async init(): Promise<void> {
-    for (const analysers of this.#mappings.values()) {
+  add(source: string, analyser: CoverageAnalyserImpl): void {
+    const analysers = this._mappings.get(source) || []
+    analysers.push(analyser)
+    this._mappings.set(source, analysers)
+  }
+
+  async init(): Promise<this> {
+    for (const analysers of this._mappings.values()) {
       for (const analyser of analysers) {
         await analyser.init()
       }
     }
+    return this
   }
 
   async destroy(): Promise<void> {
-    for (const analysers of this.#mappings.values()) {
+    for (const analysers of this._mappings.values()) {
       for (const analyser of analysers) {
         await analyser.destroy()
       }
@@ -245,32 +249,94 @@ export class SourcesCoverageAnalyser extends CoverageCombiner implements Coverag
   }
 
   coverage(source: string, line: number, column: number): number {
-    const analysers = this.#mappings.get(source) || []
-    return this._combineCoverage(analysers, source, line, column)
+    const analysers = this._mappings.get(source) || []
+    return combineCoverage(analysers, source, line, column)
   }
 }
 
 /** Combine multiple {@link CoverageAnalyser} instances together */
-export class CombiningCoverageAnalyser extends CoverageCombiner implements CoverageAnalyser {
-  #analysers: CoverageAnalyser[] = []
+export class CombiningCoverageAnalyser extends CoverageAnalyserImpl {
+  #analysers: CoverageAnalyserImpl[] = []
 
-  add(analyser: CoverageAnalyser): void {
+  add(analyser: CoverageAnalyserImpl): void {
     this.#analysers.push(analyser)
   }
 
-  async init(): Promise<void> {
-    for (const analyser of this.#analysers) {
-      await analyser.init()
-    }
+  async init(): Promise<this> {
+    for (const analyser of this.#analysers) await analyser.init()
+    return this
   }
 
   async destroy(): Promise<void> {
-    for (const analyser of this.#analysers) {
-      await analyser.destroy()
-    }
+    for (const analyser of this.#analysers) await analyser.destroy()
   }
 
   coverage(source: string, line: number, column: number): number {
-    return this._combineCoverage(this.#analysers, source, line, column)
+    return combineCoverage(this.#analysers, source, line, column)
   }
+}
+
+/* ========================================================================== */
+
+/**
+ * Analyse coverage for the specified source files, using the data from the
+ * specified coverage files and produce a {@link CoverageReport}.
+ */
+export async function createAnalyser(
+  sourceFiles: AbsolutePath[],
+  coverageFiles: AbsolutePath[],
+  log: Logger,
+): Promise<CoverageAnalyser> {
+  /* Internally V8 coverage uses URLs for everything */
+  const urls = sourceFiles.map((path) => pathToFileURL(path).toString())
+
+  /* The coverage analyser combining all coverage files in the directory */
+  const analyser = new CombiningCoverageAnalyser(log)
+
+  /* Resolve and walk the coverage directory, finding "coverage-*.json" files */
+  for await (const coverageFile of coverageFiles) {
+    /* The "SourceCoverageAnalyser" for this coverage file */
+    const coverageFileAnalyser = new SourcesCoverageAnalyser(log)
+
+    /* Parse our coverage file from JSON */
+    log.debug('Parsing coverage file', $p(coverageFile))
+    const contents = await readFile(coverageFile, 'utf-8')
+    const coverage: V8CoverageData = JSON.parse(contents)
+
+    /* Let's look inside of the coverage file... */
+    for (const result of coverage.result) {
+      /*
+        * Each coverage result (script) can be associated with a sitemap or
+        * not... Sometimes (as in with ts-node) the sitemap simply points to
+        * itself (same file), but embeds all the transformation information
+        * between the file on disk, and what's been used by Node.JS.
+        */
+      const mapping = coverage['source-map-cache']?.[result.url]
+      if (mapping) {
+        /*
+          * If we have mapping, we want to see if any of the sourcemap's source
+          * files matches one of the sources we have to analyse.
+          */
+        const matches = urls.filter((url) => mapping.data?.sources.includes(url))
+
+        /* If we map any file, we associate it with our source map analyser */
+        if (matches.length) {
+          const sourceAnalyser = new CoverageSitemapAnalyser(log, result, mapping)
+          for (const match of matches) coverageFileAnalyser.add(match, sourceAnalyser)
+        }
+
+      /*
+        * If we have no source map for the file, but it matches one of the
+        * ones we have to analyse coverage for, we add that directly...
+        */
+      } else if (urls.includes(result.url)) {
+        coverageFileAnalyser.add(result.url, new CoverageResultAnalyser(log, result))
+      }
+
+      /* Add the analyser if it has some mappings */
+      if (coverageFileAnalyser.hasMappings()) analyser.add(coverageFileAnalyser)
+    }
+  }
+
+  return await analyser.init()
 }

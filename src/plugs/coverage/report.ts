@@ -15,15 +15,9 @@ import {
   VISITOR_KEYS
 } from '@babel/types'
 
-import { $p, log } from '../../log'
+import { $p, Logger } from '../../log'
 import { readFile } from '../../utils/asyncfs'
-import {
-  CombiningCoverageAnalyser,
-  CoverageResultAnalyser,
-  CoverageSitemapAnalyser,
-  SourcesCoverageAnalyser,
-  V8CoverageData
-} from './analysis'
+import { createAnalyser } from './analysis'
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *
@@ -99,18 +93,14 @@ const ignoreRegexp = /(coverage|istanbul)\s+ignore\s+(test|if|else|try|catch|fin
  * specified coverage files and produce a {@link CoverageReport}.
  */
 export async function coverageReport(
-    sourceFiles: AsyncIterable<AbsolutePath> | Iterable<AbsolutePath>,
-    coverageFiles: AsyncIterable<AbsolutePath> | Iterable<AbsolutePath>,
+    sourceFiles: AbsolutePath[],
+    coverageFiles: AbsolutePath[],
+    log: Logger,
 ): Promise<CoverageReport> {
-  /* Convert our source files to an array for easy picking */
-  const files: AbsolutePath[] = []
-  for await (const file of sourceFiles) files.push(file)
-
-  /* Internally V8 coverage uses URLs for everything */
-  const urls = files.map((path) => pathToFileURL(path).toString())
-
   /* The coverage analyser combining all coverage files in the directory */
-  const analyser = new CombiningCoverageAnalyser()
+  const analyser = await createAnalyser(sourceFiles, coverageFiles, log)
+
+  /* Some of our results */
   const results: CoverageResults = {}
   const nodes: NodeCoverageResult = {
     coveredNodes: 0,
@@ -120,60 +110,13 @@ export async function coverageReport(
     coverage: 0,
   }
 
-
-  /* Resolve and walk the coverage directory, finding "coverage-*.json" files */
-  for await (const coverageFile of coverageFiles) {
-    /* The "SourceCoverageAnalyser" for this coverage file */
-    const coverageFileAnalyser = new SourcesCoverageAnalyser()
-    analyser.add(coverageFileAnalyser)
-
-    /* Parse our coverage file from JSON */
-    log.debug('Parsing coverage file', $p(coverageFile))
-    const contents = await readFile(coverageFile, 'utf-8')
-    const coverage: V8CoverageData = JSON.parse(contents)
-
-    /* Let's look inside of the coverage file... */
-    for (const result of coverage.result) {
-      /*
-        * Each coverage result (script) can be associated with a sitemap or
-        * not... Sometimes (as in with ts-node) the sitemap simply points to
-        * itself (same file), but embeds all the transformation information
-        * between the file on disk, and what's been used by Node.JS.
-        */
-      const mapping = coverage['source-map-cache']?.[result.url]
-      if (mapping) {
-        /*
-          * If we have mapping, we want to see if any of the sourcemap's source
-          * files matches one of the sources we have to analyse.
-          */
-        const matches = urls.filter((url) => mapping.data?.sources.includes(url))
-
-        /* If we map any file, we associate it with our source map analyser */
-        if (matches.length) {
-          const sourceAnalyser = new CoverageSitemapAnalyser(result, mapping)
-          for (const match of matches) coverageFileAnalyser.add(match, sourceAnalyser)
-        }
-
-      /*
-        * If we have no source map for the file, but it matches one of the
-        * ones we have to analyse coverage for, we add that directly...
-        */
-      } else if (urls.includes(result.url)) {
-        coverageFileAnalyser.add(result.url, new CoverageResultAnalyser(result))
-      }
-    }
-  }
-
-  /* Now that we parsed all coverage files, we initialize analysers */
-  await analyser.init()
-
   /*
     * Here comes the interesting part: we need to parse the original soruces,
     * walk their ASTs and see whether each node has been covered or not.
     * We look up every node's position, (for sitemaps, map this to the position
     * in the resulting file) then look at the coverage.
     */
-  for (const file of files) {
+  for (const file of sourceFiles) {
     /* Read up the file and parse the tree in the most liberal way possible */
     const url = pathToFileURL(file).toString()
     const code = await readFile(file, 'utf-8')
