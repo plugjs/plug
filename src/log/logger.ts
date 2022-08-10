@@ -1,4 +1,3 @@
-import { buildFailed } from '../symbols'
 import { emitColor, emitPlain, LogEmitter } from './emit'
 import { DEBUG, ERROR, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
@@ -33,8 +32,6 @@ export interface Log {
   warn(...args: [ any, ...any ]): this
   /** Log an `ERROR` message */
   error(...args: [ any, ...any ]): this
-  /** Log a `FAIL` message and throw */
-  fail(...args: [ any, ...any ]): never
 }
 
 /** A {@link Logger} extends the basic {@link Log} adding some state. */
@@ -82,8 +79,9 @@ class LoggerImpl implements Logger {
   private _emit(level: LogLevel, args: [ any, ...any ]): this {
     if (this._level > level) return this
 
-    const params = args.filter((arg) => arg !== buildFailed)
-    if (params.length === 0) return this
+    // TODO: handle previously logged failures
+    // const params = args.filter((arg) => arg !== buildFailed)
+    // if (params.length === 0) return this
 
     if (this._stack.length) {
       for (const { message, ...options } of this._stack) {
@@ -92,7 +90,7 @@ class LoggerImpl implements Logger {
       this._stack.splice(0)
     }
 
-    this._emitter({ level, taskName: this._task, indent: this._indent }, params)
+    this._emitter({ level, taskName: this._task, indent: this._indent }, args)
     return this
   }
 
@@ -126,12 +124,6 @@ class LoggerImpl implements Logger {
 
   error(...args: [ any, ...any ]): this {
     return this._emit(ERROR, args)
-  }
-
-  fail(...args: [ any, ...any ]): never {
-    if (args.includes(buildFailed)) throw buildFailed
-    this._emit(ERROR, args)
-    throw buildFailed
   }
 
   enter(): this
