@@ -37,6 +37,9 @@ export interface Log {
 
 /** A {@link Logger} extends the basic {@link Log} adding some state. */
 export interface Logger extends Log {
+  /** The current level for logging. */
+  level: LogLevel,
+
   /** Enter a sub-level of logging, increasing indent */
   enter(level: LogLevel, message: string): this
 
@@ -63,6 +66,7 @@ const _loggers = new Map<string, Logger>()
 
 /** Default implementation of the {@link Logger} interface. */
 class LoggerImpl implements Logger {
+  private _level = _level
   private _indent = 0
   private _stack: { level: LogLevel, message: string, indent: number }[] = []
 
@@ -75,43 +79,51 @@ class LoggerImpl implements Logger {
     this._stack.splice(0)
   }
 
+  get level(): LogLevel {
+    return this._level
+  }
+
+  set level(level: LogLevel) {
+    this._level = level
+  }
+
   trace(...args: [ any, ...any ]): this {
-    if (_level > TRACE) return this
+    if (this._level > TRACE) return this
     this._emitStack()
     emit({ taskName: this._task, level: TRACE, indent: this._indent }, args)
     return this
   }
 
   debug(...args: [ any, ...any ]): this {
-    if (_level > DEBUG) return this
+    if (this._level > DEBUG) return this
     this._emitStack()
     emit({ taskName: this._task, level: DEBUG, indent: this._indent }, args)
     return this
   }
 
   info(...args: [ any, ...any ]): this {
-    if (_level > INFO) return this
+    if (this._level > INFO) return this
     this._emitStack()
     emit({ taskName: this._task, level: INFO, indent: this._indent }, args)
     return this
   }
 
   notice(...args: [ any, ...any ]): this {
-    if (_level > NOTICE) return this
+    if (this._level > NOTICE) return this
     this._emitStack()
     emit({ taskName: this._task, level: NOTICE, indent: this._indent }, args)
     return this
   }
 
   warn(...args: [ any, ...any ]): this {
-    if (_level > WARN) return this
+    if (this._level > WARN) return this
     this._emitStack()
     emit({ taskName: this._task, level: WARN, indent: this._indent }, args)
     return this
   }
 
   error(...args: [ any, ...any ]): this {
-    if (_level > ERROR) return this
+    if (this._level > ERROR) return this
     this._emitStack()
     emit({ taskName: this._task, level: ERROR, indent: this._indent }, args)
     return this
