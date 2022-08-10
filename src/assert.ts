@@ -1,12 +1,16 @@
-import { inspect } from 'node:util'
-
 /* ========================================================================== *
  * BUILD FAILURES                                                             *
  * ========================================================================== */
 
-const buildFailure = Symbol.for('plugjs:isBuild')
+const buildError = Symbol.for('plugjs:buildError')
+const buildFailure = Symbol.for('plugjs:buildFailure')
 
-/** Check if the specified build is actually a {@link Build} */
+/** Check if the specified argument is a {@link BuildError} */
+export function isBuildError(arg: any): arg is BuildError {
+  return arg && arg[buildError] === buildError
+}
+
+/** Check if the specified argument is a {@link BuildFailure} */
 export function isBuildFailure(arg: any): arg is BuildFailure {
   return arg && arg[buildFailure] === buildFailure
 }
@@ -15,15 +19,12 @@ export function isBuildFailure(arg: any): arg is BuildFailure {
 export class BuildError extends Error {
   constructor(message: string) {
     super(message)
-  }
-
-  [inspect.custom](): string {
-    return this.message
+    Object.defineProperty(this, buildError, { value: buildError })
   }
 }
 
 /** A {@link BuildFailure} represents an error _already logged_ in our build. */
-export class BuildFailure extends BuildError {
+export class BuildFailure extends Error {
   constructor() {
     super('Build Failure')
     Object.defineProperty(this, buildFailure, { value: buildFailure })
