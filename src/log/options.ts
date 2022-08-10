@@ -24,6 +24,8 @@ export interface LogOptions {
   taskLength: number,
   /** The number of spaces used for indenting. */
   indentSize: number,
+  /** Whether to show sources in reports or not. */
+  showSources: boolean,
   /** The task name to be used by default if a task is not contextualized. */
   defaultTaskName: string,
   /** The options used by NodeJS for object inspection. */
@@ -53,6 +55,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   private _colors = (<NodeJS.WriteStream> this._output).isTTY
   private _spinner = true // by default, the spinner is enabled
   private _lineLength = (<NodeJS.WriteStream> this._output).columns || 80
+  private _showSources = true // by default, always show source snippets
   private _inspectOptions: InspectOptions = {}
   private _defaultTaskName = ''
   private _taskLength = 0
@@ -155,6 +158,15 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   set indentSize(indentSize: number) {
     this._indentSize = indentSize
     if (this._indentSize < 1) this._indentSize = 1
+    this._notifyListeners()
+  }
+
+  get showSources(): boolean {
+    return this._showSources
+  }
+
+  set showSources(showSources: boolean) {
+    this._showSources = showSources
     this._notifyListeners()
   }
 
