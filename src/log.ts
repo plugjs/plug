@@ -58,12 +58,6 @@ export const log: LogFunction = ((): LogFunction => {
       logger().error(...args)
       return wrapper
     },
-
-    fail(...args: [ any, ...any ]): never {
-      // Dunno why TS thinks that `logger().fail(... args)` can return
-      const log: Log = logger()
-      log.fail(...args)
-    },
   }
 
   /* Create a function that will default logging to "NOTICE" */
