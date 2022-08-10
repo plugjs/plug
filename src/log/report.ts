@@ -3,10 +3,19 @@ import type { AbsolutePath } from '../paths'
 import { buildFailed } from '../symbols'
 import { readFile } from '../utils/asyncfs'
 import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
-import { emit } from './emit'
+import { emitColor, emitPlain, LogEmitter } from './emit'
 import { ERROR, INFO, LogLevels, NOTICE, WARN } from './levels'
+import { logOptions } from './options'
 
 /* ========================================================================== */
+
+/* Track changes for colors */
+let _colors = logOptions.colors
+logOptions.on('changed', ({ colors }) => {
+  _colors = colors
+})
+
+/* ========================================================================== *
 
 /** Levels used in a {@link Report}  */
 export type ReportLevel = LogLevels['NOTICE' | 'WARN' | 'ERROR']
@@ -96,7 +105,8 @@ export interface Report {
 
 /** Create a new {@link Report} with the given title */
 export function createReport(title: string, taskName: string): Report {
-  return new ReportImpl(title, taskName)
+  const emitter = _colors ? emitColor : emitPlain
+  return new ReportImpl(title, taskName, emitter)
 }
 
 /* ========================================================================== *
@@ -131,6 +141,7 @@ class ReportImpl implements Report {
   constructor(
       private readonly _title: string,
       private readonly _task: string,
+      private readonly _emit: LogEmitter,
   ) {}
 
   get notices(): number {
@@ -326,8 +337,8 @@ class ReportImpl implements Report {
     /* Basic emit options */
     const options = { taskName: this._task, level: INFO }
 
-    emit(options, [ '' ])
-    emit(options, [ $und($wht(this._title)) ])
+    this._emit(options, [ '' ])
+    this._emit(options, [ $und($wht(this._title)) ])
 
 
     /* Iterate through all our [file,reports] tuple */
@@ -336,7 +347,7 @@ class ReportImpl implements Report {
       const source = file && this._sources.get(file)
 
       if ((f === 0) || entries[f - 1]?.records.length) {
-        emit(options, [ '' ])
+        this._emit(options, [ '' ])
       }
 
       if (file && annotation) {
@@ -345,9 +356,9 @@ class ReportImpl implements Report {
         const ann = `${$gry('[')}${$col(note.padStart(aPad))}${$gry(']')}`
         const pad = ''.padStart(fPad - file.length) // file is underlined
 
-        emit({ ...options, level }, [ $wht($und(file)), pad, ann ])
+        this._emit({ ...options, level }, [ $wht($und(file)), pad, ann ])
       } else if (file) {
-        emit(options, [ $wht($und(file)) ])
+        this._emit(options, [ $wht($und(file)) ])
       }
 
       /* Now get each message and do our magic */
@@ -373,15 +384,15 @@ class ReportImpl implements Report {
 
         /* Print out our messages, one by one */
         if (messages.length === 1) {
-          emit({ ...options, level }, [ $gry(pfx), messages[0].padEnd(mPad), tag ])
+          this._emit({ ...options, level }, [ $gry(pfx), messages[0].padEnd(mPad), tag ])
         } else {
           for (let m = 0; m < messages.length; m ++) {
             if (! m) { // first line
-              emit({ ...options, level }, [ $gry(pfx), messages[m] ])
+              this._emit({ ...options, level }, [ $gry(pfx), messages[m] ])
             } else if (m === messages.length - 1) { // last line
-              emit({ ...options, level, prefix }, [ messages[m].padEnd(mPad), tag ])
+              this._emit({ ...options, level, prefix }, [ messages[m].padEnd(mPad), tag ])
             } else { // in between lines
-              emit({ ...options, level, prefix }, [ messages[m] ])
+              this._emit({ ...options, level, prefix }, [ messages[m] ])
             }
           }
         }
@@ -395,9 +406,9 @@ class ReportImpl implements Report {
             const body = $und($col(source[line - 1].substring(offset, offset + length)))
             const tail = $gry(source[line - 1].substring(offset + length))
 
-            emit({ ...options, level, prefix }, [ $gry(`| ${head}${body}${tail}`) ])
+            this._emit({ ...options, level, prefix }, [ $gry(`| ${head}${body}${tail}`) ])
           } else {
-            emit({ ...options, level, prefix }, [ $gry(`| ${source[line - 1]}`) ])
+            this._emit({ ...options, level, prefix }, [ $gry(`| ${source[line - 1]}`) ])
           }
         }
       }
@@ -409,15 +420,15 @@ class ReportImpl implements Report {
     const eNumber = this.errors ? $red(this.errors) : 'no'
     const wNumber = this.warnings ? $ylw(this.warnings) : 'no'
 
-    emit(options, [ '' ])
-    emit(options, [ 'Found', eNumber, eLabel, 'and', wNumber, wLabel ])
-    emit(options, [ '' ])
+    this._emit(options, [ '' ])
+    this._emit(options, [ 'Found', eNumber, eLabel, 'and', wNumber, wLabel ])
+    this._emit(options, [ '' ])
 
     return this
   }
 
   fail(...args: any[]): never {
-    emit({ taskName: this._task, level: ERROR }, args)
+    this._emit({ taskName: this._task, level: ERROR }, args)
     throw buildFailed
   }
 }

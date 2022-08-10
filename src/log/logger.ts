@@ -1,5 +1,5 @@
 import { buildFailed } from '../symbols'
-import { emit } from './emit'
+import { emitColor, emitPlain, LogEmitter } from './emit'
 import { DEBUG, ERROR, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
 
@@ -7,9 +7,11 @@ import { logOptions } from './options'
 
 /* Initial value of log colors, and subscribe to changes */
 let _level = logOptions.level
+let _colors = logOptions.colors
 let _defaultTaskName = logOptions.defaultTaskName
-logOptions.on('changed', ({ defaultTaskName, level }) => {
+logOptions.on('changed', ({ defaultTaskName, colors, level }) => {
   _defaultTaskName = defaultTaskName
+  _colors = colors
   _level = level
 })
 
@@ -54,7 +56,8 @@ export interface Logger extends Log {
 export function getLogger(task: string = _defaultTaskName): Logger {
   let logger = _loggers.get(task)
   if (! logger) {
-    logger = new LoggerImpl(task)
+    const emitter = _colors ? emitColor : emitPlain
+    logger = new LoggerImpl(task, emitter)
     _loggers.set(task, logger)
   }
   return logger
@@ -67,24 +70,29 @@ const _loggers = new Map<string, Logger>()
 
 /** Default implementation of the {@link Logger} interface. */
 class LoggerImpl implements Logger {
-  private _stack: { level: LogLevel, message: string, indent: number }[] = []
+  private readonly _stack: { level: LogLevel, message: string, indent: number }[] = []
   private _level = _level
   private _indent = 0
 
-  constructor(private readonly _task: string) {}
+  constructor(
+      private readonly _task: string,
+      private readonly _emitter: LogEmitter,
+  ) {}
 
-  private _emit(level: LogLevel, args: string[]): this {
+  private _emit(level: LogLevel, args: [ any, ...any ]): this {
     if (this._level > level) return this
-    if (args.length === 0) return this
+
+    const params = args.filter((arg) => arg !== buildFailed)
+    if (params.length === 0) return this
 
     if (this._stack.length) {
       for (const { message, ...options } of this._stack) {
-        emit({ ...options, taskName: this._task }, [ message ])
+        this._emitter({ ...options, taskName: this._task }, [ message ])
       }
       this._stack.splice(0)
     }
 
-    emit({ level, taskName: this._task, indent: this._indent }, args)
+    this._emitter({ level, taskName: this._task, indent: this._indent }, params)
     return this
   }
 
