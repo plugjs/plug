@@ -7,6 +7,7 @@ import { $p, ERROR, NOTICE, WARN } from '../../log'
 import { AbsolutePath, getCurrentWorkingDirectory, resolveAbsolutePath } from '../../paths'
 import { readFile } from '../../utils/asyncfs'
 import { workerMain } from '../../worker'
+import { fail } from '../../assert'
 
 export type ESLintWorkerType = typeof ESLintWorker
 
@@ -14,7 +15,8 @@ export type ESLintWorkerType = typeof ESLintWorker
 class ESLintWorker implements Plug<undefined> {
   constructor(
       private readonly _directory: AbsolutePath,
-      private readonly _configFile?: AbsolutePath,
+      private readonly _configFile: AbsolutePath | undefined,
+      private readonly _showSources: boolean | undefined,
   ) {}
 
   async pipe(files: Files, run: Run): Promise<undefined> {
@@ -53,7 +55,7 @@ class ESLintWorker implements Plug<undefined> {
 
     /* In case of failures from promises, fail! */
     const { results, failures } = summary
-    if (failures) run.log.fail('ESLint failed linting')
+    if (failures) fail('ESLint failed linting')
 
     /* Create our report */
     const report = run.report('ESLint Report')
@@ -86,8 +88,7 @@ class ESLintWorker implements Plug<undefined> {
     }
 
     /* Emit our report and fail on errors */
-    if (! report.empty) report.emit()
-    if (report.errors) report.fail()
+    report.done(this._showSources || false) // TODO
     return undefined
   }
 }

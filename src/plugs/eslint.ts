@@ -11,6 +11,8 @@ import { $p } from '../log'
 export interface ESLintOptions {
   /** ESLint's own _current working directory_, where config files are. */
   directory?: string
+  /** Show sources in report? */
+  showSources?: boolean
   /**
    * ESLint's _override_ configuration file: configurations specified in this
    * file will override any other configuration specified elsewhere.
@@ -39,7 +41,7 @@ export class ESLint implements Plug<undefined> {
     if (cfg) assert(isFile(cfg), 'ESLint configuration', $p(cfg), 'does not exist')
 
     const script = requireResolve(__filename, './eslint/worker')
-    return executeWorker<ESLintWorkerType>(script, files, run, dir, cfg)
+    return executeWorker<ESLintWorkerType>(script, files, run, dir, cfg, this._options.showSources)
   }
 }
 
