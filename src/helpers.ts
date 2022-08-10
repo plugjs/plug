@@ -6,7 +6,7 @@ import type { ParseOptions } from './utils/options'
 
 import { assert } from './assert'
 import { currentRun } from './async'
-import { $p, log } from './log'
+import { $p, log, LogLevelString } from './log'
 import { rm } from './utils/asyncfs'
 
 /**
@@ -30,6 +30,17 @@ export async function rmrf(directory: string): Promise<void> {
 
   log.info('Removing', $p(dir))
   await rm(dir, { recursive: true })
+}
+
+/**
+ * Set the current _log level_.
+ *
+ * The _level_ will be applied _only_ within the execution of the current task.
+ */
+export function setLogLevel(level: LogLevelString): void {
+  const run = currentRun()
+  assert(run, 'Unable to find files outside a running task')
+  return run.setLogLevel(level)
 }
 
 /**

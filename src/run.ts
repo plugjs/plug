@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { assert } from './assert'
 import { Files, FilesBuilder } from './files'
-import { createReport, getLogger, Logger, Report } from './log'
+import { createReport, getLevelNumber, getLogger, Logger, LogLevelString, Report } from './log'
 import { AbsolutePath, getCurrentWorkingDirectory, isAbsolutePath, resolveAbsolutePath } from './paths'
 import { Pipe, PipeImpl } from './pipe'
 import { ParseOptions, parseOptions } from './utils/options'
@@ -37,6 +37,9 @@ export interface Run {
   readonly buildDir: AbsolutePath,
   /** The {@link Logger} associated with this instance. */
   readonly log: Logger
+
+  /** Set the logging level within this {@link Run} */
+  setLogLevel(level: LogLevelString): void
 
   /** Call another {@link Task} from this one. */
   call(name: string): Promise<Files | undefined>
@@ -92,6 +95,11 @@ export class RunImpl implements Run {
     this.buildDir = buildDir
     this.buildFile = buildFile
     this.log = log || getLogger(taskName)
+  }
+
+  /** Set the logging level within this {@link Run} */
+  setLogLevel(level: LogLevelString): void {
+    this.log.level = getLevelNumber(level)
   }
 
   report(title: string): Report {
