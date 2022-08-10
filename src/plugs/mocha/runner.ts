@@ -119,7 +119,7 @@ class PlugReporter extends Mocha.reporters.Base {
         log.leave(WARN, `${$ylw(_pending)} ${test.title} ${tag}`)
       } else if (test.isFailed()) {
         const number = failures.push(test)
-        const tag = $gry('[') + $red('failed') + $gry('|') + $red(number) + $gry(']')
+        const tag = $gry('[') + $red('failed') + $gry('] [') + $red(number) + $gry(']')
         log.leave(ERROR, `${$red(_failure)} ${test.title} ${tag}`)
       }
     })
