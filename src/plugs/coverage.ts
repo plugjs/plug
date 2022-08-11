@@ -1,4 +1,4 @@
-import html from '@plugjs/cov8-html'
+import { html, initFunction } from '@plugjs/cov8-html'
 
 import type { Files } from '../files'
 import type { AbsolutePath } from '../paths'
@@ -169,7 +169,7 @@ export class Coverage<
     }
 
     const jsonp = JSON.stringify({ ...report, results, thresholds, tree, date })
-    await builder.write('report.js', `window.__initCoverage__(${jsonp});`)
+    await builder.write('report.js', `${initFunction}(${jsonp});`)
 
     /* Emit our coverage report */
     _report.done(false)
