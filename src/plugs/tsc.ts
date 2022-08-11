@@ -25,7 +25,7 @@ export class Tsc implements Plug<Files> {
   }
 
   pipe(files: Files, run: Run): Promise<Files> {
-    const script = requireResolve(__filename, './tsc/worker')
+    const script = requireResolve(__fileurl, './tsc/worker')
     return executeWorker<TscWorkerType>(script, files, run,
         this._tsconfig,
         this._options,

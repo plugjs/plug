@@ -42,7 +42,7 @@ export class Mocha implements Plug<undefined> {
     const { coverageDir, ...options } = this._xoptions
 
     /* Get our runner script */
-    const script = requireResolve(__filename, './mocha/runner')
+    const script = requireResolve(__fileurl, './mocha/runner')
 
     /* Environment variables */
     const env = { ...process.env }

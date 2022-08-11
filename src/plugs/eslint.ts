@@ -2,11 +2,11 @@ import type { Files } from '../files'
 import type { Run } from '../run'
 import type { ESLintWorkerType } from './eslint/worker'
 
+import { assert } from '../assert'
+import { $p } from '../log'
 import { getCurrentWorkingDirectory, isDirectory, isFile, requireResolve } from '../paths'
 import { install, Plug } from '../pipe'
 import { executeWorker } from '../worker'
-import { assert } from '../assert'
-import { $p } from '../log'
 
 export interface ESLintOptions {
   /** ESLint's own _current working directory_, where config files are. */
@@ -40,7 +40,7 @@ export class ESLint implements Plug<undefined> {
     const cfg = configFile ? run.resolve(configFile) : undefined
     if (cfg) assert(isFile(cfg), `ESLint configuration ${$p(cfg)} does not exist`)
 
-    const script = requireResolve(__filename, './eslint/worker')
+    const script = requireResolve(__fileurl, './eslint/worker')
     return executeWorker<ESLintWorkerType>(script, files, run, dir, cfg, this._options.showSources)
   }
 }
