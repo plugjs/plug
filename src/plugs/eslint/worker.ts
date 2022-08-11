@@ -3,11 +3,11 @@ import type { Plug } from '../../pipe'
 import type { Run } from '../../run'
 
 import { ESLint } from 'eslint'
+import { failure } from '../../assert'
 import { $p, ERROR, NOTICE, WARN } from '../../log'
 import { AbsolutePath, getCurrentWorkingDirectory, resolveAbsolutePath } from '../../paths'
 import { readFile } from '../../utils/asyncfs'
 import { workerMain } from '../../worker'
-import { failure } from '../../assert'
 
 export type ESLintWorkerType = typeof ESLintWorker
 
@@ -40,7 +40,7 @@ class ESLintWorker implements Plug<undefined> {
     const summary = settlements.reduce((summary, settlement, i) => {
       /* Promise rejected, meaining hard failure */
       if (settlement.status === 'rejected') {
-        run.log.error('Error linting', $p(paths[i]), settlement.status)
+        run.log.error('Error linting', $p(paths[i]), settlement.reason)
         summary.failures ++
         return summary
       }
