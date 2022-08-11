@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "build/index.js",
   "types": "types/index.d.ts",
+  "type": "module",
   "scripts": {
-    "bootstrap": "node --require=./extra/ts-loader.cjs ./src/cli.ts",
+    "bootstrap": "./bootstrap.sh",
     "build": "node ./dist/cli"
   },
   "author": "",
