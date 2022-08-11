@@ -60,6 +60,8 @@ class MochaRunner implements Plug<undefined> {
     // Tell mocha about all our files
     for (const file of files.absolutePaths()) mocha.addFile(file)
 
+    await mocha.loadFilesAsync()
+
     // Run mocha!
     return new Promise((resolve, reject) => {
       try {
