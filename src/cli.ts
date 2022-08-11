@@ -5,9 +5,9 @@ import { fork } from 'node:child_process'
 import yargsParser from 'yargs-parser'
 import { isBuildFailure } from './assert'
 
-import { Build, isBuild } from './build'
+import { isBuild } from './build'
 import { logLevels, logOptions, NOTICE } from './log'
-import { AbsolutePath, getCurrentWorkingDirectory, isFile, resolveAbsolutePath } from './paths'
+import { AbsolutePath, getCurrentWorkingDirectory, isFile, requireFilename, resolveAbsolutePath } from './paths'
 
 /* Yargs-parse our arguments */
 const parsed = yargsParser(process.argv.slice(2), {
@@ -139,11 +139,13 @@ if (tasks.length === 0) tasks.push('default')
 
 /* We have everyhing we need to start our asynchronous main! */
 async function main(buildFile: AbsolutePath, tasks: string[], list: boolean): Promise<void> {
-  const exports = buildFile.endsWith('.mjs') ? await import(buildFile) : require(buildFile)
+  const exports =
+      __cjs ? await require(buildFile) :
+      __esm ? await import(buildFile) :
+      undefined
 
-  const build: Build<any> | undefined = isBuild(exports) ? exports :
-    'default' in exports && isBuild(exports.default) ? exports.default :
-    undefined
+  let build = exports
+  while (build && (! isBuild(build))) build = build.default
 
   if (! build) {
     console.log('Build file did not export a proper build')
@@ -165,17 +167,17 @@ async function main(buildFile: AbsolutePath, tasks: string[], list: boolean): Pr
 
 /* Check for source maps and typescript support */
 const sourceMapsEnabled = process.execArgv.indexOf('--enable-source-maps') >= 0
-const typeScriptEnabled = !! require.extensions['.ts']
 
 if (process.env.DEBUG_CLI === 'true') {
   console.log('SourceMaps enabled =', sourceMapsEnabled)
-  console.log('TypeScript enabled =', typeScriptEnabled)
+  console.log('   TS Loader (CJS) =', __tsLoaderCJS)
+  console.log('   TS Loader (ESM) =', __tsLoaderESM)
   console.log('         Arguments =', process.argv.join(' '))
   console.log('               PID =', process.pid)
 }
 
 /* If both source maps and typescript are on, run! */
-if (sourceMapsEnabled && typeScriptEnabled) {
+if (sourceMapsEnabled && __tsLoaderCJS && __tsLoaderESM) {
   main(buildFile, tasks, list)
       .then(() => process.exit(0))
       .catch((error) => {
@@ -185,15 +187,30 @@ if (sourceMapsEnabled && typeScriptEnabled) {
 } else {
   /* Fork out ourselves with new options */
   const execArgv = [ ...process.execArgv ]
-  const typescriptLoader = require.resolve('../extra/ts-loader.cjs')
-  if (! sourceMapsEnabled) execArgv.push('--enable-source-maps')
-  if (! typeScriptEnabled) execArgv.push(`--require=${typescriptLoader}`)
 
-  const child = fork(__filename, [ ...process.argv.slice(2) ], {
+  /* Enable source maps if not done already */
+  if (! sourceMapsEnabled) execArgv.push('--enable-source-maps')
+
+  /* Enable our CJS TypeScript loader if not done already */
+  if (! global.__tsLoaderCJS) {
+    const tsLoaderCJS = requireFilename(__fileurl, '../extra/ts-loader.cjs')
+    execArgv.push(`--require=${tsLoaderCJS}`)
+  }
+
+  /* Enable our ESM TypeScript loader if not done already */
+  if (! global.__tsLoaderESM) {
+    const tsLoaderESM = requireFilename(__fileurl, '../extra/ts-loader.mjs')
+    execArgv.push(`--experimental-loader=${tsLoaderESM}`, '--no-warnings')
+  }
+
+  /* Fork ourselves! */
+  const script = requireFilename(__fileurl) // self
+  const child = fork(script, [ ...process.argv.slice(2) ], {
     stdio: [ 'inherit', 'inherit', 'inherit', 'ipc' ],
     execArgv,
   })
 
+  /* Monitor child process... */
   child.on('error', (error) => {
     console.log('Error respawning CLI', error)
     process.exit(1)
@@ -203,7 +220,7 @@ if (sourceMapsEnabled && typeScriptEnabled) {
     if (signal) {
       console.log(`CLI process exited with signal ${signal}`)
       process.exit(1)
-    } else if (code == null) {
+    } else if (typeof code !== 'number') {
       console.log('CLI process failed for an unknown reason')
       process.exit(1)
     } else {
