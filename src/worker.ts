@@ -8,7 +8,6 @@ import { isMainThread, parentPort, Worker, workerData } from 'node:worker_thread
 import { runAsync } from './async'
 import { $p, logOptions, LogOptions } from './log'
 import { RunImpl, Run } from './run'
-import { extname } from 'node:path'
 import { failure } from './assert'
 
 /** Worker data, from main thread to worker thread */
@@ -90,27 +89,11 @@ export function executeWorker<
   }
 
   /*
-   * If we are using "ts-node" (as in our _bootstrap_ process, when the script
-   * to be executed has a ".ts" extension) we need to first require the
-   * "ts-node/register/transpile-only" script to make sure that ".ts" files are
-   * handled correctly. We use the "transpile-only" version for speed, in this
-   * case, without checking types in our sources...
+   * TODO: Here we always switch (somehow) from _CJS_ to _ESM_, so we might
+   * want to play with _eval_ workers... Also, it'd be nice to initialize
+   * the logger _BEFORE_ loading the script :-)
    */
-  const worker =
-    extname(script) !== '.ts' ?
-      new Worker(script, { workerData }) :
-      new Worker(`'use strict';
-        require('ts-node/register/transpile-only');
-        const { parentPort } = require('node:worker_threads');
-        const script = ${JSON.stringify(script)};
-        try {
-          require(script);
-        } catch (error) {
-          console.log('\\n\\n[ts-node] Error running script:', script);
-          console.log('\\n\\n', error, '\\n\\n');
-          process.nextTick(() => parentPort.postMessage({ failed: true }));
-        }`,
-      { eval: true, workerData })
+  const worker = new Worker(script, { workerData })
 
   /* Return the promise that will actually wait for the worker */
   return new Promise<Result>((resolve, reject) => {
