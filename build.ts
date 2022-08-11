@@ -1,7 +1,7 @@
-import { build, checkDependencies, find, fixExtensions, parallel, rmrf, setLogLevel } from './src/index'
+import { build, checkDependencies, find, fixExtensions, parallel, rmrf } from './src/index'
 
 export default build({
-  find_sources: () => find('**/*.ts', { directory: 'src', ignore: 'cli.ts' }),
+  find_sources: () => find('**/*.ts', { directory: 'src' }),
   find_tests: () => find('**/*.ts', { directory: 'test' }),
 
   /* ======================================================================== *
@@ -34,9 +34,9 @@ export default build({
   },
 
   async check_coverage() {
-    setLogLevel('debug')
+    // setLogLevel('debug')
     try {
-      await this.test() // no coverage without tests, right?
+      // await this.test() // no coverage without tests, right?
     } finally {
       await this.find_sources().coverage('coverage', {
         reportDir: 'coverage',
@@ -51,34 +51,42 @@ export default build({
   },
 
   async check() {
-    await parallel([
-      this.check_deps(),
-      this.check_coverage(),
-      this.check_format(),
-    ])
+    // await parallel([
+    // await this.check_deps()
+    await this.check_coverage()
+    await this.check_format()
+    // ])
   },
 
   /* ======================================================================== *
    * COMPILE TYPES IN "./types" AND SOURCES IN "./dist" (esm and cjs)         *
    * ======================================================================== */
 
-  async compile_cli() {
-    await find('cli.ts', { directory: 'src' }).esbuild({
-      outdir: 'dist',
-      format: 'cjs',
-      sourcemap: 'external',
-      sourcesContent: false,
-      plugins: [ fixExtensions() ],
-    })
-  },
+  // async compile_cli() {
+  //   await find('cli.ts', { directory: 'src' }).esbuild({
+  //     outdir: 'dist',
+  //     format: 'cjs',
+  //     sourcemap: 'external',
+  //     sourcesContent: false,
+  //     plugins: [ fixExtensions() ],
+  //   })
+  // },
 
   async compile_cjs() {
     await this.find_sources().esbuild({
       outdir: 'dist',
       format: 'cjs',
-      sourcemap: 'external',
+      outExtension: { '.js': '.cjs' },
+      sourcemap: 'linked',
       sourcesContent: false,
       plugins: [ fixExtensions() ],
+      define: {
+        __tsLoaderCJS: 'globalThis.__tsLoaderCJS',
+        __tsLoaderESM: 'globalThis.__tsLoaderESM',
+        __fileurl: '__filename',
+        __esm: 'false',
+        __cjs: 'true',
+      },
     })
   },
 
@@ -87,10 +95,16 @@ export default build({
       outdir: 'dist',
       format: 'esm',
       outExtension: { '.js': '.mjs' },
-      sourcemap: 'external',
+      sourcemap: 'linked',
       sourcesContent: false,
       plugins: [ fixExtensions() ],
-      define: { __filename: 'import.meta.url' },
+      define: {
+        __tsLoaderCJS: 'globalThis.__tsLoaderCJS',
+        __tsLoaderESM: 'globalThis.__tsLoaderESM',
+        __fileurl: 'import.meta.url',
+        __esm: 'true',
+        __cjs: 'false',
+      },
     })
   },
 
@@ -100,23 +114,27 @@ export default build({
   },
 
   async compile_types() {
-    await this.find_sources().tsc('tsconfig.json', {
-      noEmit: false,
-      declaration: true,
-      emitDeclarationOnly: true,
-      outDir: './types',
-    })
+    await rmrf('types')
+
+    // different "find_sources" as we also want "./extra/globals.d.ts"
+    return find('src/**/*.ts', 'extra/globals.d.ts')
+        .tsc('tsconfig.json', {
+          rootDir: 'src', // root this in "src" (to avoid "types/src")
+          noEmit: false,
+          declaration: true,
+          emitDeclarationOnly: true,
+          outDir: './types',
+        })
   },
 
   async compile() {
     await rmrf('dist')
-    await rmrf('types')
 
     await parallel([
       this.copy_resources(),
       this.compile_cjs(),
       this.compile_mjs(),
-      this.compile_cli(),
+      // this.compile_cli(),
       this.compile_types(),
     ])
   },
@@ -126,11 +144,11 @@ export default build({
    * ======================================================================== */
 
   async default() {
+    await this.compile()
     try {
       await this.test()
     } finally {
       await this.check()
-      await this.compile()
     }
   },
 })
