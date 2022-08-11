@@ -6,7 +6,7 @@ log('Loaded test...')
 
 describe('First Suite', () => {
   it('should run this test', async () => {
-    log('YO, INDEX', idx)
+    log('YO, INDEX', !! idx)
 
     log('Hello, world!')
     expect({ foo: true, baz: 'ok' }).to.eql({ baz: 'no', bar: 123 })
