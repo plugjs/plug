@@ -211,6 +211,7 @@ class CoverageSitemapAnalyser extends CoverageResultAnalyser {
       this._sourceMapBias === 'least_upper_bound' ? SourceMapConsumer.LEAST_UPPER_BOUND :
       undefined
 
+    // TODO: this is _super_ slow...
     const generated = this._sourceMap.generatedPositionFor({ source, line, column, bias })
 
     if (! generated) {
