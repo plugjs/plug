@@ -1,4 +1,4 @@
-import { build, checkDependencies, find, fixExtensions, parallel, rmrf } from './src/index'
+import { build, checkDependencies, find, fixExtensions, merge, parallel, rmrf } from './src/index'
 
 export default build({
   find_sources: () => find('**/*.ts', { directory: 'src' }),
@@ -9,10 +9,10 @@ export default build({
    * ======================================================================== */
 
   async test() {
-    await rmrf('coverage')
+    await rmrf('.coverage-data')
 
     await this.find_tests().mocha({
-      coverageDir: 'coverage',
+      coverageDir: '.coverage-data',
     })
   },
 
@@ -20,57 +20,58 @@ export default build({
    * EXTRA CHECKS (dependencies, linting, coverage)                           *
    * ======================================================================== */
 
-  async check_deps() {
+  async dependencies() {
     await parallel([
       await this.find_sources().esbuild({
-        plugins: [ checkDependencies({ allowDev: false, allowUnused: false }) ],
+        plugins: [ checkDependencies({
+          allowDev: false,
+          allowUnused: false,
+          ignored: [ 'yargs-parser' ],
+        }) ],
+        allowOverwrite: false,
         write: false,
+        outdir: '.',
       }),
       await this.find_tests().esbuild({
-        plugins: [ checkDependencies({ allowDev: true, allowUnused: true }) ],
+        plugins: [ checkDependencies({
+          allowDev: true,
+          allowUnused: true,
+        }) ],
+        allowOverwrite: false,
         write: false,
+        outdir: '.',
       }),
     ])
   },
 
-  async check_coverage() {
-    // setLogLevel('debug')
+  async coverage() {
     try {
-      // await this.test() // no coverage without tests, right?
+      await this.test()
     } finally {
-      await this.find_sources().coverage('coverage', {
+      await this.find_sources().coverage('.coverage-data', {
         reportDir: 'coverage',
-        // usePreciseMappings: true,
       })
     }
   },
 
-  async check_format() {
-    await this.find_sources().eslint()
-    await this.find_tests().eslint()
+  async eslint() {
+    await merge([
+      this.find_sources(),
+      this.find_tests(),
+    ]).eslint()
   },
 
-  async check() {
-    // await parallel([
-    // await this.check_deps()
-    await this.check_coverage()
-    await this.check_format()
-    // ])
+  async checks() {
+    await parallel([
+      this.dependencies(),
+      this.coverage(),
+      this.eslint(),
+    ])
   },
 
   /* ======================================================================== *
    * COMPILE TYPES IN "./types" AND SOURCES IN "./dist" (esm and cjs)         *
    * ======================================================================== */
-
-  // async compile_cli() {
-  //   await find('cli.ts', { directory: 'src' }).esbuild({
-  //     outdir: 'dist',
-  //     format: 'cjs',
-  //     sourcemap: 'external',
-  //     sourcesContent: false,
-  //     plugins: [ fixExtensions() ],
-  //   })
-  // },
 
   async compile_cjs() {
     await this.find_sources().esbuild({
@@ -81,8 +82,6 @@ export default build({
       sourcesContent: false,
       plugins: [ fixExtensions() ],
       define: {
-        __tsLoaderCJS: 'globalThis.__tsLoaderCJS',
-        __tsLoaderESM: 'globalThis.__tsLoaderESM',
         __fileurl: '__filename',
         __esm: 'false',
         __cjs: 'true',
@@ -99,8 +98,6 @@ export default build({
       sourcesContent: false,
       plugins: [ fixExtensions() ],
       define: {
-        __tsLoaderCJS: 'globalThis.__tsLoaderCJS',
-        __tsLoaderESM: 'globalThis.__tsLoaderESM',
         __fileurl: 'import.meta.url',
         __esm: 'true',
         __cjs: 'false',
@@ -116,15 +113,16 @@ export default build({
   async compile_types() {
     await rmrf('types')
 
-    // different "find_sources" as we also want "./extra/globals.d.ts"
-    return find('src/**/*.ts', 'extra/globals.d.ts')
-        .tsc('tsconfig.json', {
-          rootDir: 'src', // root this in "src" (to avoid "types/src")
-          noEmit: false,
-          declaration: true,
-          emitDeclarationOnly: true,
-          outDir: './types',
-        })
+    const extra = find('**/*.d.ts', { directory: 'extra' })
+    const sources = this.find_sources()
+
+    return merge([ extra, sources ]).tsc('tsconfig.json', {
+      rootDir: 'src', // root this in "src" (filters out "extra/...")
+      noEmit: false,
+      declaration: true,
+      emitDeclarationOnly: true,
+      outDir: './types',
+    })
   },
 
   async compile() {
@@ -134,7 +132,6 @@ export default build({
       this.copy_resources(),
       this.compile_cjs(),
       this.compile_mjs(),
-      // this.compile_cli(),
       this.compile_types(),
     ])
   },
@@ -148,7 +145,7 @@ export default build({
     try {
       await this.test()
     } finally {
-      await this.check()
+      await this.checks()
     }
   },
 })
