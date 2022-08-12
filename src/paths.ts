@@ -146,6 +146,39 @@ export function requireResolve(__fileurl: string, module: string): AbsolutePath 
   return required
 }
 
+/**
+ * Return the _common_ path amongst all specified paths.
+ *
+ * While the first `path` _must_ be an {@link AbsolutePath}, all other `paths`
+ * can be _relative_ and will be resolved against the first `path`.
+ */
+export function commonPath(path: AbsolutePath, ...paths: string[]): AbsolutePath {
+  assertAbsolutePath(path)
+
+  // Here the first path will be split into its components
+  // on win => [ 'C:', 'Windows', 'System32' ]
+  // on unx => [ '', 'usr'
+  const components = path.split(sep)
+
+  let length = components.length
+  for (const current of paths) {
+    const absolute = resolveAbsolutePath(path, current)
+    const parts = absolute.split(sep)
+    for (let i = 0; i < length; i++) {
+      if (components[i] !== parts[i]) {
+        length = i
+        break
+      }
+    }
+
+    assert(length, 'No common ancestors amongst paths')
+  }
+
+  const common = components.slice(0, length).join(sep)
+  assertAbsolutePath(common)
+  return common
+}
+
 /* ========================================================================== *
  * FILE CHECKING FUNCTIONS                                                    *
  * ========================================================================== */
