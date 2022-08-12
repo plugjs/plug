@@ -168,16 +168,20 @@ async function main(buildFile: AbsolutePath, tasks: string[], list: boolean): Pr
 /* Check for source maps and typescript support */
 const sourceMapsEnabled = process.execArgv.indexOf('--enable-source-maps') >= 0
 
+/* Check if our `ts-loader` loader is enabled */
+const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
+const typeScriptEnabled = (globalThis as any)[tsLoaderMarker] === tsLoaderMarker
+
+
 if (process.env.DEBUG_CLI === 'true') {
   console.log('SourceMaps enabled =', sourceMapsEnabled)
-  console.log('   TS Loader (CJS) =', __tsLoaderCJS)
-  console.log('   TS Loader (ESM) =', __tsLoaderESM)
+  console.log('TypeScript enabled =', typeScriptEnabled)
   console.log('         Arguments =', process.argv.join(' '))
   console.log('               PID =', process.pid)
 }
 
 /* If both source maps and typescript are on, run! */
-if (sourceMapsEnabled && __tsLoaderCJS && __tsLoaderESM) {
+if (sourceMapsEnabled && typeScriptEnabled) {
   main(buildFile, tasks, list)
       .then(() => process.exit(0))
       .catch((error) => {
@@ -191,14 +195,8 @@ if (sourceMapsEnabled && __tsLoaderCJS && __tsLoaderESM) {
   /* Enable source maps if not done already */
   if (! sourceMapsEnabled) execArgv.push('--enable-source-maps')
 
-  /* Enable our CJS TypeScript loader if not done already */
-  if (! global.__tsLoaderCJS) {
-    const tsLoaderCJS = requireFilename(__fileurl, '../extra/ts-loader.cjs')
-    execArgv.push(`--require=${tsLoaderCJS}`)
-  }
-
   /* Enable our ESM TypeScript loader if not done already */
-  if (! global.__tsLoaderESM) {
+  if (! typeScriptEnabled) {
     const tsLoaderESM = requireFilename(__fileurl, '../extra/ts-loader.mjs')
     execArgv.push(`--experimental-loader=${tsLoaderESM}`, '--no-warnings')
   }
