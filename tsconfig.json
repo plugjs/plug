@@ -16,6 +16,7 @@
     "noUnusedParameters": true,
   },
   "include": [
+    "./extra/ts-loader.mts",
     "./extra/globals.d.ts",
     "build.ts",
     "src/**/*.ts",
