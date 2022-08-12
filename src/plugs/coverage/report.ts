@@ -247,6 +247,8 @@ export async function coverageReport(
         return visitChildren(node, depth) // visit all children normally...
       }
 
+      // TODO: we lost "export type" and "import type" defs!!!
+
       /* Ok, from here we calculate the coverage */
       let coverage = 0
       if (node.loc) {
