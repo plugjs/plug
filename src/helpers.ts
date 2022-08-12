@@ -56,13 +56,22 @@ export function resolve(...paths: string[]): AbsolutePath {
   return run.resolve(...paths)
 }
 
+
 /**
  * Create a new {@link Files} instance.
  */
-export function files(...paths: string[]): FilesBuilder {
+export function files(files: Files): FilesBuilder
+export function files(...paths: string[]): FilesBuilder
+export function files(first: Files | string | undefined, ...paths: string[]): FilesBuilder {
   const run = currentRun()
   assert(run, 'Unable to create files builder outside a running task')
-  return run.files(...paths)
+  if (typeof first === 'string') {
+    return run.files(first, ...paths)
+  } else if (first) {
+    return run.files(first)
+  } else {
+    return run.files()
+  }
 }
 
 /**

@@ -68,9 +68,13 @@ export class Files {
   }
 
   /** Create a new {@link FilesBuilder} creating {@link Files} instances. */
-  static builder(directory: AbsolutePath): FilesBuilder {
+  static builder(files: Files): FilesBuilder
+  static builder(directory: AbsolutePath): FilesBuilder
+  static builder(arg: Files | AbsolutePath): FilesBuilder {
+    const directory = typeof arg === 'string' ? arg : arg.directory
+    const set = typeof arg === 'string' ? new Set<string>() : new Set(arg._files)
+
     const instance = new Files(directory)
-    const set = new Set<string>()
     let built = false
 
     return {

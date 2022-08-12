@@ -56,8 +56,11 @@ export interface Run {
    */
   resolve(...paths: string[]): AbsolutePath
 
+  /** Create a {@link FilesBuilder} cloning an existing {@link Files}. */
+  files(files: Files): FilesBuilder
+
   /**
-   * Create a {@link FilesBuilder} instancce resolving the directory specified
+   * Create a {@link FilesBuilder} instance resolving the directory specified
    * according to the rules specified in {@link Run.resolve}.
    */
   files(...paths: string[]): FilesBuilder
@@ -121,8 +124,16 @@ export class RunImpl implements Run {
     return resolveAbsolutePath(this.buildDir, path)
   }
 
-  files(...paths: string[]): FilesBuilder {
-    return Files.builder(this.resolve(...paths))
+  files(files: Files): FilesBuilder
+  files(...paths: string[]): FilesBuilder
+  files(first: Files | string | undefined, ...paths: string[]): FilesBuilder {
+    if (typeof first === 'string') {
+      return Files.builder(this.resolve(first, ...paths))
+    } else if (first) {
+      return Files.builder(first)
+    } else {
+      return Files.builder(this.resolve())
+    }
   }
 
   find(glob: string, ...args: ParseOptions<FindOptions>): Pipe & Promise<Files> {
