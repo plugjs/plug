@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "bootstrap": "./bootstrap.sh",
-    "build": "node ./dist/cli"
+    "build": "node ./extra/cli.mjs"
   },
   "author": "",
   "license": "ISC",
