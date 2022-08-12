@@ -2,5 +2,7 @@
 build/
 coverage/
 dist/
+extra/ts-loader.mjs
+extra/ts-loader.mjs.map
 node_modules/
 types/
