@@ -2,7 +2,7 @@ import type { Files } from './files'
 
 import { assert, fail, failure } from './assert'
 import { runAsync } from './async'
-import { $ms, $t, logOptions } from './log'
+import { $gry, $ms, $t, logOptions } from './log'
 import { AbsolutePath, getAbsoluteParent } from './paths'
 import { Pipe, PipeImpl } from './pipe'
 import { Run, RunImpl } from './run'
@@ -113,6 +113,13 @@ export function build<D extends BuildDefinition<D>>(
         await run.call(name)
         run.log.notice('Build completed', $ms(Date.now() - now))
       } catch (error) {
+        const failures = run.failures
+        if (failures.length) {
+          const message = `${failures.length === 1 ? 'task' : 'tasks'}`
+          const names = failures.map((task) => $t(task)).join($gry(', '))
+          run.log.error(failures.length, message, 'failed:', names)
+        }
+
         run.log.error(`Build failed ${$ms(Date.now() - now)}`, error)
         throw failure()
       }
@@ -146,11 +153,16 @@ class BuildRun extends RunImpl implements Run {
       buildDir: AbsolutePath,
       buildFile: AbsolutePath,
       private readonly _tasks: Readonly<Record<string, Task>>,
-      private readonly _cache = new Map<Task, Promise<Files | undefined>>(),
       private readonly _stack: readonly Task[] = [],
+      private readonly _cache = new Map<Task, Promise<Files | undefined>>(),
+      private readonly _failures = new Set<string>(),
       taskName: string = '',
   ) {
     super({ taskName, buildDir, buildFile })
+  }
+
+  get failures(): string[] {
+    return [ ...this._failures ].sort()
   }
 
   call(name: string): Promise<Files | undefined> {
@@ -168,8 +180,9 @@ class BuildRun extends RunImpl implements Run {
         task.context.buildDir, // the "buildDir" and "buildFile", used for local resolution (e.g. "./foo.bar") are
         task.context.buildFile, // always the ones associated with the build where the task was defined
         { ...task.context.tasks, ...this._tasks }, // merge the tasks, starting from the ones of the original build
-        this._cache, // the cache is a singleton within the whole Run tree, it's passed unchanged
         [ ...this._stack, task ], // the stack gets added the task being run...
+        this._cache, // the cache is a singleton within the whole Run tree, it's passed unchanged
+        this._failures, // like cache, also failures are a singleton
         name,
     )
 
@@ -199,6 +212,7 @@ class BuildRun extends RunImpl implements Run {
       return result
     } catch (error) {
       this.log.error(`Task ${$t(name)} failed ${$ms(Date.now() - now)}`, error)
+      this._failures.add(name)
       throw failure()
     }
   }
