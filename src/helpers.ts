@@ -1,5 +1,5 @@
 import type { Files, FilesBuilder } from './files'
-import { AbsolutePath, getCurrentWorkingDirectory, isDirectory } from './paths'
+import { AbsolutePath, commonPath, getCurrentWorkingDirectory, isDirectory } from './paths'
 import type { Pipe } from './pipe'
 import type { FindOptions } from './run'
 import type { ParseOptions } from './utils/options'
@@ -63,6 +63,32 @@ export function files(...paths: string[]): FilesBuilder {
   const run = currentRun()
   assert(run, 'Unable to create files builder outside a running task')
   return run.files(...paths)
+}
+
+/**
+ * Merge multiple {@link Files} instance.
+ */
+export function merge(args: (Files | Promise<Files>)[]): Promise<Files> & Pipe {
+  const run = currentRun()
+  assert(run, 'Unable to create files builder outside a running task')
+
+  const promise = Promise.resolve().then(async () => {
+    // No arguments, no files... Just convenience!
+    if (args.length === 0) return run.pipe(run.files().build())
+
+    // Resolve all the `Files` instances (might be from other tasks)
+    const instances = await Promise.all(args)
+    const [ first, ...others ] = instances
+
+    const firstDir = first.directory
+    const otherDirs = others.map((f) => f.directory)
+
+    const directory = commonPath(firstDir, ...otherDirs)
+
+    return run.files(directory).merge(first, ...others).build()
+  })
+
+  return run.pipe(promise)
 }
 
 /**
