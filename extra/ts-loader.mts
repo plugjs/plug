@@ -46,13 +46,14 @@ function _log(type: 'cjs' | 'esm' | '---', ...args: string []): void {
 }
 
 /** Fail miserably */
-function _fail(message: string, options?: { code?: string, cause?: any }): never {
+function _throw(message: string, options: { start?: Function, code?: string, cause?: any } = {}): never {
   const thread = _workers.isMainThread ? 'main' : _workers.threadId
   const prefix = `[ts-loader|pid=${process.pid}|tid=${thread}]`
 
+  const { start = _throw, ...extra } = options
   const error = new Error(`${prefix} ${message}`)
-  Error.captureStackTrace(error, _fail)
-  Object.assign(error, options)
+  Error.captureStackTrace(error, start)
+  Object.assign(error, extra)
 
   throw error
 }
@@ -63,10 +64,61 @@ function _fail(message: string, options?: { code?: string, cause?: any }): never
  * ========================================================================== */
 
 /* Returns the _extension_ of a file/url only if it ends in `.ts`, `.mts` or `.cts` */
-const _tsExt = (specifier: string): '.ts' | '.cts' | '.mts' | undefined => {
+function _tsExt(specifier: string): '.ts' | '.cts' | '.mts' | undefined {
   const match = specifier.match(/\.[mc]?ts$/)
-  if (match) return match[1] as '.ts' | '.cts' | '.mts'
+  if (match) return match[0] as '.ts' | '.cts' | '.mts'
   return undefined
+}
+
+const _moduleFormatCache = new Map<string, 'commonjs' | 'module'>()
+
+/*
+ * Figures out the _default_ module type for a directory, looking into the
+ * `package.json`'s `type` field (either `commonjs` or `module`)
+ */
+function _moduleFormat(directory: string): 'commonjs' | 'module' {
+  /* Before doing anything else, check our cache */
+  const type = _moduleFormatCache.get(directory)
+  if (type) return type
+
+  /* Try to read the "package.json" file from this directory */
+  const file = _path.resolve(directory, 'package.json')
+
+  try {
+    const json = _fs.readFileSync(file, 'utf-8')
+    const data = JSON.parse(json)
+
+    /* Be liberal in what you accept? Default to CommonJS if none found */
+    const type = data.type === 'module' ? 'module' : 'commonjs'
+    _log('---', `File "${file}" defines module type as "${type}"`)
+    _moduleFormatCache.set(directory, type)
+    return type
+  } catch (cause: any) {
+    /* We _accept_ a couple of errors, file not found, or file is directory */
+    if ((cause.code !== 'ENOENT') && (cause.code !== 'EISDIR')) {
+      _throw(`Unable to read or parse "${file}"`, { cause })
+    }
+  }
+
+  /*
+   * We couldn't find "package.json" in this directory, go up if we can!
+   *
+   * That said, if we are at a directory called "node_modules" we stop here,
+   * as we don't want to inherit the default type from an _importing_ package,
+   * into the _imported_ one...
+   */
+  const name = _path.basename(directory)
+  const parent = _path.dirname(directory)
+
+  if ((name === 'node_modules') || (parent !== directory)) {
+    _moduleFormatCache.set(directory, 'commonjs') // default
+    return 'commonjs'
+  } else {
+    /* We also cache back, on the way up */
+    const type = _moduleFormat(parent)
+    _moduleFormatCache.set(directory, type)
+    return type
+  }
 }
 
 /* Returns a boolean indicating whether the specified file exists or not */
@@ -113,8 +165,7 @@ function _esbReport(
   messages.forEach((message) => output.write(`${message}\n`))
 
   if (errors.length) {
-    const message = `[ts-loader] ESBuild found ${errors.length} errors in "${filename}"`
-    _fail(message, { cause: what })
+    _throw(`[ts-loader] ESBuild found ${errors.length} errors in "${filename}"`)
   }
 }
 
@@ -126,14 +177,14 @@ function _esbResult(
     filename: string,
     result?: _esbuild.BuildResult,
 ): string {
-  if (! result) _fail(`No result returned by ESBuild for ${filename}`)
-  if (! result.outputFiles) _fail(`No output files produced by ESBuild for ${filename}`)
+  if (! result) _throw(`No result returned by ESBuild for ${filename}`)
+  if (! result.outputFiles) _throw(`No output files produced by ESBuild for ${filename}`)
 
   for (const output of result.outputFiles) {
     if (output.path === filename) return output.text
   }
 
-  _fail(`ESBuild produced no output for "${filename}"`)
+  _throw(`ESBuild produced no output for "${filename}"`)
 }
 
 /*
@@ -165,9 +216,6 @@ const _addImportExtension: _esbuild.Plugin = {
         return { external: true } // easy peasy :-)
       }
 
-      /* Nope, not found */
-      _log('---', `|   wrong "${args.path}" as "${resolved}"`)
-
       /* Look for our various extensions, one-by-one */
       for (const ext of _extensions) {
         const newTarget = resolved + ext
@@ -175,8 +223,6 @@ const _addImportExtension: _esbuild.Plugin = {
         if (_isFile(newTarget)) {
           _log('---', `|   found "${newPath}" as "${newTarget}"`)
           return { path: newPath, external: true }
-        } else {
-          _log('---', `|   wrong "${newPath}" as "${newTarget}"`)
         }
       }
 
@@ -189,13 +235,12 @@ const _addImportExtension: _esbuild.Plugin = {
           if (_isFile(newTarget)) {
             _log('---', `|   found "${newPath}" as "${newTarget}"`)
             return { path: newPath, external: true }
-          } else {
-            _log('---', `|   wrong "${newPath}" as "${newTarget}"`)
           }
         }
       }
 
       /* We checked any possibility and found none... Give up! */
+      _log('---', `|   wrong "${args.path}"`)
       return { external: true } // always "external"
     })
   },
@@ -330,6 +375,14 @@ export const load: LoadHook = async (url, context, nextLoad): Promise<LoadResult
   const file = _path.basename(filename)
   const dir = _path.dirname(filename)
 
+  /* If the file is a ".ts", we need to figure out the default type */
+  if (ext === '.ts') {
+    const format = _moduleFormat(dir)
+
+    /* If the _default_ module type is 'commonjs' then load as such! */
+    if (format === 'commonjs') return { format }
+  }
+
   /* ESbuild options */
   const options: _esbuild.BuildOptions = {
     format: 'esm', // here we are transpiling as ESM
@@ -344,15 +397,13 @@ export const load: LoadHook = async (url, context, nextLoad): Promise<LoadResult
     allowOverwrite: true, // input and output file names are the same
     write: false, // we definitely _do not_ write this back to disk
     define: { // those are defined/documented in "./globals.ts"
-      __tsLoaderCJS: 'globalThis.__tsLoaderCJS',
-      __tsLoaderESM: 'globalThis.__tsLoaderESM',
       __fileurl: 'import.meta.url',
       __esm: 'true',
       __cjs: 'false',
     },
     // Make sure we _always_ have extensions in the "import" statements
     bundle: true, // trigger a "bundle" build to analyse imports one by one
-    resolveExtensions: [], //
+    resolveExtensions: [ '.mts', '.ts', '.mjs', '.js' ], //
     plugins: [ _addImportExtension ], // our plugin adding extensions
   }
 
@@ -371,7 +422,7 @@ export const load: LoadHook = async (url, context, nextLoad): Promise<LoadResult
   } catch (cause) {
     _esbReport(filename, cause as _esbuild.BuildFailure)
     // If the above doesn't fail (normal error?) then bail out
-    _fail(`ESBuild error transpiling "${filename}"`, { cause })
+    _throw(`ESBuild error transpiling "${filename}"`, { cause })
   }
 
   /* Report out any warning or error and fail if there are errors */
@@ -430,8 +481,6 @@ const loader: ExtensionHandler = (module, filename): void => {
     allowOverwrite: true, // input and output file names are the same
     write: false, // we definitely _do not_ write this back to disk
     define: { // those are defined/documented in "./globals.ts"
-      __tsLoaderCJS: 'globalThis.__tsLoaderCJS',
-      __tsLoaderESM: 'globalThis.__tsLoaderESM',
       __fileurl: '__filename',
       __esm: 'false',
       __cjs: 'true',
@@ -442,7 +491,7 @@ const loader: ExtensionHandler = (module, filename): void => {
   if (_debug) {
     options.banner = {
       // eslint-disable-next-line no-template-curly-in-string
-      js: 'console.log(`[ts-loader|cjs]: Loaded "${import.meta.url}"`);',
+      js: 'console.log(`[ts-loader|cjs]: Loaded "${__filename}"`);',
     }
   }
 
@@ -453,7 +502,7 @@ const loader: ExtensionHandler = (module, filename): void => {
   } catch (cause) {
     _esbReport(filename, cause as _esbuild.BuildFailure)
     // If the above doesn't fail (normal error?) then bail out
-    _fail(`ESBuild error transpiling "${filename}"`, { cause })
+    _throw(`ESBuild error transpiling "${filename}"`, { cause })
   }
 
   /* Report out any warning or error and fail if there are errors */
@@ -463,7 +512,7 @@ const loader: ExtensionHandler = (module, filename): void => {
   try {
     module._compile(_esbResult(filename, result), filename)
   } catch (cause) {
-    _fail(`[ts-loader] Error compiling module "${filename}"`, { cause })
+    _throw(`[ts-loader] Error compiling module "${filename}"`, { cause })
   }
 }
 
@@ -473,6 +522,10 @@ _module._extensions['.ts'] = _module._extensions['.cts'] = loader
 /* ========================================================================== *
  * FIN...                                                                     *
  * ========================================================================== */
+
+/* Mark our `globalThis` as having our `tsLoaderMarker` symbol */
+const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
+;(globalThis as any)[tsLoaderMarker] = tsLoaderMarker
 
 // @ts-ignore: https://github.com/microsoft/TypeScript/issues/49842
 _log('---', `Installing loader from "${import.meta.url}"`)
