@@ -36,7 +36,7 @@ export type TaskDefinition<B> =
  * A {@link TaskCall} describes a _function_ calling a {@link Task}, and
  * it is exposed to outside users of the {@link Build}.
  */
-export type TaskCall<T extends Files | undefined> = (() => Promise<void>) & {
+export type TaskCall<T extends Files | undefined> = ((run?: Run) => Promise<Run>) & {
   readonly task: Task<T>
 }
 
@@ -105,13 +105,17 @@ export function build<D extends BuildDefinition<D>>(
     const task: Task = 'task' in def ? def.task : new TaskImpl(context, def)
 
     /* Prepare the _new_ `TaskCall` that will wrap our `Task` */
-    const call = (async (): Promise<void> => {
-      const run = new BuildRun(buildDir, buildFile, tasks)
+    const call = (async (run?: Run): Promise<Run> => {
+      if (! run) run = run = new BuildRun(buildDir, buildFile, tasks)
+      // else console.log('REUSING RUN', run)
+      assert(run instanceof BuildRun, 'Incompatible Run specified')
+
       run.log.notice('Starting build...')
       const now = Date.now()
       try {
         await run.call(name)
         run.log.notice('Build completed', $ms(Date.now() - now))
+        return run
       } catch (error) {
         const failures = run.failures
         if (failures.length) {
