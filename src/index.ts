@@ -1,6 +1,7 @@
 /// <reference path="../extra/webassembly.d.ts" />
 
 // Our minimal exports
+export * from './assert'
 export * from './build'
 export * from './plugs'
 export * from './log'
