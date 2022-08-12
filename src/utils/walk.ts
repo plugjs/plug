@@ -48,8 +48,11 @@ export function walk(
   } = options
 
   /* Make sure to also ignore node modules or dot directories if we have to */
-  const onDirectory = (directory: AbsolutePath): boolean => {
-    const name = path.basename(directory)
+  const onDirectory = (dir: AbsolutePath): boolean => {
+    // if we were told to start looking into "node_modules", or in a directory
+    // starting with ".", then we ignore any whatsoever option here!
+    if (dir === directory) return true
+    const name = path.basename(dir)
     if (name === 'node_modules') return !!allowNodeModules
     if (name.startsWith('.')) return !!opts.dot
     return true
