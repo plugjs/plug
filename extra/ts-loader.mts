@@ -110,7 +110,7 @@ function _moduleFormat(directory: string): 'commonjs' | 'module' {
   const name = _path.basename(directory)
   const parent = _path.dirname(directory)
 
-  if ((name === 'node_modules') || (parent !== directory)) {
+  if ((name === 'node_modules') || (parent === directory)) {
     _moduleFormatCache.set(directory, 'commonjs') // default
     return 'commonjs'
   } else {
