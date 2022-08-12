@@ -25,19 +25,3 @@ declare var __cjs: boolean
  * on whether the module was compiled as CJS (`false`) or ESM (`true`).
  */
 declare var __esm: boolean
-
-/**
- * Our TS-Loader (CJS version) will set this to `true` when registerd.
- *
- * **NOTE** As this is set _at run time_ by `ts-loader.cjs` itself, `ESBuild`
- * will replace this to `globalThis.__tsLoaderCJS`.
- */
-declare var __tsLoaderCJS: true | undefined
-
-/**
- * Our TS-Loader (ESM version) will set this to `true` when registerd
- *
- * **NOTE** As this is set _at run time_ by `ts-loader.cjs` itself, `ESBuild`
- * will replace this to `globalThis.__tsLoaderESM`.
- */
-declare var __tsLoaderESM: true | undefined
