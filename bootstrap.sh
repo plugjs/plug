@@ -13,3 +13,7 @@ exec ./node_modules/.bin/esbuild \
 	--sources-content=false \
 	--out-extension:.js=.mjs \
 		./extra/*.mts
+
+# We don't need to run the compilation step, as "build.ts" imports from
+# "./src" and therefore even the files needed for the compilation of the
+# build system itself will be dynamically compiled by our loader...
