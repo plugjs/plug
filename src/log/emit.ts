@@ -47,12 +47,8 @@ export const emitColor: LogEmitter = (options: LogEmitterOptions, args: any[]): 
   const prefixes: string[] = []
 
   /* Task name or blank padding */
-  if (taskName) {
-    prefixes.push(''.padStart(_taskLength - taskName.length, ' ')) // padding
-    prefixes.push(`${$t(taskName)}`) // task name
-  } else {
-    prefixes.push(''.padStart(_taskLength, ' ')) // full width padding
-  }
+  prefixes.push(''.padStart(_taskLength - taskName.length, ' ')) // padding
+  prefixes.push(`${$t(taskName)}`) // task name
 
   /* Level indicator (our little colorful squares) */
   if (level <= TRACE) {
@@ -95,12 +91,8 @@ export const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): 
 
   const prefixes: string[] = []
 
-  if (taskName) {
-    const pad = ''.padStart(_taskLength - taskName.length, ' ')
-    prefixes.push(`${pad}${taskName}`)
-  } else {
-    prefixes.push(''.padStart(_taskLength, ' '))
-  }
+  const pad = ''.padStart(_taskLength - taskName.length, ' ')
+  prefixes.push(`${pad}${taskName}`)
 
   if (level <= 0) {
     prefixes.push(' \u2502        \u2502 ')
