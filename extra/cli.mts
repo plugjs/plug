@@ -1,3 +1,5 @@
+import type { Build, Run, BuildFailure } from '../src/index'
+
 import _yargs from 'yargs-parser'
 
 import _childProcess from 'node:child_process'
@@ -23,7 +25,7 @@ async function main(): Promise<void> {
   let build = exports
   while (build && (! isBuild(build))) build = build.default
 
-  if (! build) {
+  if (! isBuild(build)) {
     console.log('Build file did not export a proper build')
     process.exit(1)
   }
@@ -37,7 +39,10 @@ async function main(): Promise<void> {
   if (listOnly) {
     console.log('Build file tasks\n- ' + Object.keys(build).sort().join('\n- '))
   } else {
-    for (const task of tasks) await build[task]()
+    let run: Run | undefined
+    for (const task of tasks) {
+      run = await build[task](run)
+    }
   }
 }
 
@@ -120,12 +125,12 @@ const buildMarker = Symbol.for('plugjs:isBuild')
 const buildFailure = Symbol.for('plugjs:buildFailure')
 
 /** Check if the specified build is actually a {@link Build} */
-export function isBuild(build: any): build is Record<string, () => Promise<void>> {
+export function isBuild(build: any): build is Build<any> {
   return build && build[buildMarker] === buildMarker
 }
 
 /** Check if the specified argument is a {@link BuildFailure} */
-export function isBuildFailure(arg: any): boolean {
+export function isBuildFailure(arg: any): arg is BuildFailure {
   return arg && arg[buildFailure] === buildFailure
 }
 
