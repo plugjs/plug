@@ -10,6 +10,7 @@ export interface CheckDependenciesOptions {
   allowPeer?: boolean | 'warn' | 'error',
   allowOptional?: boolean | 'warn' | 'error',
   allowUnused?: boolean | 'warn' | 'error',
+  ignored?: string[]
 }
 
 export function checkDependencies(): Plugin
@@ -18,7 +19,10 @@ export function checkDependencies(options: CheckDependenciesOptions): Plugin
 export function checkDependencies(packageJson: string, options: CheckDependenciesOptions): Plugin
 
 export function checkDependencies(...args: ParseOptions<CheckDependenciesOptions>): Plugin {
+  const run = currentRun() // outside of "onStart", goes into esbuild domain
+
   const { params, options } = parseOptions(args, {
+    ignored: [] as string[],
     allowDev: false,
     allowPeer: true,
     allowOptional: true,
@@ -34,15 +38,18 @@ export function checkDependencies(...args: ParseOptions<CheckDependenciesOptions
   const devDependencies: string[] = []
   const peerDependencies: string[] = []
   const optionalDependencies: string[] = []
+  const ignored = new Set(options.ignored)
   const used = new Set<string>()
 
   return {
     name: 'check-dependencies',
     setup(build): void {
+      /* When using this, we fake esbuild's "bundle" functionality */
+      build.initialOptions.bundle = true
+
       let packageJson: AbsolutePath
 
       build.onStart(async (): Promise<OnStartResult | void> => {
-        const run = currentRun()
         if (! run) return { errors: [ { text: 'Unable to find current Run' } ] }
 
         const resolved = run.resolve(params[0] || '@package.json')
@@ -69,7 +76,7 @@ export function checkDependencies(...args: ParseOptions<CheckDependenciesOptions
         // Normal dependencies get the green light immediately
         if (dependencies.includes(args.path)) {
           used.add(args.path)
-          return
+          return { external: true }
         }
 
         // In order, here, we first check "optional" and "peers" (which should)
@@ -82,7 +89,8 @@ export function checkDependencies(...args: ParseOptions<CheckDependenciesOptions
           [ 'error', undefined ] as const
 
         // If we're told to ignore, then... IGNORE!
-        if (result === 'ignore') return
+        if (ignored.has(args.path)) return { external: true }
+        if (result === 'ignore') return { external: true }
 
         // Prep the message
         const text = label ?
@@ -91,8 +99,8 @@ export function checkDependencies(...args: ParseOptions<CheckDependenciesOptions
 
         // Return the proper error or warning
         return result === 'warn' ?
-            { warnings: [ { text } ] } :
-            { errors: [ { text } ] }
+            { external: true, warnings: [ { text } ] } :
+            { external: true, errors: [ { text } ] }
       })
 
       /* Check for unused */
@@ -101,6 +109,7 @@ export function checkDependencies(...args: ParseOptions<CheckDependenciesOptions
 
         // Figure out every unused dependency
         const unused = new Set(dependencies)
+        ignored.forEach((dep) => unused.delete(dep))
         used.forEach((dep) => unused.delete(dep))
 
         // Convert the dependency name into a "message"
