@@ -5,8 +5,10 @@ import { pathToFileURL } from 'node:url'
 import { parse } from '@babel/parser'
 import {
   Comment, isDeclaration,
+  isExportDeclaration,
   isFile,
   isIfStatement,
+  isImportDeclaration,
   isProgram, isTryStatement,
   isTSDeclareMethod,
   isTSTypeReference,
@@ -247,7 +249,14 @@ export async function coverageReport(
         return visitChildren(node, depth) // visit all children normally...
       }
 
-      // TODO: we lost "export type" and "import type" defs!!!
+      // Typescript "import type" or "export type" get skipped all together
+      if (isExportDeclaration(node) && (node.exportKind === 'type')) {
+        return setCodeCoverage(node, COVERAGE_SKIPPED, true)
+      }
+
+      if (isImportDeclaration(node) && (node.importKind === 'type')) {
+        return setCodeCoverage(node, COVERAGE_SKIPPED, true)
+      }
 
       /* Ok, from here we calculate the coverage */
       let coverage = 0
