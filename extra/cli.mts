@@ -178,7 +178,7 @@ export function parseCommandLine(): CommandLineOptions {
 
   /* Our options */
   const tasks: string[] = []
-  let verbosity = 0
+  let verbosity = 0 // yargs always returns 0 for count (quiet/verbose)
   let colors: boolean | undefined = undefined
   let file: string | undefined = undefined
   let listOnly = false
