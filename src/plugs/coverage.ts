@@ -6,7 +6,7 @@ import type { Run } from '../run'
 
 import { sep } from 'node:path'
 
-import { $gry, $p, $red, $ylw, ERROR, NOTICE, WARN } from '../log'
+import { $gry, $ms, $p, $red, $ylw, ERROR, NOTICE, WARN } from '../log'
 import { install, Plug } from '../pipe'
 import { coverageReport, CoverageResult } from './coverage/report'
 import { createAnalyser, SourceMapBias } from './coverage/analysis'
@@ -64,14 +64,18 @@ export class Coverage<
 
     const sourceFiles = [ ...files.absolutePaths() ]
 
+    const ms1 = Date.now()
     const analyser = await createAnalyser(
         sourceFiles,
         [ ...coverageFiles.absolutePaths() ],
         this._options.sourceMapBias,
         run.log,
     )
+    run.log.info('Parsed', coverageFiles.length, 'coverage files', $ms(Date.now() - ms1))
 
+    const ms2 = Date.now()
     const report = await coverageReport(analyser, sourceFiles, run.log)
+    run.log.info('Analysed', sourceFiles.length, 'source files', $ms(Date.now() - ms2))
 
     analyser.destroy()
 
