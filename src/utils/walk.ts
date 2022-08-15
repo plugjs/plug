@@ -74,20 +74,6 @@ export function walk(
   })
 }
 
-/**
- * Walk the specified directory, returning an asynchronous iterator over all
- * the _relative_ files found matching the specified globs and matching options.
- */
-export async function* absoluteWalk(
-    directory: AbsolutePath,
-    globs: string[],
-    options: WalkOptions = {},
-): AsyncGenerator<AbsolutePath, void, void> {
-  for await (const relative of walk(directory, globs, options)) {
-    yield resolveAbsolutePath(directory, relative)
-  }
-}
-
 /* ========================================================================== *
  * INTERNALS                                                                  *
  * ========================================================================== */
