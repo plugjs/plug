@@ -336,7 +336,7 @@ export async function createAnalyser(
     const coverageFileAnalyser = new SourcesCoverageAnalyser(log)
 
     /* Parse our coverage file from JSON */
-    log.debug('Parsing coverage file', $p(coverageFile))
+    log.info('Parsing coverage file', $p(coverageFile))
     const contents = await readFile(coverageFile, 'utf-8')
     const coverage: V8CoverageData = JSON.parse(contents)
 
