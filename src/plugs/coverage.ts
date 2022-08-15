@@ -68,7 +68,7 @@ export class Coverage<
     const analyser = await createAnalyser(
         sourceFiles,
         [ ...coverageFiles.absolutePaths() ],
-        this._options.sourceMapBias,
+        this._options.sourceMapBias || 'least_upper_bound',
         run.log,
     )
     run.log.info('Parsed', coverageFiles.length, 'coverage files', $ms(Date.now() - ms1))

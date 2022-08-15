@@ -73,7 +73,13 @@ export interface V8CoverageData {
  * COVERAGE ANALYSIS                                                          *
  * ========================================================================== */
 
-/** The bias for source map analisys (defaults to `greatest_lower_bound`) */
+/**
+ * The bias for source map analisys (defaults to `least_upper_bound`).
+ *
+ * We use `least_upper_bound` here, as it's the _opposite_ of the default
+ * `greatest_lower_bound`, and we _reverse_ the lookup of the sourcemaps (from
+ * source code to generated code).
+ */
 export type SourceMapBias = 'greatest_lower_bound' | 'least_upper_bound' | 'none' | undefined
 
 /** Interface providing coverage data */
