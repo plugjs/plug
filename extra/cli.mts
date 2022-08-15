@@ -168,7 +168,7 @@ export function parseCommandLine(): CommandLineOptions {
     },
 
     string: [ 'file' ],
-    boolean: [ 'help' ],
+    boolean: [ 'help', 'colors', 'list' ],
     count: [ 'verbose', 'quiet' ],
   })
 
@@ -178,7 +178,7 @@ export function parseCommandLine(): CommandLineOptions {
 
   /* Our options */
   const tasks: string[] = []
-  let verbosity: number | undefined
+  let verbosity = 0
   let colors: boolean | undefined = undefined
   let file: string | undefined = undefined
   let listOnly = false
@@ -191,10 +191,10 @@ export function parseCommandLine(): CommandLineOptions {
         tasks.push(...parsed[key].map((s) => `${s}`))
         break
       case 'verbose': // increase verbosity
-        verbosity = (verbosity || 0) + parsed[key]
+        verbosity = verbosity + parsed[key]
         break
       case 'quiet': // decrease verbosity
-        verbosity = (verbosity || 0) - parsed[key]
+        verbosity = verbosity - parsed[key]
         break
       case 'file': // build file
         file = parsed[key]
@@ -248,7 +248,7 @@ export function parseCommandLine(): CommandLineOptions {
   if (colors !== undefined) process.env.LOG_COLORS = `${colors}`
 
   /* Log level (from verbosity) overriding LOG_LEVEL */
-  if (verbosity !== undefined) {
+  if (verbosity) {
     const levels = [ 'TRACE', 'DEBUG', 'INFO', 'NOTICE', 'WARN', 'ERROR', 'OFF' ]
     let level = levels.indexOf('NOTICE') - verbosity
     if (level >= levels.length) level = levels.length - 1
