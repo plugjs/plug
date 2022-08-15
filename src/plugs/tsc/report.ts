@@ -4,7 +4,7 @@ import { ERROR, NOTICE, Report, ReportLevel, ReportRecord, WARN } from '../../lo
 import { AbsolutePath, resolveAbsolutePath } from '../../paths'
 
 function convertMessageChain(chain: ts.DiagnosticMessageChain, indent = 0): string[] {
-  const message = `${''.padStart(indent * 2)}chain.messageText`
+  const message = `${''.padStart(indent * 2)}${chain.messageText}`
 
   if (chain.next) {
     const next = chain.next.map((c) => convertMessageChain(c, indent + 1))
