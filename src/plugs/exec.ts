@@ -176,8 +176,8 @@ async function spawnChild(
 
   // Build our environment variables record
   const PATH = childPaths.join(path.delimiter)
-  const LOG_OPTIONS = JSON.stringify(logOptions.fork(run.taskName))
-  const childEnv = { ...process.env, ...env, PATH, LOG_OPTIONS }
+  const __LOG_OPTIONS = JSON.stringify(logOptions.fork(run.taskName))
+  const childEnv = { ...process.env, ...env, PATH, __LOG_OPTIONS }
 
   // Prepare the options for calling `spawn`
   const childOptions: SpawnOptions = {

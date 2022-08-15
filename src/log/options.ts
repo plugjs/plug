@@ -64,9 +64,6 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   constructor() {
     super()
 
-    /* The `LOG_OPTIONS` variable is a JSON-serialized `LogOptions` object */
-    Object.assign(this, JSON.parse(process.env.LOG_OPTIONS || '{}'))
-
     /* The `LOG_LEVEL` variable is one of our `debug`, `info`, ... */
     if (process.env.LOG_LEVEL) {
       this._level = getLevelNumber(process.env.LOG_LEVEL as LogLevelString)
@@ -78,6 +75,13 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
       if (process.env.LOG_COLOR.toLowerCase() === 'false') this.colors = false
       // Other values don't change the value of `options.colors`
     }
+
+    /*
+     * The `__LOG_OPTIONS` variable is a JSON-serialized `LogOptions` object
+     * and it's processed _last_ as it's normally only created by fork below
+     * and consumed by the `Exec` plug (which has no other way of communicating)
+     */
+    Object.assign(this, JSON.parse(process.env.__LOG_OPTIONS || '{}'))
   }
 
   private _notifyListeners(): void {
