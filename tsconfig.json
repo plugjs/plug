@@ -14,6 +14,7 @@
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    // "noUncheckedIndexedAccess": true,
   },
   "include": [
     "./extra/*.mts",
