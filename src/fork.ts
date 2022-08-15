@@ -178,8 +178,12 @@ export abstract class ForkingPlug implements Plug<Files | undefined> {
  * CHILD PROCESS SIDE OF THE FORKING PLUG IMPLEMENTATION                      *
  * ========================================================================== */
 
-/* If we were started with an IPC channel, we're the child, launch the plug */
-if (process.send) {
+/*
+ * If we were started as ourselves (fork.js) and we have an IPC channel to the
+ * parent process, we can safely assume we need to run our plug... So we wait
+ * for the message and respond once the plug returns _something_!
+ */
+if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
   /* If we haven't processed our message in 5 seconds, fail _badly_ */
   const timeout = setTimeout(() => {
     // eslint-disable-next-line no-console
