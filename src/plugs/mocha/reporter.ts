@@ -1,97 +1,25 @@
 import type { AssertionError } from 'assert'
-import type { Files } from '../../files'
-import type { Plug } from '../../pipe'
 
 import { diffJson } from 'diff'
 import Mocha from 'mocha'
 
-import { failure } from '../../assert'
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, Logger, NOTICE, WARN } from '../../log'
-import { Run } from '../../run'
-
-export interface MochaOptions {
-  /** Specify the directory where coverage data will be saved */
-  coverageDir?: string,
-  /** Bail after first test failure? */
-  bail?: boolean,
-  /** Show diff on failure? */
-  diff?: boolean,
-  /** Report tests without running them? */
-  dryRun?: boolean,
-  /** Tests marked `only` fail the suite? */
-  forbidOnly?: boolean,
-  /** Pending tests fail the suite? */
-  forbidPending?: false,
-  /** Reporter name. */
-  reporter?: string
-  /** Options for the reporter */
-  reporterOptions?: Record<string, any>,
-  /** Number of times to retry failed tests. */
-  retries?: number,
-  /** Slow threshold value. */
-  slow?: number,
-  /** Timeout threshold value. */
-  timeout?: number,
-}
-
-/** Symbol to inject `Logger` in reporter options */
-const logSymbol = Symbol()
-/** Symbol to inject `Run` in reporter options */
-const runSymbol = Symbol()
-
-/** Writes some info about the current {@link Files} being passed around. */
-export class MochaRunner implements Plug<undefined> {
-  constructor(private readonly _options: MochaOptions) {}
-
-  async pipe(files: Files, run: Run): Promise<undefined> {
-    // Enter log here, so that log messages called when loading files get
-    // properly indented by our logger
-    run.log.notice('') // empty line
-    run.log.enter(NOTICE, $wht('Starting Mocha'))
-
-    // Create the mocha runner
-    const mocha = new Mocha({
-      diff: true, // by defaut enable diffs
-      reporter: PlugReporter, // default to our reporter
-      ...this._options, // override defaults with all other options
-      reporterOptions: {
-        ...this._options.reporterOptions,
-        [logSymbol]: run.log, // always force a log
-        [runSymbol]: run, // always force a run
-      },
-      allowUncaught: false, // never allow uncaught exceptions
-      delay: false, // never delay running
-    })
-
-    // Tell mocha about all our files
-    for (const file of files.absolutePaths()) mocha.addFile(file)
-
-    await mocha.loadFilesAsync()
-
-    // Run mocha!
-    return new Promise((resolve, reject) => {
-      try {
-        mocha.run((failures) => {
-          if (failures) reject(failure())
-          resolve(undefined)
-        })
-      } catch (error) {
-        reject(error)
-      }
-    })
-  }
-}
-
-/* ========================================================================== *
- * LOGGER / REPORTER                                                          *
- * ========================================================================== */
 
 const _pending = '\u22EF' // middle ellipsis
 const _success = '\u2714' // heavy check mark
 const _failure = '\u2718' // heavy ballot x
 const _details = '\u21B3' // downwards arrow with tip rightwards
 
-class PlugReporter extends Mocha.reporters.Base {
+/* ========================================================================== *
+ * LOGGER / REPORTER                                                          *
+ * ========================================================================== */
+
+/** Symbol to inject `Logger` in reporter options */
+export const logSymbol = Symbol()
+/** Symbol to inject `Run` in reporter options */
+export const runSymbol = Symbol()
+
+export class PlugReporter extends Mocha.reporters.Base {
   constructor(runner: Mocha.Runner, options: Mocha.MochaOptions) {
     super(runner, options)
 
