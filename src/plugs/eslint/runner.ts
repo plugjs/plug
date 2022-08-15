@@ -2,29 +2,49 @@ import type { Files } from '../../files'
 import type { Plug } from '../../pipe'
 import type { Run } from '../../run'
 
-import { ESLint } from 'eslint'
-import { failure } from '../../assert'
-import { $p, ERROR, NOTICE, WARN } from '../../log'
-import { AbsolutePath, getCurrentWorkingDirectory, resolveAbsolutePath } from '../../paths'
-import { readFile } from '../../utils/asyncfs'
-import { workerMain } from '../../worker'
+import { ESLint as RealESLint } from 'eslint'
 
-export type ESLintWorkerType = typeof ESLintWorker
+import { assert, failure } from '../../assert'
+import { $p, ERROR, NOTICE, WARN } from '../../log'
+import { getCurrentWorkingDirectory, isDirectory, isFile, resolveAbsolutePath } from '../../paths'
+import { readFile } from '../../utils/asyncfs'
+
+export interface ESLintOptions {
+  /** ESLint's own _current working directory_, where config files are. */
+  directory?: string
+  /** Show sources in report? */
+  showSources?: boolean
+  /**
+   * ESLint's _override_ configuration file: configurations specified in this
+   * file will override any other configuration specified elsewhere.
+   */
+  configFile?: string
+}
 
 /** Writes some info about the current {@link Files} being passed around. */
-class ESLintWorker implements Plug<undefined> {
-  constructor(
-      private readonly _directory: AbsolutePath,
-      private readonly _configFile: AbsolutePath | undefined,
-      private readonly _showSources: boolean | undefined,
-  ) {}
+export class ESLint implements Plug<undefined> {
+  private readonly _options: Readonly<ESLintOptions>
+
+  constructor()
+  constructor(configFile: string)
+  constructor(options: ESLintOptions)
+  constructor(arg: string | ESLintOptions = {}) {
+    this._options = typeof arg === 'string' ? { configFile: arg } : arg
+  }
 
   async pipe(files: Files, run: Run): Promise<undefined> {
+    const { directory, configFile } = this._options
+
+    const cwd = directory ? run.resolve(directory) : getCurrentWorkingDirectory()
+    assert(isDirectory(cwd), `ESLint directory ${$p(cwd)} does not exist`)
+
+    const overrideConfigFile = configFile ? run.resolve(configFile) : undefined
+    if (overrideConfigFile) {
+      assert(isFile(overrideConfigFile), `ESLint configuration ${$p(overrideConfigFile)} does not exist`)
+    }
+
     /* Create our ESLint instance */
-    const eslint = new ESLint({
-      overrideConfigFile: this._configFile,
-      cwd: this._directory,
-    })
+    const eslint = new RealESLint({ overrideConfigFile, cwd })
 
     /* Lint all files in parallel */
     const paths = [ ...files.absolutePaths() ]
@@ -49,7 +69,7 @@ class ESLintWorker implements Plug<undefined> {
       summary.results.push(...settlement.value)
       return summary
     }, {
-      results: [] as ESLint.LintResult[],
+      results: [] as RealESLint.LintResult[],
       failures: 0,
     })
 
@@ -88,10 +108,7 @@ class ESLintWorker implements Plug<undefined> {
     }
 
     /* Emit our report and fail on errors */
-    report.done(this._showSources)
+    report.done(this._options.showSources)
     return undefined
   }
 }
-
-/** Run worker! */
-workerMain(ESLintWorker)
