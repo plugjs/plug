@@ -3,7 +3,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { RawSourceMap, SourceMapConsumer } from 'source-map'
 
 import { assert } from '../../assert'
-import { $p, Logger } from '../../log'
+import { $gry, $p, Logger } from '../../log'
 import { AbsolutePath } from '../../paths'
 import { readFile } from '../../utils/asyncfs'
 
@@ -211,7 +211,6 @@ class CoverageSitemapAnalyser extends CoverageResultAnalyser {
       this._sourceMapBias === 'least_upper_bound' ? SourceMapConsumer.LEAST_UPPER_BOUND :
       undefined
 
-    // TODO: this is _super_ slow...
     const generated = this._sourceMap.generatedPositionFor({ source, line, column, bias })
 
     if (! generated) {
@@ -237,12 +236,14 @@ class CoverageSitemapAnalyser extends CoverageResultAnalyser {
 
 /** Combine (add) all coverage data from all analysers */
 function combineCoverage(
-    analysers: CoverageAnalyser[],
+    analysers: Set<CoverageAnalyser> | undefined,
     source: string,
     line: number,
     column: number,
 ): number {
   let coverage = 0
+
+  if (! analysers) return coverage
 
   for (const analyser of analysers) {
     coverage += analyser.coverage(source, line, column)
@@ -255,19 +256,24 @@ function combineCoverage(
 
 /** Associate one or more {@link CoverageAnalyser} with different sources */
 export class SourcesCoverageAnalyser extends CoverageAnalyserImpl {
-  private readonly _mappings = new Map<string, CoverageAnalyserImpl[]>()
+  private readonly _mappings = new Map<string, Set<CoverageAnalyserImpl>>()
+
+  constructor(log: Logger, private readonly _filename: AbsolutePath) {
+    super(log)
+  }
 
   hasMappings(): boolean {
     return this._mappings.size > 0
   }
 
   add(source: string, analyser: CoverageAnalyserImpl): void {
-    const analysers = this._mappings.get(source) || []
-    analysers.push(analyser)
+    const analysers = this._mappings.get(source) || new Set()
+    analysers.add(analyser)
     this._mappings.set(source, analysers)
   }
 
   async init(): Promise<this> {
+    this._log.debug('SourcesCoverageAnalyser', $p(this._filename), $gry(`(${this._mappings.size} mappings)`))
     for (const analysers of this._mappings.values()) {
       for (const analyser of analysers) {
         await analyser.init()
@@ -285,30 +291,36 @@ export class SourcesCoverageAnalyser extends CoverageAnalyserImpl {
   }
 
   coverage(source: string, line: number, column: number): number {
-    const analysers = this._mappings.get(source) || []
+    const analysers = this._mappings.get(source)
     return combineCoverage(analysers, source, line, column)
   }
 }
 
 /** Combine multiple {@link CoverageAnalyser} instances together */
 export class CombiningCoverageAnalyser extends CoverageAnalyserImpl {
-  #analysers: CoverageAnalyserImpl[] = []
+  private readonly _analysers = new Set<CoverageAnalyserImpl>()
 
   add(analyser: CoverageAnalyserImpl): void {
-    this.#analysers.push(analyser)
+    this._analysers.add(analyser)
   }
 
   async init(): Promise<this> {
-    for (const analyser of this.#analysers) await analyser.init()
-    return this
+    this._log.debug('CombiningCoverageAnalyser', $gry(`(${this._analysers.size} analysers)`))
+    this._log.enter()
+    try {
+      for (const analyser of this._analysers) await analyser.init()
+      return this
+    } finally {
+      this._log.leave()
+    }
   }
 
   destroy(): void {
-    for (const analyser of this.#analysers) analyser.destroy()
+    for (const analyser of this._analysers) analyser.destroy()
   }
 
   coverage(source: string, line: number, column: number): number {
-    return combineCoverage(this.#analysers, source, line, column)
+    return combineCoverage(this._analysers, source, line, column)
   }
 }
 
@@ -333,7 +345,7 @@ export async function createAnalyser(
   /* Resolve and walk the coverage directory, finding "coverage-*.json" files */
   for await (const coverageFile of coverageFiles) {
     /* The "SourceCoverageAnalyser" for this coverage file */
-    const coverageFileAnalyser = new SourcesCoverageAnalyser(log)
+    const coverageFileAnalyser = new SourcesCoverageAnalyser(log, coverageFile)
 
     /* Parse our coverage file from JSON */
     log.info('Parsing coverage file', $p(coverageFile))
@@ -369,10 +381,10 @@ export async function createAnalyser(
       } else if (urls.includes(result.url)) {
         coverageFileAnalyser.add(result.url, new CoverageResultAnalyser(log, result))
       }
-
-      /* Add the analyser if it has some mappings */
-      if (coverageFileAnalyser.hasMappings()) analyser.add(coverageFileAnalyser)
     }
+
+    /* Add the analyser if it has some mappings */
+    if (coverageFileAnalyser.hasMappings()) analyser.add(coverageFileAnalyser)
   }
 
   return await analyser.init()
