@@ -94,9 +94,7 @@ export const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): 
   const pad = ''.padStart(_taskLength - taskName.length, ' ')
   prefixes.push(`${pad}${taskName}`)
 
-  if (level <= 0) {
-    prefixes.push(' \u2502        \u2502 ')
-  } else if (level <= TRACE) {
+  if (level <= TRACE) {
     prefixes.push(' \u2502  trace \u2502 ')
   } else if (level <= DEBUG) {
     prefixes.push(' \u2502  debug \u2502 ')
