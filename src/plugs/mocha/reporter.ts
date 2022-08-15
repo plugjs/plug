@@ -1,7 +1,7 @@
 import type { AssertionError } from 'assert'
 
 import { diffJson } from 'diff'
-import Mocha from 'mocha'
+import RealMocha from 'mocha' // Mocha types pollute the global scope!
 
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, Logger, NOTICE, WARN } from '../../log'
 
@@ -19,13 +19,13 @@ export const logSymbol = Symbol()
 /** Symbol to inject `Run` in reporter options */
 export const runSymbol = Symbol()
 
-export class PlugReporter extends Mocha.reporters.Base {
-  constructor(runner: Mocha.Runner, options: Mocha.MochaOptions) {
+export class PlugReporter extends RealMocha.reporters.Base {
+  constructor(runner: RealMocha.Runner, options: RealMocha.MochaOptions) {
     super(runner, options)
 
     const showDiff = !! options.diff
     const log = options.reporterOptions[logSymbol] as Logger
-    const failures: Mocha.Test[] = []
+    const failures: RealMocha.Test[] = []
     const rootSuite = runner.suite
 
     // Enter a suite (increase indent)

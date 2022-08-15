@@ -10,12 +10,12 @@ export * from './plugs/tsc'
 import { installForking } from './fork'
 import { requireResolve } from './paths'
 
-import type { MochaRunner } from './plugs/mocha/runner'
+import type { Mocha } from './plugs/mocha/runner'
 
 declare module './pipe' {
   export interface Pipe {
-    mocha: PipeExtension<typeof MochaRunner>
+    mocha: PipeExtension<typeof Mocha>
   }
 }
 
-installForking('mocha', requireResolve(__fileurl, './plugs/mocha/runner'), 'MochaRunner')
+installForking('mocha', requireResolve(__fileurl, './plugs/mocha/runner'), 'Mocha')
