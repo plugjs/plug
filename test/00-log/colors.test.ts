@@ -2,7 +2,7 @@ import { expect } from 'chai'
 
 import * as colors from '../../src/log/colors'
 
-import { log, logOptions } from '../../src'
+import { log, logOptions } from '../../src/log'
 import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../../src/paths'
 
 describe('Colors', () => {
