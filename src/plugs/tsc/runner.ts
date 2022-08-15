@@ -6,23 +6,30 @@ import type { Run } from '../../run'
 
 import { $p, log } from '../../log'
 import { getCurrentWorkingDirectory, isFile } from '../../paths'
-import { workerMain } from '../../worker'
 import { TypeScriptHost } from './compiler'
 import { getCompilerOptions } from './options'
 import { updateReport } from './report'
 import { failure } from '../../assert'
-
-export type TscWorkerType = typeof TscWorker
+import { parseOptions, ParseOptions } from '../../utils/options'
 
 /* ========================================================================== *
  * WORKER PLUG                                                                *
  * ========================================================================== */
 
-class TscWorker implements Plug<Files> {
-  constructor(
-      private readonly _tsconfig: string | undefined,
-      private readonly _options: ts.CompilerOptions,
-  ) {}
+export class Tsc implements Plug<Files> {
+  private readonly _tsconfig?: string
+  private readonly _options: ts.CompilerOptions
+
+  constructor()
+  constructor(config: string)
+  constructor(options: ts.CompilerOptions)
+  constructor(config: string, options: ts.CompilerOptions)
+
+  constructor(...args: ParseOptions<ts.CompilerOptions>) {
+    const { params: [ tsconfig ], options } = parseOptions(args, {})
+    this._tsconfig = tsconfig
+    this._options = options
+  }
 
   async pipe(files: Files, run: Run): Promise<Files> {
     const tsconfig = this._tsconfig ?
@@ -92,6 +99,3 @@ class TscWorker implements Plug<Files> {
     return outputs
   }
 }
-
-/** Run worker! */
-workerMain(TscWorker)
