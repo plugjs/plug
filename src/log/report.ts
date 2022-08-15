@@ -102,6 +102,9 @@ export function createReport(title: string, taskName: string): Report {
  * REPORT IMPLEMENTATION                                                      *
  * ========================================================================== */
 
+const nul = '\u2400' // null, yep, as a character, always gets sorted last
+type Null = typeof nul
+
 interface ReportInternalRecord {
   readonly level: ReportLevel
   readonly messages: readonly string[]
@@ -119,7 +122,7 @@ interface ReportInternalAnnotation {
 class ReportImpl implements Report {
   private readonly _sources = new Map<AbsolutePath, string[]>()
   private readonly _annotations = new Map<AbsolutePath, ReportInternalAnnotation>()
-  private readonly _records = new Map<AbsolutePath | null, Set<ReportInternalRecord>>()
+  private readonly _records = new Map<AbsolutePath | Null, Set<ReportInternalRecord>>()
   private _noticeRecords = 0
   private _warningRecords = 0
   private _errorRecords = 0
@@ -206,7 +209,7 @@ class ReportImpl implements Report {
       if (! messages.length) fail('No message for report record')
 
       const level = record.level
-      const file = record.file || null // use "null" as "undefined" doesn't get sorted!
+      const file = record.file
       const source = record.source || undefined
       const tags = record.tags ?
         Array.isArray(record.tags) ?
@@ -244,8 +247,8 @@ class ReportImpl implements Report {
       }
 
       /* Remember this normalized report */
-      let reports = this._records.get(file)
-      if (! reports) this._records.set(file, reports = new Set())
+      let reports = this._records.get(file || nul)
+      if (! reports) this._records.set(file || nul, reports = new Set())
       reports.add({ level, messages, tags, line, column, length: length })
     }
 
@@ -259,7 +262,8 @@ class ReportImpl implements Report {
 
     // Iterate through all the files having records
     for (const file of this._records.keys()) {
-      if (! file) continue // no "null" file
+      if (! file) continue
+      if (file === nul) continue
       if (this._sources.has(file)) continue
       promises.push(readFile(file, 'utf-8')
           .then((source) => source.split('\n'))
@@ -298,7 +302,7 @@ class ReportImpl implements Report {
         // map to a [ file, record[], annotation? ]
         .map((file) => {
           // Get our annotation for the file
-          const ann = file && this._annotations.get(file)
+          const ann = file && file !== nul && this._annotations.get(file)
 
           // Get the records (or an empty record array)
           const records = [ ...(this._records.get(file) || []) ]
@@ -340,21 +344,23 @@ class ReportImpl implements Report {
     /* Iterate through all our [file,reports] tuple */
     for (let f = 0; f < entries.length; f ++) {
       const { file, records, annotation } = entries[f]
-      const source = file && this._sources.get(file)
+      const source = file && file != nul && this._sources.get(file)
 
       if ((f === 0) || entries[f - 1]?.records.length) {
         this._emitter(options, [ '' ])
       }
 
-      if (file && annotation) {
+      if (file && file !== nul && annotation) {
         const { level, note } = annotation
         const $col = level === NOTICE ? $blu : level === WARN ? $ylw : $red
         const ann = `${$gry('[')}${$col(note.padStart(aPad))}${$gry(']')}`
         const pad = ''.padStart(fPad - file.length) // file is underlined
 
         this._emitter({ ...options, level }, [ $wht($und(file)), pad, ann ])
-      } else if (file) {
+      } else if (file !== nul ) {
         this._emitter(options, [ $wht($und(file)) ])
+      } else if (f > 0) {
+        this._emitter(options, [ '' ]) // white line for the last
       }
 
       /* Now get each message and do our magic */
@@ -369,9 +375,12 @@ class ReportImpl implements Report {
           } else {
             pfx = `  ${line.toString().padStart(lPad)}:${'-'.padEnd(cPad)} `
           }
-        } else {
+        } else if (file != nul) {
           pfx = `  ${'-'.padStart(lPad)}:${'-'.padEnd(cPad)} `
+        } else {
+          pfx = '  ~ '
         }
+
         const prefix = ''.padStart(pfx.length + 1)
 
         /* Nice tags */
