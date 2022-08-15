@@ -1,9 +1,9 @@
 import { $t, build, checkDependencies, find, fixExtensions, log, merge, parallel, rmrf } from './src/index'
 
+/** When `true` the coverage dir comes from the environment */
+const environmentCoverage = !! process.env.NODE_V8_COVERAGE
 /** The coverage data dir, might be supplied as an env variable  */
 const coverageDir = process.env.NODE_V8_COVERAGE || '.coverage-data'
-/** When "true" the coverage dir comes from the environment */
-const environmentCoverage = !! process.env.NODE_V8_COVERAGE
 
 export default build({
   find_sources: () => find('**/*.ts', { directory: 'src' }),
@@ -14,7 +14,12 @@ export default build({
    * ======================================================================== */
 
   async test() {
-    if (! environmentCoverage) await rmrf(coverageDir)
+    if (environmentCoverage) {
+      log.notice(`External coverage enabled, re-run task ${$t('coverage')} to generate full report`)
+    } else {
+      await rmrf(coverageDir)
+    }
+
     await this.find_tests().mocha({ coverageDir })
   },
 
@@ -47,21 +52,13 @@ export default build({
   },
 
   async coverage() {
-    if (environmentCoverage) {
-      log.notice(`Re-run the process with the ${$t('coverage_only')} task`)
-    } else {
-      try {
-        await this.test()
-      } finally {
-        await this.coverage_only()
-      }
+    try {
+      await this.find_sources().coverage(coverageDir, {
+        reportDir: 'coverage',
+      })
+    } catch (error) {
+      if (! environmentCoverage) throw error
     }
-  },
-
-  async coverage_only() {
-    await this.find_sources().coverage('.coverage-data', {
-      reportDir: 'coverage',
-    })
   },
 
   async eslint() {
