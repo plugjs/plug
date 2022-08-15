@@ -36,7 +36,7 @@ export interface MochaOptions {
 
 /** Writes some info about the current {@link Files} being passed around. */
 export class Mocha implements Plug<undefined> {
-  constructor(private readonly _options: MochaOptions) {}
+  constructor(private readonly _options: MochaOptions = {}) {}
 
   async pipe(files: Files, run: Run): Promise<undefined> {
     // Enter log here, so that log messages called when loading files get
