@@ -80,7 +80,7 @@ export class PipeImpl<T extends Files | undefined> extends Pipe implements Promi
  * ========================================================================== */
 
 /** The names which can be installed as direct plugs. */
-type PlugName = string & Exclude<keyof Pipe, 'plug' | keyof Promise<Files>>
+export type PlugName = string & Exclude<keyof Pipe, 'plug' | keyof Promise<Files>>
 
 /** A convenience type identifying a {@link Plug} constructor. */
 export type PlugConstructor = new (...args: any) => Plug<Files | undefined>
