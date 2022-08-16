@@ -19,7 +19,7 @@
  * ========================================================================== */
 
 // ESBuild is the only external dependency
-import _esbuild from 'esbuild'
+import _esbuild, { TransformFailure } from 'esbuild'
 
 // NodeJS dependencies
 import _fs from 'node:fs'
@@ -155,25 +155,14 @@ function _isDirectory(path: string): boolean {
  * out nicely. Then fail if any error was detected.
  */
 function _esbReport(
-    type: Type,
-    filename: string,
-    what: { warnings?: _esbuild.Message[], errors?: _esbuild.Message[] },
+    kind: 'error' | 'warning',
+    messages: _esbuild.Message[] = [],
 ): void {
-  const { warnings = [], errors = [] } = what
-
   const output = process.stderr
   const options = { color: !!output.isTTY, terminalWidth: output.columns || 80 }
 
-  const messages = [
-    ..._esbuild.formatMessagesSync(warnings, { kind: 'warning', ...options }),
-    ..._esbuild.formatMessagesSync(errors, { kind: 'error', ...options }),
-  ]
-
-  messages.forEach((message) => output.write(`${message}\n`))
-
-  if (errors.length) {
-    _throw(type, `ESBuild found ${errors.length} errors in "${filename}"`, { start: _esbReport })
-  }
+  const array = _esbuild.formatMessagesSync(messages, { kind, ...options })
+  array.forEach((message) => output.write(`${message}\n`))
 }
 
 /**
@@ -194,6 +183,7 @@ function _esbTranpile(filename: string, type: Type): string {
     sourcemap: 'inline', // always inline source maps
     sourcesContent: false, // do not include sources content in sourcemap
     platform: 'node', // d'oh! :-)
+    logLevel: 'silent', // catching those in our _esbReport below
     target: `node${process.versions['node']}`, // target _this_ version
     define: { __fileurl, __esm, __cjs }, // from "globals.d.ts"
   }
@@ -208,14 +198,14 @@ function _esbTranpile(filename: string, type: Type): string {
   try {
     const source = _fs.readFileSync(filename, 'utf-8')
     result = _esbuild.transformSync(source, options)
-  } catch (cause) {
-    _esbReport(type, filename, cause as _esbuild.BuildFailure)
-    // If the above doesn't fail (normal error?) then bail out
+  } catch (cause: any) {
+    _esbReport('error', (cause as TransformFailure).errors)
+    _esbReport('warning', (cause as TransformFailure).warnings)
     _throw(type, `ESBuild error transpiling "${filename}"`, { cause, start: _esbTranpile })
   }
 
-  /* Report out any warning or error and fail if there are errors */
-  _esbReport(type, filename, result)
+  /* Log transpile warnings if debugging */
+  if (_debug) _esbReport('warning', result.warnings)
 
   /* Done! */
   return result.code
