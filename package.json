@@ -1,5 +1,5 @@
 {
-  "name": "@plugjs/plugjs",
+  "name": "@plugjs/plug",
   "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -18,7 +18,7 @@
     }
   },
   "bin": {
-    "plugjs": "./extra/cli.mjs"
+    "plug": "./extra/cli.mjs"
   },
   "scripts": {
     "bootstrap": "./bootstrap.sh",
@@ -30,9 +30,9 @@
   "dependencies": {
     "@babel/parser": "^7.18.11",
     "@babel/types": "^7.18.10",
-    "@plugjs/cov8-html": "file:../coverage-app/plugjs-cov8-html-0.0.1.tgz",
+    "@plugjs/cov8-html": "^0.0.1",
     "diff": "^5.1.0",
-    "esbuild": "^0.15.3",
+    "esbuild": "^0.15.4",
     "eslint": "^8.22.0",
     "mocha": "^10.0.0",
     "picomatch": "^2.3.1",
