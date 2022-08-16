@@ -372,8 +372,9 @@ export const resolve: ResolveHook = (specifier, context, nextResolve): ResolveRe
    * Now we can check if "import 'foo'" resolves to:
    *
    * 1) directly to a file, e.g. "import './foo.js'" or "import './foo.mts'"
-   * 2) imports a file without extension as if it were "import './foo.ts'"
-   * 3) imports a directory  as in "import './foo/index.ts'"
+   * 2) import a "pseudo-JS file", e.g. "import './foo.js'" becomes "import './foo.ts'"
+   * 3) imports a file without extension as if it were "import './foo.ts'"
+   * 4) imports a directory  as in "import './foo/index.ts'"
    *
    * We resolve the _final_ specifier that will be passed to the next resolver
    * for further potential resolution accordingly.
@@ -385,9 +386,28 @@ export const resolve: ResolveHook = (specifier, context, nextResolve): ResolveRe
     return nextResolve(specifier, context) // straight on
   }
 
+  /*
+   * TypeScript allows us to import "./foo.js", and internally resolves this to
+   * "./foo.ts" (yeah, nice, right?) and while we normally wouldn't want to deal
+   * with this kind of stuff, the "node16" module resolution mode _forces_ us to
+   * use this syntax.
+   */
+  const match = specifier.match(/(.*)(\.[mc]?js$)/)
+  if (match) {
+    const [ , base, ext ] = match
+    const tsspecifier = base + ext.replace('js', 'ts')
+    const tsurl = new URL(tsspecifier, parentURL).href
+    const tspath = _url.fileURLToPath(tsurl)
+
+    if (_isFile(tspath)) {
+      _log(ESM, `Positive match for "${specifier}" as "${tspath}" (2)`)
+      return nextResolve(specifier, context) // straight on
+    }
+  }
+
   /* Check if the import is actually a file with a ".ts" extension */
   if (_isFile(`${path}.ts`)) {
-    _log(ESM, `Positive match for "${specifier}.ts" as "${path}.ts" (2)`)
+    _log(ESM, `Positive match for "${specifier}.ts" as "${path}.ts" (3)`)
     return nextResolve(`${specifier}.ts`, context)
   }
 
@@ -454,9 +474,18 @@ declare global {
   }
 }
 
-/** Add the `_extensions[...]` member of `node:module`. */
+/**
+ * Add the `_extensions[...]` and `resolveFilename(...)` members to the
+ * definition of `node:module`.
+ */
 declare module 'node:module' {
   const _extensions: Record<`.${string}`, ExtensionHandler>
+  function _resolveFilename(
+    request: string,
+    parent: _module | undefined,
+    isMain: boolean,
+    options?: any,
+  ): string
 }
 
 /* ========================================================================== */
@@ -491,6 +520,62 @@ const loader: ExtensionHandler = (module, filename): void => {
 
 /* Remember to load our loader for .TS/.CTS as CommonJS modules */
 _module._extensions['.ts'] = _module._extensions['.cts'] = loader
+
+/**
+ * Replace _module._resolveFilename with our own.
+ *
+ * This is a _HACK BEYOND REDEMPTION_ and I'm ashamed of even _thinking_ about
+ * it, but, well, it makes things work.
+ *
+ * TypeScript allows us to import "./foo.js", and internally resolves this to
+ * "./foo.ts" (yeah, nice, right?) and while we normally wouldn't want to deal
+ * with this kind of stuff, the "node16" module resolution mode _forces_ us to
+ * use this syntax.
+ *
+ * And we _need_ the "node16" module resolution to properly consume "export
+ * conditions" from other packages. Since ESBuild's plugins only work in async
+ * mode, changing those import statements on the fly is out of the question, so
+ * we need to hack our way into Node's own resolver.
+ *
+ * See my post: https://twitter.com/ianosh/status/1559484168685379590
+ * ESBuild related fix: https://github.com/evanw/esbuild/commit/0cdc005e3d1c765a084f206741bc4bff78e30ec4
+ */
+const _oldResolveFilename = _module._resolveFilename
+_module._resolveFilename = function(
+    request: string,
+    parent: _module | undefined,
+    ...args: [ isMain: boolean, options: any ]
+): any {
+  try {
+    /* First call the old _resolveFilename to see what Node thinks */
+    return _oldResolveFilename.call(this, request, parent, ...args)
+  } catch (error: any) {
+    /* If the error was anything but "MODULE_NOT_FOUND" bail out */
+    if (error.code !== 'MODULE_NOT_FOUND') throw error
+
+    /* Check if the "request" ends with ".js", ".mjs" or ".cjs" */
+    const match = request.match(/(.*)(\.[mc]?js$)/)
+
+    /*
+     * If the file matches our extension, _and_ we have a parent, we simply
+     * try with a new extension (e.g. ".js" becomes ".ts")...
+     */
+    if (parent && match) {
+      const [ , name, ext ] = match
+      const tsrequest = name + ext.replace('js', 'ts')
+      try {
+        const result = _oldResolveFilename.call(this, tsrequest, parent, ...args)
+        _log('commonjs', `Resolution for "${request}" intercepted as "${tsrequest}`)
+        return result
+      } catch (discard) {
+        throw error // throw the _original_ error in this case
+      }
+    }
+
+    /* We have no parent, or we don't match our extension, throw! */
+    throw error
+  }
+}
 
 /* ========================================================================== *
  * FIN...                                                                     *
