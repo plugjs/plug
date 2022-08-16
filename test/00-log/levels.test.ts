@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 
-import { DEBUG, ERROR, getLevelName, getLevelNumber, INFO, NOTICE, OFF, TRACE, WARN } from '../../src/log/levels'
+import { DEBUG, ERROR, getLevelName, getLevelNumber, INFO, NOTICE, OFF, TRACE, WARN } from '../../src/log/levels.js'
 
 describe('Levels', () => {
   it('should return the proper level name', () => {

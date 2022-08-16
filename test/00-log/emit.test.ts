@@ -1,16 +1,16 @@
 import { expect } from 'chai'
 import assert from 'node:assert'
 import { Writable } from 'node:stream'
-import { currentRun } from '../../src/async'
-import { $gry } from '../../src/log/colors'
-import { emitColor, emitPlain } from '../../src/log/emit'
-import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from '../../src/log/levels'
-import { logOptions } from '../../src/log/options'
-import { zapSpinner } from '../../src/log/spinner'
+import { currentRun } from '../../src/async.js'
+import { $gry } from '../../src/log/colors.js'
+import { emitColor, emitPlain } from '../../src/log/emit.js'
+import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from '../../src/log/levels.js'
+import { logOptions } from '../../src/log/options.js'
+import { zapSpinner } from '../../src/log/spinner.js'
 
 describe('Emit', () => {
   it('should log some messages', () => {
-    const run = currentRun()
+    const run = currentRun() // this might fail if not just-in-time transpiled
     assert(run)
 
     const _level = run.log.level
@@ -29,7 +29,7 @@ describe('Emit', () => {
   })
 
   it('should emit the correct values for colorized output', () => {
-    const run = currentRun()
+    const run = currentRun() // this might fail if not just-in-time transpiled
     assert(run)
 
     let string = ''
@@ -80,7 +80,7 @@ describe('Emit', () => {
 
 
   it('should emit the correct values for plain output', () => {
-    const run = currentRun()
+    const run = currentRun() // this might fail if not just-in-time transpiled
     assert(run)
 
     let string = ''
