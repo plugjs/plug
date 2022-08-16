@@ -1,9 +1,22 @@
 {
   "name": "test-build",
   "version": "1.0.0",
-  "main": "build/index.js",
-  "types": "types/index.d.ts",
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./types/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./types/index.d.ts",
+        "default": "./dist/index.mjs"
+      }
+    }
+  },
   "scripts": {
     "bootstrap": "./bootstrap.sh",
     "build": "node ./extra/cli.mjs",
