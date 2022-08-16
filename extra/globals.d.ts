@@ -13,15 +13,3 @@ declare var __filename: string
  * in CJS modules, or to `import.meta.url` in ESM modules.
  */
 declare var __fileurl: string
-
-/**
- * `ESBuild` will replace this pseudo-variable with `true` or `false` depending
- * on whether the module was compiled as CJS (`true`) or ESM (`false`).
- */
-declare var __cjs: boolean
-
-/**
- * `ESBuild` will replace this pseudo-variable with `true` or `false` depending
- * on whether the module was compiled as CJS (`false`) or ESM (`true`).
- */
-declare var __esm: boolean

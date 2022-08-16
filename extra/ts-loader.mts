@@ -171,9 +171,9 @@ function _esbReport(
 function _esbTranpile(filename: string, type: Type): string {
   _log(type, `Transpiling "${filename}`)
 
-  const [ format, __esm, __cjs, __fileurl ] = type === ESM ?
-    [ 'esm', 'true', 'false', 'import.meta.url' ] as const :
-    [ 'cjs', 'false', 'true', '__filename' ] as const
+  const [ format, __fileurl ] = type === ESM ?
+    [ 'esm', 'import.meta.url' ] as const :
+    [ 'cjs', '__filename' ] as const
 
   /* ESbuild options */
   const options: _esbuild.TransformOptions = {
@@ -185,7 +185,7 @@ function _esbTranpile(filename: string, type: Type): string {
     platform: 'node', // d'oh! :-)
     logLevel: 'silent', // catching those in our _esbReport below
     target: `node${process.versions['node']}`, // target _this_ version
-    define: { __fileurl, __esm, __cjs }, // from "globals.d.ts"
+    define: { __fileurl }, // from "globals.d.ts"
   }
 
   /* Emit a line on the console when loading in debug mode */

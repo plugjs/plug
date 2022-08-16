@@ -1,4 +1,4 @@
-import type { Build, Run, BuildFailure } from '../src/index'
+import type { Build, Run, BuildFailure } from '../src/index.js'
 
 import _yargs from 'yargs-parser'
 
@@ -20,13 +20,17 @@ async function main(): Promise<void> {
   const { buildFile, tasks, listOnly } = parseCommandLine()
   if (tasks.length === 0) tasks.push('default')
 
-  const exports = await import(buildFile)
-
-  let build = exports
-  while (build && (! isBuild(build))) build = build.default
+  const build = (await import(buildFile)).default
 
   if (! isBuild(build)) {
     console.log('Build file did not export a proper build')
+    console.log()
+    console.log('- If using CommonJS export your build as "module.exports"')
+    console.log('  e.g.: module.exports = build({ ... })')
+    console.log()
+    console.log('- If using ESM modules export your build as "default"')
+    console.log('  e.g.: export default build({ ... })')
+    console.log()
     process.exit(1)
   }
 
