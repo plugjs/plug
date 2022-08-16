@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import type { Build, Run, BuildFailure } from '../src/index.js'
 
 import _yargs from 'yargs-parser'
