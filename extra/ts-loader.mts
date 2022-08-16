@@ -26,7 +26,6 @@ import _fs from 'node:fs'
 import _module from 'node:module'
 import _path from 'node:path'
 import _url from 'node:url'
-import _workers from 'node:worker_threads'
 
 
 /* ========================================================================== *
@@ -47,8 +46,8 @@ const _debug = process.env.DEBUG_TS_LOADER === 'true'
 function _log(type: Type | null, ...args: string []): void {
   if (! _debug) return
 
-  const thread = _workers.isMainThread ? 'main' : _workers.threadId
-  const prefix = `[ts-loader|${type || '-'}|pid=${process.pid}|tid=${thread}]`
+  const t = type === 'module' ? 'esm' : type === 'commonjs' ? 'cjs' : '---'
+  const prefix = `[ts-loader|${t}|pid=${process.pid}]`
 
   // eslint-disable-next-line no-console
   console.log(prefix, ...args)
@@ -60,8 +59,8 @@ function _throw(
     message: string,
     options: { start?: Function, code?: string, cause?: any } = {},
 ): never {
-  const thread = _workers.isMainThread ? 'main' : _workers.threadId
-  const prefix = `[ts-loader|${type || '-'}|pid=${process.pid}|tid=${thread}]`
+  const t = type === 'module' ? 'esm' : type === 'commonjs' ? 'cjs' : '---'
+  const prefix = `[ts-loader|${t}|pid=${process.pid}]`
 
   const { start = _throw, ...extra } = options
   const error = new Error(`${prefix} ${message}`)
@@ -178,33 +177,10 @@ function _esbReport(
 }
 
 /**
- * Return the _code_ produced by ESBuild (as a string) for the given file name
- * or fail miserable if that was not produced
- */
-function _esbResult(
-    type: Type,
-    filename: string,
-    result?: _esbuild.BuildResult,
-): string {
-  if (! result) _throw(type, `No result returned by ESBuild for ${filename}`, { start: _esbResult })
-  if (! result.outputFiles) _throw(type, `No output files produced by ESBuild for ${filename}`, { start: _esbResult })
-
-  for (const output of result.outputFiles) {
-    if (output.path === filename) return output.text
-  }
-
-  _throw(type, `ESBuild produced no output for "${filename}"`, { start: _esbResult })
-}
-
-/**
  * Transpile with ESBuild
  */
 function _esbTranpile(filename: string, type: Type): string {
   _log(type, `Transpiling "${filename}`)
-
-  const file = _path.basename(filename)
-  const dir = _path.dirname(filename)
-  const ext = _path.extname(filename)
 
   const [ format, __esm, __cjs, __fileurl ] = type === ESM ?
     [ 'esm', 'true', 'false', 'import.meta.url' ] as const :
@@ -212,30 +188,19 @@ function _esbTranpile(filename: string, type: Type): string {
 
   /* ESbuild options */
   const options: _esbuild.TransformOptions = {
-    sourcefile: filename,
+    sourcefile: filename, // the original filename we're parsing
     format, // what are we actually transpiling to???
-    loader: 'ts',
-
-    // entryPoints: [ file ], // relative file name
-    // absWorkingDir: dir, // directory where file lives
-    // outdir: dir, // output in the same directory
+    loader: 'ts', // the format is always "typescript"
     sourcemap: 'inline', // always inline source maps
     sourcesContent: false, // do not include sources content in sourcemap
     platform: 'node', // d'oh! :-)
     target: `node${process.versions['node']}`, // target _this_ version
-    // outExtension: { '.js': ext }, // keep the output file name
-    // allowOverwrite: true, // input and output file names are the same
-    // write: false, // we definitely _do not_ write this back to disk
-    define: { // those are defined/documented in "./globals.ts"
-      __fileurl,
-      __esm,
-      __cjs,
-    },
+    define: { __fileurl, __esm, __cjs }, // from "globals.d.ts"
   }
-  /* Emit a line on the console when loading in debug mode */
 
+  /* Emit a line on the console when loading in debug mode */
   if (_debug) {
-    options.banner = `console.log(\`[ts-loader|${type}]: Loaded "\${${__fileurl}}"\`);`
+    options.banner = `console.log(\`[ts-loader|${format}]: Loaded "\${${__fileurl}}"\`);`
   }
 
   /* Transpile our TypeScript file into some JavaScript stuff */
@@ -252,11 +217,8 @@ function _esbTranpile(filename: string, type: Type): string {
   /* Report out any warning or error and fail if there are errors */
   _esbReport(type, filename, result)
 
-  console.log(result.code)
+  /* Done! */
   return result.code
-
-  /* Finally return our transpiled code */
-  // return _esbResult(type, filename, result)
 }
 
 
@@ -407,7 +369,7 @@ export const resolve: ResolveHook = (specifier, context, nextResolve): ResolveRe
 
     if (_isFile(tspath)) {
       _log(ESM, `Positive match for "${specifier}" as "${tspath}" (2)`)
-      return nextResolve(specifier, context) // straight on
+      return nextResolve(tsspecifier, context) // straight on
     }
   }
 
