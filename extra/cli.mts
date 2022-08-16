@@ -22,7 +22,8 @@ async function main(): Promise<void> {
   const { buildFile, tasks, listOnly } = parseCommandLine()
   if (tasks.length === 0) tasks.push('default')
 
-  const build = (await import(buildFile)).default
+  let build = await import(buildFile)
+  while (build && (! isBuild(build))) build = build.default
 
   if (! isBuild(build)) {
     console.log('Build file did not export a proper build')

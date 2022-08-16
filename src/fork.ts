@@ -223,13 +223,16 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
       assert(isFile(scriptFile), `Script file ${$p(scriptFile)} not found`)
       const script = await import(scriptFile)
 
+      /* Figure out the constructor, in the "default" chain */
+      let Ctor = script
+      while (Ctor && (typeof Ctor !== 'function')) Ctor = Ctor.default
+
       /* Check that we have a proper constructor */
-      assert(typeof script.default === 'function',
+      assert(typeof Ctor === 'function',
           `Script ${$p(scriptFile)} does not export a default constructor`)
 
       /* Create the Plug instance and our Files instance */
-      const Ctor = script.default as new (...args: any[]) => Plug<Files | undefined>
-      const plug = new Ctor(...constructorArgs)
+      const plug = new Ctor(...constructorArgs) as Plug<Files | undefined>
       const files = run.files(filesDir).add(...filesList).build()
 
       /* Run and return the result */
