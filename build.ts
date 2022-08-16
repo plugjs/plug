@@ -90,8 +90,6 @@ export default build({
       plugins: [ fixExtensions() ],
       define: {
         __fileurl: '__filename',
-        __esm: 'false',
-        __cjs: 'true',
       },
     })
   },
@@ -106,8 +104,6 @@ export default build({
       plugins: [ fixExtensions() ],
       define: {
         __fileurl: 'import.meta.url',
-        __esm: 'true',
-        __cjs: 'false',
       },
     })
   },
