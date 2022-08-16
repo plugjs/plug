@@ -17,6 +17,9 @@
       }
     }
   },
+  "bin": {
+    "plugjs": "./extra/cli.mjs"
+  },
   "scripts": {
     "bootstrap": "./bootstrap.sh",
     "build": "node ./extra/cli.mjs",
