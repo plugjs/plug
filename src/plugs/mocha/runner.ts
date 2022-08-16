@@ -34,7 +34,7 @@ export interface MochaOptions {
 }
 
 /** Writes some info about the current {@link Files} being passed around. */
-export class Mocha implements Plug<undefined> {
+export default class Mocha implements Plug<undefined> {
   constructor(private readonly _options: MochaOptions = {}) {}
 
   async pipe(files: Files, run: Run): Promise<undefined> {

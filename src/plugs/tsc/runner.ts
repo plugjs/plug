@@ -15,7 +15,7 @@ import { updateReport } from './report.js'
  * WORKER PLUG                                                                *
  * ========================================================================== */
 
-export class Tsc implements Plug<Files> {
+export default class Tsc implements Plug<Files> {
   private readonly _tsconfig?: string
   private readonly _options: ts.CompilerOptions
 

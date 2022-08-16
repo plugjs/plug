@@ -20,7 +20,7 @@ export interface ESLintOptions {
 }
 
 /** Writes some info about the current {@link Files} being passed around. */
-export class ESLint implements Plug<undefined> {
+export default class ESLint implements Plug<undefined> {
   private readonly _options: Readonly<ESLintOptions>
 
   constructor()
