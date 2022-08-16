@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
     // Setup our compilation type
-    "lib": [ "esnext" ],
+    "lib": [ "es2022" ],
+    "target": "es2022",
+    "module": "es2022",
+    "moduleResolution": "node16",
     "types": [ "node" ],
-    "target": "esnext",
-    "moduleResolution": "node",
     "esModuleInterop": true,
-    "module": "node16",
     // No emit (done with "bootstrap")
     "noEmit": true,
     // Ultra strict
