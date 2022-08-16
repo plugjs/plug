@@ -206,8 +206,9 @@ function _esbTranpile(filename: string, type: Type): string {
   const dir = _path.dirname(filename)
   const ext = _path.extname(filename)
 
-  const fileurl = type === 'module' ? 'import.meta.url' : '__filename'
-  const format = type === 'module' ? 'esm' : 'cjs'
+  const [ format, __esm, __cjs, __fileurl ] = type === ESM ?
+    [ 'esm', 'true', 'false', 'import.meta.url' ] as const :
+    [ 'cjs', 'false', 'true', '__filename' ] as const
 
   /* ESbuild options */
   const options: _esbuild.BuildOptions = {
@@ -223,9 +224,9 @@ function _esbTranpile(filename: string, type: Type): string {
     allowOverwrite: true, // input and output file names are the same
     write: false, // we definitely _do not_ write this back to disk
     define: { // those are defined/documented in "./globals.ts"
-      __fileurl: fileurl,
-      __esm: 'true',
-      __cjs: 'false',
+      __fileurl,
+      __esm,
+      __cjs,
     },
   }
   /* Emit a line on the console when loading in debug mode */
