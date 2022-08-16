@@ -1,7 +1,6 @@
-import type { Files } from './files'
-import type { Run } from './run'
-
-import { assert } from './assert'
+import { assert } from './assert.js'
+import { Files } from './files.js'
+import { Run } from './run.js'
 
 /**
  * The {@link Plug} interface describes an extension mechanism for our build.

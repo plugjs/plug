@@ -1,9 +1,9 @@
-import type { Message, OnStartResult, Plugin } from 'esbuild'
-import { currentRun } from '../../async'
-import { $p } from '../../log'
-import { AbsolutePath } from '../../paths'
-import { readFile } from '../../utils/asyncfs'
-import { ParseOptions, parseOptions } from '../../utils/options'
+import { Message, OnStartResult, Plugin } from 'esbuild'
+import { currentRun } from '../../async.js'
+import { $p } from '../../log.js'
+import { AbsolutePath } from '../../paths.js'
+import { readFile } from '../../utils/asyncfs.js'
+import { ParseOptions, parseOptions } from '../../utils/options.js'
 
 export interface CheckDependenciesOptions {
   allowDev?: boolean | 'warn' | 'error',

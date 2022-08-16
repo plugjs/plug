@@ -1,11 +1,11 @@
 import { fork } from 'node:child_process'
-import { assert, failure } from './assert'
-import { runAsync } from './async'
-import { Files } from './files'
-import { $gry, $p, $wht, LogOptions, logOptions } from './log'
-import { AbsolutePath, isFile, requireFilename } from './paths'
-import { install, Plug, PlugName } from './pipe'
-import { Run, RunImpl } from './run'
+import { assert, failure } from './assert.js'
+import { runAsync } from './async.js'
+import { Files } from './files.js'
+import { $gry, $p, $wht, LogOptions, logOptions } from './log.js'
+import { AbsolutePath, isFile, requireFilename } from './paths.js'
+import { install, Plug, PlugName } from './pipe.js'
+import { Run, RunImpl } from './run.js'
 
 /** Fork data, from parent to child process */
 export interface ForkData {

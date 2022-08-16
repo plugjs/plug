@@ -1,6 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
-
-import type { Run } from './run'
+import { Run } from './run.js'
 
 /* ========================================================================== *
  * EXPORTED                                                                   *

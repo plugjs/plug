@@ -1,11 +1,10 @@
-import type { Files, FilesBuilder } from '../files'
-import type { Run } from '../run'
-
 import { build, BuildFailure, BuildOptions, BuildResult, Message, Metafile } from 'esbuild'
-import { assert } from '../assert'
-import { $p, ERROR, ReportLevel, ReportRecord, WARN } from '../log'
-import { AbsolutePath, resolveAbsolutePath } from '../paths'
-import { install, Plug } from '../pipe'
+import { assert } from '../assert.js'
+import { Files, FilesBuilder } from '../files.js'
+import { $p, ERROR, ReportLevel, ReportRecord, WARN } from '../log.js'
+import { AbsolutePath, resolveAbsolutePath } from '../paths.js'
+import { install, Plug } from '../pipe.js'
+import { Run } from '../run.js'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 
@@ -111,7 +110,7 @@ function convertMessage(level: ReportLevel, message: Message, directory: Absolut
 
 install('esbuild', ESBuild)
 
-declare module '../pipe' {
+declare module '../pipe.js' {
   export interface Pipe {
     /**
      * Transpile and bundle files with {@link https://esbuild.github.io/ esbuild}.
@@ -124,6 +123,6 @@ declare module '../pipe' {
  * PLUGINS                                                                    *
  * ========================================================================== */
 
-export * from './esbuild/bundle-locals'
-export * from './esbuild/fix-extensions'
-export * from './esbuild/check-dependencies'
+export * from './esbuild/bundle-locals.js'
+export * from './esbuild/check-dependencies.js'
+export * from './esbuild/fix-extensions.js'

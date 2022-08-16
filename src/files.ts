@@ -1,6 +1,6 @@
 import { inspect } from 'node:util'
-import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths'
-import { mkdir, writeFile } from './utils/asyncfs'
+import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths.js'
+import { mkdir, writeFile } from './utils/asyncfs.js'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
 export interface FilesBuilder {

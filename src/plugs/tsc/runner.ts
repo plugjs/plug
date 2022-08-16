@@ -1,16 +1,15 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
 
-import type { Files } from '../../files'
-import type { Plug } from '../../pipe'
-import type { Run } from '../../run'
-
-import { $p, log } from '../../log'
-import { getCurrentWorkingDirectory, isFile } from '../../paths'
-import { TypeScriptHost } from './compiler'
-import { getCompilerOptions } from './options'
-import { updateReport } from './report'
-import { failure } from '../../assert'
-import { parseOptions, ParseOptions } from '../../utils/options'
+import { failure } from '../../assert.js'
+import { Files } from '../../files.js'
+import { $p, log } from '../../log.js'
+import { getCurrentWorkingDirectory, isFile } from '../../paths.js'
+import { Plug } from '../../pipe.js'
+import { Run } from '../../run.js'
+import { parseOptions, ParseOptions } from '../../utils/options.js'
+import { TypeScriptHost } from './compiler.js'
+import { getCompilerOptions } from './options.js'
+import { updateReport } from './report.js'
 
 /* ========================================================================== *
  * WORKER PLUG                                                                *

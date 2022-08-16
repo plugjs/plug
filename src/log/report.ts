@@ -1,11 +1,10 @@
-import { fail, failure } from '../assert'
-import type { AbsolutePath } from '../paths'
-
-import { readFile } from '../utils/asyncfs'
-import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
-import { emitColor, emitPlain, LogEmitter } from './emit'
-import { ERROR, INFO, LogLevels, NOTICE, WARN } from './levels'
-import { logOptions } from './options'
+import { fail, failure } from '../assert.js'
+import { AbsolutePath } from '../paths.js'
+import { readFile } from '../utils/asyncfs.js'
+import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors.js'
+import { emitColor, emitPlain, LogEmitter } from './emit.js'
+import { ERROR, INFO, LogLevels, NOTICE, WARN } from './levels.js'
+import { logOptions } from './options.js'
 
 /* ========================================================================== */
 

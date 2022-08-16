@@ -1,6 +1,3 @@
-import type { AbsolutePath } from '../../paths'
-
-import { pathToFileURL } from 'node:url'
 
 import { parse } from '@babel/parser'
 import {
@@ -16,10 +13,11 @@ import {
   Node,
   VISITOR_KEYS
 } from '@babel/types'
-
-import { $p, Logger } from '../../log'
-import { readFile } from '../../utils/asyncfs'
-import { CoverageAnalyser } from './analysis'
+import { pathToFileURL } from 'node:url'
+import { $p, Logger } from '../../log.js'
+import { AbsolutePath } from '../../paths.js'
+import { readFile } from '../../utils/asyncfs.js'
+import { CoverageAnalyser } from './analysis.js'
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *

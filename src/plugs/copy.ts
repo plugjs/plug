@@ -1,12 +1,11 @@
-import type { Files } from '../files'
-import type { Run } from '../run'
+import fs from '../utils/asyncfs.js'
 
-import fs from '../utils/asyncfs'
-
-import { assert } from '../assert'
-import { $p } from '../log'
-import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { install, Plug } from '../pipe'
+import { assert } from '../assert.js'
+import { Files } from '../files.js'
+import { $p } from '../log.js'
+import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths.js'
+import { install, Plug } from '../pipe.js'
+import { Run } from '../run.js'
 
 /** Options for copying files */
 export interface CopyOptions {
@@ -90,7 +89,7 @@ export class Copy implements Plug<Files> {
 
 install('copy', Copy)
 
-declare module '../pipe' {
+declare module '../pipe.js' {
   export interface Pipe {
     /** Copy the curent {@link Files} to a different directory */
     copy: PipeExtension<typeof Copy>

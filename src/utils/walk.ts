@@ -1,11 +1,8 @@
-import fs from './asyncfs'
-
-import path, { join } from 'node:path'
-import { match } from './match'
-
-import type { MatchOptions } from './match'
-import { $p, log } from '../log'
-import { AbsolutePath, resolveAbsolutePath } from '../paths'
+import { basename, join } from 'node:path'
+import { $p, log } from '../log.js'
+import { AbsolutePath, resolveAbsolutePath } from '../paths.js'
+import { readdir, stat } from './asyncfs.js'
+import { match, MatchOptions } from './match.js'
 
 /** Specific options for walking a directory */
 export interface WalkOptions extends MatchOptions {
@@ -52,7 +49,7 @@ export function walk(
     // if we were told to start looking into "node_modules", or in a directory
     // starting with ".", then we ignore any whatsoever option here!
     if (dir === directory) return true
-    const name = path.basename(dir)
+    const name = basename(dir)
     if (name === 'node_modules') return !!allowNodeModules
     if (name.startsWith('.')) return !!opts.dot
     return true
@@ -104,7 +101,7 @@ async function* walker(args: WalkerArguments): AsyncGenerator<string, void, void
   const dir = resolveAbsolutePath(directory, relative)
   if (! onDirectory(dir)) return
   log.trace('Reading directory', $p(dir))
-  const dirents = await fs.readdir(dir, { withFileTypes: true }).catch((error) => {
+  const dirents = await readdir(dir, { withFileTypes: true }).catch((error) => {
     if (error.code !== 'ENOENT') throw error
     log.warn('Directory', $p(dir), 'not found')
     return []
@@ -124,13 +121,13 @@ async function* walker(args: WalkerArguments): AsyncGenerator<string, void, void
 
     /* If this is a symlink and we're told to check them let's see what we have */
     } else if (dirent.isSymbolicLink() && followSymlinks) {
-      const stat = await fs.stat(join(directory, path))
+      const info = await stat(join(directory, path))
 
       /* If the link is a file and matches, yield it */
-      if (stat.isFile() && positiveMatcher(path)) yield path
+      if (info.isFile() && positiveMatcher(path)) yield path
 
       /* If the link is a directory within our depth, walk it recursively */
-      else if (stat.isDirectory() && (depth < maxDepth)) {
+      else if (info.isDirectory() && (depth < maxDepth)) {
         const children = walker({ ...args, relative: path, depth: depth + 1 })
         for await (const child of children) yield child
       }

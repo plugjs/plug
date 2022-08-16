@@ -1,16 +1,15 @@
-import type { Files } from '../files'
-import type { Run } from '../run'
-
-import { spawn, SpawnOptions } from 'node:child_process'
 import path from 'node:path'
 import reaadline from 'node:readline'
 
-import { assert } from '../assert'
-import { currentRun } from '../async'
-import { $p, logOptions } from '../log'
-import { AbsolutePath, getCurrentWorkingDirectory, isDirectory } from '../paths'
-import { install, Plug } from '../pipe'
-import { parseOptions, ParseOptions } from '../utils/options'
+import { spawn, SpawnOptions } from 'node:child_process'
+import { assert } from '../assert.js'
+import { currentRun } from '../async.js'
+import { Files } from '../files.js'
+import { $p, logOptions } from '../log.js'
+import { AbsolutePath, getCurrentWorkingDirectory, isDirectory } from '../paths.js'
+import { install, Plug } from '../pipe.js'
+import { Run } from '../run.js'
+import { parseOptions, ParseOptions } from '../utils/options.js'
 
 /** Options for executing scripts */
 export interface ExecOptions {
@@ -115,7 +114,7 @@ export function exec(cmd: string, ...args: ParseOptions<ExecOptions>): Promise<v
 
 install('exec', Exec)
 
-declare module '../pipe' {
+declare module '../pipe.js' {
   export interface Pipe {
     /**
      * Execute a shell command, adding to its _arguments_ the list of files

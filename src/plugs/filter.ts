@@ -1,10 +1,10 @@
-import { Files } from '../files'
-import { log } from '../log'
-import { match, MatchOptions } from '../utils/match'
-import { ParseOptions, parseOptions } from '../utils/options'
-import { resolveRelativeChildPath } from '../paths'
-import { install, Plug } from '../pipe'
-import { Run } from '../run'
+import { Files } from '../files.js'
+import { log } from '../log.js'
+import { resolveRelativeChildPath } from '../paths.js'
+import { install, Plug } from '../pipe.js'
+import { Run } from '../run.js'
+import { match, MatchOptions } from '../utils/match.js'
+import { ParseOptions, parseOptions } from '../utils/options.js'
 
 /** Options for filtering {@link Files}. */
 export interface FilterOptions extends MatchOptions {
@@ -48,7 +48,7 @@ export class Filter implements Plug<Files> {
 
 install('filter', Filter)
 
-declare module '../pipe' {
+declare module '../pipe.js' {
   export interface Pipe {
     /** Filter the current {@link Files} using globs. */
     filter: PipeExtension<typeof Filter>

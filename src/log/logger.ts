@@ -1,7 +1,7 @@
-import { isBuildError, isBuildFailure } from '../assert'
-import { emitColor, emitPlain, LogEmitter } from './emit'
-import { DEBUG, ERROR, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
-import { logOptions } from './options'
+import { isBuildError, isBuildFailure } from '../assert.js'
+import { emitColor, emitPlain, LogEmitter } from './emit.js'
+import { DEBUG, ERROR, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels.js'
+import { logOptions } from './options.js'
 
 /* ========================================================================== */
 

@@ -1,4 +1,4 @@
-import type { Plugin } from 'esbuild'
+import { Plugin } from 'esbuild'
 
 /**
  * A simple ESBuild plugin bundling _only_ local files, and marking anything

@@ -1,13 +1,12 @@
-import type { Files } from './files'
-
-import { assert, fail, failure } from './assert'
-import { runAsync } from './async'
-import { $gry, $ms, $t, logOptions } from './log'
-import { AbsolutePath, getAbsoluteParent } from './paths'
-import { Pipe, PipeImpl } from './pipe'
-import { Run, RunImpl } from './run'
-import { Task, TaskImpl } from './task'
-import { findCaller } from './utils/caller'
+import { assert, fail, failure } from './assert.js'
+import { runAsync } from './async.js'
+import { Files } from './files.js'
+import { $gry, $ms, $t, logOptions } from './log.js'
+import { AbsolutePath, getAbsoluteParent } from './paths.js'
+import { Pipe, PipeImpl } from './pipe.js'
+import { Run, RunImpl } from './run.js'
+import { Task, TaskImpl } from './task.js'
+import { findCaller } from './utils/caller.js'
 
 /* ========================================================================== *
  * TYPES                                                                      *

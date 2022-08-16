@@ -1,11 +1,11 @@
 import { join } from 'node:path'
-import { assert } from './assert'
-import { Files, FilesBuilder } from './files'
-import { createReport, getLevelNumber, getLogger, Logger, LogLevelString, Report } from './log'
-import { AbsolutePath, getCurrentWorkingDirectory, isAbsolutePath, resolveAbsolutePath } from './paths'
-import { Pipe, PipeImpl } from './pipe'
-import { ParseOptions, parseOptions } from './utils/options'
-import { walk, WalkOptions } from './utils/walk'
+import { assert } from './assert.js'
+import { Files, FilesBuilder } from './files.js'
+import { createReport, getLevelNumber, getLogger, Logger, LogLevelString, Report } from './log.js'
+import { AbsolutePath, getCurrentWorkingDirectory, isAbsolutePath, resolveAbsolutePath } from './paths.js'
+import { Pipe, PipeImpl } from './pipe.js'
+import { ParseOptions, parseOptions } from './utils/options.js'
+import { walk, WalkOptions } from './utils/walk.js'
 
 /** The {@link FindOptions} interface defines the options for finding files. */
 export interface FindOptions extends WalkOptions {

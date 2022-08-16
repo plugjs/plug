@@ -1,13 +1,11 @@
-import type { Files } from '../../files'
-import type { Plug } from '../../pipe'
-import type { Run } from '../../run'
-
 import { ESLint as RealESLint } from 'eslint'
-
-import { assert, failure } from '../../assert'
-import { $p, ERROR, NOTICE, WARN } from '../../log'
-import { getCurrentWorkingDirectory, isDirectory, isFile, resolveAbsolutePath } from '../../paths'
-import { readFile } from '../../utils/asyncfs'
+import { assert, failure } from '../../assert.js'
+import { Files } from '../../files.js'
+import { $p, ERROR, NOTICE, WARN } from '../../log.js'
+import { getCurrentWorkingDirectory, isDirectory, isFile, resolveAbsolutePath } from '../../paths.js'
+import { Plug } from '../../pipe.js'
+import { Run } from '../../run.js'
+import { readFile } from '../../utils/asyncfs.js'
 
 export interface ESLintOptions {
   /** ESLint's own _current working directory_, where config files are. */

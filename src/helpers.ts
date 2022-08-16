@@ -1,13 +1,12 @@
-import type { Files, FilesBuilder } from './files'
-import { AbsolutePath, commonPath, getCurrentWorkingDirectory, isDirectory } from './paths'
-import type { Pipe } from './pipe'
-import type { FindOptions } from './run'
-import type { ParseOptions } from './utils/options'
-
-import { assert } from './assert'
-import { currentRun } from './async'
-import { $p, log, LogLevelString } from './log'
-import { rm } from './utils/asyncfs'
+import { assert } from './assert.js'
+import { currentRun } from './async.js'
+import { Files, FilesBuilder } from './files.js'
+import { $p, log, LogLevelString } from './log.js'
+import { AbsolutePath, commonPath, getCurrentWorkingDirectory, isDirectory } from './paths.js'
+import { Pipe } from './pipe.js'
+import { FindOptions } from './run.js'
+import { rm } from './utils/asyncfs.js'
+import { ParseOptions } from './utils/options.js'
 
 /**
  * Recursively remove the specified directory _**(use with care)**_.

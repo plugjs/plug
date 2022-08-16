@@ -1,8 +1,7 @@
-import type { Files } from '../files'
-import type { Run } from '../run'
-
-import { $gry, $p, $und, log } from '../log'
-import { install, Plug } from '../pipe'
+import { Files } from '../files.js'
+import { $gry, $p, $und, log } from '../log.js'
+import { install, Plug } from '../pipe.js'
+import { Run } from '../run.js'
 
 /** Writes some info about the current {@link Files} being passed around. */
 export class Debug implements Plug<Files> {
@@ -28,7 +27,7 @@ export class Debug implements Plug<Files> {
 
 install('debug', Debug)
 
-declare module '../pipe' {
+declare module '../pipe.js' {
   export interface Pipe {
     /** Writes some info about the current {@link Files} being passed around. */
     debug: PipeExtension<typeof Debug>

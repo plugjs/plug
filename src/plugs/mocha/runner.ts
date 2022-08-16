@@ -1,12 +1,11 @@
-import type { Files } from '../../files'
-import type { Plug } from '../../pipe'
-
 import RealMocha from 'mocha' // Mocha types pollute the global scope!
 
-import { failure } from '../../assert'
-import { $wht, NOTICE } from '../../log'
-import { Run } from '../../run'
-import { logSymbol, PlugReporter, runSymbol } from './reporter'
+import { failure } from '../../assert.js'
+import { Files } from '../../files.js'
+import { $wht, NOTICE } from '../../log.js'
+import { Plug } from '../../pipe.js'
+import { Run } from '../../run.js'
+import { logSymbol, PlugReporter, runSymbol } from './reporter.js'
 
 /** Options to construct our {@link Mocha} plug. */
 export interface MochaOptions {

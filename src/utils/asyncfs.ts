@@ -1,5 +1,5 @@
-import fsp from 'node:fs/promises'
 import { constants } from 'node:fs'
+import fsp from 'node:fs/promises'
 
 /*
  * I have no idea why sometimes stacks don't have a trace when coming out of

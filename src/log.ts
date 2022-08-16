@@ -1,12 +1,12 @@
-import { currentRun } from './async'
-import { getLogger, Log } from './log/logger'
-import { setupSpinner } from './log/spinner'
+import { currentRun } from './async.js'
+import { getLogger, Log } from './log/logger.js'
+import { setupSpinner } from './log/spinner.js'
 
-export * from './log/colors'
-export * from './log/levels'
-export * from './log/logger'
-export * from './log/options'
-export * from './log/report'
+export * from './log/colors.js'
+export * from './log/levels.js'
+export * from './log/logger.js'
+export * from './log/options.js'
+export * from './log/report.js'
 
 /* ========================================================================== *
  * INITIALIZATION                                                             *

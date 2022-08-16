@@ -1,6 +1,6 @@
-import type { BuildContext, TaskDefinition, ThisBuild } from './build'
-import type { Files } from './files'
-import type { Run } from './run'
+import type { BuildContext, TaskDefinition, ThisBuild } from './build.js'
+import type { Files } from './files.js'
+import type { Run } from './run.js'
 
 /* ========================================================================== *
  * TASK                                                                       *

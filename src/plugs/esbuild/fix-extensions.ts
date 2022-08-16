@@ -1,8 +1,8 @@
 import path from 'node:path'
 
-import type { Plugin } from 'esbuild'
-
-import { stat } from '../../utils/asyncfs'
+import { Plugin } from 'esbuild'
+import { assertAbsolutePath, isFile, resolveAbsolutePath } from '../../paths.js'
+import { stat } from '../../utils/asyncfs.js'
 
 /**
  * A simple ESBuild plugin fixing extensions for `require` and `import` calls.
@@ -45,13 +45,37 @@ export function fixExtensions(): Plugin {
         if (! args.importer) return null
 
         /* Anything not starting with "."? external node module */
-        if (! args.path.startsWith('.')) return { external: true }
+        if (! args.path.match(/^\.\.?\//)) return { external: true }
 
         /* Our ".js" extension, might be remapped by `outExtension`s */
         const js = build.initialOptions.outExtension?.['.js'] || '.js'
 
         /* Extensions for files to look for */
         const exts = build.initialOptions.resolveExtensions || [ '.ts', '.js', '.tsx', '.jsx' ]
+
+        /* Some easy pathing options */
+        const resolveDir = args.resolveDir
+        assertAbsolutePath(resolveDir)
+
+        /* First of all, check if the _real_ filename exists */
+        const resolved = resolveAbsolutePath(resolveDir, args.path)
+        if (isFile(resolved)) return { path: args.path, external: true }
+
+        /*
+         * Thank you TypeScript 4.7!!! If the file is ".js", ".mjs" or ".cjs" we
+         * need to check if we have the corresponding ".ts", ".mts" or ".cjs"
+         */
+        const match = args.path.match(/(.*)(\.[mc]?js$)/)
+        if (match) {
+          const [ , name, ext ] = match
+          const tspath = name + ext.replace('js', 'ts')
+          const tsfile = resolveAbsolutePath(resolveDir, tspath)
+          if (isFile(tsfile)) {
+            // TODO TODO TODO => MJS / CJS MAPPING!
+            console.log('WHAAAA MATCHAMAJIG!', args.path, '->', tspath)
+            return { path: name + js, external: true }
+          }
+        }
 
         /* Check if ".../filename.ext" exists in our sources */
         for (const ext of exts) {

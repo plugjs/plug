@@ -2,8 +2,7 @@ import { statSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-
-import { assert } from './assert'
+import { assert } from './assert.js'
 
 /** A _branded_ `string` representing an _absolute_ path name */
 export type AbsolutePath = string & { __brand_absolute_path: never }

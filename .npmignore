@@ -1,0 +1,14 @@
+*.sh
+*.tgz
+.*
+.coverage-data/
+.vscode/
+build.sh
+build.ts
+build/
+coverage/
+extra/*.mts
+extra/globals.d.ts
+node_modules/
+test/
+tsconfig.json
