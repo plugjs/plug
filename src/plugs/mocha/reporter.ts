@@ -61,78 +61,92 @@ export class PlugReporter extends RealMocha.reporters.Base {
 
     // Mocha finished running, dump our report
     runner.once('end', () => {
-      // Each failure gets dumped individually
-      for (let i = 0; i < failures.length; i ++) {
-        log.notice('')
-        const failure = failures[i]
+      try {
+        // Each failure gets dumped individually
+        for (let i = 0; i < failures.length; i ++) {
+          log.notice('')
+          const failure = failures[i]
 
-        // The titles (from the suite, up to the test)
-        const titles = [ failure.title ]
-        for (let parent = failure.parent; parent; parent = parent?.parent) {
-          if (parent.parent) titles.unshift(parent.title)
-        }
-
-        // Log out our titles (one per line, indented)
-        log.error(`${$gry('Failure [')}${$red(i + 1)}${$gry(']')}`)
-        titles.forEach((title, indent) => {
-          log.error(`  ${''.padStart(indent * 4)}${$gry(_details)} ${$wht(title)}`)
-        })
-
-        // If we have an error, luckily this is an `Error` instance
-        if (failure.err) {
-          const message = `${failure.err}` // this is the message, can be multiple lines
-          const messageOrStack = failure.err.stack || `${failure.err}` // maybe a stack?
-          const messageIndex = messageOrStack.indexOf(message)
-
-          // Subtrack the message from the stack
-          const stack =
-            messageOrStack === message ? '' :
-            messageIndex < 0 ? messageOrStack :
-            messageOrStack.substring(messageIndex + message.length)
-
-          // Split and clean up stack lines
-          const stackLines = stack.split('\n')
-              .map((line) => line.trim())
-              .filter((line) => !! line)
-
-          // Output the message
-          log.enter(ERROR, '')
-          log.error($red(message))
-
-          // Should we diff?
-          if (showDiff && ('actual' in failure.err) && ('expected' in failure.err)) {
-            const err = failure.err as AssertionError
-            const changes = diffJson(err.actual as any, err.expected as any)
-
-            const diff = changes.map((change): string => {
-              if (change.removed) return $red(change.value)
-              if (change.added) return $grn(change.value)
-              return $gry(change.value)
-            }).join('')
-
-            log.enter(ERROR, `${$gry('diff')} ${$grn('expected')}  ${$gry('/')} ${$red('actual')}`)
-            log.error(diff)
-            log.leave()
+          // The titles (from the suite, up to the test)
+          const titles = [ failure.title ]
+          for (let parent = failure.parent; parent; parent = parent?.parent) {
+            if (parent.parent) titles.unshift(parent.title)
           }
 
-          // Dump our stack trace and leave
-          stackLines.forEach((line) => log.error(line))
-          log.leave()
+          // Log out our titles (one per line, indented)
+          log.error(`${$gry('Failure [')}${$red(i + 1)}${$gry(']')}`)
+          titles.forEach((title, indent) => {
+            log.error(`  ${''.padStart(indent * 4)}${$gry(_details)} ${$wht(title)}`)
+          })
+
+          // If we have an error, luckily this is an `Error` instance
+          if (failure.err) {
+            const message = `${failure.err}` // this is the message, can be multiple lines
+            const messageOrStack = failure.err.stack || `${failure.err}` // maybe a stack?
+            const messageIndex = messageOrStack.indexOf(message)
+
+            // Subtrack the message from the stack
+            const stack =
+              messageOrStack === message ? '' :
+              messageIndex < 0 ? messageOrStack :
+              messageOrStack.substring(messageIndex + message.length)
+
+            // Split and clean up stack lines
+            const stackLines = stack.split('\n')
+                .map((line) => line.trim())
+                .filter((line) => !! line)
+
+            // Output the message
+            log.enter(ERROR, '')
+            log.error($red(message))
+
+            // Should we diff?
+            if (showDiff && ('actual' in failure.err) && ('expected' in failure.err)) {
+              const err = failure.err as AssertionError
+              const actual =
+                err.actual === undefined ? '[undefined]' :
+                err.actual === null ? '[null]' :
+                err.actual
+
+              const expected =
+                err.expected === undefined ? '[undefined]' :
+                err.expected === null ? '[null]' :
+                err.expected
+
+              const changes = diffJson(actual as any, expected as any)
+
+              const diff = changes.map((change): string => {
+                if (change.removed) return $red(change.value)
+                if (change.added) return $grn(change.value)
+                return $gry(change.value)
+              }).join('')
+
+              log.enter(ERROR, `${$gry('diff')} ${$grn('expected')}  ${$gry('/')} ${$red('actual')}`)
+              log.error(diff)
+              log.leave()
+            }
+
+            // Dump our stack trace and leave
+            stackLines.forEach((line) => log.error(line))
+            log.leave()
+          }
         }
-      }
 
-      // If we have some statistics, then let's dump them out in pretty colors
-      if (runner.stats) {
+        // If we have some statistics, then let's dump them out in pretty colors
+        if (runner.stats) {
+          log.notice('')
+          const { passes, pending, failures, duration = 0 } = runner.stats
+          const fmt = (n: number): string => n === 1 ? `${n} test` : `${n} tests`
+          if (passes) log.notice($grn(fmt(passes)), 'passing', $ms(duration))
+          if (pending) log.warn($ylw(fmt(pending)), 'pending')
+          if (failures) log.error($red(fmt(failures)), 'pending')
+        }
+
+        // Done...
         log.notice('')
-        const { passes, pending, failures, duration = 0 } = runner.stats
-        const fmt = (n: number): string => n === 1 ? `${n} test` : `${n} tests`
-        if (passes) log.notice($grn(fmt(passes)), 'passing', $ms(duration))
-        if (pending) log.warn($ylw(fmt(pending)), 'pending')
-        if (failures) log.error($red(fmt(failures)), 'pending')
+      } catch (error) {
+        log.error('Error rendering Mocha report', error)
       }
-
-      // Done...
-      log.notice('')
     })
   }
 }
