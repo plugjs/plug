@@ -2,7 +2,7 @@ import { fork } from 'node:child_process'
 import { assert, failure } from './assert.js'
 import { runAsync } from './async.js'
 import { Files } from './files.js'
-import { $gry, $p, $wht, LogOptions, logOptions } from './log.js'
+import { $gry, $p, LogOptions, logOptions } from './log.js'
 import { AbsolutePath, isFile, requireFilename } from './paths.js'
 import { install, Plug, PlugName } from './pipe.js'
 import { Run, RunImpl } from './run.js'
@@ -11,8 +11,6 @@ import { Run, RunImpl } from './run.js'
 export interface ForkData {
   /** Script name for the Plug to execute */
   scriptFile: AbsolutePath,
-  /** The exported constructor name to create the Plug instance */
-  constructorName: string,
   /** Plug constructor arguments */
   constructorArgs: any[],
   /** Task name (for logs) */
@@ -50,16 +48,24 @@ export interface ForkResult {
  * As a contract, if the _last non-null_ parameter of the constructor is an
  * object and contains the key `coverageDir`, the process will be forked with
  * the approptiately resolved `NODE_V8_COVERAGE` environment variable.
+ *
+ * Also, forking plugs require some special attention:
+ *
+ * * plug functions are not supported, only classes implementing the
+ *   {@link Plug} interface can be used with this.
+ *
+ * * the class itself _MUST_ be exported as the _default_ export for the
+ *   `scriptFile` specified below. This is to simplify interoperability between
+ *   CommonJS and ESM modules as we use dynamic `import(...)` statements.
  */
 export function installForking(
     plugName: PlugName,
     scriptFile: AbsolutePath,
-    constructorName: string,
 ): void {
   /** Extend out our ForkingPlug below */
   const ctor = class extends ForkingPlug {
     constructor(...args: any[]) {
-      super(scriptFile, constructorName, args)
+      super(scriptFile, args)
     }
   }
 
@@ -74,14 +80,12 @@ export function installForking(
 export abstract class ForkingPlug implements Plug<Files | undefined> {
   constructor(
       private readonly _scriptFile: AbsolutePath,
-      private readonly _constructorName: string,
       private readonly _arguments: any[],
   ) {}
 
   pipe(files: Files, run: Run): Promise<Files | undefined> {
     const message: ForkData = {
       scriptFile: this._scriptFile,
-      constructorName: this._constructorName,
       constructorArgs: this._arguments,
       taskName: run.taskName,
       buildFile: run.buildFile,
@@ -93,7 +97,7 @@ export abstract class ForkingPlug implements Plug<Files | undefined> {
 
     /* Get _this_ filename to spawn */
     const script = requireFilename(__fileurl)
-    run.log.debug('About to fork plug from', $p(script), $gry(`(${this._constructorName})`))
+    run.log.debug('About to fork plug from', $p(script))
 
     /* Environment variables */
     const env = { ...process.env }
@@ -197,7 +201,6 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
 
     const {
       scriptFile,
-      constructorName,
       constructorArgs,
       taskName,
       buildFile,
@@ -221,11 +224,12 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
       const script = await import(scriptFile)
 
       /* Check that we have a proper constructor */
-      assert(typeof script[constructorName] === 'function',
-          `Script ${$p(scriptFile)} does not export ${$wht(constructorName)} constructor`)
+      assert(typeof script.default === 'function',
+          `Script ${$p(scriptFile)} does not export a default constructor`)
 
       /* Create the Plug instance and our Files instance */
-      const plug = new script[constructorName](...constructorArgs) as Plug<Files | undefined>
+      const Ctor = script.default as new (...args: any[]) => Plug<Files | undefined>
+      const plug = new Ctor(...constructorArgs)
       const files = run.files(filesDir).add(...filesList).build()
 
       /* Run and return the result */
