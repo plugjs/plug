@@ -192,10 +192,10 @@ export async function coverageReport(
     const visitChildren = (node: Node, depth: number): void => {
       const keys = VISITOR_KEYS[node.type] || []
       for (const key of keys) {
-        const children: Node | Node[] = (<any> node)[key]
+        const children: Node | null | (Node | null)[] = (<any> node)[key]
         if (Array.isArray(children)) {
           for (const child of children) {
-            visitNode(child, depth + 1)
+            if (child) visitNode(child, depth + 1)
           }
         } else if (children) {
           visitNode(children, depth + 1)
