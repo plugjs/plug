@@ -158,7 +158,7 @@ function _isDirectory(path: string): boolean {
 function _esbReport(
     type: Type,
     filename: string,
-    what: _esbuild.BuildFailure | _esbuild.BuildResult,
+    what: { warnings?: _esbuild.Message[], errors?: _esbuild.Message[] },
 ): void {
   const { warnings = [], errors = [] } = what
 
@@ -211,18 +211,21 @@ function _esbTranpile(filename: string, type: Type): string {
     [ 'cjs', 'false', 'true', '__filename' ] as const
 
   /* ESbuild options */
-  const options: _esbuild.BuildOptions = {
+  const options: _esbuild.TransformOptions = {
+    sourcefile: filename,
     format, // what are we actually transpiling to???
-    entryPoints: [ file ], // relative file name
-    absWorkingDir: dir, // directory where file lives
-    outdir: dir, // output in the same directory
+    loader: 'ts',
+
+    // entryPoints: [ file ], // relative file name
+    // absWorkingDir: dir, // directory where file lives
+    // outdir: dir, // output in the same directory
     sourcemap: 'inline', // always inline source maps
     sourcesContent: false, // do not include sources content in sourcemap
     platform: 'node', // d'oh! :-)
     target: `node${process.versions['node']}`, // target _this_ version
-    outExtension: { '.js': ext }, // keep the output file name
-    allowOverwrite: true, // input and output file names are the same
-    write: false, // we definitely _do not_ write this back to disk
+    // outExtension: { '.js': ext }, // keep the output file name
+    // allowOverwrite: true, // input and output file names are the same
+    // write: false, // we definitely _do not_ write this back to disk
     define: { // those are defined/documented in "./globals.ts"
       __fileurl,
       __esm,
@@ -232,15 +235,14 @@ function _esbTranpile(filename: string, type: Type): string {
   /* Emit a line on the console when loading in debug mode */
 
   if (_debug) {
-    options.banner = {
-      js: `console.log(\`[ts-loader|${type}]: Loaded "\${${fileurl}}"\`);`,
-    }
+    options.banner = `console.log(\`[ts-loader|${type}]: Loaded "\${${__fileurl}}"\`);`
   }
 
   /* Transpile our TypeScript file into some JavaScript stuff */
   let result
   try {
-    result = _esbuild.buildSync(options)
+    const source = _fs.readFileSync(filename, 'utf-8')
+    result = _esbuild.transformSync(source, options)
   } catch (cause) {
     _esbReport(type, filename, cause as _esbuild.BuildFailure)
     // If the above doesn't fail (normal error?) then bail out
@@ -250,8 +252,11 @@ function _esbTranpile(filename: string, type: Type): string {
   /* Report out any warning or error and fail if there are errors */
   _esbReport(type, filename, result)
 
+  console.log(result.code)
+  return result.code
+
   /* Finally return our transpiled code */
-  return _esbResult(type, filename, result)
+  // return _esbResult(type, filename, result)
 }
 
 
