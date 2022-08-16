@@ -39,6 +39,14 @@ export function fixExtensions(): Plugin {
       /* When using this, we fake esbuild's "bundle" functionality */
       build.initialOptions.bundle = true
 
+      /* Our ".js" extension, might be remapped by `outExtension`s */
+      const cjs = build.initialOptions.outExtension?.['.cjs'] || '.cjs'
+      const mjs = build.initialOptions.outExtension?.['.mjs'] || '.mjs'
+      const js = build.initialOptions.outExtension?.['.js'] || '.js'
+
+      /* Extensions for files to look for */
+      const exts = build.initialOptions.resolveExtensions || [ '.ts', '.js', '.tsx', '.jsx' ]
+
       /* Intercept resolution */
       build.onResolve({ filter: /.*/ }, async (args) => {
         /* Ignore the entry points (when the file is not being imported) */
@@ -46,12 +54,6 @@ export function fixExtensions(): Plugin {
 
         /* Anything not starting with "."? external node module */
         if (! args.path.match(/^\.\.?\//)) return { external: true }
-
-        /* Our ".js" extension, might be remapped by `outExtension`s */
-        const js = build.initialOptions.outExtension?.['.js'] || '.js'
-
-        /* Extensions for files to look for */
-        const exts = build.initialOptions.resolveExtensions || [ '.ts', '.js', '.tsx', '.jsx' ]
 
         /* Some easy pathing options */
         const resolveDir = args.resolveDir
@@ -64,6 +66,7 @@ export function fixExtensions(): Plugin {
         /*
          * Thank you TypeScript 4.7!!! If the file is ".js", ".mjs" or ".cjs" we
          * need to check if we have the corresponding ".ts", ".mts" or ".cjs"
+         * and return whatever ESBuild maps that particular extension to.
          */
         const match = args.path.match(/(.*)(\.[mc]?js$)/)
         if (match) {
@@ -71,9 +74,8 @@ export function fixExtensions(): Plugin {
           const tspath = name + ext.replace('js', 'ts')
           const tsfile = resolveAbsolutePath(resolveDir, tspath)
           if (isFile(tsfile)) {
-            // TODO TODO TODO => MJS / CJS MAPPING!
-            console.log('WHAAAA MATCHAMAJIG!', args.path, '->', tspath)
-            return { path: name + js, external: true }
+            const newext = ext === '.mjs' ? mjs : ext === '.cjs' ? cjs : js
+            return { path: name + newext, external: true }
           }
         }
 
