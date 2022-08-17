@@ -15,11 +15,11 @@ export class Rmf implements Plug<undefined> {
   async pipe(files: Files, run: Run): Promise<undefined> {
     if (this._dryRun) {
       for (const file of files.absolutePaths()) {
-        run.log.notice('Not deleting', $p(file), $gry('(dry-run)'))
+        run.log.notice('Not removing file', $p(file), $gry('(dry-run)'))
       }
     } else {
       for (const file of files.absolutePaths()) {
-        run.log.notice('Not deleting', $p(file), $gry('(dry-run)'))
+        run.log.notice('Removing file', $p(file))
         await rm(file)
       }
     }

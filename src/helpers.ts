@@ -27,7 +27,7 @@ export async function rmrf(directory: string): Promise<void> {
     return
   }
 
-  log.notice('Removing', $p(dir))
+  log.notice('Removing directory', $p(dir), 'recursively')
   await rm(dir, { recursive: true })
 }
 
