@@ -1,5 +1,5 @@
 import { Files } from '../files.js'
-import { $gry, $p, $und, log } from '../log.js'
+import { $gry, $p, $und } from '../log.js'
 import { install, Plug } from '../pipe.js'
 import { Run } from '../run.js'
 
@@ -8,14 +8,14 @@ export class Debug implements Plug<Files> {
   constructor() {}
 
   async pipe(files: Files, run: Run): Promise<Files> {
-    log.notice('Debugging', files.length, 'files')
-    log.notice('-        base dir:', $p(run.resolve('@')))
-    log.notice('-  build file dir:', $p(run.resolve('.')))
-    log.notice('-       files dir:', $p(files.directory))
+    run.log.notice('Debugging', files.length, 'files')
+    run.log.notice('-        base dir:', $p(run.resolve('@')))
+    run.log.notice('-  build file dir:', $p(run.resolve('.')))
+    run.log.notice('-       files dir:', $p(files.directory))
     if (files.length) {
       const [ path, ...paths ] = files
-      log.notice('-  relative paths:', $und($gry(path)))
-      for (const p of paths) log.notice('-                :', $und($gry(p)))
+      run.log.notice('-  relative paths:', $und($gry(path)))
+      for (const p of paths) run.log.notice('-                :', $und($gry(p)))
     }
     return files
   }

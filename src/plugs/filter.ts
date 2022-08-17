@@ -1,5 +1,4 @@
 import { Files } from '../files.js'
-import { log } from '../log.js'
 import { resolveRelativeChildPath } from '../paths.js'
 import { install, Plug } from '../pipe.js'
 import { Run } from '../run.js'
@@ -36,7 +35,7 @@ export class Filter implements Plug<Files> {
 
     const result = builder.build()
     const discarded = files.length - result.length
-    log.debug('Filtered', result.length, 'files (discarded', discarded, 'files)')
+    run.log.debug('Filtered', result.length, 'files (discarded', discarded, 'files)')
 
     return result
   }
