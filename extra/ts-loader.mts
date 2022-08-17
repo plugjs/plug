@@ -43,14 +43,14 @@ const ESM = 'module'
 const _debug = process.env.DEBUG_TS_LOADER === 'true'
 
 /** Emit some logs if `DEBUG_TS_LOADER` is set to `true` */
-function _log(type: Type | null, ...args: string []): void {
+function _log(type: Type | null, arg: string, ...args: any []): void {
   if (! _debug) return
 
   const t = type === 'module' ? 'esm' : type === 'commonjs' ? 'cjs' : '---'
   const prefix = `[ts-loader|${t}|pid=${process.pid}]`
 
   // eslint-disable-next-line no-console
-  console.log(prefix, ...args)
+  console.log(prefix, arg, ...args)
 }
 
 /** Fail miserably */
@@ -77,6 +77,16 @@ function _throw(
 
 /** Cache for directory to module format as discovered in "package.json" */
 const _moduleFormatCache = new Map<string, Type>()
+
+/** Force ESM loading? */
+if (process.env.__TS_LOADER_FORCE_ESM) {
+  const dir = process.env.__TS_LOADER_FORCE_ESM
+  _log(null, `Forcing ".ts" files from "${dir}" to be interpreted as ESM modules`)
+  _moduleFormatCache.set(dir, 'module')
+}
+
+/* Dump our cache on exit if debugging */
+if (_debug) process.on('exit', () => _log(null, 'Format cache', _moduleFormatCache))
 
 /**
  * Figures out the _default_ module type for a directory, looking into the
