@@ -1,4 +1,4 @@
-import { join } from 'node:path'
+import { join, normalize, sep } from 'node:path'
 import { assert } from './assert.js'
 import { Files, FilesBuilder } from './files.js'
 import { createReport, getLevelNumber, getLogger, Logger, LogLevelString, Report } from './log.js'
@@ -114,8 +114,9 @@ export class RunImpl implements Run {
     if (! path) return this.buildDir
 
     if (path.startsWith('@')) {
-      const relative = path.substring(1)
-      assert(! isAbsolutePath(relative), `Path component of "${path}" is absolute`)
+      const components = normalize(path.substring(1)).split(sep)
+      const relative = join(...components) // this will remove any leading slash
+      assert(! isAbsolutePath(relative), `Path "${path.substring(1)}" is absolute`)
       return resolveAbsolutePath(this.buildDir, relative)
     }
 
