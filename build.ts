@@ -1,4 +1,4 @@
-import { $t, build, checkDependencies, find, fixExtensions, log, merge, parallel, rmrf } from './src/index.js'
+import { $t, build, checkDependencies, find, fixExtensions, log, merge, rmrf } from './src/index.js'
 
 /** When `true` the coverage dir comes from the environment */
 const environmentCoverage = !! process.env.NODE_V8_COVERAGE
@@ -28,7 +28,7 @@ export default build({
    * ======================================================================== */
 
   async dependencies() {
-    await parallel([
+    await Promise.all([
       await this.find_sources().esbuild({
         plugins: [ checkDependencies({
           allowDev: false,
@@ -69,7 +69,7 @@ export default build({
   },
 
   async checks() {
-    await parallel([
+    await Promise.all([
       this.dependencies(),
       this.coverage(),
       this.eslint(),
@@ -131,7 +131,7 @@ export default build({
   async compile() {
     await rmrf('dist')
 
-    await parallel([
+    await Promise.all([
       this.copy_resources(),
       this.compile_cjs(),
       this.compile_mjs(),
