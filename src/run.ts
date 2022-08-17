@@ -51,8 +51,8 @@ export interface Run {
    * Resolve a path in the context of this {@link Run}.
    *
    * If the path starts with `@...` it is considered to be relative to the
-   * {@link process.cwd | current working directory}, otherwise it will be
-   * resolved against the build file where the task was originally defined in.
+   * _directory containing the build file where the task was defined_, otherwise
+   * it will be relative to the {@link process.cwd | current working directory}.
    */
   resolve(...paths: string[]): AbsolutePath
 
@@ -116,12 +116,12 @@ export class RunImpl implements Run {
     if (path.startsWith('@')) {
       const relative = path.substring(1)
       assert(! isAbsolutePath(relative), `Path component of "${path}" is absolute`)
-      return resolveAbsolutePath(getCurrentWorkingDirectory(), relative)
+      return resolveAbsolutePath(this.buildDir, relative)
     }
 
     if (isAbsolutePath(path)) return path
 
-    return resolveAbsolutePath(this.buildDir, path)
+    return resolveAbsolutePath(getCurrentWorkingDirectory(), path)
   }
 
   files(files: Files): FilesBuilder

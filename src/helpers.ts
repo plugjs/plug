@@ -46,8 +46,8 @@ export function setLogLevel(level: LogLevelString): void {
  * Resolve a path into an {@link AbsolutePath}.
  *
  * If the path starts with `@...` it is considered to be relative to the
- * {@link process.cwd | current working directory}, otherwise it will be
- * resolved against the build file where the task was originally defined in.
+ * _directory containing the build file where the task was defined_, otherwise
+ * it will be relative to the {@link process.cwd | current working directory}.
  */
 export function resolve(...paths: string[]): AbsolutePath {
   const run = currentRun()
