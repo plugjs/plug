@@ -1,7 +1,7 @@
 import { assert, fail, failure } from './assert.js'
 import { runAsync } from './async.js'
 import { Files } from './files.js'
-import { $gry, $ms, $t, logOptions } from './log.js'
+import { $gry, $ms, $t, logOptions, getLogger } from './log.js'
 import { AbsolutePath, getAbsoluteParent } from './paths.js'
 import { Pipe, PipeImpl } from './pipe.js'
 import { Run, RunImpl } from './run.js'
@@ -105,24 +105,34 @@ export function build<D extends BuildDefinition<D>>(
 
     /* Prepare the _new_ `TaskCall` that will wrap our `Task` */
     const call = (async (run?: Run): Promise<Run> => {
+      /* Create a new run, or reuse the one given to us */
       if (! run) run = run = new BuildRun(buildDir, buildFile, tasks)
-      // else console.log('REUSING RUN', run)
       assert(run instanceof BuildRun, 'Incompatible Run specified')
 
+      /* Start the build, call the task, log errors */
       run.log.notice('Starting build...')
       const now = Date.now()
+      let error: any = undefined
       try {
         await run.call(name)
+      } catch (err) {
+        run.log.error(err)
+        error = err
+      }
+
+      /* Build is finished, so _await_ all pending tasks and be done! */
+      try {
+        /* This will await all pending tasks, log, and throw if any failed */
+        await run.finish()
+
+        /* We should never get here, but just in case... */
+        if (error !== undefined) throw error
+
+        /* All done, we can return the run */
         run.log.notice('Build completed', $ms(Date.now() - now))
         return run
       } catch (error) {
-        const failures = run.failures
-        if (failures.length) {
-          const message = `${failures.length === 1 ? 'task' : 'tasks'}`
-          const names = failures.map((task) => $t(task)).join($gry(', '))
-          run.log.error(failures.length, message, 'failed:', names)
-        }
-
+        /* Log our failure and throw in case of errors */
         run.log.error(`Build failed ${$ms(Date.now() - now)}`, error)
         throw failure()
       }
@@ -157,15 +167,38 @@ class BuildRun extends RunImpl implements Run {
       buildFile: AbsolutePath,
       private readonly _tasks: Readonly<Record<string, Task>>,
       private readonly _stack: readonly Task[] = [],
-      private readonly _cache = new Map<Task, Promise<Files | undefined>>(),
-      private readonly _failures = new Set<string>(),
+      private readonly _cache = new Map<Task, { name: string, promise: Promise<Files | undefined> }>(),
       taskName: string = '',
   ) {
     super({ taskName, buildDir, buildFile })
   }
 
-  get failures(): string[] {
-    return [ ...this._failures ].sort()
+  async finish(): Promise<void> {
+    const names: string[] = []
+    const promises: Promise<Files | undefined>[] = []
+
+    for (const { name, promise } of this._cache.values()) {
+      names.push(name)
+      promises.push(promise)
+    }
+
+    const settlements = await Promise.allSettled(promises)
+
+    const failures = settlements.reduce((failures, settlement, i) => {
+      if (settlement.status === 'rejected') {
+        const name = names[i]
+        getLogger(name).error(settlement.reason)
+        failures.push(name)
+      }
+      return failures
+    }, [] as string[])
+
+    if (failures.length) {
+      const message = `${failures.length === 1 ? 'task has' : 'tasks have'}`
+      const names = failures.map((task) => $t(task)).join($gry(', '))
+      this.log.error(failures.length, message, 'failed:', names)
+      throw failure()
+    }
   }
 
   call(name: string): Promise<Files | undefined> {
@@ -177,7 +210,7 @@ class BuildRun extends RunImpl implements Run {
 
     /* Check for cached results */
     const cached = this._cache.get(task)
-    if (cached) return cached
+    if (cached) return cached.promise
 
     const childRun = new BuildRun(
         task.context.buildDir, // the "buildDir" and "buildFile", used for local resolution (e.g. "./foo.bar") are
@@ -185,7 +218,6 @@ class BuildRun extends RunImpl implements Run {
         { ...task.context.tasks, ...this._tasks }, // merge the tasks, starting from the ones of the original build
         [ ...this._stack, task ], // the stack gets added the task being run...
         this._cache, // the cache is a singleton within the whole Run tree, it's passed unchanged
-        this._failures, // like cache, also failures are a singleton
         name,
     )
 
@@ -193,7 +225,7 @@ class BuildRun extends RunImpl implements Run {
     const promise = runAsync(childRun, name, () => childRun._run(name, task))
 
     /* Cache the execution promise (never run the smae task twice) */
-    this._cache.set(task, promise)
+    this._cache.set(task, { name, promise })
     return promise
   }
 
@@ -215,7 +247,6 @@ class BuildRun extends RunImpl implements Run {
       return result
     } catch (error) {
       this.log.error(`Task ${$t(name)} failed ${$ms(Date.now() - now)}`, error)
-      this._failures.add(name)
       throw failure()
     }
   }
