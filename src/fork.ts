@@ -128,7 +128,7 @@ export abstract class ForkingPlug implements Plug<Files | undefined> {
 
       child.on('error', (error) => {
         run.log.error('Child process error', error)
-        return done ? reject(failure()) : void 0
+        return done || reject(failure())
       })
 
       child.on('message', (message: ForkResult) => {
@@ -139,20 +139,20 @@ export abstract class ForkingPlug implements Plug<Files | undefined> {
       child.on('exit', (code, signal) => {
         if (signal) {
           run.log.error(`Child process exited with signal ${signal}`, $gry(`(pid=${child.pid})`))
-          return done ? reject(failure()) : void 0
+          return done || reject(failure())
         } else if (code !== 0) {
           run.log.error(`Child process exited with code ${code}`, $gry(`(pid=${child.pid})`))
-          return done ? reject(failure()) : void 0
+          return done || reject(failure())
         } else if (! result) {
           run.log.error('Child process exited with no result', $gry(`(pid=${child.pid})`))
-          return done ? reject(failure()) : void 0
+          return done || reject(failure())
         } else if (result.failed) {
           // definitely logged on the child side
-          return done ? reject(failure()) : void 0
+          return done || reject(failure())
         }
 
         /* We definitely have a successful result! */
-        return resolve(message.filesDir && message.filesList ?
+        return done || resolve(message.filesDir && message.filesList ?
             run.files(message.filesDir).unchecked(...message.filesList).build() :
             undefined)
       })
