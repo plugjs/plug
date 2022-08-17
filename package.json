@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/plug",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -32,7 +32,7 @@
     "@babel/types": "^7.18.10",
     "@plugjs/cov8-html": "^0.0.1",
     "diff": "^5.1.0",
-    "esbuild": "^0.15.4",
+    "esbuild": "^0.15.5",
     "eslint": "^8.22.0",
     "mocha": "^10.0.0",
     "picomatch": "^2.3.1",
