@@ -3,7 +3,7 @@ import { AbsolutePath } from '../paths.js'
 import { readFile } from '../utils/asyncfs.js'
 import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors.js'
 import { emitColor, emitPlain, LogEmitter } from './emit.js'
-import { ERROR, INFO, LogLevels, NOTICE, WARN } from './levels.js'
+import { ERROR, LogLevels, NOTICE, WARN } from './levels.js'
 import { logOptions } from './options.js'
 
 /* ========================================================================== */
@@ -288,6 +288,9 @@ class ReportImpl implements Report {
     let lPad = 0
     let cPad = 0
 
+    /* Skip report all together if empty! */
+    if ((this._annotations.size === 0) && (this._records.size === 0)) return this
+
     /* This is GIANT: sort and convert our data for easy reporting */
     const entries = [ ...this._annotations.keys(), ...this._records.keys() ]
         // dedupe
@@ -334,11 +337,10 @@ class ReportImpl implements Report {
     cPad = cPad.toString().length
 
     /* Basic emit options */
-    const options = { taskName: this._task, level: INFO }
+    const options = { taskName: this._task, level: NOTICE }
 
     this._emitter(options, [ '' ])
     this._emitter(options, [ $und($wht(this._title)) ])
-
 
     /* Iterate through all our [file,reports] tuple */
     for (let f = 0; f < entries.length; f ++) {
@@ -418,16 +420,25 @@ class ReportImpl implements Report {
       }
     }
 
-    /* Our totals */
-    const eLabel = this.errors === 1 ? 'error' : 'errors'
-    const wLabel = this.warnings === 1 ? 'warning' : 'warnings'
-    const eNumber = this.errors ? $red(this.errors) : 'no'
-    const wNumber = this.warnings ? $ylw(this.warnings) : 'no'
-
-    this._emitter(options, [ '' ])
-    this._emitter(options, [ 'Found', eNumber, eLabel, 'and', wNumber, wLabel ])
+    /* Our totals (if any) */
     this._emitter(options, [ '' ])
 
+    const status: any[] = [ 'Found' ]
+    if (this.errors) {
+      status.push($red(this.errors), this.errors === 1 ? 'error' : 'errors' )
+    }
+
+    if (this.warnings) {
+      if (this.errors) status.push('and')
+      status.push($ylw(this.warnings), this.warnings === 1 ? 'warning' : 'warnings' )
+    }
+
+    if (this.errors || this.warnings) {
+      this._emitter(options, status)
+      this._emitter(options, [ '' ])
+    }
+
+    /* Done! */
     return this
   }
 }
