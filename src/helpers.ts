@@ -114,32 +114,3 @@ export function pipe(files: Files | Promise<Files>): Pipe & Promise<Files> {
   assert(run, 'Unable to create pipes outside a running task')
   return run.pipe(files)
 }
-
-/** Await for the settlement of all the promises, then return their results. */
-export async function parallel<P extends readonly any[]>(promises: P): Promise<ParallelResult<P>> {
-  const settlements = await Promise.allSettled(promises)
-  const results: any[] = []
-
-  let errors = 0
-  for (const settlement of settlements) {
-    if (settlement.status === 'fulfilled') {
-      results.push(settlement.value)
-      continue
-    }
-
-    log.error(settlement.reason)
-    errors ++
-  }
-
-  assert(! errors, `Parallel execution failed for ${errors} tasks`)
-  return results as ParallelResult<P>
-}
-
-type ParallelResult<T extends readonly any[]> =
-  T extends readonly [ infer First, ...infer Rest ] ?
-    [ Awaited<First>, ...ParallelResult<Rest> ] :
-  T extends readonly [ infer Only ] ?
-    [ Awaited<Only> ] :
-  T extends readonly [] ?
-    [] :
-  never
