@@ -14,5 +14,5 @@ export NODE_V8_COVERAGE="${PWD}/.coverage-data"
 rm -rf "${NODE_V8_COVERAGE}"
 
 # Run build twice to generate full coverage
-node ./extra/cli.mjs default
-node ./extra/cli.mjs coverage
+node ./extra/cli.mjs --force-esm default
+node ./extra/cli.mjs --force-esm coverage

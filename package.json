@@ -1,7 +1,7 @@
 {
   "name": "@plugjs/plug",
   "version": "0.0.4",
-  "type": "module",
+  "type": "commonjs",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./types/index.d.ts",
@@ -22,7 +22,7 @@
   },
   "scripts": {
     "bootstrap": "./bootstrap.sh",
-    "build": "node ./extra/cli.mjs",
+    "build": "node ./extra/cli.mjs --force-esm",
     "dev": "npx nodemon -e .ts -w ./test -w ./src -x ./runme.sh"
   },
   "author": "",
