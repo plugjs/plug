@@ -153,7 +153,7 @@ export abstract class ForkingPlug implements Plug<Files | undefined> {
 
         /* We definitely have a successful result! */
         return resolve(message.filesDir && message.filesList ?
-            run.files(message.filesDir).add(...message.filesList).build() :
+            run.files(message.filesDir).unchecked(...message.filesList).build() :
             undefined)
       })
 
@@ -233,7 +233,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
 
       /* Create the Plug instance and our Files instance */
       const plug = new Ctor(...constructorArgs) as Plug<Files | undefined>
-      const files = run.files(filesDir).add(...filesList).build()
+      const files = run.files(filesDir).unchecked(...filesList).build()
 
       /* Run and return the result */
       return plug.pipe(files, run)

@@ -142,7 +142,7 @@ export class RunImpl implements Run {
     const promise = Promise.resolve().then(async () => {
       const builder = this.files(directory || '.')
       for await (const file of walk(builder.directory, [ glob, ...params ], options)) {
-        builder.add(file)
+        builder.unchecked(file)
       }
       return builder.build()
     })

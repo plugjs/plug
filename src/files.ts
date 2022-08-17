@@ -1,17 +1,34 @@
 import { inspect } from 'node:util'
-import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths.js'
+import { assert } from './assert.js'
+import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, isFile, resolveAbsolutePath } from './paths.js'
 import { mkdir, writeFile } from './utils/asyncfs.js'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
 export interface FilesBuilder {
   /** The (resolved) directory the {@link Files} will be associated with */
   readonly directory: AbsolutePath
-  /** Push files into the {@link Files} instance being built */
+
+  /**
+   * Push files into the {@link Files} instance being built **checking for
+   * their existance on disk**.
+   *
+   * This _will_ be slow, use {@link FilesBuilder.unchecked} when absolutely
+   * sure the file already exist.
+   */
   add(...files: string[]): this
+
+  /**
+   * Push files into the {@link Files} instance being built without checking
+   * they exist on disk _(use with care!)_.
+   */
+  unchecked(...files: string[]): this
+
   /** Merge orther {@link Files} instance to the {@link Files} being built */
   merge(...files: Files[]): this
+
   /** Write a file and add it to the {@link Files} instance being built */
   write(file: string, content: string | Buffer): Promise<AbsolutePath>
+
   /** Build and return a {@link Files} instance */
   build(): Files
 }
@@ -86,6 +103,21 @@ export class Files {
         if (typeof files === 'string') files = [ files ]
         for (const file of files) {
           const relative = assertRelativeChildPath(instance.directory, file)
+          const resolved = resolveAbsolutePath(instance.directory, file)
+
+          assert(isFile(resolved), `File "${resolved}" does not exist`)
+          set.add(relative)
+        }
+
+        return this
+      },
+
+      unchecked(...files: string[]): FilesBuilder {
+        if (built) throw new Error('FileBuilder "build()" already called')
+
+        if (typeof files === 'string') files = [ files ]
+        for (const file of files) {
+          const relative = assertRelativeChildPath(instance.directory, file)
           set.add(relative)
         }
 
@@ -97,7 +129,7 @@ export class Files {
 
         for (const files of args) {
           for (const file of files.absolutePaths()) {
-            this.add(file)
+            this.unchecked(file)
           }
         }
 
@@ -111,7 +143,7 @@ export class Files {
 
         await mkdir(directory, { recursive: true })
         await writeFile(absolute, content)
-        this.add(absolute)
+        this.unchecked(absolute)
 
         return absolute
       },

@@ -81,7 +81,7 @@ export class ESBuild implements Plug<Files> {
     assert(esbuild, 'ESBuild did not produce any result')
 
     for (const file in esbuild.metafile.outputs) {
-      builder.add(resolveAbsolutePath(absWorkingDir, file))
+      builder.unchecked(resolveAbsolutePath(absWorkingDir, file))
     }
 
     const result = builder.build()

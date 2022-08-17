@@ -74,7 +74,7 @@ export class Copy implements Plug<Files> {
       }
 
       /* Record this file */
-      builder.add(relative)
+      builder.unchecked(relative)
     }
 
     const result = builder.build()
