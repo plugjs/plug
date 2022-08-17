@@ -18,8 +18,8 @@ import _url from 'node:url'
 /* eslint-disable no-console */
 
 /* We have everyhing we need to start our asynchronous main! */
-async function main(): Promise<void> {
-  const { buildFile, tasks, listOnly } = parseCommandLine()
+async function main(options: CommandLineOptions): Promise<void> {
+  const { buildFile, tasks, listOnly } = options
   if (tasks.length === 0) tasks.push('default')
 
   let build = await import(buildFile)
@@ -68,9 +68,12 @@ if (process.env.DEBUG_CLI === 'true') {
   console.log('               PID =', process.pid)
 }
 
+/* Parse command line options */
+const options = parseCommandLine()
+
 /* If both source maps and typescript are on, run! */
 if (sourceMapsEnabled && typeScriptEnabled) {
-  main()
+  main(options)
       .then(() => process.exit(0))
       .catch((error) => {
         if (! isBuildFailure(error)) console.log(error)
@@ -94,10 +97,32 @@ if (sourceMapsEnabled && typeScriptEnabled) {
     execArgv.push(`--experimental-loader=${loader}`, '--no-warnings')
   }
 
+  /*
+   * It seems that setting "type" as "module" in "package.json" creates some
+   * problems when the module is being imported from a "commonjs" one.
+   *
+   * TypeScript _incorrectly_ says (regardless of how we set up our conditional
+   * exports) that we must use dynamic imports:
+   *
+   *     Module '@plugjs/plug' cannot be imported using this construct. The
+   *     specifier only resolves to an ES module, which cannot be imported
+   *     synchronously. Use dynamic import instead.
+   *     TS(1471)
+   *
+   * So for now our only option is to leave "type" as "commonjs", and for those
+   * brave souls willing to force ESM irregardless of what's in "package.json",
+   * we allow the "--force-esm" option, and instruct `ts-loader` that the
+   * current directory (and subdirs) will transpile as ESM always.
+   */
+  const env = options.forceEsm ?
+    { __TS_LOADER_FORCE_ESM: process.cwd(), ...process.env } :
+    process.env
+
   /* Fork ourselves! */
   const child = _childProcess.fork(script, [ ...process.argv.slice(2) ], {
     stdio: [ 'inherit', 'inherit', 'inherit', 'ipc' ],
     execArgv,
+    env,
   })
 
   /* Monitor child process... */
@@ -146,6 +171,7 @@ export interface CommandLineOptions {
   buildFile: string,
   tasks: string[],
   listOnly: boolean,
+  forceEsm: boolean,
 }
 
 
@@ -160,22 +186,23 @@ export function parseCommandLine(): CommandLineOptions {
   /* Yargs-parse our arguments */
   const parsed = _yargs(process.argv.slice(2), {
     configuration: {
-      'camel-case-expansion': true,
+      'camel-case-expansion': false,
       'strip-aliased': true,
       'strip-dashed': true,
     },
 
     alias: {
-      verbose: [ 'v' ],
-      quiet: [ 'q' ],
-      colors: [ 'c' ],
-      file: [ 'f' ],
-      list: [ 'l' ],
-      help: [ 'h' ],
+      'force-esm': [ 'e' ],
+      'verbose': [ 'v' ],
+      'quiet': [ 'q' ],
+      'colors': [ 'c' ],
+      'file': [ 'f' ],
+      'list': [ 'l' ],
+      'help': [ 'h' ],
     },
 
     string: [ 'file' ],
-    boolean: [ 'help', 'colors', 'list' ],
+    boolean: [ 'help', 'colors', 'list', 'force-esm' ],
     count: [ 'verbose', 'quiet' ],
   })
 
@@ -188,6 +215,7 @@ export function parseCommandLine(): CommandLineOptions {
   let verbosity = 0 // yargs always returns 0 for count (quiet/verbose)
   let colors: boolean | undefined = undefined
   let file: string | undefined = undefined
+  let forceEsm = false
   let listOnly = false
   let help = false
 
@@ -205,6 +233,9 @@ export function parseCommandLine(): CommandLineOptions {
         break
       case 'file': // build file
         file = parsed[key]
+        break
+      case 'force-esm':
+        forceEsm = !! parsed[key]
         break
       case 'colors':
         colors = !! parsed[key]
@@ -232,12 +263,13 @@ export function parseCommandLine(): CommandLineOptions {
     plugjs [--options] [... tasks]
 
     Options:
-      -v --verbose  Increase logging verbosity
-      -q --quiet    Decrease logging verbosity
-      -c --colors   Force colorful output (use "--no-colors" to force plain text)
-      -f --file     Specify the build file to use (default "./build.[ts/js/...]")
-      -l --list     Only list the tasks defined by the build, nothing more!
-      -h --help     Help! You're reading it now!
+      -v --verbose    Increase logging verbosity
+      -q --quiet      Decrease logging verbosity
+      -c --colors     Force colorful output (use "--no-colors" to force plain text)
+      -e --force-esm  Force our TypeScript loader to interpret ".ts" files as ESM
+      -f --file       Specify the build file to use (default "./build.[ts/js/...]")
+      -l --list       Only list the tasks defined by the build, nothing more!
+      -h --help       Help! You're reading it now!
 
     Tasks:
       Any other argument will be treated as a task name. If no task names are
@@ -301,7 +333,7 @@ export function parseCommandLine(): CommandLineOptions {
    * ======================================================================== */
 
   /* All done, here are our arguments parsed! */
-  return { buildFile, tasks, listOnly }
+  return { buildFile, tasks, forceEsm, listOnly }
 }
 
 /* ========================================================================== */
