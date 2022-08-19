@@ -1,7 +1,8 @@
+import { Dir } from 'node:fs'
 import { basename, join } from 'node:path'
 import { $p, log } from '../log.js'
 import { AbsolutePath, resolveAbsolutePath } from '../paths.js'
-import { readdir, stat } from './asyncfs.js'
+import { opendir, stat } from './asyncfs.js'
 import { match, MatchOptions } from './match.js'
 
 /** Specific options for walking a directory */
@@ -101,14 +102,18 @@ async function* walker(args: WalkerArguments): AsyncGenerator<string, void, void
   const dir = resolveAbsolutePath(directory, relative)
   if (! onDirectory(dir)) return
   log.trace('Reading directory', $p(dir))
-  const dirents = await readdir(dir, { withFileTypes: true }).catch((error) => {
+
+  let dirents: Dir
+  try {
+    dirents = await opendir(dir)
+  } catch (error: any) {
     if (error.code !== 'ENOENT') throw error
     log.warn('Directory', $p(dir), 'not found')
-    return []
-  })
+    return
+  }
 
   /* For each entry we determine the full path */
-  for (const dirent of dirents) {
+  for await (const dirent of dirents) {
     const path = join(relative, dirent.name)
 
     /* If the entry is a file and matches, yield it */
