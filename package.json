@@ -22,7 +22,7 @@
   },
   "scripts": {
     "bootstrap": "./bootstrap.sh",
-    "build": "node ./extra/cli.mjs --force-esm",
+    "build": "./runme.sh",
     "dev": "npx nodemon -e .ts -w ./test -w ./src -x ./runme.sh"
   },
   "author": "",
