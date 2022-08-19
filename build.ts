@@ -1,4 +1,4 @@
-import { $t, build, checkDependencies, find, fixExtensions, log, merge, rmrf } from './src/index.js'
+import { $t, build, find, fixExtensions, log, merge, rmrf } from './src/index.js'
 
 /** When `true` the coverage dir comes from the environment */
 const environmentCoverage = !! process.env.NODE_V8_COVERAGE
