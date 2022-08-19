@@ -1,6 +1,12 @@
 import { constants } from 'node:fs'
 import fsp from 'node:fs/promises'
 
+type FsPromises = typeof fsp
+
+type FsWrappers = {
+  [ K in keyof FsPromises as FsPromises[K] extends ((...args: any[]) => any) ? K : never ]: FsPromises[K]
+}
+
 /*
  * I have no idea why sometimes stacks don't have a trace when coming out of
  * the "node:fs/promises" api... There is a _stack_ property on the object
@@ -35,17 +41,12 @@ const fs = Object.entries(fsp as any).reduce((fs, [ key, val ]) => {
     Object.defineProperty(f, 'name', { value: key })
     /* Assign the wrapper to our exports */
     fs[key] = f
-  } else {
-    /* Not a function, no wrapping... */
-    fs[key] = val
   }
 
   /* Return the "reduced" exports */
   return fs
-}, { constants } as any) as typeof fsp & { constants: typeof constants }
+}, {} as any) as FsWrappers
 
-/* Export _our_ version of the "node:fs/promises" module */
-export default fs
 
 /* Export all the wrappers to "node:fs/promises" individually */
 export const access = fs.access
@@ -78,5 +79,5 @@ export const appendFile = fs.appendFile
 export const readFile = fs.readFile
 export const watch = fs.watch
 
-/* Export constants from "node:/fs" in addition */
-export { constants } from 'node:fs'
+/* Export constants from "node:fs" */
+export const fsConstants = constants
