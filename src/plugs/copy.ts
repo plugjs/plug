@@ -4,7 +4,7 @@ import { $p } from '../log.js'
 import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths.js'
 import { install, Plug } from '../pipe.js'
 import { Run } from '../run.js'
-import { chmod, copyFile, mkdir } from '../utils/asyncfs.js'
+import { chmod, copyFile, fsConstants, mkdir } from '../utils/asyncfs.js'
 
 /** Options for copying files */
 export interface CopyOptions {
@@ -29,7 +29,7 @@ export class Copy implements Plug<Files> {
   async pipe(files: Files, run: Run): Promise<Files> {
     /* Destructure our options with some defaults and compute write flags */
     const { mode, dirMode, overwrite, rename = (s): string => s } = this._options
-    const flags = overwrite ? fs.constants.COPYFILE_EXCL : 0
+    const flags = overwrite ? fsConstants.COPYFILE_EXCL : 0
     const dmode = parseMode(dirMode)
     const fmode = parseMode(mode)
 
