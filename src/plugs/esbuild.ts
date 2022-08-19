@@ -129,7 +129,6 @@ declare module '../pipe.js' {
  * ========================================================================== */
 
 export * from './esbuild/bundle-locals.js'
-export * from './esbuild/check-dependencies.js'
 export * from './esbuild/fix-extensions.js'
 
 /* ========================================================================== *

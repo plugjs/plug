@@ -27,31 +27,9 @@ export default build({
    * EXTRA CHECKS (dependencies, linting, coverage)                           *
    * ======================================================================== */
 
-  async dependencies() {
-    await Promise.all([
-      await this.find_sources().esbuild({
-        plugins: [ checkDependencies({
-          allowDev: false,
-          allowUnused: false,
-          ignored: [ 'yargs-parser' ],
-        }) ],
-        allowOverwrite: false,
-        write: false,
-        outdir: '.',
-      }),
-      await this.find_tests().esbuild({
-        plugins: [ checkDependencies({
-          allowDev: true,
-          allowUnused: true,
-        }) ],
-        allowOverwrite: false,
-        write: false,
-        outdir: '.',
-      }),
-    ])
-  },
-
   async coverage() {
+    await find('fooobarbaz').debug()
+
     try {
       await this.find_sources().coverage(coverageDir, {
         reportDir: 'coverage',
@@ -70,7 +48,6 @@ export default build({
 
   async checks() {
     await Promise.all([
-      this.dependencies(),
       this.coverage(),
       this.eslint(),
     ])
