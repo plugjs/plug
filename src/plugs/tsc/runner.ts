@@ -3,7 +3,7 @@ import ts from 'typescript' // TypeScript does NOT support ESM modules
 import { failure } from '../../assert.js'
 import { Files } from '../../files.js'
 import { $p, log } from '../../log.js'
-import { getCurrentWorkingDirectory, isFile } from '../../paths.js'
+import { AbsolutePath, isFile } from '../../paths.js'
 import { Plug } from '../../pipe.js'
 import { Run } from '../../run.js'
 import { parseOptions, ParseOptions } from '../../utils/options.js'
@@ -31,47 +31,71 @@ export default class Tsc implements Plug<Files> {
   }
 
   async pipe(files: Files, run: Run): Promise<Files> {
-    const tsconfig = this._tsconfig ?
-      run.resolve(this._tsconfig) :
-      isFile(files.directory, 'tsconfig.json')
+    const baseDir = run.resolve('.') // "this" directory, base of all relative paths
+    const report = run.report('TypeScript Report') // report used throughout
+    const overrides = { ...this._options } // clone our options
 
-    const overrides: ts.CompilerOptions = {
-      rootDir: files.directory, // by default, our "files" directory
-      ...this._options, // any other options specified in the constructor
+    /*
+     * The "tsconfig" file is either specified, or (if existing) first checked
+     * alongside the sources, otherwise checked in the current directory.
+     */
+    const sourcesConfig = isFile(files.directory, 'tsconfig.json')
+    const tsconfig = this._tsconfig ? run.resolve(this._tsconfig) :
+      sourcesConfig || isFile(run.resolve('tsconfig.json'))
+
+    /* Root directory must always exist */
+    let rootDir: AbsolutePath
+    if (overrides.rootDir) {
+      rootDir = overrides.rootDir = run.resolve(overrides.rootDir)
+    } else {
+      rootDir = overrides.rootDir = files.directory
     }
 
+    /* Output directory _also_ must always exist */
+    let outDir: AbsolutePath
+    if (overrides.outDir) {
+      outDir = overrides.outDir = run.resolve(overrides.outDir)
+    } else {
+      outDir = overrides.outDir = rootDir // default to the root directory
+    }
+
+    /* All other root paths */
+    if (overrides.rootDirs) {
+      overrides.rootDirs = overrides.rootDirs.map((dir) => run.resolve(dir))
+    }
+
+    /* The baseURL is resolved, as well */
+    if (overrides.baseUrl) overrides.baseUrl = run.resolve(overrides.baseUrl)
+
+    /* We can now get our compiler options, and check any and all overrides */
     const { errors, options } = await getCompilerOptions(
         tsconfig, // resolved tsconfig.json from constructor, might be undefined
         overrides, // overrides from constructor, might be an empty object
-        run.buildFile) // overrides are defined in the build file, sooo.....
+        run.buildFile, // the build file where the overrides were specified,
+        baseDir) // base dir where to resolve overrides
 
-    const report = run.report('TypeScript Report')
-
-    // Update report and fail on errors
-    updateReport(report, errors, getCurrentWorkingDirectory())
+    /* Update report and fail on errors */
+    updateReport(report, errors, baseDir)
     if (report.errors) report.done(true)
 
-    const { rootDir, outDir } = options
-    const root = rootDir ? run.resolve(rootDir) : files.directory
-    const out = outDir ? run.resolve(outDir) : root
-
-    const host = new TypeScriptHost(root)
-
+    /* Prep for compilation */
     const paths = [ ...files.absolutePaths() ]
     for (const path of paths) log.trace(`Compiling "${$p(path)}"`)
 
-    // Get our build file and create the master program
     log.info('Compiling', paths.length, 'files')
     log.debug('Compliation options', options)
 
+    /* Typescript host, create program and compile */
+    const host = new TypeScriptHost(rootDir)
     const program = ts.createProgram(paths, options, host, undefined, errors)
     const diagnostics = ts.getPreEmitDiagnostics(program)
 
-    // Update report and fail on errors
-    updateReport(report, diagnostics, root)
+    /* Update report and fail on errors */
+    updateReport(report, diagnostics, rootDir)
     if (report.errors) report.done(true)
 
-    const builder = run.files(out)
+    /* Write out all files asynchronously */
+    const builder = run.files(outDir)
     const promises: Promise<void>[] = []
     const result = program.emit(undefined, (fileName, code) => {
       promises.push(builder.write(fileName, code).then((file) => {
@@ -82,17 +106,17 @@ export default class Tsc implements Plug<Files> {
       }))
     })
 
-    // Update report and fail on errors
-    updateReport(report, result.diagnostics, root)
-    if (report.errors) report.done(true)
-
-    // Await for all files to be written and check
+    /* Await for all files to be written and check */
     const settlements = await Promise.allSettled(promises)
     const failures = settlements
         .reduce((failures, s) => failures + s.status === 'rejected' ? 1 : 0, 0)
     if (failures) throw failure() // already logged above
 
-    // All done, build our files and return it
+    /* Update report and fail on errors */
+    updateReport(report, result.diagnostics, rootDir)
+    if (report.errors) report.done(true)
+
+    /* All done, build our files and return it */
     const outputs = builder.build()
     log.info('TSC produced', outputs.length, 'files into', $p(outputs.directory))
     return outputs
