@@ -1,6 +1,6 @@
 import { statSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { dirname, extname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { assert } from './assert.js'
 
@@ -158,7 +158,7 @@ export function commonPath(path: AbsolutePath, ...paths: string[]): AbsolutePath
   // Here the first path will be split into its components
   // on win => [ 'C:', 'Windows', 'System32' ]
   // on unx => [ '', 'usr'
-  const components = path.split(sep)
+  const components = normalize(path).split(sep)
 
   let length = components.length
   for (const current of paths) {
