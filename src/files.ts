@@ -1,4 +1,3 @@
-import { inspect } from 'node:util'
 import { assert } from './assert.js'
 import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, isFile, resolveAbsolutePath } from './paths.js'
 import { mkdir, writeFile } from './utils/asyncfs.js'
@@ -27,7 +26,7 @@ export interface FilesBuilder {
   merge(...files: Files[]): this
 
   /** Write a file and add it to the {@link Files} instance being built */
-  write(file: string, content: string | Buffer): Promise<AbsolutePath>
+  write(file: string, content: string | Uint8Array): Promise<AbsolutePath>
 
   /** Build and return a {@link Files} instance */
   build(): Files
@@ -48,6 +47,13 @@ export class Files {
   constructor(directory: AbsolutePath) {
     this._directory = directory
     this._files = []
+
+    // Nicety for "console.log" / "util.inspect"...
+    const inspect = Symbol.for('nodejs.util.inspect.custom')
+    Object.defineProperty(this, inspect, { value: () => ({
+      directory: this._directory,
+      files: [ ...this._files ],
+    }) })
   }
 
   /** Return the _directory_ where this {@link Files} is rooted */
@@ -73,15 +79,6 @@ export class Files {
   /** Return an iterator over all _relative_ to _absolute_ mappings */
   * pathMappings(): Generator<[ relative: string, absolute: AbsolutePath ]> {
     for (const file of this) yield [ file, resolveAbsolutePath(this._directory, file) ]
-  }
-
-  /* Nicety for logging */
-  [inspect.custom](): any {
-    const self = this
-    return new class Files {
-      directory = self._directory
-      files = [ ...self._files ]
-    }
   }
 
   /** Create a new {@link FilesBuilder} creating {@link Files} instances. */
@@ -136,7 +133,7 @@ export class Files {
         return this
       },
 
-      async write(file: string, content: string | Buffer): Promise<AbsolutePath> {
+      async write(file: string, content: string | Uint8Array): Promise<AbsolutePath> {
         const relative = assertRelativeChildPath(instance.directory, file)
         const absolute = resolveAbsolutePath(instance.directory, relative)
         const directory = getAbsoluteParent(absolute)
