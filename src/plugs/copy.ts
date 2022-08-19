@@ -1,11 +1,10 @@
-import fs from '../utils/asyncfs.js'
-
 import { assert } from '../assert.js'
 import { Files } from '../files.js'
 import { $p } from '../log.js'
 import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths.js'
 import { install, Plug } from '../pipe.js'
 import { Run } from '../run.js'
+import { chmod, copyFile, mkdir } from '../utils/asyncfs.js'
 
 /** Options for copying files */
 export interface CopyOptions {
@@ -51,26 +50,26 @@ export class Copy implements Plug<Files> {
 
       /* Create the parent directory, recursively */
       const directory = getAbsoluteParent(target)
-      const firstParent = await fs.mkdir(directory, { recursive: true })
+      const firstParent = await mkdir(directory, { recursive: true })
 
       /* Set the mode for all created directories */
       if (firstParent && (dmode !== undefined)) {
         assertAbsolutePath(firstParent)
         for (let dir = directory; ; dir = getAbsoluteParent(dir)) {
           run.log.trace(`Setting mode ${stringifyMode(dmode)} for directory`, $p(dir))
-          await fs.chmod(dir, dmode)
+          await chmod(dir, dmode)
           if (dir === firstParent) break
         }
       }
 
       /* Actually _copy_ the file */
       run.log.trace(`Copying "${$p(absolute)}" to "${$p(target)}"`)
-      await fs.copyFile(absolute, target, flags)
+      await copyFile(absolute, target, flags)
 
       /* Set the mode, if we need to */
       if (fmode !== undefined) {
         run.log.trace(`Setting mode ${stringifyMode(fmode)} for file`, $p(target))
-        await fs.chmod(target, fmode)
+        await chmod(target, fmode)
       }
 
       /* Record this file */
