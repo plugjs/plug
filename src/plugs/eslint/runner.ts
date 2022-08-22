@@ -2,7 +2,7 @@ import { ESLint as RealESLint } from 'eslint'
 import { assert, failure } from '../../assert.js'
 import { Files } from '../../files.js'
 import { $p, ERROR, NOTICE, WARN } from '../../log.js'
-import { getCurrentWorkingDirectory, isDirectory, isFile, resolveAbsolutePath } from '../../paths.js'
+import { getCurrentWorkingDirectory, resolveDirectory, resolveFile, resolveAbsolutePath } from '../../paths.js'
 import { Plug } from '../../pipe.js'
 import { Run } from '../../run.js'
 import { readFile } from '../../utils/asyncfs.js'
@@ -34,11 +34,11 @@ export default class ESLint implements Plug<undefined> {
     const { directory, configFile } = this._options
 
     const cwd = directory ? run.resolve(directory) : getCurrentWorkingDirectory()
-    assert(isDirectory(cwd), `ESLint directory ${$p(cwd)} does not exist`)
+    assert(resolveDirectory(cwd), `ESLint directory ${$p(cwd)} does not exist`)
 
     const overrideConfigFile = configFile ? run.resolve(configFile) : undefined
     if (overrideConfigFile) {
-      assert(isFile(overrideConfigFile), `ESLint configuration ${$p(overrideConfigFile)} does not exist`)
+      assert(resolveFile(overrideConfigFile), `ESLint configuration ${$p(overrideConfigFile)} does not exist`)
     }
 
     /* Create our ESLint instance */

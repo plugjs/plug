@@ -1,5 +1,5 @@
 import { assert } from './assert.js'
-import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, isFile, resolveAbsolutePath } from './paths.js'
+import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, resolveFile, resolveAbsolutePath } from './paths.js'
 import { mkdir, writeFile } from './utils/asyncfs.js'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
@@ -102,7 +102,7 @@ export class Files {
           const relative = assertRelativeChildPath(instance.directory, file)
           const resolved = resolveAbsolutePath(instance.directory, file)
 
-          assert(isFile(resolved), `File "${resolved}" does not exist`)
+          assert(resolveFile(resolved), `File "${resolved}" does not exist`)
           set.add(relative)
         }
 

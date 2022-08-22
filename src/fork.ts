@@ -3,7 +3,7 @@ import { assert, failure } from './assert.js'
 import { runAsync } from './async.js'
 import { Files } from './files.js'
 import { $gry, $p, LogOptions, logOptions } from './log.js'
-import { AbsolutePath, isFile, requireFilename } from './paths.js'
+import { AbsolutePath, resolveFile, requireFilename } from './paths.js'
 import { install, Plug, PlugName } from './pipe.js'
 import { Run, RunImpl } from './run.js'
 
@@ -220,7 +220,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
     /* Contextualize this run, and go! */
     const result = runAsync(run, taskName, async () => {
       /* Check that we have a proper script file name */
-      assert(isFile(scriptFile), `Script file ${$p(scriptFile)} not found`)
+      assert(resolveFile(scriptFile), `Script file ${$p(scriptFile)} not found`)
       const script = await import(scriptFile)
 
       /* Figure out the constructor, in the "default" chain */

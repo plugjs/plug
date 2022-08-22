@@ -3,7 +3,7 @@ import ts from 'typescript' // TypeScript does NOT support ESM modules
 import { failure } from '../../assert.js'
 import { Files } from '../../files.js'
 import { $p, log } from '../../log.js'
-import { AbsolutePath, isFile } from '../../paths.js'
+import { AbsolutePath, resolveFile } from '../../paths.js'
 import { Plug } from '../../pipe.js'
 import { Run } from '../../run.js'
 import { parseOptions, ParseOptions } from '../../utils/options.js'
@@ -39,9 +39,9 @@ export default class Tsc implements Plug<Files> {
      * The "tsconfig" file is either specified, or (if existing) first checked
      * alongside the sources, otherwise checked in the current directory.
      */
-    const sourcesConfig = isFile(files.directory, 'tsconfig.json')
+    const sourcesConfig = resolveFile(files.directory, 'tsconfig.json')
     const tsconfig = this._tsconfig ? run.resolve(this._tsconfig) :
-      sourcesConfig || isFile(run.resolve('tsconfig.json'))
+      sourcesConfig || resolveFile(run.resolve('tsconfig.json'))
 
     /* Root directory must always exist */
     let rootDir: AbsolutePath

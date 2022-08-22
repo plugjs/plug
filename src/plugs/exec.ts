@@ -6,7 +6,7 @@ import { assert } from '../assert.js'
 import { currentRun } from '../async.js'
 import { Files } from '../files.js'
 import { $p, logOptions } from '../log.js'
-import { AbsolutePath, getCurrentWorkingDirectory, isDirectory } from '../paths.js'
+import { AbsolutePath, getCurrentWorkingDirectory, resolveDirectory } from '../paths.js'
 import { install, Plug } from '../pipe.js'
 import { Run } from '../run.js'
 import { parseOptions, ParseOptions } from '../utils/options.js'
@@ -156,18 +156,18 @@ async function spawnChild(
   } = options
 
   const childCwd = cwd ? run.resolve(cwd) : getCurrentWorkingDirectory()
-  assert(isDirectory(childCwd), `Current working directory ${$p(childCwd)} does not exist`)
+  assert(resolveDirectory(childCwd), `Current working directory ${$p(childCwd)} does not exist`)
 
   // Figure out the PATH environment variable
   const childPaths: AbsolutePath[] = []
 
   // The `.../node_modules/.bin` path relative to the current working dir */
   const baseNodePath = run.resolve('@node_modules', '.bin')
-  if (isDirectory(baseNodePath)) childPaths.push(baseNodePath)
+  if (resolveDirectory(baseNodePath)) childPaths.push(baseNodePath)
 
   // The `.../node_bodules/.bin` path relative to the buildDir */
   const buildNodePath = run.resolve('./node_modules', '.bin')
-  if (isDirectory(buildNodePath)) childPaths.push(buildNodePath)
+  if (resolveDirectory(buildNodePath)) childPaths.push(buildNodePath)
 
   // Any other paths either from `process.env` or `env` (which overrides it)
   const extraPath = env.PATH || process.env.PATH

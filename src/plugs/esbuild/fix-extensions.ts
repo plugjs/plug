@@ -1,7 +1,7 @@
 import path from 'node:path'
 
 import { Plugin } from 'esbuild'
-import { assertAbsolutePath, isFile, resolveAbsolutePath } from '../../paths.js'
+import { assertAbsolutePath, resolveFile, resolveAbsolutePath } from '../../paths.js'
 import { stat } from '../../utils/asyncfs.js'
 
 /**
@@ -61,7 +61,7 @@ export function fixExtensions(): Plugin {
 
         /* First of all, check if the _real_ filename exists */
         const resolved = resolveAbsolutePath(resolveDir, args.path)
-        if (isFile(resolved)) return { path: args.path, external: true }
+        if (resolveFile(resolved)) return { path: args.path, external: true }
 
         /*
          * Thank you TypeScript 4.7!!! If the file is ".js", ".mjs" or ".cjs" we
@@ -73,7 +73,7 @@ export function fixExtensions(): Plugin {
           const [ , name, ext ] = match
           const tspath = name + ext.replace('js', 'ts')
           const tsfile = resolveAbsolutePath(resolveDir, tspath)
-          if (isFile(tsfile)) {
+          if (resolveFile(tsfile)) {
             const newext = ext === '.mjs' ? mjs : ext === '.cjs' ? cjs : js
             return { path: name + newext, external: true }
           }

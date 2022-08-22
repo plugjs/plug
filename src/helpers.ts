@@ -1,8 +1,15 @@
+import {
+  AbsolutePath,
+  commonPath,
+  getCurrentWorkingDirectory,
+  resolveDirectory,
+  resolveFile,
+} from './paths.js'
+
 import { assert } from './assert.js'
 import { currentRun } from './async.js'
 import { Files, FilesBuilder } from './files.js'
 import { $p, log, LogLevelString } from './log.js'
-import { AbsolutePath, commonPath, getCurrentWorkingDirectory, isDirectory } from './paths.js'
 import { Pipe } from './pipe.js'
 import { FindOptions } from './run.js'
 import { rm } from './utils/asyncfs.js'
@@ -22,7 +29,7 @@ export async function rmrf(directory: string): Promise<void> {
   assert(dir !== run.buildDir,
       `Cowardly refusing to wipe build file directory ${$p(dir)}`)
 
-  if (! isDirectory(dir)) {
+  if (! resolveDirectory(dir)) {
     log.info('Directory', $p(dir), 'not found')
     return
   }
@@ -113,4 +120,14 @@ export function pipe(files: Files | Promise<Files>): Pipe & Promise<Files> {
   const run = currentRun()
   assert(run, 'Unable to create pipes outside a running task')
   return run.pipe(files)
+}
+
+/** Return an absolute path of the file if it exist on disk */
+export function isFile(...paths: string[]): AbsolutePath | undefined {
+  return resolveFile(resolve(...paths))
+}
+
+/** Return an absolute path of the file if it exist on disk */
+export function isDirectory(...paths: string[]): AbsolutePath | undefined {
+  return resolveDirectory(resolve(...paths))
 }

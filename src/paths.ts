@@ -133,7 +133,7 @@ export function requireResolve(__fileurl: string, module: string): AbsolutePath 
 
     for (const check of checks) {
       const resolved = fileURLToPath(new URL(check, url)) as AbsolutePath
-      if (isFile(resolved)) {
+      if (resolveFile(resolved)) {
         module = check
         break
       }
@@ -187,7 +187,7 @@ export function commonPath(path: AbsolutePath, ...paths: string[]): AbsolutePath
  * Resolves the specified path as an {@link AbsolutePath} and checks it is a
  * _file_, returning `undefined` if it is not.
  */
-export function isFile(path: AbsolutePath, ...paths: string[]): AbsolutePath | undefined {
+export function resolveFile(path: AbsolutePath, ...paths: string[]): AbsolutePath | undefined {
   const file = resolveAbsolutePath(path, ...paths)
   try {
     const stat = statSync(file)
@@ -202,7 +202,7 @@ export function isFile(path: AbsolutePath, ...paths: string[]): AbsolutePath | u
  * Resolves the specified path as an {@link AbsolutePath} and checks it is a
  * _directory_, returning `undefined` if it is not.
  */
-export function isDirectory(path: AbsolutePath, ...paths: string[]): AbsolutePath | undefined {
+export function resolveDirectory(path: AbsolutePath, ...paths: string[]): AbsolutePath | undefined {
   const directory = resolveAbsolutePath(path, ...paths)
   try {
     const stat = statSync(directory)
