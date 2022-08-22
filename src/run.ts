@@ -1,8 +1,7 @@
-import { join, normalize, sep } from 'node:path'
-import { assert } from './assert.js'
+import { sep } from 'node:path'
 import { Files, FilesBuilder } from './files.js'
 import { createReport, getLevelNumber, getLogger, Logger, LogLevelString, Report } from './log.js'
-import { AbsolutePath, getCurrentWorkingDirectory, isAbsolutePath, resolveAbsolutePath } from './paths.js'
+import { AbsolutePath, getCurrentWorkingDirectory, resolveAbsolutePath } from './paths.js'
 import { Pipe, PipeImpl } from './pipe.js'
 import { ParseOptions, parseOptions } from './utils/options.js'
 import { walk, WalkOptions } from './utils/walk.js'
@@ -109,20 +108,19 @@ export class RunImpl implements Run {
     return createReport(title, this.taskName)
   }
 
-  resolve(...paths: string[]): AbsolutePath {
-    const path = join(...paths)
-    if (! path) return this.buildDir
-
-    if (path.startsWith('@')) {
-      const components = normalize(path.substring(1)).split(sep)
-      const relative = join(...components) // this will remove any leading slash
-      assert(! isAbsolutePath(relative), `Path "${path.substring(1)}" is absolute`)
-      return resolveAbsolutePath(this.buildDir, relative)
+  resolve(path?: string, ...paths: string[]): AbsolutePath {
+    // Paths starting with "@" are relative to the build file directory
+    if (path && path.startsWith('@')) {
+      // We can have paths like "@/../foo/bar" or "@../foo/bar"... both are ok
+      const components = path.substring(1).split(sep).filter((s) => !!s)
+      return resolveAbsolutePath(this.buildDir, ...components, ...paths)
     }
 
-    if (isAbsolutePath(path)) return path
+    // No path? Resolve to the CWD!
+    if (! path) return getCurrentWorkingDirectory()
 
-    return resolveAbsolutePath(getCurrentWorkingDirectory(), path)
+    // For all the rest, normal resolution!
+    return resolveAbsolutePath(getCurrentWorkingDirectory(), path, ...paths)
   }
 
   files(files: Files): FilesBuilder
