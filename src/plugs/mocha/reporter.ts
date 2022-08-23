@@ -39,6 +39,15 @@ export class PlugReporter extends RealMocha.reporters.Base {
       log.leave()
     })
 
+    runner.on('fail', (test) => {
+      // Hooks fail here (not on "hook end")
+      if (test.type as any === 'hook') {
+        const number = failures.push(test)
+        const tag = $gry('[') + $red('failed') + $gry('] [') + $red(number) + $gry(']')
+        log.error(`${$red(_failure)} ${test.title} ${tag}`)
+      }
+    })
+
     // Enter a test (increase indent)
     runner.on('test', (test) => {
       log.enter(NOTICE, `${$blu(_pending)} ${test.title}`)
