@@ -98,10 +98,12 @@ export class Coverage<
     const _report = run.report('Coverage report')
 
     for (const [ _file, result ] of Object.entries(report.results)) {
-      const { coverage } = result.nodeCoverage
+      const { coverage, totalNodes } = result.nodeCoverage
       const file = _file as AbsolutePath
 
-      if (coverage < minimumFileCoverage) {
+      if (totalNodes === 0) {
+        _report.annotate(NOTICE, file, 'n/a')
+      } else if (coverage < minimumFileCoverage) {
         _report.annotate(ERROR, file, `${coverage} %`)
         fileErrors ++
       } else if (coverage < optimalFileCoverage) {
