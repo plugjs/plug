@@ -329,7 +329,9 @@ export async function coverageReport(
 function updateNodeCoverageResult(result: NodeCoverageResult): void {
   const { coveredNodes, missingNodes, ignoredNodes } = result
   const totalNodes = result.totalNodes = coveredNodes + missingNodes + ignoredNodes
-  if (totalNodes - ignoredNodes) {
+  if (totalNodes === 0) {
+    result.coverage = 100 // No "total" nodes, means all ignored
+  } else if (totalNodes - ignoredNodes) {
     result.coverage = Math.floor((100 * coveredNodes) / (totalNodes - ignoredNodes))
   } else {
     result.coverage = 0 // No "infinity" on division by zero...
