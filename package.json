@@ -28,8 +28,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@babel/parser": "^7.18.11",
-    "@babel/types": "^7.18.10",
+    "@babel/parser": "^7.18.13",
+    "@babel/types": "^7.18.13",
     "@plugjs/cov8-html": "^0.0.1",
     "@types/node": "<17",
     "diff": "^5.1.0",
@@ -42,6 +42,7 @@
     "yargs-parser": "^21.1.1"
   },
   "devDependencies": {
+    "@plugjs/eslint-plugin": "^0.0.2",
     "@types/chai": "^4.3.3",
     "@types/diff": "^5.0.2",
     "@types/eslint": "^8.4.6",
@@ -49,8 +50,8 @@
     "@types/ms": "^0.7.31",
     "@types/picomatch": "^2.3.0",
     "@types/yargs-parser": "^21.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.33.1",
-    "@typescript-eslint/parser": "^5.33.1",
+    "@typescript-eslint/eslint-plugin": "^5.34.0",
+    "@typescript-eslint/parser": "^5.34.0",
     "chai": "^4.3.6",
     "eslint-config-google": "^0.14.0"
   }
