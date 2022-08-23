@@ -10,7 +10,7 @@ export default build({
   find_tests: () => find('**/*.ts', { directory: 'test' }),
 
   /* ======================================================================== *
-   * COMPILE AND RUN TESTS IN "./build"                                       *
+   * RUN TESTS FROM "./test"                                                  *
    * ======================================================================== */
 
   async test() {
@@ -54,10 +54,10 @@ export default build({
   },
 
   /* ======================================================================== *
-   * COMPILE TYPES IN "./types" AND SOURCES IN "./dist" (esm and cjs)         *
+   * TRANSPILE TYPES AND SOURCES IN "./dist" (dts, esm and cjs)               *
    * ======================================================================== */
 
-  async compile_cjs() {
+  async transpile_cjs() {
     await this.find_sources().esbuild({
       outdir: 'dist',
       format: 'cjs',
@@ -71,7 +71,7 @@ export default build({
     })
   },
 
-  async compile_mjs() {
+  async transpile_mjs() {
     await this.find_sources().esbuild({
       outdir: 'dist',
       format: 'esm',
@@ -90,9 +90,7 @@ export default build({
         .copy('dist')
   },
 
-  async compile_types() {
-    await rmrf('types')
-
+  async transpile_types() {
     const extra = find('**/*.d.ts', { directory: 'extra' })
     const sources = this.find_sources()
 
@@ -101,18 +99,18 @@ export default build({
       noEmit: false,
       declaration: true,
       emitDeclarationOnly: true,
-      outDir: './types',
+      outDir: './dist',
     })
   },
 
-  async compile() {
+  async transpile() {
     await rmrf('dist')
 
     await Promise.all([
       this.copy_resources(),
-      this.compile_cjs(),
-      this.compile_mjs(),
-      this.compile_types(),
+      this.transpile_cjs(),
+      this.transpile_mjs(),
+      this.transpile_types(),
     ])
   },
 
@@ -121,7 +119,7 @@ export default build({
    * ======================================================================== */
 
   async default() {
-    await this.compile()
+    await this.transpile()
     try {
       await this.test()
     } finally {
