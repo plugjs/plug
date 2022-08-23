@@ -354,8 +354,8 @@ class ReportImpl implements Report {
       if (file && file !== nul && annotation) {
         const { level, note } = annotation
         const $col = level === NOTICE ? $blu : level === WARN ? $ylw : $red
-        const ann = `${$gry('[')}${$col(note.padStart(aPad))}${$gry(']')}`
-        const pad = ''.padStart(fPad - file.length) // file is underlined
+        const ann = `${$gry('[')}${$col(note)}${$gry(']')}`
+        const pad = ''.padStart((fPad + aPad) - (file.length + note.length))
 
         this._emitter({ ...options, level }, [ $wht($und(file)), pad, ann ])
       } else if (file !== nul ) {
