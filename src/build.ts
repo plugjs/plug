@@ -56,9 +56,12 @@ export type Build<B> = {
  */
 export type ThisBuild<B> = {
   [ K in keyof B ] :
-    B[K] extends () => Files | Promise<Files> ? () => Pipe & Promise<Files> :
-    B[K] extends () => undefined | void | Promise<undefined | void> ? () => Promise<undefined> :
-    B[K] extends TaskCall<infer T> ? () => T :
+    B[K] extends () => Files | Promise<Files> ?
+      () => Pipe & Promise<Files> :
+    B[K] extends () => undefined | void | Promise<undefined | void> ?
+      () => Promise<undefined> :
+    B[K] extends TaskCall<infer T> ?
+      T extends Files ? () => T & Pipe : () => T :
     never
 }
 
