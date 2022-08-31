@@ -1,38 +1,35 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { Run } from './run.js'
+import { RunContext } from './types.js'
 
 /* ========================================================================== *
  * EXPORTED                                                                   *
  * ========================================================================== */
 
 /**
- * Run the specified `callback` associating the specified {@link Run} and task
+ * Run the specified `callback` associating the specified {@link RunContext} and task
  * name with the current asynchronous invocation context.
  */
-export function runAsync<T>(run: Run, task: string, callback: () => Promise<T>): Promise<T> {
-  return storage.run({ run, task }, () => {
-    tasks.push(task)
-    return callback().finally(() => {
-      const index = tasks.lastIndexOf(task)
-      if (index >= 0) tasks.splice(index, 1)
-    })
+export function runAsync<T>(
+    context: RunContext,
+    taskName: string,
+    callback: () => Promise<T>,
+): Promise<T> {
+  return storage.run(context, async () => {
+    try {
+      tasks.add(taskName)
+      return await callback()
+    } finally {
+      tasks.delete(taskName)
+    }
   })
 }
 
 /**
- * Returns the _task name_ associated with the current asynchronous invocation
+ * Returns the {@link RunContext} associated with the current asynchronous invocation
  * context or `undefined`.
  */
-export function currentTask(): string | undefined {
-  return storage.getStore()?.task
-}
-
-/**
- * Returns the {@link Run} associated with the current asynchronous invocation
- * context or `undefined`.
- */
-export function currentRun(): Run | undefined {
-  return storage.getStore()?.run
+export function runContext(): RunContext | undefined {
+  return storage.getStore()
 }
 
 /**
@@ -46,5 +43,5 @@ export function runningTasks(): string[] {
  * INTERNALS                                                                  *
  * ========================================================================== */
 
-const storage = new AsyncLocalStorage<{ run: Run, task: string }>()
-const tasks: string[] = []
+const storage = new AsyncLocalStorage<RunContext>()
+const tasks = new Set<string>
