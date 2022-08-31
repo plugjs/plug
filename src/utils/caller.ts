@@ -1,27 +1,16 @@
 import { statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { assert } from '../assert.js'
-import { AbsolutePath, assertAbsolutePath } from '../paths.js'
+import { assert } from '../assert'
+import { $p } from '../log'
+import { AbsolutePath, assertAbsolutePath } from '../paths'
 
-export interface Location {
-  file: AbsolutePath,
-  line?: number | undefined,
-  column?: number | undefined,
-}
-
-export function findCaller(of: (...args: any[]) => any): Location {
+export function findCaller(of: (...args: any[]) => any): AbsolutePath {
   const oldPrepareStackTrace = Error.prepareStackTrace
 
   try {
-    Error.prepareStackTrace = (_, stackTraces): Location | undefined => {
+    Error.prepareStackTrace = (_, stackTraces): AbsolutePath | undefined => {
       const nullableFileOrUrl = stackTraces[0].getFileName()
       if (! nullableFileOrUrl) return
-
-      const nullableLine = stackTraces[0].getColumnNumber()
-      const nullableColumn = stackTraces[0].getColumnNumber()
-
-      const line = typeof nullableLine === 'number' ? nullableLine : undefined
-      const column = typeof nullableColumn === 'number' ? nullableColumn : undefined
 
       const file =
         nullableFileOrUrl.startsWith('file:/') ?
@@ -29,16 +18,16 @@ export function findCaller(of: (...args: any[]) => any): Location {
           nullableFileOrUrl
 
       assertAbsolutePath(file)
-      return { file, line, column }
+      return file
     }
 
-    const record: { stack?: Location } = {}
+    const record: { stack?: AbsolutePath } = {}
     Error.captureStackTrace(record, of)
-    const location = record.stack
+    const file = record.stack
 
-    assert(location, 'Unable to determine build file name')
-    assert(statSync(location.file).isFile(), `Build file "${location.file}" not found`)
-    return location
+    assert(file, 'Unable to determine build file name')
+    assert(statSync(file).isFile(), `Build file ${$p(file)} not found`)
+    return file
   } finally {
     Error.prepareStackTrace = oldPrepareStackTrace
   }
