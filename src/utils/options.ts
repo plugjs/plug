@@ -7,7 +7,7 @@ export function parseOptions<Options>(args: ParseOptions<Options>): ParsedOption
 /** Parse an array of at least one string, followed by an optional `Options` argument. */
 export function parseOptions<Options>(args: ParseOptions<Options>, defaults?: undefined): ParsedOptionalOptions<Options>
 /** Parse an array of at least one string, followed by an optional `Options` argument, ensuring some defaults are present. */
-export function parseOptions<Options, Defaults extends Options>(args: ParseOptions<Options>, defaults: Defaults): ParsedOptions<Options & Defaults>
+export function parseOptions<Options, Defaults extends Options = Options>(args: ParseOptions<Options>, defaults: Defaults): ParsedOptions<Options & Defaults>
 // overloaded implementation
 export function parseOptions<Options, Defaults extends Options>(args: ParseOptions<Options>, defaults?: Defaults): ParsedOptions<any> {
   const params: string[] = []
