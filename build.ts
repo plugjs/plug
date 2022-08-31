@@ -1,4 +1,4 @@
-import { $t, build, find, fixExtensions, log, merge, rmrf } from './src/index.js'
+import { $t, build, fixExtensions, log, Pipe, rmrf } from './src/index.js'
 
 /** When `true` the coverage dir comes from the environment */
 const environmentCoverage = !! process.env.NODE_V8_COVERAGE
@@ -6,8 +6,13 @@ const environmentCoverage = !! process.env.NODE_V8_COVERAGE
 const coverageDir = process.env.NODE_V8_COVERAGE || '.coverage-data'
 
 export default build({
-  find_sources: () => find('**/*.ts', { directory: 'src' }),
-  find_tests: () => find('**/*.ts', { directory: 'test' }),
+  find_sources(): Pipe {
+    return this.find('**/*.ts', { directory: 'src' })
+  },
+
+  find_tests(): Pipe {
+    return this.find('**/*.ts', { directory: 'test' })
+  },
 
   /* ======================================================================== *
    * RUN TESTS FROM "./test"                                                  *
@@ -20,7 +25,7 @@ export default build({
       await rmrf(coverageDir)
     }
 
-    await this.find_tests().mocha({ coverageDir })
+    this.pipe('find_tests').mocha({ coverageDir })
   },
 
   /* ======================================================================== *
@@ -28,37 +33,29 @@ export default build({
    * ======================================================================== */
 
   async coverage() {
-    await find('fooobarbaz').debug()
-
     try {
-      await this.find_sources().coverage(coverageDir, {
+      await this.pipe('find_sources').coverage(coverageDir, {
         reportDir: 'coverage',
-      })
+      }).run()
     } catch (error) {
       if (! environmentCoverage) throw error
     }
   },
 
   async eslint() {
-    await merge([
-      this.find_sources(),
-      this.find_tests(),
-    ]).eslint()
+    await this.merge('find_sources', 'find_tests').eslint()
   },
 
   async checks() {
-    await Promise.all([
-      this.coverage(),
-      this.eslint(),
-    ])
+    await this.parallel('coverage', 'eslint')
   },
 
   /* ======================================================================== *
    * TRANSPILE TYPES AND SOURCES IN "./dist" (dts, esm and cjs)               *
    * ======================================================================== */
 
-  async transpile_cjs() {
-    await this.find_sources().esbuild({
+  transpile_cjs(): Pipe {
+    return this.pipe('find_sources').esbuild({
       outdir: 'dist',
       format: 'cjs',
       outExtension: { '.js': '.cjs' },
@@ -71,8 +68,8 @@ export default build({
     })
   },
 
-  async transpile_mjs() {
-    await this.find_sources().esbuild({
+  transpile_mjs(): Pipe {
+    return this.pipe('find_sources').esbuild({
       outdir: 'dist',
       format: 'esm',
       outExtension: { '.js': '.mjs' },
@@ -85,16 +82,16 @@ export default build({
     })
   },
 
-  async copy_resources() {
-    await find('!**/*.ts', { directory: 'src' })
+  copy_resources(): Pipe {
+    return this.find('!**/*.ts', { directory: 'src' })
         .copy('dist')
   },
 
-  async transpile_types() {
-    const extra = find('**/*.d.ts', { directory: 'extra' })
-    const sources = this.find_sources()
+  transpile_types(): Pipe {
+    const extra = this.find('**/*.d.ts', { directory: 'extra' })
+    const sources = this.pipe('find_sources')
 
-    return merge([ extra, sources ]).tsc('tsconfig.json', {
+    return this.merge(extra, sources).tsc('tsconfig.json', {
       rootDir: 'src', // root this in "src" (filters out "extra/...")
       noEmit: false,
       declaration: true,
@@ -106,12 +103,12 @@ export default build({
   async transpile() {
     await rmrf('dist')
 
-    await Promise.all([
-      this.copy_resources(),
-      this.transpile_cjs(),
-      this.transpile_mjs(),
-      this.transpile_types(),
-    ])
+    await this.parallel(
+        'copy_resources',
+        'transpile_cjs',
+        'transpile_mjs',
+        'transpile_types',
+    )
   },
 
   /* ======================================================================== *
@@ -119,11 +116,11 @@ export default build({
    * ======================================================================== */
 
   async default() {
-    await this.transpile()
+    await this.run('transpile')
     try {
-      await this.test()
+      await this.run('test')
     } finally {
-      await this.checks()
+      await this.run('checks')
     }
   },
 })
