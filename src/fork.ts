@@ -3,9 +3,9 @@ import { assert, failure } from './assert.js'
 import { runAsync } from './async.js'
 import { Files } from './files.js'
 import { $gry, $p, LogOptions, logOptions } from './log.js'
-import { AbsolutePath, resolveFile, requireFilename } from './paths.js'
-import { install, Plug, PlugName } from './pipe.js'
-import { Run, RunImpl } from './run.js'
+import { AbsolutePath, requireFilename, resolveFile } from './paths.js'
+import { RunImpl } from './run.js'
+import { Plug, Result, RunContext } from './types.js'
 
 /** Fork data, from parent to child process */
 export interface ForkData {
@@ -17,8 +17,6 @@ export interface ForkData {
   taskName: string,
   /** Build file name */
   buildFile: AbsolutePath,
-  /** Build directory */
-  buildDir: AbsolutePath,
   /** Files directory */
   filesDir: AbsolutePath,
   /** All files to pipe */
@@ -38,58 +36,21 @@ export interface ForkResult {
 }
 
 /* ========================================================================== *
- * PIPE INSTALLATION                                                          *
- * ========================================================================== */
-
-/**
- * Install a _forking_ {@link Plug} in the {@link Pipe}, in other words
- * execute the plug in a separate process.
- *
- * As a contract, if the _last non-null_ parameter of the constructor is an
- * object and contains the key `coverageDir`, the process will be forked with
- * the approptiately resolved `NODE_V8_COVERAGE` environment variable.
- *
- * Also, forking plugs require some special attention:
- *
- * * plug functions are not supported, only classes implementing the
- *   {@link Plug} interface can be used with this.
- *
- * * the class itself _MUST_ be exported as the _default_ export for the
- *   `scriptFile` specified below. This is to simplify interoperability between
- *   CommonJS and ESM modules as we use dynamic `import(...)` statements.
- */
-export function installForking(
-    plugName: PlugName,
-    scriptFile: AbsolutePath,
-): void {
-  /** Extend out our ForkingPlug below */
-  const ctor = class extends ForkingPlug {
-    constructor(...args: any[]) {
-      super(scriptFile, args)
-    }
-  }
-
-  /** Install the plug in  */
-  install(plugName, ctor)
-}
-
-/* ========================================================================== *
  * PARENT PROCESS SIDE OF THE FORKING PLUG IMPLEMENTATION                     *
  * ========================================================================== */
 
-export abstract class ForkingPlug implements Plug<Files | undefined> {
+export abstract class ForkingPlug implements Plug<Result> {
   constructor(
       private readonly _scriptFile: AbsolutePath,
       private readonly _arguments: any[],
   ) {}
 
-  pipe(files: Files, run: Run): Promise<Files | undefined> {
+  pipe(files: Files, run: RunContext): Promise<Result> {
     const message: ForkData = {
       scriptFile: this._scriptFile,
       constructorArgs: this._arguments,
       taskName: run.taskName,
       buildFile: run.buildFile,
-      buildDir: run.buildDir,
       filesDir: files.directory,
       filesList: [ ...files.absolutePaths() ],
       logOpts: logOptions.fork(run.taskName),
@@ -123,7 +84,7 @@ export abstract class ForkingPlug implements Plug<Files | undefined> {
 
     /* Return a promise from the child process events */
     let done = false // this will be fixed up in "finally" below
-    return new Promise<Files | undefined>((resolve, reject) => {
+    return new Promise<Result>((resolve, reject) => {
       let result: ForkResult | undefined = undefined
 
       child.on('error', (error) => {
@@ -153,7 +114,7 @@ export abstract class ForkingPlug implements Plug<Files | undefined> {
 
         /* We definitely have a successful result! */
         return done || resolve(message.filesDir && message.filesList ?
-            run.files(message.filesDir).unchecked(...message.filesList).build() :
+            Files.builder(message.filesDir).add(...message.filesList).build() :
             undefined)
       })
 
@@ -204,7 +165,6 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
       constructorArgs,
       taskName,
       buildFile,
-      buildDir,
       filesDir,
       filesList,
       logOpts,
@@ -214,7 +174,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
     Object.assign(logOptions, logOpts)
 
     /* First of all, our Run */
-    const run = new RunImpl({ buildDir, buildFile, taskName })
+    const run = new RunImpl(buildFile, taskName)
     run.log.debug('Message from parent process', message)
 
     /* Contextualize this run, and go! */
@@ -232,8 +192,8 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
           `Script ${$p(scriptFile)} does not export a default constructor`)
 
       /* Create the Plug instance and our Files instance */
-      const plug = new Ctor(...constructorArgs) as Plug<Files | undefined>
-      const files = run.files(filesDir).unchecked(...filesList).build()
+      const plug = new Ctor(...constructorArgs) as Plug<Result>
+      const files = Files.builder(filesDir).add(...filesList).build()
 
       /* Run and return the result */
       return plug.pipe(files, run)
