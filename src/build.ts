@@ -45,8 +45,10 @@ class PipeImpl extends Pipe implements Pipe {
     _build.pipes.add(this)
   }
 
-  plug(plug: Plug<Files> | PlugFunction<Files>): Pipe
-  plug(plug: Plug<undefined> | PlugFunction<undefined>): Runnable<undefined>
+  plug(plug: Plug<Files>): Pipe
+  plug(plug: PlugFunction<Files>): Pipe
+  plug(plug: Plug<undefined>): Runnable<undefined>
+  plug(plug: PlugFunction<Files>): Runnable<undefined>
   plug(arg: Plug<Result> | PlugFunction<Result>): Pipe | Runnable<undefined> {
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
 
