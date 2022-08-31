@@ -1,5 +1,5 @@
-import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths.js'
-import { mkdir, writeFile } from './utils/asyncfs.js'
+import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths'
+import { mkdir, writeFile } from './utils/asyncfs'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
 export interface FilesBuilder {
