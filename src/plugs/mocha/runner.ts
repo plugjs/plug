@@ -1,11 +1,10 @@
 import RealMocha from 'mocha' // Mocha types pollute the global scope!
 
-import { failure } from '../../assert.js'
-import { Files } from '../../files.js'
-import { $wht, NOTICE } from '../../log.js'
-import { Plug } from '../../pipe.js'
-import { Run } from '../../run.js'
-import { logSymbol, PlugReporter, runSymbol } from './reporter.js'
+import { failure } from '../../assert'
+import { Files } from '../../files'
+import { $wht, NOTICE } from '../../log'
+import { Plug, RunContext } from '../../types'
+import { logSymbol, PlugReporter, runSymbol } from './reporter'
 
 /** Options to construct our {@link Mocha} plug. */
 export interface MochaOptions {
@@ -37,7 +36,7 @@ export interface MochaOptions {
 export default class Mocha implements Plug<undefined> {
   constructor(private readonly _options: MochaOptions = {}) {}
 
-  async pipe(files: Files, run: Run): Promise<undefined> {
+  async pipe(files: Files, run: RunContext): Promise<undefined> {
     // Enter log here, so that log messages called when loading files get
     // properly indented by our logger
     run.log.notice('') // empty line

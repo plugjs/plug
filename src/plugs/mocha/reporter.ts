@@ -2,7 +2,7 @@ import RealMocha from 'mocha' // Mocha types pollute the global scope!
 
 import { AssertionError } from 'assert'
 import { diffJson } from 'diff'
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, Logger, NOTICE, WARN } from '../../log.js'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, Logger, NOTICE, WARN } from '../../log'
 
 const _pending = '\u22EF' // middle ellipsis
 const _success = '\u2714' // heavy check mark
