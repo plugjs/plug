@@ -1,7 +1,8 @@
-import { isBuildError, isBuildFailure } from '../assert.js'
-import { emitColor, emitPlain, LogEmitter } from './emit.js'
-import { DEBUG, ERROR, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels.js'
-import { logOptions } from './options.js'
+import { isBuildError, isBuildFailure } from '../assert'
+import { emitColor, emitPlain, LogEmitter } from './emit'
+import { DEBUG, ERROR, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
+import { logOptions } from './options'
+import { Report, ReportImpl } from './report'
 
 /* ========================================================================== */
 
@@ -48,6 +49,8 @@ export interface Logger extends Log {
   leave(): this
   /** Leave a sub-level of logging, decreasing indent */
   leave(level: LogLevel, message: string): this
+  /** Create a {@link Report} associated with this instance */
+  report(title: string): Report
 }
 
 /** Return a {@link Logger} associated with the specified task name. */
@@ -149,6 +152,7 @@ class LoggerImpl implements Logger {
       const [ level, message ] = args
       this._stack.push({ level, message, indent: this._indent })
     }
+
     this._indent ++
     return this
   }
@@ -167,5 +171,9 @@ class LoggerImpl implements Logger {
     }
 
     return this
+  }
+
+  report(title: string): Report {
+    return new ReportImpl(title, this._task, this._emitter)
   }
 }
