@@ -1,5 +1,4 @@
-import { assert } from './assert.js'
-import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, resolveFile, resolveAbsolutePath } from './paths.js'
+import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths.js'
 import { mkdir, writeFile } from './utils/asyncfs.js'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
@@ -8,19 +7,11 @@ export interface FilesBuilder {
   readonly directory: AbsolutePath
 
   /**
-   * Push files into the {@link Files} instance being built **checking for
-   * their existance on disk**.
+   * Push files into the {@link Files} instance being built.
    *
-   * This _will_ be slow, use {@link FilesBuilder.unchecked} when absolutely
-   * sure the file already exist.
+   * This method will not check that files actually exist on disk.
    */
   add(...files: string[]): this
-
-  /**
-   * Push files into the {@link Files} instance being built without checking
-   * they exist on disk _(use with care!)_.
-   */
-  unchecked(...files: string[]): this
 
   /** Merge orther {@link Files} instance to the {@link Files} being built */
   merge(...files: Files[]): this
@@ -100,21 +91,6 @@ export class Files {
         if (typeof files === 'string') files = [ files ]
         for (const file of files) {
           const relative = assertRelativeChildPath(instance.directory, file)
-          const resolved = resolveAbsolutePath(instance.directory, file)
-
-          assert(resolveFile(resolved), `File "${resolved}" does not exist`)
-          set.add(relative)
-        }
-
-        return this
-      },
-
-      unchecked(...files: string[]): FilesBuilder {
-        if (built) throw new Error('FileBuilder "build()" already called')
-
-        if (typeof files === 'string') files = [ files ]
-        for (const file of files) {
-          const relative = assertRelativeChildPath(instance.directory, file)
           set.add(relative)
         }
 
@@ -126,7 +102,7 @@ export class Files {
 
         for (const files of args) {
           for (const file of files.absolutePaths()) {
-            this.unchecked(file)
+            this.add(file)
           }
         }
 
@@ -140,7 +116,7 @@ export class Files {
 
         await mkdir(directory, { recursive: true })
         await writeFile(absolute, content)
-        this.unchecked(absolute)
+        this.add(absolute)
 
         return absolute
       },
