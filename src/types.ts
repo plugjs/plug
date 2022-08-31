@@ -1,7 +1,7 @@
 import type { Files } from './files'
 import type { Logger } from './log'
 import type { AbsolutePath } from './paths'
-import type { Pipe } from './pipe'
+import type { Call, Pipe } from './pipe'
 import type { WalkOptions } from './utils/walk'
 
 /** The {@link FindOptions} interface defines the options for finding files. */
@@ -60,14 +60,6 @@ export interface RunContext {
   resolve(...paths: [ string, ...string[] ]): AbsolutePath
 }
 
-/**
- * The {@link Runnable} interface defines a component eventually producing
- * a {@link Files} or `undefined` result when executed in a {@link RunContext}.
- */
-export type Runnable<T extends Result = Result> = {
-  run(): Promise<T>
-}
-
 /* ========================================================================== *
  * STATE AND CONTEXT                                                          *
  * ========================================================================== */
@@ -115,7 +107,7 @@ export interface Task<T extends Result = Result> extends TaskContext {
  * The {@link TaskResult} type identifies _what_ can be returned by a
  * {@link TaskDef | _task definition_}.
  */
-export type TaskResult = Runnable | Files | void | undefined
+export type TaskResult = Pipe | Call | Files | void | undefined
 
 /** The {@link TaskDef} type identifies the _definition_ of a task. */
 export type TaskDef<R extends TaskResult = TaskResult> = () => R | Promise<R>
@@ -133,8 +125,9 @@ export type Props<D extends BuildDef = BuildDef> = {
 export type Tasks<D extends BuildDef = BuildDef> = {
   readonly [ k in string & keyof D as D[k] extends TaskDef | Task ? k : never ] :
     D[k] extends TaskDef<infer R> ?
-      R extends Runnable<infer Result> ? Task<Result> :
       R extends void | undefined ? Task<undefined> :
+      R extends Call ? Task<undefined> :
+      R extends Pipe ? Task<Files> :
       R extends Files ? Task<Files> :
       never :
     D[k] extends Task ? D[k] :

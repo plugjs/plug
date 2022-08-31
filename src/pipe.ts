@@ -1,15 +1,15 @@
 import type { Files } from './files'
-import type { Plug, PlugFunction, Result, Runnable } from './types'
+import type { AbsolutePath } from './paths'
+import type { Plug, PlugFunction, Result } from './types'
 
 import { ForkingPlug } from './fork'
-import { AbsolutePath } from './paths'
 
 /**
  * A class that will be extended by {@link Pipe} where {@link install} will
  * add prototype properties from installed {@link Plug}s
  */
 abstract class PipeProto {
-  abstract plug(plug: Plug<Result> | PlugFunction<Result>): Runnable<Result>
+  abstract plug(plug: Plug<Result> | PlugFunction<Result>): Pipe | Call
 }
 
 /**
@@ -19,10 +19,14 @@ abstract class PipeProto {
 export abstract class Pipe extends PipeProto {
   abstract plug(plug: Plug<Files>): Pipe
   abstract plug(plug: PlugFunction<Files>): Pipe
-  abstract plug(plug: Plug<undefined>): Runnable<undefined>
-  abstract plug(plug: PlugFunction<Files>): Runnable<undefined>
+  abstract plug(plug: Plug<undefined>): Call
+  abstract plug(plug: PlugFunction<Files>): Call
 
   abstract run(): Promise<Files>
+}
+
+export interface Call {
+  run(): Promise<undefined>
 }
 
 /* ========================================================================== *
@@ -41,11 +45,11 @@ export type PipeParameters<Name extends PlugName> =
     (...args: infer A3): infer R3
     (...args: infer A4): infer R4
   } ?
-    | (R0 extends Runnable ? A0 : never)
-    | (R1 extends Runnable ? A1 : never)
-    | (R2 extends Runnable ? A2 : never)
-    | (R3 extends Runnable ? A3 : never)
-    | (R4 extends Runnable ? A4 : never)
+    | (R0 extends (Pipe | Call) ? A0 : never)
+    | (R1 extends (Pipe | Call) ? A1 : never)
+    | (R2 extends (Pipe | Call) ? A2 : never)
+    | (R3 extends (Pipe | Call) ? A3 : never)
+    | (R4 extends (Pipe | Call) ? A4 : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
@@ -53,31 +57,31 @@ export type PipeParameters<Name extends PlugName> =
     (...args: infer A2): infer R2
     (...args: infer A3): infer R3
   } ?
-    | (R0 extends Runnable ? A0 : never)
-    | (R1 extends Runnable ? A1 : never)
-    | (R2 extends Runnable ? A2 : never)
-    | (R3 extends Runnable ? A3 : never)
+    | (R0 extends (Pipe | Call) ? A0 : never)
+    | (R1 extends (Pipe | Call) ? A1 : never)
+    | (R2 extends (Pipe | Call) ? A2 : never)
+    | (R3 extends (Pipe | Call) ? A3 : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
     (...args: infer A1): infer R1
     (...args: infer A2): infer R2
   } ?
-    | (R0 extends Runnable ? A0 : never)
-    | (R1 extends Runnable ? A1 : never)
-    | (R2 extends Runnable ? A2 : never)
+    | (R0 extends (Pipe | Call) ? A0 : never)
+    | (R1 extends (Pipe | Call) ? A1 : never)
+    | (R2 extends (Pipe | Call) ? A2 : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
     (...args: infer A1): infer R1
   } ?
-    | (R0 extends Runnable ? A0 : never)
-    | (R1 extends Runnable ? A1 : never)
+    | (R0 extends (Pipe | Call) ? A0 : never)
+    | (R1 extends (Pipe | Call) ? A1 : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
   } ?
-    | (R0 extends Runnable ? A0 : never)
+    | (R0 extends (Pipe | Call) ? A0 : never)
   : never
 
 /**
@@ -114,7 +118,7 @@ export function install<
   Ctor extends new (...args: PipeParameters<Name>) => Plug<Result>
 >(name: Name, ctor: Ctor): void {
   /* The function plugging the newly constructed plug in a pipe */
-  function plug(this: PipeProto, ...args: PipeParameters<Name>): Runnable<Result> {
+  function plug(this: PipeProto, ...args: PipeParameters<Name>): Pipe | Call {
     // eslint-disable-next-line new-cap
     return this.plug(new ctor(...args))
   }

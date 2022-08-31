@@ -1,6 +1,5 @@
 import { requireResolve } from '../paths'
 import { installForking } from '../pipe'
-import { Runnable } from '../types'
 
 /** Options to construct our {@link Mocha} plug. */
 export interface MochaOptions {
@@ -35,7 +34,7 @@ declare module '../pipe' {
      *
      * @param options Optional {@link MochaOptions | options} for _Mocha_.
      */
-    mocha(options?: MochaOptions): Runnable<undefined>
+    mocha(options?: MochaOptions): Call
   }
 }
 

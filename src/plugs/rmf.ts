@@ -1,7 +1,7 @@
 import { Files } from '../files'
 import { $gry, $p } from '../log'
 import { install, PipeParameters } from '../pipe'
-import { Plug, RunContext, Runnable } from '../types'
+import { Plug, RunContext } from '../types'
 import { rm } from '../utils/asyncfs'
 
 declare module '../pipe' {
@@ -11,7 +11,7 @@ declare module '../pipe' {
      *
      * @param dryRun If `true` only log what would be removed (default `false`)
      */
-    rmf(dryRun?: boolean): Runnable<undefined>
+    rmf(dryRun?: boolean): Call
   }
 }
 

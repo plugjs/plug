@@ -1,6 +1,5 @@
 import { requireResolve } from '../paths'
 import { installForking } from '../pipe'
-import { Runnable } from '../types'
 
 export interface ESLintOptions {
   /** ESLint's own _current working directory_, where config files are. */
@@ -20,7 +19,7 @@ declare module '../pipe' {
      * Run {@link https://eslint.org/ _ESlint_} over the input source files,
      * using the configuration from the local `.eslintrc.*` file.
      */
-    eslint(): Runnable<undefined>
+    eslint(): Call
 
     /**
      * Run {@link https://eslint.org/ _ESlint_} over the input source files,
@@ -29,14 +28,14 @@ declare module '../pipe' {
      *
      * @param configFile The configuration file to use
      */
-    eslint(configFile: string): Runnable<undefined>
+    eslint(configFile: string): Call
 
     /**
      * Run {@link https://eslint.org/ _ESlint_} over the input source files..
      *
      * @param options {@link ESLintOptions | Options} to pass to _ESLint_
      */
-    eslint(options: ESLintOptions): Runnable<undefined>
+    eslint(options: ESLintOptions): Call
   }
 }
 

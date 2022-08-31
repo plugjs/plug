@@ -10,7 +10,6 @@ import type {
   Props,
   Result,
   RunContext,
-  Runnable,
   State,
   Task,
   TaskContext,
@@ -26,7 +25,7 @@ import { runAsync } from './async'
 import { Files } from './files'
 import { $ms, $t, getLogger, logOptions } from './log'
 import { AbsolutePath, commonPath, getCurrentWorkingDirectory } from './paths'
-import { Pipe } from './pipe'
+import { Call, Pipe } from './pipe'
 import { RunImpl } from './run'
 import { findCaller } from './utils/caller'
 import { ParseOptions, parseOptions } from './utils/options'
@@ -47,9 +46,9 @@ class PipeImpl extends Pipe implements Pipe {
 
   plug(plug: Plug<Files>): Pipe
   plug(plug: PlugFunction<Files>): Pipe
-  plug(plug: Plug<undefined>): Runnable<undefined>
-  plug(plug: PlugFunction<Files>): Runnable<undefined>
-  plug(arg: Plug<Result> | PlugFunction<Result>): Pipe | Runnable<undefined> {
+  plug(plug: Plug<undefined>): Call
+  plug(plug: PlugFunction<Files>): Call
+  plug(arg: Plug<Result> | PlugFunction<Result>): Pipe | Call {
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
 
     const parent = this
