@@ -1,11 +1,10 @@
 import { ESLint as RealESLint } from 'eslint'
-import { assert, failure } from '../../assert.js'
-import { Files } from '../../files.js'
-import { $p, ERROR, NOTICE, WARN } from '../../log.js'
-import { getCurrentWorkingDirectory, resolveDirectory, resolveFile, resolveAbsolutePath } from '../../paths.js'
-import { Plug } from '../../pipe.js'
-import { Run } from '../../run.js'
-import { readFile } from '../../utils/asyncfs.js'
+import { assert, failure } from '../../assert'
+import { Files } from '../../files'
+import { $p, ERROR, NOTICE, WARN } from '../../log'
+import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from '../../paths'
+import { Plug, RunContext } from '../../types'
+import { readFile } from '../../utils/asyncfs'
 
 export interface ESLintOptions {
   /** ESLint's own _current working directory_, where config files are. */
@@ -30,7 +29,7 @@ export default class ESLint implements Plug<undefined> {
     this._options = typeof arg === 'string' ? { configFile: arg } : arg
   }
 
-  async pipe(files: Files, run: Run): Promise<undefined> {
+  async pipe(files: Files, run: RunContext): Promise<undefined> {
     const { directory, configFile } = this._options
 
     const cwd = directory ? run.resolve(directory) : getCurrentWorkingDirectory()
@@ -76,7 +75,7 @@ export default class ESLint implements Plug<undefined> {
     if (failures) throw failure() // already logged above
 
     /* Create our report */
-    const report = run.report('ESLint Report')
+    const report = run.log.report('ESLint Report')
 
     /* Convert ESLint results into our report records */
     for (const result of results) {
