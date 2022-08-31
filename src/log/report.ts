@@ -1,20 +1,12 @@
-import { fail, failure } from '../assert.js'
-import { AbsolutePath } from '../paths.js'
-import { readFile } from '../utils/asyncfs.js'
-import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors.js'
-import { emitColor, emitPlain, LogEmitter } from './emit.js'
-import { ERROR, LogLevels, NOTICE, WARN } from './levels.js'
-import { logOptions } from './options.js'
+import { fail, failure } from '../assert'
+import { AbsolutePath } from '../paths'
+import { readFile } from '../utils/asyncfs'
+import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
+import { LogEmitter } from './emit'
+import { ERROR, LogLevels, NOTICE, WARN } from './levels'
+import { logOptions } from './options'
 
 /* ========================================================================== */
-
-/* Track changes for colors */
-let _colors = logOptions.colors
-logOptions.on('changed', ({ colors }) => {
-  _colors = colors
-})
-
-/* ========================================================================== *
 
 /** Levels used in a {@link Report}  */
 export type ReportLevel = LogLevels['NOTICE' | 'WARN' | 'ERROR']
@@ -91,12 +83,6 @@ export interface Report {
   done(showSources?: boolean | undefined): void
 }
 
-/** Create a new {@link Report} with the given title */
-export function createReport(title: string, taskName: string): Report {
-  const emitter = _colors ? emitColor : emitPlain
-  return new ReportImpl(title, taskName, emitter)
-}
-
 /* ========================================================================== *
  * REPORT IMPLEMENTATION                                                      *
  * ========================================================================== */
@@ -118,7 +104,7 @@ interface ReportInternalAnnotation {
   readonly note: string
 }
 
-class ReportImpl implements Report {
+export class ReportImpl implements Report {
   private readonly _sources = new Map<AbsolutePath, string[]>()
   private readonly _annotations = new Map<AbsolutePath, ReportInternalAnnotation>()
   private readonly _records = new Map<AbsolutePath | Null, Set<ReportInternalRecord>>()
