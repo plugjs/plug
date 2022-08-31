@@ -101,6 +101,10 @@ export type PipeParameters<Name extends PlugName> =
  * }
  *
  * install('write', class Write implements Plug {
+ *   constructorg(...args: PipeParams<'write'>) {
+ *     // here `args` is automatically inferred by whatever was declared above
+ *   }
+ *
  *   // ... the plug implementation lives here
  * })
  * ```
@@ -121,115 +125,6 @@ export function install<
   /* Inject the create function in the Pipe's prototype */
   Object.defineProperty(PipeProto.prototype, name, { value: plug })
 }
-
-/* ========================================================================== *
- * PLUG INSTALLATION (INTERNAL)                                               *
- * ========================================================================== */
-
-/** A convenience type identifying a {@link Plug} constructor. */
-export type PlugConstructor = new (...args: any) => Plug<Files | undefined>
-
-/** Convert the resulting type of a {@link Plug} for use in a {@link Pipe} */
-type PlugReturnForPipe<T> =
-  T extends Plug<infer R> ?
-    R extends Files ? Pipe :
-    R extends undefined ? Runnable<undefined> :
-    never :
-  never
-
-/**
- * Map constructors into an array of all known overloads.
- *
- * This is a _royal_ pain in the ass, as we need to distinguish between
- * all possible number of overloads of a constructor... Limit to 5 of them!
- *
- * Also, the empty constructor (when specified in the overloads) will simply
- * match the first case (most overloads) and generate functions somewhat like
- *
- * (...args: unknown[]) => never
- * (...args: unknown[]) => never
- * (...args: unknown[]) => never
- * () => PlugReturnForPipe<R3>
- * (arg: Options) => PlugReturnForPipe<R4>
- *
- * Somehow inferring the result to `Function` or the right type and ANDing all
- * those together here doesn't work, so we create this array and we'll AND
- * all its members in the PipeExtension<...> type.
- */
-type PlugConstructorOverloads<T extends PlugConstructor> =
-  T extends {
-    new (...args: infer A0): infer R0
-    new (...args: infer A1): infer R1
-    new (...args: infer A2): infer R2
-    new (...args: infer A3): infer R3
-    new (...args: infer A4): infer R4
-  } ? [
-    R0 extends Plug<Files | undefined> ? ((...args: A0) => PlugReturnForPipe<R0>) : Function,
-    R1 extends Plug<Files | undefined> ? ((...args: A1) => PlugReturnForPipe<R1>) : Function,
-    R2 extends Plug<Files | undefined> ? ((...args: A2) => PlugReturnForPipe<R2>) : Function,
-    R3 extends Plug<Files | undefined> ? ((...args: A3) => PlugReturnForPipe<R3>) : Function,
-    R4 extends Plug<Files | undefined> ? ((...args: A4) => PlugReturnForPipe<R4>) : Function,
-  ] :
-  T extends {
-    new (...args: infer A0): infer R0
-    new (...args: infer A1): infer R1
-    new (...args: infer A2): infer R2
-    new (...args: infer A3): infer R3
-  } ? [
-    R0 extends Plug<Files | undefined> ? (...args: A0) => PlugReturnForPipe<R0> : Function,
-    R1 extends Plug<Files | undefined> ? (...args: A1) => PlugReturnForPipe<R1> : Function,
-    R2 extends Plug<Files | undefined> ? (...args: A2) => PlugReturnForPipe<R2> : Function,
-    R3 extends Plug<Files | undefined> ? (...args: A3) => PlugReturnForPipe<R3> : Function,
-  ] :
-  T extends {
-    new (...args: infer A0): infer R0
-    new (...args: infer A1): infer R1
-    new (...args: infer A2): infer R2
-  } ? [
-    R0 extends Plug<Files | undefined> ? (...args: A0) => PlugReturnForPipe<R0> : Function,
-    R1 extends Plug<Files | undefined> ? (...args: A1) => PlugReturnForPipe<R1> : Function,
-    R2 extends Plug<Files | undefined> ? (...args: A2) => PlugReturnForPipe<R2> : Function,
-  ] :
-  T extends {
-    new (...args: infer A0): infer R0
-    new (...args: infer A1): infer R1
-  } ? [
-    R0 extends Plug<Files | undefined> ? (...args: A0) => PlugReturnForPipe<R0> : Function,
-    R1 extends Plug<Files | undefined> ? (...args: A1) => PlugReturnForPipe<R1> : Function,
-  ] :
-  T extends {
-    new (...args: infer A0): infer R0
-  } ? [
-    R0 extends Plug<Files | undefined> ? (...args: A0) => PlugReturnForPipe<R0> : Function,
-  ] :
-  never
-
-/**
- * A convenience type to easily annotate installed {@link Plug Plugs}.
- *
- * See also {@link install}.
- *
- * ```
- * export class Write implements Plug {
- *   // ... the plug implementation lives here
- * }
- *
- * install('write', Write)
- *
- * declare module '../pipe' {
- *   export interface Pipe {
- *     write: PipeExtension<typeof Write>
- *   }
- * }
- * ```
- */
-export type PipeExtension<T extends PlugConstructor, A = PlugConstructorOverloads<T>> =
-  A extends readonly [ infer First, ...infer Rest ] ?
-    First & PipeExtension<T, Rest> :
-  A extends readonly [ infer Only ] ?
-    Only :
-  Function
-
 
 /**
  * Install a _forking_ {@link Plug} in the {@link Pipe}, in other words
