@@ -49,7 +49,7 @@ export function $t(task: string): string {
 }
 
 /** Colorize milliseconds. */
-export function $ms(millis: number): string {
+export function $ms(millis: number, note?: string): string {
   let string: string
   if (millis >= 60000) {
     // One minute or more: style is Xm Ys
@@ -70,6 +70,7 @@ export function $ms(millis: number): string {
     // Milliseconds: style is 123ms
     string = `${millis}ms`
   }
+  if (note) string = `${note} ${string}`
   return _colors ? `${gry}[${string}]${rst}` : `[${string}]`
 }
 
