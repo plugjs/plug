@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import type { Build, Run, BuildFailure } from '../src/index.js'
+import type { CompiledBuild, BuildFailure } from '../src/index.js'
 
 import _yargs from 'yargs-parser'
 
@@ -23,7 +23,9 @@ async function main(options: CommandLineOptions): Promise<void> {
   if (tasks.length === 0) tasks.push('default')
 
   let build = await import(buildFile)
-  while (build && (! isBuild(build))) build = build.default
+  while (build && (build[buildMarker] !== buildMarker)) {
+    build = build.default
+  }
 
   if (! isBuild(build)) {
     console.log('Build file did not export a proper build')
@@ -37,19 +39,10 @@ async function main(options: CommandLineOptions): Promise<void> {
     process.exit(1)
   }
 
-  for (const task of tasks) {
-    if (task in build) continue
-    console.log(`Build file does not contain task "${task}"`)
-    process.exit(1)
-  }
-
   if (listOnly) {
     console.log('Build file tasks\n- ' + Object.keys(build).sort().join('\n- '))
   } else {
-    let run: Run | undefined
-    for (const task of tasks) {
-      run = await build[task](run)
-    }
+    await build(...tasks)
   }
 }
 
@@ -157,17 +150,17 @@ const buildMarker = Symbol.for('plugjs:isBuild')
 const buildFailure = Symbol.for('plugjs:buildFailure')
 
 /** Check if the specified build is actually a {@link Build} */
-export function isBuild(build: any): build is Build<any> {
+function isBuild(build: any): build is CompiledBuild<Record<string, any>> {
   return build && build[buildMarker] === buildMarker
 }
 
 /** Check if the specified argument is a {@link BuildFailure} */
-export function isBuildFailure(arg: any): arg is BuildFailure {
+function isBuildFailure(arg: any): arg is BuildFailure {
   return arg && arg[buildFailure] === buildFailure
 }
 
 /* Parsed and normalised command line options */
-export interface CommandLineOptions {
+interface CommandLineOptions {
   buildFile: string,
   tasks: string[],
   listOnly: boolean,
