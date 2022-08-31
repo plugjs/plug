@@ -1,14 +1,8 @@
-import {
-  AbsolutePath,
-  getCurrentWorkingDirectory,
-  resolveDirectory,
-  resolveFile,
-} from './paths.js'
-
-import { assert } from './assert.js'
-import { runContext } from './async.js'
-import { $p, log } from './log.js'
-import { rm } from './utils/asyncfs.js'
+import { assert } from './assert'
+import { runContext } from './async'
+import { $p, log } from './log'
+import { AbsolutePath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
+import { rm } from './utils/asyncfs'
 
 /**
  * Recursively remove the specified directory _**(use with care)**_.
