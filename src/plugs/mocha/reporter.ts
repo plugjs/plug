@@ -26,6 +26,7 @@ export class PlugReporter extends RealMocha.reporters.Base {
     const log = options.reporterOptions[logSymbol] as Logger
     const failures: RealMocha.Test[] = []
     const rootSuite = runner.suite
+    let slow = 0
 
     // Enter a suite (increase indent)
     runner.on('suite', (suite) => {
@@ -55,9 +56,14 @@ export class PlugReporter extends RealMocha.reporters.Base {
 
     // Leave a test (handle warning/failures and decrease indent)
     runner.on('test end', (test) => {
-      // TODO: slow!!!
       if (test.isPassed()) {
-        log.leave(NOTICE, `${$grn(_success)} ${test.title}`)
+        const duration = test.duration || 0
+        if (duration < test.slow()) {
+          log.leave(NOTICE, `${$grn(_success)} ${test.title}`)
+        } else {
+          log.leave(WARN, `${$ylw(_success)} ${test.title} ${$ms(duration, 'slow')}`)
+          slow ++
+        }
       } else if (test.isPending()) {
         const tag = $gry('[') + $ylw('skipped') + $gry(']')
         log.leave(WARN, `${$ylw(_pending)} ${test.title} ${tag}`)
@@ -147,6 +153,7 @@ export class PlugReporter extends RealMocha.reporters.Base {
           const { passes, pending, failures, duration = 0 } = runner.stats
           const fmt = (n: number): string => n === 1 ? `${n} test` : `${n} tests`
           if (passes) log.notice($grn(fmt(passes)), 'passing', $ms(duration))
+          if (slow) log.warn($ylw(fmt(slow)), 'slow')
           if (pending) log.warn($ylw(fmt(pending)), 'pending')
           if (failures) log.error($red(fmt(failures)), 'pending')
         }
