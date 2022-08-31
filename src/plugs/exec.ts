@@ -40,10 +40,10 @@ declare module '../pipe' {
      * For example:
      *
      * ```
-     * import { find, exec } from '@plugjs/plugjs'
+     * import { build } from '@plugjs/plugjs'
      *
      * export default build({
-     *   async runme() {
+     *   runme() {
      *     this.find('*.ts', { directory: 'src' })
      *       .exec('chmod', '755' })
      *       .exec('chown root:root', { shell: true })
@@ -63,10 +63,10 @@ declare module '../pipe' {
      * For example:
      *
      * ```
-     * import { find, exec } from '@plugjs/plugjs'
+     * import { build } from '@plugjs/plugjs'
      *
      * export default build({
-     *   async runme() {
+     *   runme() {
      *     this.find('*.ts', { directory: 'src' })
      *       .exec('chmod', '755' })
      *       .exec('chown root:root', { shell: true })
