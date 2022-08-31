@@ -37,7 +37,10 @@ export interface Call {
 export type PlugName = string & Exclude<keyof Pipe, 'plug' | 'run'>
 
 /** The parameters of the plug extension with the given name */
-export type PipeParameters<Name extends PlugName> =
+export type PipeParameters<Name extends PlugName> = PipeOverloads<Name>['args']
+
+/** Extract arguments and return types from function overloads. */
+type PipeOverloads<Name extends PlugName> =
   Pipe[Name] extends {
     (...args: infer A0): infer R0
     (...args: infer A1): infer R1
@@ -45,11 +48,11 @@ export type PipeParameters<Name extends PlugName> =
     (...args: infer A3): infer R3
     (...args: infer A4): infer R4
   } ?
-    | (R0 extends (Pipe | Call) ? A0 : never)
-    | (R1 extends (Pipe | Call) ? A1 : never)
-    | (R2 extends (Pipe | Call) ? A2 : never)
-    | (R3 extends (Pipe | Call) ? A3 : never)
-    | (R4 extends (Pipe | Call) ? A4 : never)
+    | (R0 extends (Pipe | Call) ? { args: A0, ret: R0 } : never)
+    | (R1 extends (Pipe | Call) ? { args: A1, ret: R1 } : never)
+    | (R2 extends (Pipe | Call) ? { args: A2, ret: R2 } : never)
+    | (R3 extends (Pipe | Call) ? { args: A3, ret: R3 } : never)
+    | (R4 extends (Pipe | Call) ? { args: A4, ret: R4 } : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
@@ -57,32 +60,48 @@ export type PipeParameters<Name extends PlugName> =
     (...args: infer A2): infer R2
     (...args: infer A3): infer R3
   } ?
-    | (R0 extends (Pipe | Call) ? A0 : never)
-    | (R1 extends (Pipe | Call) ? A1 : never)
-    | (R2 extends (Pipe | Call) ? A2 : never)
-    | (R3 extends (Pipe | Call) ? A3 : never)
+    | (R0 extends (Pipe | Call) ? { args: A0, ret: R0 } : never)
+    | (R1 extends (Pipe | Call) ? { args: A1, ret: R1 } : never)
+    | (R2 extends (Pipe | Call) ? { args: A2, ret: R2 } : never)
+    | (R3 extends (Pipe | Call) ? { args: A3, ret: R3 } : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
     (...args: infer A1): infer R1
     (...args: infer A2): infer R2
   } ?
-    | (R0 extends (Pipe | Call) ? A0 : never)
-    | (R1 extends (Pipe | Call) ? A1 : never)
-    | (R2 extends (Pipe | Call) ? A2 : never)
+    | (R0 extends (Pipe | Call) ? { args: A0, ret: R0 } : never)
+    | (R1 extends (Pipe | Call) ? { args: A1, ret: R1 } : never)
+    | (R2 extends (Pipe | Call) ? { args: A2, ret: R2 } : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
     (...args: infer A1): infer R1
   } ?
-    | (R0 extends (Pipe | Call) ? A0 : never)
-    | (R1 extends (Pipe | Call) ? A1 : never)
+    | (R0 extends (Pipe | Call) ? { args: A0, ret: R0 } : never)
+    | (R1 extends (Pipe | Call) ? { args: A1, ret: R1 } : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
   } ?
-    | (R0 extends (Pipe | Call) ? A0 : never)
+    | (R0 extends (Pipe | Call) ? { args: A0, ret: R0 } : never)
   : never
+
+/** The parameters of the plug extension with the given name */
+type PipeResult<Name extends PlugName> = PipeOverloads<Name>['ret']
+
+/**
+ * A type defining the correct constructor for a {@link Plug}, inferring
+ * argument types and instance type from the definitions in {@link Pipe}.
+ */
+type PlugConstructor<Name extends PlugName> =
+  PipeResult<Name> extends Pipe ?
+    new (...args: PipeParameters<Name>) => Plug<Files> :
+  PipeResult<Name> extends Call ?
+    new (...args: PipeParameters<Name>) => Plug<void | undefined> :
+  PipeResult<Name> extends (Pipe | Call) ?
+    new (...args: PipeParameters<Name>) => Plug<Files | void | undefined> :
+  never
 
 /**
  * Install a {@link Plug} into our {@link Pipe} prototype.
@@ -115,7 +134,7 @@ export type PipeParameters<Name extends PlugName> =
  */
 export function install<
   Name extends PlugName,
-  Ctor extends new (...args: PipeParameters<Name>) => Plug
+  Ctor extends PlugConstructor<Name>,
 >(name: Name, ctor: Ctor): void {
   /* The function plugging the newly constructed plug in a pipe */
   function plug(this: PipeProto, ...args: PipeParameters<Name>): Pipe | Call {
@@ -147,8 +166,8 @@ export function install<
  *   `scriptFile` specified below. This is to simplify interoperability between
  *   CommonJS and ESM modules as we use dynamic `import(...)` statements.
  */
-export function installForking(
-    plugName: PlugName,
+export function installForking<Name extends PlugName>(
+    plugName: Name,
     scriptFile: AbsolutePath,
 ): void {
   /** Extend out our ForkingPlug below */
@@ -156,7 +175,7 @@ export function installForking(
     constructor(...args: any[]) {
       super(scriptFile, args)
     }
-  }
+  } as unknown as PlugConstructor<Name>
 
   /** Install the plug in  */
   install(plugName, ctor)
