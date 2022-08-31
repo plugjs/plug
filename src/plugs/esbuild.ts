@@ -1,12 +1,12 @@
 import { build, BuildFailure, BuildOptions, BuildResult, Format, Message, Metafile } from 'esbuild'
 import { basename } from 'node:path'
-import { assert } from '../assert.js'
-import { Files, FilesBuilder } from '../files.js'
-import { $p, ERROR, Logger, ReportLevel, ReportRecord, WARN } from '../log.js'
-import { AbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths.js'
-import { install, Plug } from '../pipe.js'
-import { Run } from '../run.js'
-import { readFile } from '../utils/asyncfs.js'
+import { assert } from '../assert'
+import { Files, FilesBuilder } from '../files'
+import { $p, ERROR, Logger, ReportLevel, ReportRecord, WARN } from '../log'
+import { AbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
+import { install } from '../pipe'
+import { RunContext, Plug } from '../types'
+import { readFile } from '../utils/asyncfs'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 
@@ -17,7 +17,7 @@ export class ESBuild implements Plug<Files> {
   constructor(options: ESBuildOptions)
   constructor(private readonly _options: ESBuildOptions) {}
 
-  async pipe(files: Files, run: Run): Promise<Files> {
+  async pipe(files: Files, run: RunContext): Promise<Files> {
     const entryPoints = [ ...files ]
     const absWorkingDir = files.directory
 
@@ -48,7 +48,7 @@ export class ESBuild implements Plug<Files> {
     /* Where to write, where to write? */
     let builder: FilesBuilder
     if (options.bundle && options.outfile && (entryPoints.length === 1)) {
-      builder = run.files(absWorkingDir)
+      builder = Files.builder(absWorkingDir)
       const outputFile = resolveAbsolutePath(absWorkingDir, options.outfile)
       const entryPoint = resolveAbsolutePath(absWorkingDir, entryPoints[0])
       options.outfile = outputFile
@@ -57,14 +57,14 @@ export class ESBuild implements Plug<Files> {
     } else {
       assert(options.outdir, 'Option "outdir" must be specified')
 
-      builder = run.files(options.outdir)
+      builder = Files.builder(run.resolve(options.outdir))
       options.outdir = builder.directory
 
       const message = options.bundle ? 'Bundling' : 'Transpiling'
       run.log.debug(message, entryPoints.length, 'files to', $p(builder.directory))
     }
 
-    const report = run.report('ESBuild Report')
+    const report = run.log.report('ESBuild Report')
 
     run.log.trace('Running ESBuild', options)
     let esbuild: undefined | (BuildResult & { metafile: Metafile })
@@ -86,7 +86,7 @@ export class ESBuild implements Plug<Files> {
     assert(esbuild, 'ESBuild did not produce any result')
 
     for (const file in esbuild.metafile.outputs) {
-      builder.unchecked(resolveAbsolutePath(absWorkingDir, file))
+      builder.add(resolveAbsolutePath(absWorkingDir, file))
     }
 
     const result = builder.build()
@@ -115,7 +115,7 @@ function convertMessage(level: ReportLevel, message: Message, directory: Absolut
 
 install('esbuild', ESBuild)
 
-declare module '../pipe.js' {
+declare module '../pipe' {
   export interface Pipe {
     /**
      * Transpile and bundle files with {@link https://esbuild.github.io/ esbuild}.
@@ -128,8 +128,8 @@ declare module '../pipe.js' {
  * PLUGINS                                                                    *
  * ========================================================================== */
 
-export * from './esbuild/bundle-locals.js'
-export * from './esbuild/fix-extensions.js'
+export * from './esbuild/bundle-locals'
+export * from './esbuild/fix-extensions'
 
 /* ========================================================================== *
  * DEFAULT MODULE FORMAT FROM PACKAGE.JSON                                    *

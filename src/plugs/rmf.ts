@@ -1,8 +1,8 @@
-import { Files } from '../files.js'
-import { $gry, $p } from '../log.js'
-import { install, Plug } from '../pipe.js'
-import { Run } from '../run.js'
-import { rm } from '../utils/asyncfs.js'
+import { Files } from '../files'
+import { $gry, $p } from '../log'
+import { install } from '../pipe'
+import { Plug, RunContext } from '../types'
+import { rm } from '../utils/asyncfs'
 
 /** Remove some files using globs. */
 export class Rmf implements Plug<undefined> {
@@ -12,7 +12,7 @@ export class Rmf implements Plug<undefined> {
     this._dryRun = !! dryRun
   }
 
-  async pipe(files: Files, run: Run): Promise<undefined> {
+  async pipe(files: Files, run: RunContext): Promise<undefined> {
     if (this._dryRun) {
       for (const file of files.absolutePaths()) {
         run.log.notice('Not removing file', $p(file), $gry('(dry-run)'))
@@ -34,7 +34,7 @@ export class Rmf implements Plug<undefined> {
 
 install('rmf', Rmf)
 
-declare module '../pipe.js' {
+declare module '../pipe' {
   export interface Pipe {
     /** Remove all {@link Files} piped in. */
     rmf: PipeExtension<typeof Rmf>

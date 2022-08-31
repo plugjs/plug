@@ -1,9 +1,9 @@
-import { Files } from '../files.js'
-import { resolveRelativeChildPath } from '../paths.js'
-import { install, Plug } from '../pipe.js'
-import { Run } from '../run.js'
-import { match, MatchOptions } from '../utils/match.js'
-import { ParseOptions, parseOptions } from '../utils/options.js'
+import { Files } from '../files'
+import { resolveRelativeChildPath } from '../paths'
+import { install } from '../pipe'
+import { Plug, RunContext } from '../types'
+import { match, MatchOptions } from '../utils/match'
+import { ParseOptions, parseOptions } from '../utils/options'
 
 /** Options for filtering {@link Files}. */
 export interface FilterOptions extends MatchOptions {
@@ -22,15 +22,16 @@ export class Filter implements Plug<Files> {
     this._options = options
   }
 
-  pipe(files: Files, run: Run): Files {
+  pipe(files: Files, run: RunContext): Files {
     const { directory, ...options } = this._options
 
-    const builder = run.files(directory || files.directory)
+    const dir = directory ? run.resolve(directory) : files.directory
+    const builder = Files.builder(dir)
     const matcher = match(this._globs, options)
 
     for (const file of files.absolutePaths()) {
       const relative = resolveRelativeChildPath(builder.directory, file)
-      if (relative && matcher(relative)) builder.unchecked(relative)
+      if (relative && matcher(relative)) builder.add(relative)
     }
 
     const result = builder.build()
@@ -47,7 +48,7 @@ export class Filter implements Plug<Files> {
 
 install('filter', Filter)
 
-declare module '../pipe.js' {
+declare module '../pipe' {
   export interface Pipe {
     /** Filter the current {@link Files} using globs. */
     filter: PipeExtension<typeof Filter>

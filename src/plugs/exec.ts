@@ -2,14 +2,14 @@ import path from 'node:path'
 import reaadline from 'node:readline'
 
 import { spawn, SpawnOptions } from 'node:child_process'
-import { assert } from '../assert.js'
-import { currentRun } from '../async.js'
-import { Files } from '../files.js'
-import { $p, logOptions } from '../log.js'
-import { AbsolutePath, getCurrentWorkingDirectory, resolveDirectory } from '../paths.js'
-import { install, Plug } from '../pipe.js'
-import { Run } from '../run.js'
-import { parseOptions, ParseOptions } from '../utils/options.js'
+import { assert } from '../assert'
+import { runContext } from '../async'
+import { Files } from '../files'
+import { $p, logOptions } from '../log'
+import { AbsolutePath, getCurrentWorkingDirectory, resolveDirectory } from '../paths'
+import { install } from '../pipe'
+import { Plug, RunContext } from '../types'
+import { parseOptions, ParseOptions } from '../utils/options'
 
 /** Options for executing scripts */
 export interface ExecOptions {
@@ -64,7 +64,7 @@ export class Exec implements Plug<Files> {
     this._options = options
   }
 
-  async pipe(files: Files, run: Run): Promise<Files> {
+  async pipe(files: Files, run: RunContext): Promise<Files> {
     const { relativePaths = true, ...options } = this._options
 
     if (! options.cwd) options.cwd = files.directory
@@ -100,7 +100,7 @@ export class Exec implements Plug<Files> {
  */
 
 export function exec(cmd: string, ...args: ParseOptions<ExecOptions>): Promise<void> {
-  const run = currentRun()
+  const run = runContext()
   assert(run, 'Unable to execute commands outside a running task')
 
   const { params, options } = parseOptions(args, {})
@@ -114,7 +114,7 @@ export function exec(cmd: string, ...args: ParseOptions<ExecOptions>): Promise<v
 
 install('exec', Exec)
 
-declare module '../pipe.js' {
+declare module '../pipe' {
   export interface Pipe {
     /**
      * Execute a shell command, adding to its _arguments_ the list of files
@@ -146,7 +146,7 @@ async function spawnChild(
     cmd: string,
     args: readonly string[],
     options: ExecOptions = {},
-    run: Run,
+    run: RunContext,
 ): Promise<void> {
   const {
     env = {}, // default empty environment

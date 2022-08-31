@@ -1,10 +1,10 @@
-import { assert } from '../assert.js'
-import { Files } from '../files.js'
-import { $p } from '../log.js'
-import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths.js'
-import { install, Plug } from '../pipe.js'
-import { Run } from '../run.js'
-import { chmod, copyFile, fsConstants, mkdir } from '../utils/asyncfs.js'
+import { assert } from '../assert'
+import { Files } from '../files'
+import { $p } from '../log'
+import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
+import { install } from '../pipe'
+import { RunContext, Plug } from '../types'
+import { chmod, copyFile, fsConstants, mkdir } from '../utils/asyncfs'
 
 /** Options for copying files */
 export interface CopyOptions {
@@ -26,7 +26,7 @@ export class Copy implements Plug<Files> {
       private readonly _options: CopyOptions = {},
   ) {}
 
-  async pipe(files: Files, run: Run): Promise<Files> {
+  async pipe(files: Files, run: RunContext): Promise<Files> {
     /* Destructure our options with some defaults and compute write flags */
     const { mode, dirMode, overwrite, rename = (s): string => s } = this._options
     const flags = overwrite ? fsConstants.COPYFILE_EXCL : 0
@@ -34,7 +34,8 @@ export class Copy implements Plug<Files> {
     const fmode = parseMode(mode)
 
     /* Our files builder for all written files */
-    const builder = run.files(this._directory)
+    const directory = run.resolve(this._directory)
+    const builder = Files.builder(directory)
 
     /* Iterate through all the mappings of the source files */
     for (const [ relative, absolute ] of files.pathMappings()) {
@@ -73,7 +74,7 @@ export class Copy implements Plug<Files> {
       }
 
       /* Record this file */
-      builder.unchecked(relative)
+      builder.add(relative)
     }
 
     const result = builder.build()
@@ -88,7 +89,7 @@ export class Copy implements Plug<Files> {
 
 install('copy', Copy)
 
-declare module '../pipe.js' {
+declare module '../pipe' {
   export interface Pipe {
     /** Copy the curent {@link Files} to a different directory */
     copy: PipeExtension<typeof Copy>
