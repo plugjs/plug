@@ -17,21 +17,22 @@ export interface ESLintOptions {
 declare module '../pipe' {
   export interface Pipe {
     /**
-     * Run _ESLint_ over the input source files, using the configuration
-     * from the local `.eslintrc.*` file.
+     * Run {@link https://eslint.org/ _ESlint_} over the input source files,
+     * using the configuration from the local `.eslintrc.*` file.
      */
     eslint(): Runnable<undefined>
 
     /**
-     * Run _ESLint_ over the input source files, using the configuration from
-     * the specified `configFile` (this wil override any `.eslintrc.*` file).
+     * Run {@link https://eslint.org/ _ESlint_} over the input source files,
+     * using the configuration from the specified `configFile` (this wil
+     * override any `.eslintrc.*` file).
      *
      * @param configFile The configuration file to use
      */
     eslint(configFile: string): Runnable<undefined>
 
     /**
-     * Run _ESLint_ over the input source files.
+     * Run {@link https://eslint.org/ _ESlint_} over the input source files..
      *
      * @param options {@link ESLintOptions | Options} to pass to _ESLint_
      */
