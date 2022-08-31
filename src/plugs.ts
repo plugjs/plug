@@ -2,14 +2,14 @@
  * FORKING PLUGS                                                              *
  * ========================================================================== */
 
-import { installForking } from './fork.js'
-import { requireResolve } from './paths.js'
+import { requireResolve } from './paths'
+import { installForking } from './pipe'
 
-import type ESLint from './plugs/eslint/runner.js'
-import type Mocha from './plugs/mocha/runner.js'
-import type Tsc from './plugs/tsc/runner.js'
+import type ESLint from './plugs/eslint/runner'
+import type Mocha from './plugs/mocha/runner'
+import type Tsc from './plugs/tsc/runner'
 
-declare module './pipe.js' {
+declare module './pipe' {
   export interface Pipe {
     eslint: PipeExtension<typeof ESLint>
     mocha: PipeExtension<typeof Mocha>
@@ -25,10 +25,10 @@ installForking('tsc', requireResolve(__fileurl, './plugs/tsc/runner'))
  * STANDARD IN-PROCESS PLUGS                                                  *
  * ========================================================================== */
 
-export * from './plugs/copy.js'
-export * from './plugs/coverage.js'
-export * from './plugs/debug.js'
-export * from './plugs/esbuild.js'
-export * from './plugs/exec.js'
-export * from './plugs/filter.js'
-export * from './plugs/rmf.js'
+export * from './plugs/copy'
+export * from './plugs/coverage'
+export * from './plugs/debug'
+export * from './plugs/esbuild'
+export * from './plugs/exec'
+export * from './plugs/filter'
+export * from './plugs/rmf'
