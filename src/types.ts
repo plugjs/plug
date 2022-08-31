@@ -27,7 +27,7 @@ export type Result = Files | undefined
  * a list of _source `.ts` files_) and optionally produces a possibly different
  * list (for example the _compiled `.js` files_).
  */
-export interface Plug<T extends Result> {
+export interface Plug<T extends Result = Result> {
   pipe(files: Files, run: RunContext): T | Promise<T>
 }
 
@@ -47,8 +47,6 @@ export interface RunContext {
   readonly taskName: string
   /** The absolute file name where the task was defined. */
   readonly buildFile: AbsolutePath,
-  /** For convenience, the directory of the build file */
-  // readonly buildDir: AbsolutePath,
   /** A {@link Logger} associated with this instance. */
   readonly log: Logger
 

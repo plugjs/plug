@@ -3,10 +3,19 @@ import { $gry, $p, $und } from '../log'
 import { install } from '../pipe'
 import { Plug, RunContext } from '../types'
 
-/** Writes some info about the current {@link Files} being passed around. */
-export class Debug implements Plug<Files> {
-  constructor() {}
+declare module '../pipe' {
+  export interface Pipe {
+    /** Log some info about the current {@link Files} being passed around. */
+    debug(): Pipe
+  }
+}
 
+/* ========================================================================== *
+ * INSTALLATION / IMPLEMENTATION                                              *
+ * ========================================================================== */
+
+/** Writes some info about the current {@link Files} being passed around. */
+install('debug', class Debug implements Plug<Files> {
   async pipe(files: Files, run: RunContext): Promise<Files> {
     run.log.notice('Debugging', files.length, 'files')
     run.log.notice('-        base dir:', $p(run.resolve('@')))
@@ -19,17 +28,4 @@ export class Debug implements Plug<Files> {
     }
     return files
   }
-}
-
-/* ========================================================================== *
- * INSTALLATION                                                               *
- * ========================================================================== */
-
-install('debug', Debug)
-
-declare module '../pipe' {
-  export interface Pipe {
-    /** Writes some info about the current {@link Files} being passed around. */
-    debug: PipeExtension<typeof Debug>
-  }
-}
+})

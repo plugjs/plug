@@ -1,13 +1,25 @@
 import { Files } from '../files'
 import { $gry, $p } from '../log'
-import { install } from '../pipe'
-import { Plug, RunContext } from '../types'
+import { install, PipeParameters } from '../pipe'
+import { Plug, RunContext, Runnable } from '../types'
 import { rm } from '../utils/asyncfs'
 
+declare module '../pipe' {
+  export interface Pipe {
+    /**
+     * Remove all {@link Files} piped in.
+     *
+     * @param dryRun If `true` only log what would be removed (default `false`)
+     */
+    rmf(dryRun?: boolean): Runnable<undefined>
+  }
+}
+
 /** Remove some files using globs. */
-export class Rmf implements Plug<undefined> {
+install('rmf', class Rmf implements Plug<undefined> {
   private readonly _dryRun: boolean
 
+  constructor(...args: PipeParameters<'rmf'>)
   constructor(dryRun?: boolean) {
     this._dryRun = !! dryRun
   }
@@ -26,17 +38,4 @@ export class Rmf implements Plug<undefined> {
 
     return undefined
   }
-}
-
-/* ========================================================================== *
- * INSTALLATION                                                               *
- * ========================================================================== */
-
-install('rmf', Rmf)
-
-declare module '../pipe' {
-  export interface Pipe {
-    /** Remove all {@link Files} piped in. */
-    rmf: PipeExtension<typeof Rmf>
-  }
-}
+})

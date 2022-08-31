@@ -4,17 +4,36 @@ import { assert } from '../assert'
 import { Files, FilesBuilder } from '../files'
 import { $p, ERROR, Logger, ReportLevel, ReportRecord, WARN } from '../log'
 import { AbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { install } from '../pipe'
+import { install, PipeParameters } from '../pipe'
 import { Plug, RunContext } from '../types'
 import { readFile } from '../utils/asyncfs'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 
-/**
- * Transpile and bundle files with {@link https://esbuild.github.io/ | esbuild}.
- */
-export class ESBuild implements Plug<Files> {
-  constructor(options: ESBuildOptions)
+export * from './esbuild/bundle-locals'
+export * from './esbuild/fix-extensions'
+
+declare module '../pipe' {
+  export interface Pipe {
+    /**
+     * Transpile and bundle with {@link https://esbuild.github.io/ esbuild}.
+     *
+     * For documentation on the _options_ to pass to _esbuild_ refer to its
+     * {@link https://esbuild.github.io/api/#build-api documentation}.
+     *
+     * @param options Build {@link ESBuildOptions | options} to pass to esbuild.
+     *
+     */
+    esbuild(options: ESBuildOptions): Pipe
+  }
+}
+
+/* ========================================================================== *
+ * INSTALLATION / IMPLEMENTATION                                              *
+ * ========================================================================== */
+
+install('esbuild', class ESBuild implements Plug<Files> {
+  constructor(...args: PipeParameters<'esbuild'>)
   constructor(private readonly _options: ESBuildOptions) {}
 
   async pipe(files: Files, run: RunContext): Promise<Files> {
@@ -93,7 +112,7 @@ export class ESBuild implements Plug<Files> {
     run.log.info('ESBuild produced', result.length, 'files into', $p(result.directory))
     return result
   }
-}
+})
 
 function convertMessage(level: ReportLevel, message: Message, directory: AbsolutePath): ReportRecord {
   const record: ReportRecord = { level, message: message.text }
@@ -108,28 +127,6 @@ function convertMessage(level: ReportLevel, message: Message, directory: Absolut
 
   return record
 }
-
-/* ========================================================================== *
- * INSTALLATION                                                               *
- * ========================================================================== */
-
-install('esbuild', ESBuild)
-
-declare module '../pipe' {
-  export interface Pipe {
-    /**
-     * Transpile and bundle files with {@link https://esbuild.github.io/ esbuild}.
-     */
-    esbuild: PipeExtension<typeof ESBuild>
-  }
-}
-
-/* ========================================================================== *
- * PLUGINS                                                                    *
- * ========================================================================== */
-
-export * from './esbuild/bundle-locals'
-export * from './esbuild/fix-extensions'
 
 /* ========================================================================== *
  * DEFAULT MODULE FORMAT FROM PACKAGE.JSON                                    *

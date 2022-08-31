@@ -2,7 +2,7 @@ import { assert } from '../assert'
 import { Files } from '../files'
 import { $p } from '../log'
 import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { install } from '../pipe'
+import { install, PipeParameters } from '../pipe'
 import { Plug, RunContext } from '../types'
 import { chmod, copyFile, fsConstants, mkdir } from '../utils/asyncfs'
 
@@ -18,9 +18,31 @@ export interface CopyOptions {
   rename?: (relative: string) => string
 }
 
+declare module '../pipe' {
+  export interface Pipe {
+    /**
+     * Copy the curent {@link Files} to a different directory
+     *
+     * @param directory The target directory where files will be copied to
+     */
+    copy(directory: string): Pipe
+    /**
+     * Copy the curent {@link Files} to a different directory
+     *
+     * @param directory The target directory where files will be copied to
+     * @param options Extra {@link CopyOptions | options} for the copy operation
+     */
+    copy(directory: string, options: CopyOptions): Pipe
+  }
+}
+
+/* ========================================================================== *
+ * INSTALLATION / IMPLEMENTATION                                              *
+ * ========================================================================== */
+
 /** Copy the curent {@link Files} to a different directory */
-export class Copy implements Plug<Files> {
-  constructor(directory: string, options?: CopyOptions)
+install('copy', class Copy implements Plug<Files> {
+  constructor(...args: PipeParameters<'copy'>)
   constructor(
       private readonly _directory: string,
       private readonly _options: CopyOptions = {},
@@ -81,20 +103,7 @@ export class Copy implements Plug<Files> {
     run.log.info('Copied', result.length, 'files to', $p(builder.directory))
     return result
   }
-}
-
-/* ========================================================================== *
- * INSTALLATION                                                               *
- * ========================================================================== */
-
-install('copy', Copy)
-
-declare module '../pipe' {
-  export interface Pipe {
-    /** Copy the curent {@link Files} to a different directory */
-    copy: PipeExtension<typeof Copy>
-  }
-}
+})
 
 /* ========================================================================== *
  * INTERNALS                                                                  *

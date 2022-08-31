@@ -7,7 +7,7 @@ import { runContext } from '../async'
 import { Files } from '../files'
 import { $p, logOptions } from '../log'
 import { AbsolutePath, getCurrentWorkingDirectory, resolveDirectory } from '../paths'
-import { install } from '../pipe'
+import { install, PipeParameters } from '../pipe'
 import { Plug, RunContext } from '../types'
 import { parseOptions, ParseOptions } from '../utils/options'
 
@@ -31,32 +31,67 @@ export interface ExecOptions {
   relativePaths?: boolean
 }
 
-/**
- * Execute a shell command, adding to its _arguments_ the list of files from
- * the current pipe (much like `xargs` does on Unix systems).
- *
- * This {@link Plug} returns the same {@link Files} it was given, so that
- * executing a shell command doesn't interrupt a {@link Pipe}.
- *
- * For example:
- *
- * ```
- * import { find, exec } from '@plugjs/plugjs'
- *
- * export default build({
- *   async runme() {
- *     find('*.ts', { directory: 'src' })
- *       .plug(new Exec('chmod', '755' }))
- *       .plug(new Exec('chown root:root', { shell: true }))
- *   },
- * })
- * ```
- */
-export class Exec implements Plug<Files> {
+declare module '../pipe' {
+  export interface Pipe {
+    /**
+     * Execute a shell command, adding to its _arguments_ the list of files
+     * from the current pipe (much like `xargs` does on Unix systems).
+     *
+     * For example:
+     *
+     * ```
+     * import { find, exec } from '@plugjs/plugjs'
+     *
+     * export default build({
+     *   async runme() {
+     *     this.find('*.ts', { directory: 'src' })
+     *       .exec('chmod', '755' })
+     *       .exec('chown root:root', { shell: true })
+     *   },
+     * })
+     * ```
+     *
+     * @param cmd The command to execute
+     * @param args Any additional argument for the command to execute
+     */
+    exec(cmd: string, ...args: string[]): Pipe
+
+    /**
+     * Execute a shell command, adding to its _arguments_ the list of files
+     * from the current pipe (much like `xargs` does on Unix systems).
+     *
+     * For example:
+     *
+     * ```
+     * import { find, exec } from '@plugjs/plugjs'
+     *
+     * export default build({
+     *   async runme() {
+     *     this.find('*.ts', { directory: 'src' })
+     *       .exec('chmod', '755' })
+     *       .exec('chown root:root', { shell: true })
+     *   },
+     * })
+     * ```
+     *
+     * @param cmd The command to execute
+     * @param args Any additional argument for the command to execute
+     * @param options Extra {@link ExecOptions | options} for process execution
+     */
+    exec(cmd: string, ...extra: [ ...args: string[], options: ExecOptions ]): Pipe
+  }
+}
+
+/* ========================================================================== *
+ * INSTALLATION / IMPLEMENTATION                                              *
+ * ========================================================================== */
+
+install('exec', class Exec implements Plug<Files> {
   private readonly _cmd: string
   private readonly _args: readonly string[]
   private readonly _options: ExecOptions
 
+  constructor(...args: PipeParameters<'exec'>)
   constructor(cmd: string, ...args: ParseOptions<ExecOptions>) {
     const { params, options } = parseOptions(args, {})
     this._cmd = cmd
@@ -81,7 +116,7 @@ export class Exec implements Plug<Files> {
     // Return our files
     return files
   }
-}
+})
 
 /**
  * Execute a command and await for its result from within a task.
@@ -97,8 +132,34 @@ export class Exec implements Plug<Files> {
  *   },
  * })
  * ```
+ *
+ * @param cmd The command to execute
+ * @param args Any additional argument for the command to execute
  */
+export function exec(cmd: string, ...args: string[]): Promise<void>
 
+/**
+ * Execute a command and await for its result from within a task.
+ *
+ * For example:
+ *
+ * ```
+ * import { exec } from '@plugjs/plugjs'
+ *
+ * export default build({
+ *   async runme() {
+ *     await exec('ls -la /', { shell: true })
+ *   },
+ * })
+ * ```
+ *
+ * @param cmd The command to execute
+ * @param args Any additional argument for the command to execute
+ * @param options Extra {@link ExecOptions | options} for process execution
+ */
+export function exec(cmd: string, ...extra: [ ...args: string[], options: ExecOptions ]): Promise<void>
+
+/* Overloads implementation */
 export function exec(cmd: string, ...args: ParseOptions<ExecOptions>): Promise<void> {
   const run = runContext()
   assert(run, 'Unable to execute commands outside a running task')
@@ -107,36 +168,6 @@ export function exec(cmd: string, ...args: ParseOptions<ExecOptions>): Promise<v
   return spawnChild(cmd, params, options, run)
 }
 
-
-/* ========================================================================== *
- * INSTALLATION                                                               *
- * ========================================================================== */
-
-install('exec', Exec)
-
-declare module '../pipe' {
-  export interface Pipe {
-    /**
-     * Execute a shell command, adding to its _arguments_ the list of files
-     * from the current pipe (much like `xargs` does on Unix systems).
-     *
-     * For example:
-     *
-     * ```
-     * import { find, exec } from '@plugjs/plugjs'
-     *
-     * export default build({
-     *   async runme() {
-     *     find('*.ts', { directory: 'src' })
-     *       .exec('chmod', '755' })
-     *       .exec('chown root:root', { shell: true })
-     *   },
-     * })
-     * ```
-     */
-    exec: PipeExtension<typeof Exec>
-  }
-}
 
 /* ========================================================================== *
  * INTERNALS                                                                  *

@@ -1,6 +1,6 @@
 import { Files } from '../files'
 import { resolveRelativeChildPath } from '../paths'
-import { install } from '../pipe'
+import { install, PipeParameters } from '../pipe'
 import { Plug, RunContext } from '../types'
 import { match, MatchOptions } from '../utils/match'
 import { ParseOptions, parseOptions } from '../utils/options'
@@ -11,11 +11,40 @@ export interface FilterOptions extends MatchOptions {
   directory?: string
 }
 
+declare module '../pipe' {
+  export interface Pipe {
+    /**
+     * Filter the current {@link Files} using globs.
+     *
+     * @param glob The glob to use for filtering files
+     */
+    filter(glob: string): Pipe
+    /**
+     * Filter the current {@link Files} using globs.
+     *
+     * @param globs The globs to use for filtering files (at least one)
+     */
+    filter(...globs: [ string, ...string[] ]): Pipe
+    /**
+     * Filter the current {@link Files} using globs.
+     *
+     * @param globs The globs to use for filtering files (at least one)
+     * @param options Additional {@link FilterOptions | options} for filtering
+     */
+    filter(...args: [ ...globs: [ string, ...string[] ], options: FilterOptions ]): Pipe
+  }
+}
+
+/* ========================================================================== *
+ * INSTALLATION / IMPLEMENTATION                                              *
+ * ========================================================================== */
+
 /** Filter the current {@link Files} using globs. */
-export class Filter implements Plug<Files> {
+install('filter', class Filter implements Plug<Files> {
   private readonly _globs: readonly [ string, ...readonly string[] ]
   private readonly _options: FilterOptions
 
+  constructor(...args: PipeParameters<'filter'>)
   constructor(glob: string, ...args: ParseOptions<FilterOptions>) {
     const { params, options } = parseOptions(args, {})
     this._globs = [ glob, ...params ]
@@ -40,17 +69,4 @@ export class Filter implements Plug<Files> {
 
     return result
   }
-}
-
-/* ========================================================================== *
- * INSTALLATION                                                               *
- * ========================================================================== */
-
-install('filter', Filter)
-
-declare module '../pipe' {
-  export interface Pipe {
-    /** Filter the current {@link Files} using globs. */
-    filter: PipeExtension<typeof Filter>
-  }
-}
+})

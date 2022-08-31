@@ -1,34 +1,130 @@
 import type { Files } from './files'
-import { ForkingPlug } from './fork'
-import { AbsolutePath } from './paths'
 import type { Plug, PlugFunction, Result, Runnable } from './types'
 
+import { ForkingPlug } from './fork'
+import { AbsolutePath } from './paths'
 
 /**
- * The {@link Pipe} interface defines processing pipeline where multiple
- * {@link Plug}s can transform lists of {@link Files}.
+ * A class that will be extended by {@link Pipe} where {@link install} will
+ * add prototype properties from installed {@link Plug}s
  */
-export interface Pipe extends Runnable<Files> {
-  plug(plug: Plug<Files>): Pipe
-  plug(plug: PlugFunction<Files>): Pipe
-  plug(plug: Plug<undefined>): Runnable<undefined>
-  plug(plug: PlugFunction<undefined>): Runnable<undefined>
-}
-
 abstract class PipeProto {
   abstract plug(plug: Plug<Result> | PlugFunction<Result>): Runnable<Result>
 }
 
-export abstract class Pipe extends PipeProto implements Pipe {
-  // empty!
+/**
+ * The {@link Pipe} abstract defines processing pipeline where multiple
+ * {@link Plug}s can transform lists of {@link Files}.
+ */
+export abstract class Pipe extends PipeProto {
+  abstract plug(plug: Plug<Files>): Pipe
+  abstract plug(plug: PlugFunction<Files>): Pipe
+  abstract plug(plug: Plug<undefined>): Runnable<undefined>
+  abstract plug(plug: PlugFunction<Files>): Runnable<undefined>
+
+  abstract run(): Promise<Files>
+}
+
+/* ========================================================================== *
+ * PLUG INSTALLATION (NEW)                                                    *
+ * ========================================================================== */
+
+/** The names which can be installed as direct plugs. */
+export type PlugName = string & Exclude<keyof Pipe, 'plug' | 'run'>
+
+/** The parameters of the plug extension with the given name */
+export type PipeParameters<Name extends PlugName> =
+  Pipe[Name] extends {
+    (...args: infer A0): infer R0
+    (...args: infer A1): infer R1
+    (...args: infer A2): infer R2
+    (...args: infer A3): infer R3
+    (...args: infer A4): infer R4
+  } ?
+    | (R0 extends Runnable ? A0 : never)
+    | (R1 extends Runnable ? A1 : never)
+    | (R2 extends Runnable ? A2 : never)
+    | (R3 extends Runnable ? A3 : never)
+    | (R4 extends Runnable ? A4 : never)
+  :
+  Pipe[Name] extends {
+    (...args: infer A0): infer R0
+    (...args: infer A1): infer R1
+    (...args: infer A2): infer R2
+    (...args: infer A3): infer R3
+  } ?
+    | (R0 extends Runnable ? A0 : never)
+    | (R1 extends Runnable ? A1 : never)
+    | (R2 extends Runnable ? A2 : never)
+    | (R3 extends Runnable ? A3 : never)
+  :
+  Pipe[Name] extends {
+    (...args: infer A0): infer R0
+    (...args: infer A1): infer R1
+    (...args: infer A2): infer R2
+  } ?
+    | (R0 extends Runnable ? A0 : never)
+    | (R1 extends Runnable ? A1 : never)
+    | (R2 extends Runnable ? A2 : never)
+  :
+  Pipe[Name] extends {
+    (...args: infer A0): infer R0
+    (...args: infer A1): infer R1
+  } ?
+    | (R0 extends Runnable ? A0 : never)
+    | (R1 extends Runnable ? A1 : never)
+  :
+  Pipe[Name] extends {
+    (...args: infer A0): infer R0
+  } ?
+    | (R0 extends Runnable ? A0 : never)
+  : never
+
+/**
+ * Install a {@link Plug} into our {@link Pipe} prototype.
+ *
+ * This allows our shorthand syntax for well-defined plugs such as:
+ *
+ * ```
+ * find('./src', '*.ts').write('./target')
+ * // Nicer and easier than...
+ * find('./src', '*.ts').plug(new Write('./target'))
+ * ```
+ *
+ * Use this alongside interface merging like:
+ *
+ * ```
+ * declare module '@plugjs/plug/pipe' {
+ *   export interface Pipe {
+ *     write(): Pipe
+ *   }
+ * }
+ *
+ * install('write', class Write implements Plug {
+ *   // ... the plug implementation lives here
+ * })
+ * ```
+ */
+export function install<
+  Name extends PlugName,
+  Ctor extends new (...args: PipeParameters<Name>) => Plug<Result>
+>(name: Name, ctor: Ctor): void {
+  /* The function plugging the newly constructed plug in a pipe */
+  function plug(this: PipeProto, ...args: PipeParameters<Name>): Runnable<Result> {
+    // eslint-disable-next-line new-cap
+    return this.plug(new ctor(...args))
+  }
+
+  /* Setup name so that stack traces look better */
+  Object.defineProperty(plug, 'name', { value: name })
+
+  /* Inject the create function in the Pipe's prototype */
+  Object.defineProperty(PipeProto.prototype, name, { value: plug })
 }
 
 /* ========================================================================== *
  * PLUG INSTALLATION (INTERNAL)                                               *
  * ========================================================================== */
-
-/** The names which can be installed as direct plugs. */
-export type PlugName = string & Exclude<keyof Pipe, 'plug' | 'run'>
 
 /** A convenience type identifying a {@link Plug} constructor. */
 export type PlugConstructor = new (...args: any) => Plug<Files | undefined>
@@ -134,48 +230,6 @@ export type PipeExtension<T extends PlugConstructor, A = PlugConstructorOverload
     Only :
   Function
 
-/**
- * Install a {@link Plug} into our {@link Pipe} prototype, and return a static
- * creator function for the {@link Plug} itself.
- *
- * This allows our shorthand syntax for well-defined plugs such as:
- *
- * ```
- * find('./src', '*.ts').write('./target')
- * // Nicer and easier than...
- * find('./src', '*.ts').plug(new Write('./target'))
- * ```
- *
- * Use this alongside interface merging like:
- *
- * ```
- * export class Write implements Plug {
- *   // ... the plug implementation lives here
- * }
- *
- * install('write', Write)
- *
- * declare module '../pipe' {
- *   export interface Pipe {
- *     write: PipeExtension<typeof Write>
- *   }
- * }
- * ```
- */
-export function install<C extends PlugConstructor>(name: PlugName, ctor: C): void {
-  /* This is quite hairy when it comes to types, so, just give up! :-P */
-
-  function create(this: PipeProto, ...args: any): Runnable<Files | undefined> {
-    // eslint-disable-next-line new-cap
-    return this.plug(new ctor(...args))
-  }
-
-  /* Setup name so that stack traces look better */
-  Object.defineProperty(create, 'name', { value: name })
-
-  /* Inject the create function in the Pipe's prototype */
-  Object.defineProperty(PipeProto.prototype, name, { value: create })
-}
 
 /**
  * Install a _forking_ {@link Plug} in the {@link Pipe}, in other words
