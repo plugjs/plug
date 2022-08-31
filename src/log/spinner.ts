@@ -1,6 +1,6 @@
-import { runningTasks } from '../async.js'
-import { $cyn, $gry, $t } from './colors.js'
-import { logOptions } from './options.js'
+import { runningTasks } from '../async'
+import { $cyn, $gry, $t } from './colors'
+import { logOptions } from './options'
 
 /* ========================================================================== */
 

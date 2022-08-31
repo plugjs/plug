@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events'
 import { Writable } from 'node:stream'
 import { InspectOptions } from 'node:util'
-import { getLevelNumber, LogLevel, LogLevelString, NOTICE } from './levels.js'
+import { getLevelNumber, LogLevel, LogLevelString, NOTICE } from './levels'
 
 /* ========================================================================== */
 

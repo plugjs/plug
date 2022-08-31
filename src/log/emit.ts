@@ -1,8 +1,8 @@
 import { formatWithOptions } from 'node:util'
-import { $blu, $grn, $gry, $red, $t, $ylw } from './colors.js'
-import { DEBUG, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels.js'
-import { logOptions } from './options.js'
-import { zapSpinner } from './spinner.js'
+import { $blu, $grn, $gry, $red, $t, $ylw } from './colors'
+import { DEBUG, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
+import { logOptions } from './options'
+import { zapSpinner } from './spinner'
 
 /* ========================================================================== */
 

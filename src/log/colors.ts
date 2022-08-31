@@ -1,6 +1,6 @@
 import { sep } from 'node:path'
-import { AbsolutePath, getCurrentWorkingDirectory, resolveRelativeChildPath } from '../paths.js'
-import { logOptions } from './options.js'
+import { AbsolutePath, getCurrentWorkingDirectory, resolveRelativeChildPath } from '../paths'
+import { logOptions } from './options'
 
 /* ========================================================================== */
 
