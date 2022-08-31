@@ -1,9 +1,9 @@
 import { Dir } from 'node:fs'
 import { basename, join } from 'node:path'
-import { $p, log } from '../log.js'
-import { AbsolutePath, resolveAbsolutePath } from '../paths.js'
-import { opendir, stat } from './asyncfs.js'
-import { match, MatchOptions } from './match.js'
+import { $p, log } from '../log'
+import { AbsolutePath, resolveAbsolutePath } from '../paths'
+import { opendir, stat } from './asyncfs'
+import { match, MatchOptions } from './match'
 
 /** Specific options for walking a directory */
 export interface WalkOptions extends MatchOptions {
