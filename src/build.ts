@@ -46,9 +46,9 @@ class PipeImpl extends Pipe implements Pipe {
 
   plug(plug: Plug<Files>): Pipe
   plug(plug: PlugFunction<Files>): Pipe
-  plug(plug: Plug<undefined>): Call
-  plug(plug: PlugFunction<Files>): Call
-  plug(arg: Plug<Result> | PlugFunction<Result>): Pipe | Call {
+  plug(plug: Plug<void | undefined>): Call
+  plug(plug: PlugFunction<void | undefined>): Call
+  plug(arg: Plug<Result | void> | PlugFunction<Result | void>): Pipe | Call {
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
 
     const parent = this

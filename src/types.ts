@@ -27,12 +27,12 @@ export type Result = Files | undefined
  * a list of _source `.ts` files_) and optionally produces a possibly different
  * list (for example the _compiled `.js` files_).
  */
-export interface Plug<T extends Result = Result> {
+export interface Plug<T extends Result | void = Result | void> {
   pipe(files: Files, run: RunContext): T | Promise<T>
 }
 
 /** A type identifying a {@link Plug} as a `function` */
-export type PlugFunction<T extends Result> = Plug<T>['pipe']
+export type PlugFunction<T extends Result | void> = Plug<T>['pipe']
 
 /* ========================================================================== *
  * RUNNING PIPES                                                              *

@@ -9,11 +9,11 @@ import { MochaOptions } from '../mocha'
 import { logSymbol, PlugReporter, runSymbol } from './reporter'
 
 /** Writes some info about the current {@link Files} being passed around. */
-export default class Mocha implements Plug<undefined> {
+export default class Mocha implements Plug<void> {
   constructor(...args: PipeParameters<'mocha'>)
   constructor(private readonly _options: MochaOptions = {}) {}
 
-  async pipe(files: Files, run: RunContext): Promise<undefined> {
+  async pipe(files: Files, run: RunContext): Promise<void> {
     // Enter log here, so that log messages called when loading files get
     // properly indented by our logger
     run.log.notice('') // empty line

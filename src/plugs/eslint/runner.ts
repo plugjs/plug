@@ -9,7 +9,7 @@ import { readFile } from '../../utils/asyncfs'
 import { ESLintOptions } from '../eslint'
 
 /** Runner implementation for the `ESLint` plug. */
-export default class ESLint implements Plug<undefined> {
+export default class ESLint implements Plug<void> {
   private readonly _options: Readonly<ESLintOptions>
 
   constructor(...arg: PipeParameters<'eslint'>)
@@ -17,7 +17,7 @@ export default class ESLint implements Plug<undefined> {
     this._options = typeof arg === 'string' ? { configFile: arg } : arg
   }
 
-  async pipe(files: Files, run: RunContext): Promise<undefined> {
+  async pipe(files: Files, run: RunContext): Promise<void> {
     const { directory, configFile } = this._options
 
     const cwd = directory ? run.resolve(directory) : getCurrentWorkingDirectory()
@@ -94,6 +94,5 @@ export default class ESLint implements Plug<undefined> {
 
     /* Emit our report and fail on errors */
     report.done(this._options.showSources)
-    return undefined
   }
 }

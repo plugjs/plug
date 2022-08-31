@@ -9,7 +9,7 @@ import { ForkingPlug } from './fork'
  * add prototype properties from installed {@link Plug}s
  */
 abstract class PipeProto {
-  abstract plug(plug: Plug<Result> | PlugFunction<Result>): Pipe | Call
+  abstract plug(plug: Plug<Result | void> | PlugFunction<Result | void>): Pipe | Call
 }
 
 /**
@@ -19,8 +19,8 @@ abstract class PipeProto {
 export abstract class Pipe extends PipeProto {
   abstract plug(plug: Plug<Files>): Pipe
   abstract plug(plug: PlugFunction<Files>): Pipe
-  abstract plug(plug: Plug<undefined>): Call
-  abstract plug(plug: PlugFunction<Files>): Call
+  abstract plug(plug: Plug<void | undefined>): Call
+  abstract plug(plug: PlugFunction<void | undefined>): Call
 
   abstract run(): Promise<Files>
 }
@@ -115,7 +115,7 @@ export type PipeParameters<Name extends PlugName> =
  */
 export function install<
   Name extends PlugName,
-  Ctor extends new (...args: PipeParameters<Name>) => Plug<Result>
+  Ctor extends new (...args: PipeParameters<Name>) => Plug
 >(name: Name, ctor: Ctor): void {
   /* The function plugging the newly constructed plug in a pipe */
   function plug(this: PipeProto, ...args: PipeParameters<Name>): Pipe | Call {

@@ -16,7 +16,7 @@ declare module '../pipe' {
 }
 
 /** Remove some files using globs. */
-install('rmf', class Rmf implements Plug<undefined> {
+install('rmf', class Rmf implements Plug<void> {
   private readonly _dryRun: boolean
 
   constructor(...args: PipeParameters<'rmf'>)
@@ -24,7 +24,7 @@ install('rmf', class Rmf implements Plug<undefined> {
     this._dryRun = !! dryRun
   }
 
-  async pipe(files: Files, run: RunContext): Promise<undefined> {
+  async pipe(files: Files, run: RunContext): Promise<void> {
     if (this._dryRun) {
       for (const file of files.absolutePaths()) {
         run.log.notice('Not removing file', $p(file), $gry('(dry-run)'))
@@ -35,7 +35,5 @@ install('rmf', class Rmf implements Plug<undefined> {
         await rm(file)
       }
     }
-
-    return undefined
   }
 })

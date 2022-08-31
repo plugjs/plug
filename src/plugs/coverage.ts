@@ -65,7 +65,7 @@ declare module '../pipe' {
  * INSTALLATION / IMPLEMENTATION                                              *
  * ========================================================================== */
 
-install('coverage', class Coverage implements Plug {
+install('coverage', class Coverage implements Plug<Result> {
   constructor(...args: PipeParameters<'coverage'>)
   constructor(
       private readonly _coverageDir: string,
