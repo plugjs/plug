@@ -3,28 +3,16 @@ import { assert, failure } from '../../assert'
 import { Files } from '../../files'
 import { $p, ERROR, NOTICE, WARN } from '../../log'
 import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from '../../paths'
+import { PipeParameters } from '../../pipe'
 import { Plug, RunContext } from '../../types'
 import { readFile } from '../../utils/asyncfs'
+import { ESLintOptions } from '../eslint'
 
-export interface ESLintOptions {
-  /** ESLint's own _current working directory_, where config files are. */
-  directory?: string
-  /** Show sources in report? */
-  showSources?: boolean
-  /**
-   * ESLint's _override_ configuration file: configurations specified in this
-   * file will override any other configuration specified elsewhere.
-   */
-  configFile?: string
-}
-
-/** Writes some info about the current {@link Files} being passed around. */
+/** Runner implementation for the `ESLint` plug. */
 export default class ESLint implements Plug<undefined> {
   private readonly _options: Readonly<ESLintOptions>
 
-  constructor()
-  constructor(configFile: string)
-  constructor(options: ESLintOptions)
+  constructor(...arg: PipeParameters<'eslint'>)
   constructor(arg: string | ESLintOptions = {}) {
     this._options = typeof arg === 'string' ? { configFile: arg } : arg
   }
