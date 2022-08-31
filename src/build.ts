@@ -24,7 +24,7 @@ import type {
 import { assert, fail, failure } from './assert'
 import { runAsync } from './async'
 import { Files } from './files'
-import { $ms, $t, getLogger, Logger, logOptions } from './log'
+import { $ms, $t, getLogger, logOptions } from './log'
 import { AbsolutePath, commonPath, getCurrentWorkingDirectory } from './paths'
 import { Pipe } from './pipe'
 import { RunImpl } from './run'
@@ -32,13 +32,17 @@ import { findCaller } from './utils/caller'
 import { ParseOptions, parseOptions } from './utils/options'
 import { walk } from './utils/walk'
 
+/* ========================================================================== *
+ * PIPE                                                                       *
+ * ========================================================================== */
+
 class PipeImpl extends Pipe implements Pipe {
   constructor(
-      private readonly _pipes: Set<Pipe>,
-      private readonly _run: (run: RunContext) => Promise<Files>,
+      private readonly _build: { pipes: Set<Pipe>, context: RunContext },
+      private readonly _start: () => Promise<Files>,
   ) {
     super()
-    _pipes.add(this)
+    _build.pipes.add(this)
   }
 
   plug(plug: Plug<Files> | PlugFunction<Files>): Pipe
@@ -47,18 +51,21 @@ class PipeImpl extends Pipe implements Pipe {
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
 
     const parent = this
-    const pipe = new PipeImpl(this._pipes, async (run: RunContext): Promise<any> => {
-      const files = await parent.run(run)
-      if (! files) fail('Unable to extend pipe')
-      return await plug.pipe(files, run)
+    return new PipeImpl(this._build, async (): Promise<any> => {
+      const files = await parent.run() // always call run, it clears pipes!
+      assert(files, 'Unable to extend pipe')
+      return await plug.pipe(files, this._build.context)
     })
-    return pipe
   }
 
-  async run(run: RunContext): Promise<Files> {
-    return this._run(run).finally(() => this._pipes.delete(this))
+  async run(): Promise<Files> {
+    return this._start().finally(() => this._build.pipes.delete(this))
   }
 }
+
+/* ========================================================================== *
+ * TASK                                                                       *
+ * ========================================================================== */
 
 class TaskImpl implements Task {
   constructor(
@@ -71,33 +78,38 @@ class TaskImpl implements Task {
   call(state: State, context: TaskContext, taskName: string): Promise<Result> {
     assert(! state.stack.includes(this), `Recursion detected calling ${$t(taskName)}`)
 
+    /* Check cache */
     const cached = state.cache.get(this)
     if (cached) return cached
 
+    /* Create new substate, adding this task */
     const stack = [ ...state.stack, this ]
     const cache = state.cache
 
+    /* Create run context and build */
     const run = new RunImpl(this.buildFile, taskName)
     const build = new BuildImpl(
         Object.assign({}, this.tasks, context.tasks),
         Object.assign({}, this.props, context.props),
-        { cache, stack },
-        run.log,
+        run, { cache, stack },
     )
 
+    /* Some logging */
     run.log.info('Running...')
     const now = Date.now()
 
+    /* Run asynchronously in an asynchronous context */
     const promise = runAsync(run, taskName, async () => {
+      /* Call the task definition and run the eventually returned pipe */
       let result = await this._def.call(build)
       if (result && 'run' in result) {
-        result = await result.run(run)
+        result = await result.run()
       }
 
-      for (const pipe of build.pipes) {
-        await pipe.run(run)
-      }
+      /* Any pipe not run yet gets run (serially) */
+      for (const pipe of build.pipes) await pipe.run()
 
+      /* All done! */
       return result || undefined
     }).then((result) => {
       run.log.notice(`Success ${$ms(Date.now() - now)}`)
@@ -107,10 +119,15 @@ class TaskImpl implements Task {
       throw failure()
     })
 
+    /* Cache the resulting promise and return it */
     cache.set(this, promise)
     return promise
   }
 }
+
+/* ========================================================================== *
+ * BUILD                                                                      *
+ * ========================================================================== */
 
 class BuildImpl<
   D extends BuildDef,
@@ -122,8 +139,8 @@ class BuildImpl<
   constructor(
       public readonly tasks: T,
       public readonly props: P,
+      public readonly context: RunContext,
       private readonly _state: State,
-      private readonly _logger: Logger,
   ) {}
 
   get<K extends PropName<P>>(prop: K): string {
@@ -159,6 +176,10 @@ class BuildImpl<
     }
   }
 
+  getPath<K extends PropName<P>>(prop: K): AbsolutePath {
+    return this.context.resolve(this.get(prop))
+  }
+
   async run<K extends TaskName<T>>(task: K): Promise<TasksResult<D, T>[K]> {
     const result = await this.tasks[task].call(this._state, this, task)
     return result as TasksResult<D, T>[K]
@@ -174,7 +195,7 @@ class BuildImpl<
       if (settlement.status === 'fulfilled') {
         results.push(settlement.value)
       } else {
-        this._logger.error(settlement.reason)
+        this.context.log.error(settlement.reason)
         errors ++
       }
     }
@@ -190,7 +211,7 @@ class BuildImpl<
   }
 
   pipe<K extends PipeName<T>>(task: K): Pipe {
-    return new PipeImpl(this.pipes, async () => {
+    return new PipeImpl(this, async () => {
       const files = await this.run(task)
       assert(files, 'Unable to pipe with undefined results')
       return files
@@ -198,7 +219,7 @@ class BuildImpl<
   }
 
   merge<K extends PipeName<T>>(...tasks: (K | Pipe)[]): Pipe {
-    return new PipeImpl(this.pipes, async (run: RunContext) => {
+    return new PipeImpl(this, async () => {
       if (tasks.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
 
       const results: Files[] = []
@@ -209,7 +230,7 @@ class BuildImpl<
           assert(result, `Task ${$t(task)} did not return a Files instance`)
           results.push(result)
         } else {
-          const result = await task.run(run)
+          const result = await task.run()
           assert(result, 'Pipe did not return a Files result')
           results.push(result)
         }
@@ -233,8 +254,8 @@ class BuildImpl<
   find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
     const { params, options: { directory, ...options } } = parseOptions(args, {})
 
-    return new PipeImpl(this.pipes, async (run: RunContext) => {
-      const dir = directory ? run.resolve(directory) : getCurrentWorkingDirectory()
+    return new PipeImpl(this, async () => {
+      const dir = directory ? this.context.resolve(directory) : getCurrentWorkingDirectory()
 
       const builder = Files.builder(dir)
       for await (const file of walk(dir, [ glob, ...params ], options)) {
@@ -245,6 +266,10 @@ class BuildImpl<
     })
   }
 }
+
+/* ========================================================================== *
+ * BUILD COMPILER                                                             *
+ * ========================================================================== */
 
 /** Symbol indicating that an object is a Build */
 const buildMarker = Symbol.for('plugjs:isBuild')
