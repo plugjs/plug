@@ -1,5 +1,4 @@
 
-import { parse } from '@babel/parser'
 import {
   Comment, isDeclaration,
   isExportDeclaration,
@@ -13,11 +12,13 @@ import {
   Node,
   VISITOR_KEYS
 } from '@babel/types'
+
+import { parse } from '@babel/parser'
 import { pathToFileURL } from 'node:url'
-import { $p, Logger } from '../../log.js'
-import { AbsolutePath } from '../../paths.js'
-import { readFile } from '../../utils/asyncfs.js'
-import { CoverageAnalyser } from './analysis.js'
+import { $p, Logger } from '../../log'
+import { AbsolutePath } from '../../paths'
+import { readFile } from '../../utils/asyncfs'
+import { CoverageAnalyser } from './analysis'
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *
