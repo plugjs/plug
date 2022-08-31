@@ -1,4 +1,4 @@
-import { currentRun } from './async.js'
+import { runContext } from './async.js'
 import { getLogger, Log } from './log/logger.js'
 import { setupSpinner } from './log/spinner.js'
 
@@ -25,7 +25,7 @@ export type LogFunction = ((...args: [ any, ...any ]) => void) & Log
 /** Our logging function (defaulting to the `NOTICE` level) */
 export const log: LogFunction = ((): LogFunction => {
   /* Return either the current run's log, or the default task's logger */
-  const logger = (): Log => (currentRun()?.log || getLogger())
+  const logger = (): Log => (runContext()?.log || getLogger())
 
   /* Create a Logger wrapping the current logger */
   const wrapper: Log = {
