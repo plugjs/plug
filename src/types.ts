@@ -204,6 +204,8 @@ export interface Build<
   getBigInt<K extends PropName<P>>(prop: K): bigint
   /** Return the value of the specified property as a _boolean_ */
   getBoolean<K extends PropName<P>>(prop: K): boolean
+  /** Return the value of the specified property as an {@link AbsolutePath} */
+  getPath<K extends PropName<P>>(prop: K): AbsolutePath
 
   /** Find files matching the specified glob pattern */
   find(glob: string): Pipe
