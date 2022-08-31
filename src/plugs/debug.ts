@@ -1,7 +1,7 @@
 import { Files } from '../files'
 import { $gry, $p, $und } from '../log'
 import { install } from '../pipe'
-import { RunContext, Plug } from '../types'
+import { Plug, RunContext } from '../types'
 
 /** Writes some info about the current {@link Files} being passed around. */
 export class Debug implements Plug<Files> {

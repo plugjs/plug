@@ -3,7 +3,7 @@ import { Files } from '../files'
 import { $p } from '../log'
 import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
 import { install } from '../pipe'
-import { RunContext, Plug } from '../types'
+import { Plug, RunContext } from '../types'
 import { chmod, copyFile, fsConstants, mkdir } from '../utils/asyncfs'
 
 /** Options for copying files */
