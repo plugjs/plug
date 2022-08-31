@@ -1,77 +1,26 @@
-import { assert } from './assert.js'
-import { Files } from './files.js'
-import { Run } from './run.js'
+import type { Files } from './files'
+import { ForkingPlug } from './fork'
+import { AbsolutePath } from './paths'
+import type { Plug, PlugFunction, Result, Runnable } from './types'
+
 
 /**
- * The {@link Plug} interface describes an extension mechanism for our build.
+ * The {@link Pipe} interface defines processing pipeline where multiple
+ * {@link Plug}s can transform lists of {@link Files}.
  */
-export interface Plug<T extends Files | undefined> {
-  pipe(files: Files, run: Run): T | Promise<T>
+export interface Pipe extends Runnable<Files> {
+  plug(plug: Plug<Files>): Pipe
+  plug(plug: PlugFunction<Files>): Pipe
+  plug(plug: Plug<undefined>): Runnable<undefined>
+  plug(plug: PlugFunction<undefined>): Runnable<undefined>
 }
 
-/**
- * A type identifying a {@link Plug} as a `function`
- */
-export type PlugFunction<T extends Files | undefined> = Plug<T>['pipe']
-
-/**
- * A {@link Pipe} represents a sequence of operations performed by
- * a series of {@link Plug | Plugs}.
- */
-export interface Pipe {
-  /* Left empty, for definitions of installed plugs as extensions */
+abstract class PipeProto {
+  abstract plug(plug: Plug<Result> | PlugFunction<Result>): Runnable<Result>
 }
 
-/**
- * The {@link Pipe} abstract class exposes the prototype upon which all
- * extension plugs will be installed on.
- */
-export abstract class Pipe implements Pipe {
-  abstract plug(plug: Plug<Files> | PlugFunction<Files>): Pipe & Promise<Files>
-  abstract plug(plug: Plug<undefined> | PlugFunction<undefined>): Promise<undefined>
-}
-
-
-/** Implementation of our {@link Pipe}. */
-export class PipeImpl<T extends Files | undefined> extends Pipe implements Promise<T> {
-  readonly #promise: Promise<T>
-  readonly #run: Run
-
-  constructor(start: T | Promise<T>, run: Run) {
-    super()
-    this.#promise = Promise.resolve(start)
-    this.#run = run
-  }
-
-  plug<T extends Files | undefined>(arg: Plug<T> | PlugFunction<T>): Pipe & Promise<T> {
-    const plug = typeof arg === 'function' ? { pipe: arg } : arg
-    const promise = this.#promise.then((files) => {
-      assert(files, 'Pipe can not be further extended')
-      return plug.pipe(files, this.#run)
-    })
-    return new PipeImpl(promise, this.#run)
-  }
-
-  then<T1 = T, T2 = never>(
-      onfulfilled?: ((value: T) => T1 | PromiseLike<T1>) | null | undefined,
-      onrejected?: ((reason: any) => T2 | PromiseLike<T2>) | null | undefined,
-  ): Promise<T1 | T2> {
-    return this.#promise.then(onfulfilled, onrejected)
-  }
-
-  catch<T0 = never>(
-      onrejected?: ((reason: any) => T0 | PromiseLike<T0>) | null | undefined,
-  ): Promise<T0 | T> {
-    return this.#promise.catch(onrejected)
-  }
-
-  finally(
-      onfinally?: (() => void) | null | undefined,
-  ): Promise<T> {
-    return this.#promise.finally(onfinally)
-  }
-
-  [Symbol.toStringTag] = 'Pipe'
+export abstract class Pipe extends PipeProto implements Pipe {
+  // empty!
 }
 
 /* ========================================================================== *
@@ -79,7 +28,7 @@ export class PipeImpl<T extends Files | undefined> extends Pipe implements Promi
  * ========================================================================== */
 
 /** The names which can be installed as direct plugs. */
-export type PlugName = string & Exclude<keyof Pipe, 'plug' | keyof Promise<Files>>
+export type PlugName = string & Exclude<keyof Pipe, 'plug' | 'run'>
 
 /** A convenience type identifying a {@link Plug} constructor. */
 export type PlugConstructor = new (...args: any) => Plug<Files | undefined>
@@ -87,10 +36,8 @@ export type PlugConstructor = new (...args: any) => Plug<Files | undefined>
 /** Convert the resulting type of a {@link Plug} for use in a {@link Pipe} */
 type PlugReturnForPipe<T> =
   T extends Plug<infer R> ?
-    R extends Files ?
-      Promise<Files> & Pipe :
-    R extends undefined ?
-      Promise<undefined> :
+    R extends Files ? Pipe :
+    R extends undefined ? Runnable<undefined> :
     never :
   never
 
@@ -218,14 +165,46 @@ export type PipeExtension<T extends PlugConstructor, A = PlugConstructorOverload
 export function install<C extends PlugConstructor>(name: PlugName, ctor: C): void {
   /* This is quite hairy when it comes to types, so, just give up! :-P */
 
-  function create(this: Pipe, ...args: any): Pipe & Promise<Files | undefined> {
+  function create(this: PipeProto, ...args: any): Runnable<Files | undefined> {
     // eslint-disable-next-line new-cap
-    return this.plug(new ctor(...args) as any)
+    return this.plug(new ctor(...args))
   }
 
   /* Setup name so that stack traces look better */
   Object.defineProperty(create, 'name', { value: name })
 
   /* Inject the create function in the Pipe's prototype */
-  Object.defineProperty(Pipe.prototype, name, { value: create })
+  Object.defineProperty(PipeProto.prototype, name, { value: create })
+}
+
+/**
+ * Install a _forking_ {@link Plug} in the {@link Pipe}, in other words
+ * execute the plug in a separate process.
+ *
+ * As a contract, if the _last non-null_ parameter of the constructor is an
+ * object and contains the key `coverageDir`, the process will be forked with
+ * the approptiately resolved `NODE_V8_COVERAGE` environment variable.
+ *
+ * Also, forking plugs require some special attention:
+ *
+ * * plug functions are not supported, only classes implementing the
+ *   {@link Plug} interface can be used with this.
+ *
+ * * the class itself _MUST_ be exported as the _default_ export for the
+ *   `scriptFile` specified below. This is to simplify interoperability between
+ *   CommonJS and ESM modules as we use dynamic `import(...)` statements.
+ */
+export function installForking(
+    plugName: PlugName,
+    scriptFile: AbsolutePath,
+): void {
+  /** Extend out our ForkingPlug below */
+  const ctor = class extends ForkingPlug {
+    constructor(...args: any[]) {
+      super(scriptFile, args)
+    }
+  }
+
+  /** Install the plug in  */
+  install(plugName, ctor)
 }
