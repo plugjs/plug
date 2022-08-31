@@ -67,7 +67,7 @@ export interface RunContext {
  * a {@link Files} or `undefined` result when executed in a {@link RunContext}.
  */
 export type Runnable<T extends Result = Result> = {
-  run(run: RunContext): Promise<T>
+  run(): Promise<T>
 }
 
 /* ========================================================================== *
