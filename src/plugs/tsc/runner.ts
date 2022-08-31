@@ -4,6 +4,7 @@ import { failure } from '../../assert'
 import { Files } from '../../files'
 import { $p, log } from '../../log'
 import { AbsolutePath, resolveFile } from '../../paths'
+import { PipeParameters } from '../../pipe'
 import { Plug, RunContext } from '../../types'
 import { parseOptions, ParseOptions } from '../../utils/options'
 import { TypeScriptHost } from './compiler'
@@ -18,11 +19,7 @@ export default class Tsc implements Plug<Files> {
   private readonly _tsconfig?: string
   private readonly _options: ts.CompilerOptions
 
-  constructor()
-  constructor(config: string)
-  constructor(options: ts.CompilerOptions)
-  constructor(config: string, options: ts.CompilerOptions)
-
+  constructor(...args: PipeParameters<'tsc'>)
   constructor(...args: ParseOptions<ts.CompilerOptions>) {
     const { params: [ tsconfig ], options } = parseOptions(args, {})
     this._tsconfig = tsconfig

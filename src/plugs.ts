@@ -2,25 +2,13 @@
  * FORKING PLUGS                                                              *
  * ========================================================================== */
 
-import { requireResolve } from './paths'
-import { installForking } from './pipe'
-
-import type Tsc from './plugs/tsc/runner'
-
-declare module './pipe' {
-  export interface Pipe {
-    tsc: PipeExtension<typeof Tsc>
-  }
-}
-
-installForking('tsc', requireResolve(__fileurl, './plugs/tsc/runner'))
+export * from './plugs/eslint'
+export * from './plugs/mocha'
+export * from './plugs/tsc'
 
 /* ========================================================================== *
  * STANDARD IN-PROCESS PLUGS                                                  *
  * ========================================================================== */
-
-export * from './plugs/eslint'
-export * from './plugs/mocha'
 
 export * from './plugs/copy'
 export * from './plugs/coverage'
