@@ -1,6 +1,6 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
 
-import { AbsolutePath, resolveAbsolutePath } from '../../paths.js'
+import { AbsolutePath, resolveAbsolutePath } from '../../paths'
 
 export class TypeScriptHost
 implements ts.CompilerHost {

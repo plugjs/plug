@@ -1,15 +1,14 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
 
-import { failure } from '../../assert.js'
-import { Files } from '../../files.js'
-import { $p, log } from '../../log.js'
-import { AbsolutePath, resolveFile } from '../../paths.js'
-import { Plug } from '../../pipe.js'
-import { Run } from '../../run.js'
-import { parseOptions, ParseOptions } from '../../utils/options.js'
-import { TypeScriptHost } from './compiler.js'
-import { getCompilerOptions } from './options.js'
-import { updateReport } from './report.js'
+import { failure } from '../../assert'
+import { Files } from '../../files'
+import { $p, log } from '../../log'
+import { AbsolutePath, resolveFile } from '../../paths'
+import { Plug, RunContext } from '../../types'
+import { parseOptions, ParseOptions } from '../../utils/options'
+import { TypeScriptHost } from './compiler'
+import { getCompilerOptions } from './options'
+import { updateReport } from './report'
 
 /* ========================================================================== *
  * WORKER PLUG                                                                *
@@ -30,9 +29,9 @@ export default class Tsc implements Plug<Files> {
     this._options = options
   }
 
-  async pipe(files: Files, run: Run): Promise<Files> {
+  async pipe(files: Files, run: RunContext): Promise<Files> {
     const baseDir = run.resolve('.') // "this" directory, base of all relative paths
-    const report = run.report('TypeScript Report') // report used throughout
+    const report = run.log.report('TypeScript Report') // report used throughout
     const overrides = { ...this._options } // clone our options
 
     /*
@@ -95,7 +94,7 @@ export default class Tsc implements Plug<Files> {
     if (report.errors) report.done(true)
 
     /* Write out all files asynchronously */
-    const builder = run.files(outDir)
+    const builder = Files.builder(outDir)
     const promises: Promise<void>[] = []
     const result = program.emit(undefined, (fileName, code) => {
       promises.push(builder.write(fileName, code).then((file) => {
