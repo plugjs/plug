@@ -1,7 +1,6 @@
 import { Files } from '../files'
 import { $gry, $p } from '../log'
-import { install, PipeParameters } from '../pipe'
-import { Plug, RunContext } from '../types'
+import { install, PipeParameters, Plug, Context } from '../pipe'
 import { rm } from '../utils/asyncfs'
 
 declare module '../pipe' {
@@ -11,7 +10,7 @@ declare module '../pipe' {
      *
      * @param dryRun If `true` only log what would be removed (default `false`)
      */
-    rmf(dryRun?: boolean): Call
+    rmf(dryRun?: boolean): Promise<undefined>
   }
 }
 
@@ -24,14 +23,14 @@ install('rmf', class Rmf implements Plug<void> {
     this._dryRun = !! dryRun
   }
 
-  async pipe(files: Files, run: RunContext): Promise<void> {
+  async pipe(files: Files, context: Context): Promise<void> {
     if (this._dryRun) {
       for (const file of files.absolutePaths()) {
-        run.log.notice('Not removing file', $p(file), $gry('(dry-run)'))
+        context.log.notice('Not removing file', $p(file), $gry('(dry-run)'))
       }
     } else {
       for (const file of files.absolutePaths()) {
-        run.log.notice('Removing file', $p(file))
+        context.log.notice('Removing file', $p(file))
         await rm(file)
       }
     }

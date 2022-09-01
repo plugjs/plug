@@ -19,7 +19,7 @@ declare module '../pipe' {
      * Run {@link https://eslint.org/ _ESlint_} over the input source files,
      * using the configuration from the local `.eslintrc.*` file.
      */
-    eslint(): Call
+    eslint(): Promise<undefined>
 
     /**
      * Run {@link https://eslint.org/ _ESlint_} over the input source files,
@@ -28,14 +28,14 @@ declare module '../pipe' {
      *
      * @param configFile The configuration file to use
      */
-    eslint(configFile: string): Call
+    eslint(configFile: string): Promise<undefined>
 
     /**
      * Run {@link https://eslint.org/ _ESlint_} over the input source files..
      *
      * @param options {@link ESLintOptions | Options} to pass to _ESLint_
      */
-    eslint(options: ESLintOptions): Call
+    eslint(options: ESLintOptions): Promise<undefined>
   }
 }
 

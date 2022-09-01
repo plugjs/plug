@@ -3,21 +3,20 @@ import RealMocha from 'mocha' // Mocha types pollute the global scope!
 import { failure } from '../../assert'
 import { Files } from '../../files'
 import { $wht, NOTICE } from '../../log'
-import { PipeParameters } from '../../pipe'
-import { Plug, RunContext } from '../../types'
+import { PipeParameters, Plug, Context } from '../../pipe'
 import { MochaOptions } from '../mocha'
-import { logSymbol, PlugReporter, runSymbol } from './reporter'
+import { logSymbol, PlugReporter } from './reporter'
 
 /** Writes some info about the current {@link Files} being passed around. */
 export default class Mocha implements Plug<void> {
   constructor(...args: PipeParameters<'mocha'>)
   constructor(private readonly _options: MochaOptions = {}) {}
 
-  async pipe(files: Files, run: RunContext): Promise<void> {
+  async pipe(files: Files, context: Context): Promise<void> {
     // Enter log here, so that log messages called when loading files get
     // properly indented by our logger
-    run.log.notice('') // empty line
-    run.log.enter(NOTICE, $wht('Starting Mocha'))
+    context.log.notice('') // empty line
+    context.log.enter(NOTICE, $wht('Starting Mocha'))
 
     // Create the mocha runner
     const mocha = new RealMocha({
@@ -26,8 +25,7 @@ export default class Mocha implements Plug<void> {
       ...this._options, // override defaults with all other options
       reporterOptions: {
         ...this._options.reporterOptions,
-        [logSymbol]: run.log, // always force a log
-        [runSymbol]: run, // always force a run
+        [logSymbol]: context.log, // always force a log
       },
       allowUncaught: false, // never allow uncaught exceptions
       delay: false, // never delay running

@@ -1,22 +1,54 @@
-export type ParsedOptions<Options> = { params: string[], options: Options }
-export type ParsedOptionalOptions<Options> = { params: string[], options?: Options | undefined }
-export type ParseOptions<Options> = string[] | [ ...string[], Options ] | [ Options ]
+/** A type extacting string parameters from an arguments array */
+export type ParsedParams<Args extends readonly any[]> =
+  // Normal tuple, we stop processing if the _first_ argument is not a string!
+  Args extends readonly [ infer First, ...infer Rest ] ?
+    First extends string ? [ First, ...ParsedParams<Rest> ] : [] :
 
-/** Parse an array of at least one string, followed by an optional `Options` argument. */
-export function parseOptions<Options>(args: ParseOptions<Options>): ParsedOptionalOptions<Options>
-/** Parse an array of at least one string, followed by an optional `Options` argument. */
-export function parseOptions<Options>(args: ParseOptions<Options>, defaults?: undefined): ParsedOptionalOptions<Options>
-/** Parse an array of at least one string, followed by an optional `Options` argument, ensuring some defaults are present. */
-export function parseOptions<Options, Defaults extends Options = Options>(args: ParseOptions<Options>, defaults: Defaults): ParsedOptions<Options & Defaults>
-// overloaded implementation
-export function parseOptions<Options, Defaults extends Options>(args: ParseOptions<Options>, defaults?: Defaults): ParsedOptions<any> {
+  // If not caught above, here "first" is the rest parameter in the tuple
+  Args extends readonly [ ...infer First, infer Rest ] ?
+    Rest extends string ? [ ...ParsedParams<First>, Rest ] : [ ...ParsedParams<First> ] :
+
+  // Not a tuple: normal string array or the end of our arguments
+  Args extends readonly string[] ? [ ...Args ] : []
+
+/** A type extacting the (last) options type from an arguments array */
+export type ParsedOptions<Args extends readonly any[]> = // , Defaults> =
+  Args extends readonly [ ...string[], infer Last ] ?
+    Last extends object ? // Record<any, any> ?
+      Last : // last arg is a record, defaults is null or undefined
+      never : // last arg is a string, defaults is null or undefined
+  never // args is not an array
+
+/** Parserable arguments: a number of strings, followed by optional options */
+export type ParseOptions<Options extends Record<any, any>> =
+  readonly [ ...params: string[] ] | readonly [ ...params: string[], options: Options ]
+
+/** The return type from {@link ParseOptions} */
+export interface ParsedResult<Args extends readonly any [], Options, Defaults> {
+  params: ParsedParams<Args>,
+  options: Defaults extends null | undefined ? Options | undefined : Options & Defaults
+}
+
+/**
+ * Parse an array of arguments (a number of strings optionally followed by an
+ * options object into parameters and options.
+ */
+export function parseOptions<
+  Args extends ParseOptions<any>,
+  Options extends ParsedOptions<Args> = ParsedOptions<Args>,
+  Defaults extends ParsedOptions<Args> | null | undefined = undefined,
+>(args: Args, defaults?: Defaults): ParsedResult<Args, Options, Defaults> {
   const params: string[] = []
-  const options: any = { ...defaults }
+  const clone: any[] = [ ...args ]
 
-  for (const arg of args) {
-    if (typeof arg === 'string') params.push(arg)
-    else Object.assign(options, arg)
+  // Collect all strings at the beginning of our arguments array
+  while (typeof clone[0] === 'string') {
+    params.push(clone.shift())
   }
 
-  return { params, options }
+  // The options is the _last_ element in our arguments array (if any)
+  const options = Object.assign({}, defaults, clone.pop)
+
+  // All done
+  return { params, options } as ParsedResult<Args, Options, Defaults>
 }

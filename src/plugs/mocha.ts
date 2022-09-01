@@ -34,7 +34,7 @@ declare module '../pipe' {
      *
      * @param options Optional {@link MochaOptions | options} for _Mocha_.
      */
-    mocha(options?: MochaOptions): Call
+    mocha(options?: MochaOptions): Promise<undefined>
   }
 }
 

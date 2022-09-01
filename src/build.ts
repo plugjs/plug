@@ -1,66 +1,87 @@
 import type {
   Build,
   BuildDef,
-  CompiledBuild,
-  FindOptions,
-  PipeName,
-  Plug,
-  PlugFunction,
-  PropName,
   Props,
   Result,
-  RunContext,
   State,
   Task,
-  TaskContext,
   TaskDef,
-  TaskName,
   Tasks,
-  TasksResult,
-  TasksResults,
+  ThisBuild,
 } from './types'
 
-import { assert, fail, failure } from './assert'
+import { assert, fail, failure, isBuildFailure } from './assert'
 import { runAsync } from './async'
 import { Files } from './files'
 import { $ms, $t, getLogger, logOptions } from './log'
-import { AbsolutePath, commonPath, getCurrentWorkingDirectory } from './paths'
-import { Call, Pipe } from './pipe'
-import { RunImpl } from './run'
+import { AbsolutePath } from './paths'
+import { Context, Pipe, Plug, PlugFunction } from './pipe'
 import { findCaller } from './utils/caller'
-import { ParseOptions, parseOptions } from './utils/options'
-import { walk } from './utils/walk'
+import { parseOptions } from './utils/options'
 
 /* ========================================================================== *
  * PIPE                                                                       *
  * ========================================================================== */
 
-class PipeImpl extends Pipe implements Pipe {
+class PipeImpl extends Pipe implements Pipe, Promise<Result> {
+  readonly [Symbol.toStringTag] = 'PipeImpl'
+
   constructor(
-      private readonly _build: { pipes: Set<Pipe>, context: RunContext },
-      private readonly _start: () => Promise<Files>,
+      private readonly _promise: Promise<Result>,
+      private readonly _promises: Set<Promise<Result>>,
+      private readonly _context: Context,
   ) {
     super()
-    _build.pipes.add(this)
+    _promises.add(_promise)
   }
+
+  /* ------------------------------------------------------------------------ *
+   * Promise<Files | undefined> implementation                                *
+   * ------------------------------------------------------------------------ */
+
+  then<R1 = Result, R2 = never>(
+      onfulfilled?: ((value: Result) => R1 | PromiseLike<R1>) | null | undefined,
+      onrejected?: ((reason: any) => R2 | PromiseLike<R2>) | null | undefined,
+  ): Promise<R1 | R2> {
+    return this._promise.then(onfulfilled, onrejected)
+  }
+
+  catch<R = never>(
+      onrejected?: ((reason: any) => R | PromiseLike<R>) | null | undefined,
+  ): Promise<Result | R> {
+    return this._promise.catch(onrejected)
+  }
+
+  finally(onfinally?: (() => void) | null | undefined): Promise<Result> {
+    return this._promise.finally(onfinally)
+  }
+
+  /* ------------------------------------------------------------------------ *
+   * Pipe implementation                                                      *
+   * ------------------------------------------------------------------------ */
 
   plug(plug: Plug<Files>): Pipe
   plug(plug: PlugFunction<Files>): Pipe
-  plug(plug: Plug<void | undefined>): Call
-  plug(plug: PlugFunction<void | undefined>): Call
-  plug(arg: Plug<Result | void> | PlugFunction<Result | void>): Pipe | Call {
+  plug(plug: Plug<void | undefined>): Promise<undefined>
+  plug(plug: PlugFunction<void | undefined>): Promise<undefined>
+  plug(arg: Plug<Result | void> | PlugFunction<Result | void>): Pipe | Promise<undefined> {
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
 
-    const parent = this
-    return new PipeImpl(this._build, async (): Promise<any> => {
-      const files = await parent.run() // always call run, it clears pipes!
-      assert(files, 'Unable to extend pipe')
-      return await plug.pipe(files, this._build.context)
+    const promise = this._promise.then(async (files) => {
+      assert(files, 'Unable to extend Pipe')
+      const result = await plug.pipe(files, this._context)
+      assert(result, 'Plug did not return a Files instance')
+      return result
     })
+
+    return new PipeImpl(promise, this._promises, this._context)
   }
 
   async run(): Promise<Files> {
-    return this._start().finally(() => this._build.pipes.delete(this))
+    return this._promise.then((whaps) => {
+      assert(whaps, 'Unable to run Pipe')
+      return whaps
+    })
   }
 }
 
@@ -76,47 +97,70 @@ class TaskImpl implements Task {
       private readonly _def: TaskDef,
   ) {}
 
-  call(state: State, context: TaskContext, taskName: string): Promise<Result> {
+  call(state: State, taskName: string): Promise<Result> {
     assert(! state.stack.includes(this), `Recursion detected calling ${$t(taskName)}`)
 
     /* Check cache */
     const cached = state.cache.get(this)
     if (cached) return cached
 
-    /* Create new substate, adding this task */
+    /* Create new substate merging sibling tasks/props and adding this to the stack */
+    const props: Record<string, string> = Object.assign({}, this.props, state.props)
+    const tasks: Record<string, Task> = Object.assign({}, this.tasks, state.tasks)
     const stack = [ ...state.stack, this ]
     const cache = state.cache
 
     /* Create run context and build */
-    const run = new RunImpl(this.buildFile, taskName)
-    const build = new BuildImpl(
-        Object.assign({}, this.tasks, context.tasks),
-        Object.assign({}, this.props, context.props),
-        run, { cache, stack },
-    )
+    const promises = new Set<Promise<Result>>()
+    const context = new Context(this.buildFile, taskName)
+
+    const build = new Proxy({}, {
+      get(_: any, name: string): void | string | (() => Pipe & Promise<Result>) {
+        // Tasks first, props might come also from environment
+        if (name in tasks) {
+          return (): Pipe & Promise<Result> => {
+            const state = { stack, cache, tasks, props }
+            const promise = tasks[name].call(state, name)
+            return new PipeImpl(promise, promises, context)
+          }
+        } else if (name in props) {
+          return props[name]
+        }
+      },
+    })
 
     /* Some logging */
-    run.log.info('Running...')
+    context.log.info('Running...')
     const now = Date.now()
 
     /* Run asynchronously in an asynchronous context */
-    const promise = runAsync(run, taskName, async () => {
-      /* Call the task definition and run the eventually returned pipe */
-      let result = await this._def.call(build)
-      if (result && 'run' in result) {
-        result = await result.run()
+    const promise = runAsync(context, taskName, async () => {
+      try {
+        /* Call the task definition and run the eventually returned pipe */
+        let result = await this._def.call(build)
+        if (result && 'run' in result) result = await result.run()
+        return result || undefined
+      } finally {
+        /* Make sure we _await_ all promises (PipeImpl) created by the task */
+        const settlements = await Promise.allSettled([ ...promises ])
+
+        /* Get any error */
+        const errors = new Set<any>()
+        for (const settlement of settlements) {
+          if (settlement.status === 'fulfilled') continue
+          if (! isBuildFailure(settlement.reason)) {
+            errors.add(settlement.reason)
+          }
+        }
+
+        /* Log any error detected, but don't file (think try/catch) */
+        for (const error of errors) context.log.error(error)
       }
-
-      /* Any pipe not run yet gets run (serially) */
-      for (const pipe of build.pipes) await pipe.run()
-
-      /* All done! */
-      return result || undefined
     }).then((result) => {
-      run.log.notice(`Success ${$ms(Date.now() - now)}`)
+      context.log.notice(`Success ${$ms(Date.now() - now)}`)
       return result
     }).catch((error) => {
-      run.log.error(`Failure ${$ms(Date.now() - now)}`, error)
+      context.log.error(`Failure ${$ms(Date.now() - now)}`, error)
       throw failure()
     })
 
@@ -127,159 +171,21 @@ class TaskImpl implements Task {
 }
 
 /* ========================================================================== *
- * BUILD                                                                      *
- * ========================================================================== */
-
-class BuildImpl<
-  D extends BuildDef,
-  T extends Tasks<D> = Tasks<D>,
-  P extends Props<D> = Props<D>,
-> implements Build<D, T, P> {
-  readonly pipes = new Set<Pipe>()
-
-  constructor(
-      public readonly tasks: T,
-      public readonly props: P,
-      public readonly context: RunContext,
-      private readonly _state: State,
-  ) {}
-
-  get<K extends PropName<P>>(prop: K): string {
-    assert(prop in this.props, `Property ${$t(prop)} unknown`)
-    return this.props[prop]
-  }
-
-  getNumber<K extends PropName<P>>(prop: K): number {
-    const value = Number(this.get(prop))
-    assert(! isNaN(value), `Property ${$t(prop)} is not a number`)
-    return value
-  }
-  getInteger<K extends PropName<P>>(prop: K): number {
-    const value = this.getNumber(prop)
-    assert(value === Math.floor(value), `Property ${$t(prop)} is not an integer`)
-    return value
-  }
-
-  getBigInt<K extends PropName<P>>(prop: K): bigint {
-    try {
-      return BigInt(this.get(prop))
-    } catch (error) {
-      fail(`Property ${$t(prop)} is not a big integer`)
-    }
-  }
-
-  getBoolean<K extends PropName<P>>(prop: K): boolean {
-    const value = this.get(prop).toLowerCase()
-    switch (value) {
-      case 'true': return true
-      case 'false': return false
-      default: fail(`Property ${$t(prop)} is not "true" or "false"`)
-    }
-  }
-
-  getPath<K extends PropName<P>>(prop: K): AbsolutePath {
-    return this.context.resolve(this.get(prop))
-  }
-
-  async run<K extends TaskName<T>>(task: K): Promise<TasksResult<D, T>[K]> {
-    const result = await this.tasks[task].call(this._state, this, task)
-    return result as TasksResult<D, T>[K]
-  }
-
-  async parallel<A extends readonly TaskName<T>[]>(...tasks: A): Promise<TasksResults<D, T, A>> {
-    const promises = tasks.map((task) => this.run(task))
-
-    let errors = 0
-    const results: Result[] = []
-    const settlements = await Promise.allSettled(promises)
-    for (const settlement of settlements) {
-      if (settlement.status === 'fulfilled') {
-        results.push(settlement.value)
-      } else {
-        this.context.log.error(settlement.reason)
-        errors ++
-      }
-    }
-
-    if (errors) throw failure()
-    return results as TasksResults<D, T, A>
-  }
-
-  async series<A extends readonly TaskName<T>[]>(...tasks: A): Promise<TasksResults<D, T, A>> {
-    const results: Result[] = []
-    for (const task of tasks) results.push(await this.run(task))
-    return results as TasksResults<D, T, A>
-  }
-
-  pipe<K extends PipeName<T>>(task: K): Pipe {
-    return new PipeImpl(this, async () => {
-      const files = await this.run(task)
-      assert(files, 'Unable to pipe with undefined results')
-      return files
-    })
-  }
-
-  merge<K extends PipeName<T>>(...tasks: (K | Pipe)[]): Pipe {
-    return new PipeImpl(this, async () => {
-      if (tasks.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
-
-      const results: Files[] = []
-
-      for (const task of tasks) {
-        if (typeof task === 'string') {
-          const result = await this.run(task)
-          assert(result, `Task ${$t(task)} did not return a Files instance`)
-          results.push(result)
-        } else {
-          const result = await task.run()
-          assert(result, 'Pipe did not return a Files result')
-          results.push(result)
-        }
-      }
-
-      const [ first, ...others ] = results
-
-      const firstDir = first.directory
-      const otherDirs = others.map((f) => f.directory)
-
-      const directory = commonPath(firstDir, ...otherDirs)
-
-      return Files.builder(directory).merge(first, ...others).build()
-    })
-  }
-
-  find(glob: string): Pipe
-  find(glob: string, ...globs: string[]): Pipe
-  find(glob: string, options: FindOptions): Pipe
-  find(glob: string, ...extra: [...globs: string[], options: FindOptions]): Pipe
-  find(glob: string, ...args: ParseOptions<FindOptions>): Pipe {
-    const { params, options: { directory, ...options } } = parseOptions(args, {})
-
-    return new PipeImpl(this, async () => {
-      const dir = directory ? this.context.resolve(directory) : getCurrentWorkingDirectory()
-
-      const builder = Files.builder(dir)
-      for await (const file of walk(dir, [ glob, ...params ], options)) {
-        builder.add(file)
-      }
-
-      return builder.build()
-    })
-  }
-}
-
-/* ========================================================================== *
  * BUILD COMPILER                                                             *
  * ========================================================================== */
 
 /** Symbol indicating that an object is a Build */
 const buildMarker = Symbol.for('plugjs:isBuild')
 
-export function build<D extends BuildDef, B extends Build<D>>(def: D & ThisType<B>): CompiledBuild<D> {
+/** Compile a {@link BuildDef | build definition} into a {@link Build} */
+export function build<
+  D extends BuildDef, B extends ThisBuild<D>
+>(def: D & ThisType<B>): Build<D> {
   const buildFile = findCaller(build)
   const tasks: Record<string, Task> = {}
   const props: Record<string, string> = {}
 
+  /* Iterate through all definition extracting properties and tasks */
   for (const [ key, val ] of Object.entries(def)) {
     let len = 0
     if (typeof val === 'string') {
@@ -287,38 +193,38 @@ export function build<D extends BuildDef, B extends Build<D>>(def: D & ThisType<
     } else if (typeof val === 'function') {
       tasks[key] = new TaskImpl(buildFile, tasks, props, val)
       len = key.length
-    } else {
+    } else if (val instanceof TaskImpl) {
       tasks[key] = val
       len = key.length
     }
 
+    /* Update the logger's own "taskLength" for nice printing */
     if (len > logOptions.taskLength) logOptions.taskLength = len
   }
 
-  const compiled = async function build(
-      ...args: ParseOptions<Partial<Props<D>>>
+  /* Create the "call" function for this build */
+  const call: BuildCall = async function call(
+      taskNames: string[],
+      overrideProps: Record<string, string | undefined> = {},
   ): Promise<void> {
-    const { params: taskNames, options } = parseOptions(args, {})
-
+    /* Our "root" logger and initial (empty) state */
     const logger = getLogger('')
-
     const state = {
       cache: new Map<Task, Promise<Result>>(),
       stack: [] as Task[],
-    }
-
-    const context = {
-      props: Object.assign({}, props, options),
+      props: Object.assign({}, props, overrideProps),
       tasks: tasks,
     }
 
+    /* Let's go down to business */
     logger.notice('Starting...')
     const now = Date.now()
 
     try {
+      /* Run tasks _serially_ */
       for (const taskName of taskNames) {
         if (taskName in tasks) {
-          await tasks[taskName].call(state, context, taskName)
+          await tasks[taskName].call(state, taskName)
         } else {
           fail(`Task ${$t(taskName)} not found in build`)
         }
@@ -330,7 +236,43 @@ export function build<D extends BuildDef, B extends Build<D>>(def: D & ThisType<
     }
   }
 
-  Object.assign(compiled, props, tasks)
-  Object.defineProperty(compiled, buildMarker, { value: buildMarker })
-  return compiled as CompiledBuild<D>
+  /* Create our build, the collection of all props and tasks */
+  const compiled = Object.assign({}, props, tasks) as Build<D>
+
+  /* Sneak our "call" function in the build, for the CLI and "call" below */
+  Object.defineProperty(compiled, buildMarker, { value: call })
+
+  /* All done! */
+  return compiled
+}
+
+/** Internal type identifying all _task names_ in a {@link Build} */
+type TaskNames<B extends Build> = string & keyof B &
+(B extends Build<BuildDef, infer Tasks, Props> ? keyof Tasks : never)
+
+/** Internal type identifying all _property names_ in a {@link Build} */
+type OverrideProps<B extends Build> = {
+  [ k in keyof B as B[k] extends string ? k : never ]?: string
+}
+
+/** Internal type describing the build call function */
+type BuildCall = (tasks: string[], props?: Record<string, string | undefined>) => Promise<void>
+
+/** Serially invoke tasks in a {@link Build} optionally overriding properties */
+export function call<B extends Build>(
+    build: B,
+    ...args:
+    | [ ...taskNames: [ TaskNames<B>, ...TaskNames<B>[] ] ]
+    | [ ...taskNames: [ TaskNames<B>, ...TaskNames<B>[] ], options: OverrideProps<B> ]
+): Promise<void> {
+  const { params: tasks, options: props } = parseOptions(args, {})
+
+  /* Get the calling function from the sneaked-in property in build */
+  const call: BuildCall = (build as any)[buildMarker]
+
+  /* Triple check that we actually _have_ a function */
+  if (typeof call !== 'function') fail('Unknown build type')
+
+  /* Call everyhin that needs to be called */
+  return call(tasks, props)
 }

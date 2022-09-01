@@ -4,8 +4,7 @@ import { assert } from '../assert'
 import { Files, FilesBuilder } from '../files'
 import { $p, ERROR, Logger, ReportLevel, ReportRecord, WARN } from '../log'
 import { AbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { install, PipeParameters } from '../pipe'
-import { Plug, RunContext } from '../types'
+import { install, PipeParameters, Plug, Context } from '../pipe'
 import { readFile } from '../utils/asyncfs'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
@@ -36,7 +35,7 @@ install('esbuild', class ESBuild implements Plug<Files> {
   constructor(...args: PipeParameters<'esbuild'>)
   constructor(private readonly _options: ESBuildOptions) {}
 
-  async pipe(files: Files, run: RunContext): Promise<Files> {
+  async pipe(files: Files, context: Context): Promise<Files> {
     const entryPoints = [ ...files ]
     const absWorkingDir = files.directory
 
@@ -46,7 +45,7 @@ install('esbuild', class ESBuild implements Plug<Files> {
       target: `node${process.versions['node'].split('.')[0]}`,
 
       /* The default format (if not specified in options) is from package.json */
-      format: this._options.format || await _moduleFormat(files.directory, run.log),
+      format: this._options.format || await _moduleFormat(files.directory, context.log),
 
       /* Output bese directory */
       outbase: absWorkingDir,
@@ -72,24 +71,24 @@ install('esbuild', class ESBuild implements Plug<Files> {
       const entryPoint = resolveAbsolutePath(absWorkingDir, entryPoints[0])
       options.outfile = outputFile
 
-      run.log.debug('Bundling', $p(entryPoint), 'into', $p(outputFile))
+      context.log.debug('Bundling', $p(entryPoint), 'into', $p(outputFile))
     } else {
       assert(options.outdir, 'Option "outdir" must be specified')
 
-      builder = Files.builder(run.resolve(options.outdir))
+      builder = Files.builder(context.resolve(options.outdir))
       options.outdir = builder.directory
 
       const message = options.bundle ? 'Bundling' : 'Transpiling'
-      run.log.debug(message, entryPoints.length, 'files to', $p(builder.directory))
+      context.log.debug(message, entryPoints.length, 'files to', $p(builder.directory))
     }
 
-    const report = run.log.report('ESBuild Report')
+    const report = context.log.report('ESBuild Report')
 
-    run.log.trace('Running ESBuild', options)
+    context.log.trace('Running ESBuild', options)
     let esbuild: undefined | (BuildResult & { metafile: Metafile })
     try {
       esbuild = await build({ ...options, metafile: true })
-      run.log.trace('ESBuild Results', esbuild)
+      context.log.trace('ESBuild Results', esbuild)
 
       report.add(...esbuild.warnings.map((m) => convertMessage(WARN, m, absWorkingDir)))
       report.add(...esbuild.errors.map((m) => convertMessage(ERROR, m, absWorkingDir)))
@@ -109,7 +108,7 @@ install('esbuild', class ESBuild implements Plug<Files> {
     }
 
     const result = builder.build()
-    run.log.info('ESBuild produced', result.length, 'files into', $p(result.directory))
+    context.log.info('ESBuild produced', result.length, 'files into', $p(result.directory))
     return result
   }
 })

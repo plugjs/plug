@@ -4,8 +4,7 @@ import { runAsync } from './async'
 import { Files } from './files'
 import { $gry, $p, LogOptions, logOptions } from './log'
 import { AbsolutePath, requireFilename, resolveFile } from './paths'
-import { RunImpl } from './run'
-import { Plug, Result, RunContext } from './types'
+import { Plug, PlugResult, Context } from './pipe'
 
 /** Fork data, from parent to child process */
 export interface ForkData {
@@ -39,26 +38,26 @@ export interface ForkResult {
  * PARENT PROCESS SIDE OF THE FORKING PLUG IMPLEMENTATION                     *
  * ========================================================================== */
 
-export abstract class ForkingPlug implements Plug<Result> {
+export abstract class ForkingPlug implements Plug<PlugResult> {
   constructor(
       private readonly _scriptFile: AbsolutePath,
       private readonly _arguments: any[],
   ) {}
 
-  pipe(files: Files, run: RunContext): Promise<Result> {
+  pipe(files: Files, context: Context): Promise<PlugResult> {
     const message: ForkData = {
       scriptFile: this._scriptFile,
       constructorArgs: this._arguments,
-      taskName: run.taskName,
-      buildFile: run.buildFile,
+      taskName: context.taskName,
+      buildFile: context.buildFile,
       filesDir: files.directory,
       filesList: [ ...files.absolutePaths() ],
-      logOpts: logOptions.fork(run.taskName),
+      logOpts: logOptions.fork(context.taskName),
     }
 
     /* Get _this_ filename to spawn */
     const script = requireFilename(__fileurl)
-    run.log.debug('About to fork plug from', $p(script))
+    context.log.debug('About to fork plug from', $p(script))
 
     /* Environment variables */
     const env = { ...process.env }
@@ -68,8 +67,8 @@ export abstract class ForkingPlug implements Plug<Result> {
       if (this._arguments[i] == null) continue // null or undefined... optionals
       if (typeof this._arguments[i] === 'object') {
         if (typeof this._arguments[i].coverageDir === 'string') {
-          const dir = env.NODE_V8_COVERAGE = run.resolve(this._arguments[i].coverageDir)
-          run.log.debug('Forked process will produce coverage in', $p(dir))
+          const dir = env.NODE_V8_COVERAGE = context.resolve(this._arguments[i].coverageDir)
+          context.log.debug('Forked process will produce coverage in', $p(dir))
         }
       }
     }
@@ -80,32 +79,32 @@ export abstract class ForkingPlug implements Plug<Result> {
       env,
     })
 
-    run.log.info('Running', $p(script), $gry(`(pid=${child.pid})`))
+    context.log.info('Running', $p(script), $gry(`(pid=${child.pid})`))
 
     /* Return a promise from the child process events */
     let done = false // this will be fixed up in "finally" below
-    return new Promise<Result>((resolve, reject) => {
+    return new Promise<PlugResult>((resolve, reject) => {
       let result: ForkResult | undefined = undefined
 
       child.on('error', (error) => {
-        run.log.error('Child process error', error)
+        context.log.error('Child process error', error)
         return done || reject(failure())
       })
 
       child.on('message', (message: ForkResult) => {
-        run.log.debug('Message from child process', message)
+        context.log.debug('Message from child process', message)
         result = message
       })
 
       child.on('exit', (code, signal) => {
         if (signal) {
-          run.log.error(`Child process exited with signal ${signal}`, $gry(`(pid=${child.pid})`))
+          context.log.error(`Child process exited with signal ${signal}`, $gry(`(pid=${child.pid})`))
           return done || reject(failure())
         } else if (code !== 0) {
-          run.log.error(`Child process exited with code ${code}`, $gry(`(pid=${child.pid})`))
+          context.log.error(`Child process exited with code ${code}`, $gry(`(pid=${child.pid})`))
           return done || reject(failure())
         } else if (! result) {
-          run.log.error('Child process exited with no result', $gry(`(pid=${child.pid})`))
+          context.log.error('Child process exited with no result', $gry(`(pid=${child.pid})`))
           return done || reject(failure())
         } else if (result.failed) {
           // definitely logged on the child side
@@ -122,16 +121,16 @@ export abstract class ForkingPlug implements Plug<Result> {
       try {
         const result = child.send(message, (error) => {
           if (error) {
-            run.log.error('Error sending message to child process (callback failure)', error)
+            context.log.error('Error sending message to child process (callback failure)', error)
             reject(failure())
           }
         })
         if (! result) {
-          run.log.error('Error sending message to child process (send returned false)')
+          context.log.error('Error sending message to child process (send returned false)')
           reject(failure())
         }
       } catch (error) {
-        run.log.error('Error sending message to child process (exception caught)', error)
+        context.log.error('Error sending message to child process (exception caught)', error)
         reject(failure())
       }
     }).finally(() => done = true)
@@ -173,12 +172,12 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
     /* Restore logging options first */
     Object.assign(logOptions, logOpts)
 
-    /* First of all, our Run */
-    const run = new RunImpl(buildFile, taskName)
-    run.log.debug('Message from parent process', message)
+    /* First of all, our plug context */
+    const context = new Context(buildFile, taskName)
+    context.log.debug('Message from parent process', message)
 
     /* Contextualize this run, and go! */
-    const result = runAsync(run, taskName, async () => {
+    const result = runAsync(context, taskName, async () => {
       /* Check that we have a proper script file name */
       assert(resolveFile(scriptFile), `Script file ${$p(scriptFile)} not found`)
       const script = await import(scriptFile)
@@ -192,11 +191,11 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
           `Script ${$p(scriptFile)} does not export a default constructor`)
 
       /* Create the Plug instance and our Files instance */
-      const plug = new Ctor(...constructorArgs) as Plug<Result>
+      const plug = new Ctor(...constructorArgs) as Plug<PlugResult>
       const files = Files.builder(filesDir).add(...filesList).build()
 
       /* Run and return the result */
-      return plug.pipe(files, run)
+      return plug.pipe(files, context)
     })
 
     /* The result promise generates a message back to the parent process */
@@ -208,7 +207,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
         process.send!(message, (err: Error) => err ? reject(err) : resolve())
       })
     }, (error) => {
-      run.log.error(error)
+      context.log.error(error)
       return new Promise<void>((resolve, reject) => {
         process.send!({ failed: true }, (err: Error) => err ? reject(err) : resolve())
       })
@@ -216,10 +215,10 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
 
     /* The promise generated by `process.send()` simply triggers process exit */
     promise.then(() => {
-      run.log.debug('Forked plug exiting')
+      context.log.debug('Forked plug exiting')
       process.exit(0)
     }, (error) => {
-      run.log.error('Error sending message back to parent process', error)
+      context.log.error('Error sending message back to parent process', error)
       process.exit(1)
     })
   })

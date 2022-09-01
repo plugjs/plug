@@ -15,8 +15,6 @@ const _details = '\u21B3' // downwards arrow with tip rightwards
 
 /** Symbol to inject `Logger` in reporter options */
 export const logSymbol = Symbol()
-/** Symbol to inject `Run` in reporter options */
-export const runSymbol = Symbol()
 
 export class PlugReporter extends RealMocha.reporters.Base {
   constructor(runner: RealMocha.Runner, options: RealMocha.MochaOptions) {

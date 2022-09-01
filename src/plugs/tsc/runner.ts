@@ -1,12 +1,11 @@
-import ts from 'typescript' // TypeScript does NOT support ESM modules
+import ts from 'typescript'; // TypeScript does NOT support ESM modules
 
 import { failure } from '../../assert'
 import { Files } from '../../files'
 import { $p, log } from '../../log'
 import { AbsolutePath, resolveFile } from '../../paths'
-import { PipeParameters } from '../../pipe'
-import { Plug, RunContext } from '../../types'
-import { parseOptions, ParseOptions } from '../../utils/options'
+import { Context, PipeParameters, Plug } from '../../pipe'
+import { parseOptions } from '../../utils/options'
 import { TypeScriptHost } from './compiler'
 import { getCompilerOptions } from './options'
 import { updateReport } from './report'
@@ -19,16 +18,15 @@ export default class Tsc implements Plug<Files> {
   private readonly _tsconfig?: string
   private readonly _options: ts.CompilerOptions
 
-  constructor(...args: PipeParameters<'tsc'>)
-  constructor(...args: ParseOptions<ts.CompilerOptions>) {
+  constructor(...args: PipeParameters<'tsc'>) {
     const { params: [ tsconfig ], options } = parseOptions(args, {})
     this._tsconfig = tsconfig
     this._options = options
   }
 
-  async pipe(files: Files, run: RunContext): Promise<Files> {
-    const baseDir = run.resolve('.') // "this" directory, base of all relative paths
-    const report = run.log.report('TypeScript Report') // report used throughout
+  async pipe(files: Files, context: Context): Promise<Files> {
+    const baseDir = context.resolve('.') // "this" directory, base of all relative paths
+    const report = context.log.report('TypeScript Report') // report used throughout
     const overrides = { ...this._options } // clone our options
 
     /*
@@ -36,13 +34,13 @@ export default class Tsc implements Plug<Files> {
      * alongside the sources, otherwise checked in the current directory.
      */
     const sourcesConfig = resolveFile(files.directory, 'tsconfig.json')
-    const tsconfig = this._tsconfig ? run.resolve(this._tsconfig) :
-      sourcesConfig || resolveFile(run.resolve('tsconfig.json'))
+    const tsconfig = this._tsconfig ? context.resolve(this._tsconfig) :
+      sourcesConfig || resolveFile(context.resolve('tsconfig.json'))
 
     /* Root directory must always exist */
     let rootDir: AbsolutePath
     if (overrides.rootDir) {
-      rootDir = overrides.rootDir = run.resolve(overrides.rootDir)
+      rootDir = overrides.rootDir = context.resolve(overrides.rootDir)
     } else {
       rootDir = overrides.rootDir = files.directory
     }
@@ -50,24 +48,24 @@ export default class Tsc implements Plug<Files> {
     /* Output directory _also_ must always exist */
     let outDir: AbsolutePath
     if (overrides.outDir) {
-      outDir = overrides.outDir = run.resolve(overrides.outDir)
+      outDir = overrides.outDir = context.resolve(overrides.outDir)
     } else {
       outDir = overrides.outDir = rootDir // default to the root directory
     }
 
     /* All other root paths */
     if (overrides.rootDirs) {
-      overrides.rootDirs = overrides.rootDirs.map((dir) => run.resolve(dir))
+      overrides.rootDirs = overrides.rootDirs.map((dir) => context.resolve(dir))
     }
 
     /* The baseURL is resolved, as well */
-    if (overrides.baseUrl) overrides.baseUrl = run.resolve(overrides.baseUrl)
+    if (overrides.baseUrl) overrides.baseUrl = context.resolve(overrides.baseUrl)
 
     /* We can now get our compiler options, and check any and all overrides */
     const { errors, options } = await getCompilerOptions(
         tsconfig, // resolved tsconfig.json from constructor, might be undefined
         overrides, // overrides from constructor, might be an empty object
-        run.buildFile, // the build file where the overrides were specified,
+        context.buildFile, // the build file where the overrides were specified,
         baseDir) // base dir where to resolve overrides
 
     /* Update report and fail on errors */
@@ -97,7 +95,7 @@ export default class Tsc implements Plug<Files> {
       promises.push(builder.write(fileName, code).then((file) => {
         log.trace('Written', $p(file))
       }).catch((error) => {
-        run.log.error('Error writing to', fileName, error)
+        context.log.error('Error writing to', fileName, error)
         throw failure() // no more logs!
       }))
     })

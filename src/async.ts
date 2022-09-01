@@ -1,16 +1,16 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { RunContext } from './types'
+import { Context } from './pipe'
 
 /* ========================================================================== *
  * EXPORTED                                                                   *
  * ========================================================================== */
 
 /**
- * Run the specified `callback` associating the specified {@link RunContext} and task
+ * Run the specified `callback` associating the specified {@link Context} and task
  * name with the current asynchronous invocation context.
  */
 export function runAsync<T>(
-    context: RunContext,
+    context: Context,
     taskName: string,
     callback: () => Promise<T>,
 ): Promise<T> {
@@ -25,10 +25,10 @@ export function runAsync<T>(
 }
 
 /**
- * Returns the {@link RunContext} associated with the current asynchronous invocation
+ * Returns the {@link Context} associated with the current asynchronous invocation
  * context or `undefined`.
  */
-export function runContext(): RunContext | undefined {
+export function runContext(): Context | undefined {
   return storage.getStore()
 }
 
@@ -43,5 +43,5 @@ export function runningTasks(): string[] {
  * INTERNALS                                                                  *
  * ========================================================================== */
 
-const storage = new AsyncLocalStorage<RunContext>()
+const storage = new AsyncLocalStorage<Context>()
 const tasks = new Set<string>

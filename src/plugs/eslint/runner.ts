@@ -3,8 +3,7 @@ import { assert, failure } from '../../assert'
 import { Files } from '../../files'
 import { $p, ERROR, NOTICE, WARN } from '../../log'
 import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from '../../paths'
-import { PipeParameters } from '../../pipe'
-import { Plug, RunContext } from '../../types'
+import { PipeParameters, Plug, Context } from '../../pipe'
 import { readFile } from '../../utils/asyncfs'
 import { ESLintOptions } from '../eslint'
 
@@ -17,13 +16,13 @@ export default class ESLint implements Plug<void> {
     this._options = typeof arg === 'string' ? { configFile: arg } : arg
   }
 
-  async pipe(files: Files, run: RunContext): Promise<void> {
+  async pipe(files: Files, context: Context): Promise<void> {
     const { directory, configFile } = this._options
 
-    const cwd = directory ? run.resolve(directory) : getCurrentWorkingDirectory()
+    const cwd = directory ? context.resolve(directory) : getCurrentWorkingDirectory()
     assert(resolveDirectory(cwd), `ESLint directory ${$p(cwd)} does not exist`)
 
-    const overrideConfigFile = configFile ? run.resolve(configFile) : undefined
+    const overrideConfigFile = configFile ? context.resolve(configFile) : undefined
     if (overrideConfigFile) {
       assert(resolveFile(overrideConfigFile), `ESLint configuration ${$p(overrideConfigFile)} does not exist`)
     }
@@ -45,7 +44,7 @@ export default class ESLint implements Plug<void> {
     const summary = settlements.reduce((summary, settlement, i) => {
       /* Promise rejected, meaining hard failure */
       if (settlement.status === 'rejected') {
-        run.log.error('Error linting', $p(paths[i]), settlement.reason)
+        context.log.error('Error linting', $p(paths[i]), settlement.reason)
         summary.failures ++
         return summary
       }
@@ -63,7 +62,7 @@ export default class ESLint implements Plug<void> {
     if (failures) throw failure() // already logged above
 
     /* Create our report */
-    const report = run.log.report('ESLint Report')
+    const report = context.log.report('ESLint Report')
 
     /* Convert ESLint results into our report records */
     for (const result of results) {

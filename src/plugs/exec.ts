@@ -7,9 +7,8 @@ import { runContext } from '../async'
 import { Files } from '../files'
 import { $p, logOptions } from '../log'
 import { AbsolutePath, getCurrentWorkingDirectory, resolveDirectory } from '../paths'
-import { install, PipeParameters } from '../pipe'
-import { Plug, RunContext } from '../types'
-import { parseOptions, ParseOptions } from '../utils/options'
+import { Context, install, PipeParameters, Plug } from '../pipe'
+import { parseOptions } from '../utils/options'
 
 /** Options for executing scripts */
 export interface ExecOptions {
@@ -91,15 +90,15 @@ install('exec', class Exec implements Plug<Files> {
   private readonly _args: readonly string[]
   private readonly _options: ExecOptions
 
-  constructor(...args: PipeParameters<'exec'>)
-  constructor(cmd: string, ...args: ParseOptions<ExecOptions>) {
+  constructor(...args: PipeParameters<'exec'>) {
     const { params, options } = parseOptions(args, {})
-    this._cmd = cmd
-    this._args = params
+    const [ _cmd, ..._args ] = params
+    this._cmd = _cmd
+    this._args = _args
     this._options = options
   }
 
-  async pipe(files: Files, run: RunContext): Promise<Files> {
+  async pipe(files: Files, context: Context): Promise<Files> {
     const { relativePaths = true, ...options } = this._options
 
     if (! options.cwd) options.cwd = files.directory
@@ -111,7 +110,7 @@ install('exec', class Exec implements Plug<Files> {
     if (options.shell) params.forEach((s, i, a) => a[i] = JSON.stringify(s))
 
     // Run our child
-    await spawnChild(this._cmd, [ ...this._args, ...params ], options, run)
+    await spawnChild(this._cmd, [ ...this._args, ...params ], options, context)
 
     // Return our files
     return files
@@ -129,25 +128,7 @@ install('exec', class Exec implements Plug<Files> {
  * export default build({
  *   async runme() {
  *     await exec('ls', '-la', '/')
- *   },
- * })
- * ```
- *
- * @param cmd The command to execute
- * @param args Any additional argument for the command to execute
- */
-export function exec(cmd: string, ...args: string[]): Promise<void>
-
-/**
- * Execute a command and await for its result from within a task.
- *
- * For example:
- *
- * ```
- * import { exec } from '@plugjs/plugjs'
- *
- * export default build({
- *   async runme() {
+ *     // or similarly letting the shell interpret the command
  *     await exec('ls -la /', { shell: true })
  *   },
  * })
@@ -157,15 +138,17 @@ export function exec(cmd: string, ...args: string[]): Promise<void>
  * @param args Any additional argument for the command to execute
  * @param options Extra {@link ExecOptions | options} for process execution
  */
-export function exec(cmd: string, ...extra: [ ...args: string[], options: ExecOptions ]): Promise<void>
+export function exec(
+    cmd: string,
+    ...args:
+    | [ ...args: string[] ]
+    | [ ...args: string[], options: ExecOptions ]
+): Promise<void> {
+  const context = runContext()
+  assert(context, 'Unable to execute commands outside a running task')
 
-/* Overloads implementation */
-export function exec(cmd: string, ...args: ParseOptions<ExecOptions>): Promise<void> {
-  const run = runContext()
-  assert(run, 'Unable to execute commands outside a running task')
-
-  const { params, options } = parseOptions(args, {})
-  return spawnChild(cmd, params, options, run)
+  const { params, options } = parseOptions(args)
+  return spawnChild(cmd, params, options, context)
 }
 
 
@@ -177,7 +160,7 @@ async function spawnChild(
     cmd: string,
     args: readonly string[],
     options: ExecOptions = {},
-    run: RunContext,
+    context: Context,
 ): Promise<void> {
   const {
     env = {}, // default empty environment
@@ -186,18 +169,18 @@ async function spawnChild(
     ...extraOptions
   } = options
 
-  const childCwd = cwd ? run.resolve(cwd) : getCurrentWorkingDirectory()
+  const childCwd = cwd ? context.resolve(cwd) : getCurrentWorkingDirectory()
   assert(resolveDirectory(childCwd), `Current working directory ${$p(childCwd)} does not exist`)
 
   // Figure out the PATH environment variable
   const childPaths: AbsolutePath[] = []
 
   // The `.../node_modules/.bin` path relative to the current working dir */
-  const baseNodePath = run.resolve('@node_modules', '.bin')
+  const baseNodePath = context.resolve('@node_modules', '.bin')
   if (resolveDirectory(baseNodePath)) childPaths.push(baseNodePath)
 
   // The `.../node_bodules/.bin` path relative to the buildDir */
-  const buildNodePath = run.resolve('./node_modules', '.bin')
+  const buildNodePath = context.resolve('./node_modules', '.bin')
   if (resolveDirectory(buildNodePath)) childPaths.push(buildNodePath)
 
   // Any other paths either from `process.env` or `env` (which overrides it)
@@ -206,7 +189,7 @@ async function spawnChild(
 
   // Build our environment variables record
   const PATH = childPaths.join(path.delimiter)
-  const __LOG_OPTIONS = JSON.stringify(logOptions.fork(run.taskName))
+  const __LOG_OPTIONS = JSON.stringify(logOptions.fork(context.taskName))
   const childEnv = { ...process.env, ...env, PATH, __LOG_OPTIONS }
 
   // Prepare the options for calling `spawn`
@@ -219,18 +202,18 @@ async function spawnChild(
   }
 
   // Spawn our subprocess and monitor its stdout/stderr
-  run.log.info('Executing', [ cmd, ...args ])
-  run.log.info('Execution options', childOptions)
+  context.log.info('Executing', [ cmd, ...args ])
+  context.log.info('Execution options', childOptions)
   const child = spawn(cmd, args, childOptions)
 
   if (child.stdout) {
     const out = reaadline.createInterface(child.stdout)
-    out.on('line', (line) => line ? run.log.notice(line) : run.log.notice('\u00a0'))
+    out.on('line', (line) => line ? context.log.notice(line) : context.log.notice('\u00a0'))
   }
 
   if (child.stderr) {
     const err = reaadline.createInterface(child.stderr)
-    err.on('line', (line) => line ? run.log.warn(line) : run.log.warn('\u00a0'))
+    err.on('line', (line) => line ? context.log.warn(line) : context.log.warn('\u00a0'))
   }
 
   // Return our promise from the spawn events

@@ -1,15 +1,81 @@
 import type { Files } from './files'
-import type { AbsolutePath } from './paths'
-import type { Plug, PlugFunction, Result } from './types'
+import { getLogger, Logger } from './log'
+import { AbsolutePath, getAbsoluteParent, getCurrentWorkingDirectory, resolveAbsolutePath } from './paths'
 
 import { ForkingPlug } from './fork'
+import { sep } from 'path'
+
+/* ========================================================================== *
+ * PLUGS                                                                      *
+ * ========================================================================== */
+
+/** A convenience type indicating what can be returned by a {@link Plug}. */
+export type PlugResult = Files | undefined | void
+
+/**
+ * The {@link Plug} interface describes _build plugin_.
+ *
+ * A {@link Plug} receives a {@link Files} instance in its input (for example
+ * a list of _source `.ts` files_) and optionally produces a possibly different
+ * list (for example the _compiled `.js` files_).
+ */
+export interface Plug<T extends PlugResult> {
+  pipe(files: Files, context: Context): T | Promise<T>
+}
+
+/** A type identifying a {@link Plug} as a `function` */
+export type PlugFunction<T extends PlugResult> = Plug<T>['pipe']
+
+/* ========================================================================== *
+ * PLUG CONTEXT                                                               *
+ * ========================================================================== */
+
+/**
+ * The {@link Context} class defines the context in which a {@link Plug}
+ * is invoked.
+ */
+export class Context {
+  /** The directory of the file where the task was defined (convenience). */
+  public readonly buildDir: AbsolutePath
+  /** The {@link Logger} associated with this instance. */
+  public readonly log: Logger
+
+  constructor(
+      /** The absolute file name where the task was defined. */
+      public readonly buildFile: AbsolutePath,
+      /** The _name_ of the task associated with this {@link Context}. */
+      public readonly taskName: string,
+  ) {
+    this.buildDir = getAbsoluteParent(buildFile)
+    this.log = getLogger(taskName)
+  }
+
+  resolve(path: string, ...paths: string[]): AbsolutePath {
+    // Paths starting with "@" are relative to the build file directory
+    if (path && path.startsWith('@')) {
+      // We can have paths like "@/../foo/bar" or "@../foo/bar"... both are ok
+      const components = path.substring(1).split(sep).filter((s) => !!s)
+      return resolveAbsolutePath(this.buildDir, ...components, ...paths)
+    }
+
+    // No path? Resolve to the CWD!
+    if (! path) return getCurrentWorkingDirectory()
+
+    // For all the rest, normal resolution!
+    return resolveAbsolutePath(getCurrentWorkingDirectory(), path, ...paths)
+  }
+}
+
+/* ========================================================================== *
+ * PIPES                                                                      *
+ * ========================================================================== */
 
 /**
  * A class that will be extended by {@link Pipe} where {@link install} will
  * add prototype properties from installed {@link Plug}s
  */
 abstract class PipeProto {
-  abstract plug(plug: Plug<Result | void> | PlugFunction<Result | void>): Pipe | Call
+  abstract plug(plug: Plug<PlugResult>): Pipe | Promise<undefined>
 }
 
 /**
@@ -19,14 +85,10 @@ abstract class PipeProto {
 export abstract class Pipe extends PipeProto {
   abstract plug(plug: Plug<Files>): Pipe
   abstract plug(plug: PlugFunction<Files>): Pipe
-  abstract plug(plug: Plug<void | undefined>): Call
-  abstract plug(plug: PlugFunction<void | undefined>): Call
+  abstract plug(plug: Plug<void | undefined>): Promise<undefined>
+  abstract plug(plug: PlugFunction<void | undefined>): Promise<undefined>
 
   abstract run(): Promise<Files>
-}
-
-export interface Call {
-  run(): Promise<undefined>
 }
 
 /* ========================================================================== *
@@ -48,11 +110,11 @@ type PipeOverloads<Name extends PlugName> =
     (...args: infer A3): infer R3
     (...args: infer A4): infer R4
   } ?
-    | (R0 extends (Pipe | Call) ? { args: A0, ret: R0 } : never)
-    | (R1 extends (Pipe | Call) ? { args: A1, ret: R1 } : never)
-    | (R2 extends (Pipe | Call) ? { args: A2, ret: R2 } : never)
-    | (R3 extends (Pipe | Call) ? { args: A3, ret: R3 } : never)
-    | (R4 extends (Pipe | Call) ? { args: A4, ret: R4 } : never)
+    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never)
+    | (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never)
+    | (R2 extends (Pipe | Promise<undefined>) ? { args: A2, ret: R2 } : never)
+    | (R3 extends (Pipe | Promise<undefined>) ? { args: A3, ret: R3 } : never)
+    | (R4 extends (Pipe | Promise<undefined>) ? { args: A4, ret: R4 } : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
@@ -60,31 +122,31 @@ type PipeOverloads<Name extends PlugName> =
     (...args: infer A2): infer R2
     (...args: infer A3): infer R3
   } ?
-    | (R0 extends (Pipe | Call) ? { args: A0, ret: R0 } : never)
-    | (R1 extends (Pipe | Call) ? { args: A1, ret: R1 } : never)
-    | (R2 extends (Pipe | Call) ? { args: A2, ret: R2 } : never)
-    | (R3 extends (Pipe | Call) ? { args: A3, ret: R3 } : never)
+    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never)
+    | (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never)
+    | (R2 extends (Pipe | Promise<undefined>) ? { args: A2, ret: R2 } : never)
+    | (R3 extends (Pipe | Promise<undefined>) ? { args: A3, ret: R3 } : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
     (...args: infer A1): infer R1
     (...args: infer A2): infer R2
   } ?
-    | (R0 extends (Pipe | Call) ? { args: A0, ret: R0 } : never)
-    | (R1 extends (Pipe | Call) ? { args: A1, ret: R1 } : never)
-    | (R2 extends (Pipe | Call) ? { args: A2, ret: R2 } : never)
+    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never)
+    | (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never)
+    | (R2 extends (Pipe | Promise<undefined>) ? { args: A2, ret: R2 } : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
     (...args: infer A1): infer R1
   } ?
-    | (R0 extends (Pipe | Call) ? { args: A0, ret: R0 } : never)
-    | (R1 extends (Pipe | Call) ? { args: A1, ret: R1 } : never)
+    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never)
+    | (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never)
   :
   Pipe[Name] extends {
     (...args: infer A0): infer R0
   } ?
-    | (R0 extends (Pipe | Call) ? { args: A0, ret: R0 } : never)
+    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never)
   : never
 
 /** The parameters of the plug extension with the given name */
@@ -97,9 +159,9 @@ type PipeResult<Name extends PlugName> = PipeOverloads<Name>['ret']
 type PlugConstructor<Name extends PlugName> =
   PipeResult<Name> extends Pipe ?
     new (...args: PipeParameters<Name>) => Plug<Files> :
-  PipeResult<Name> extends Call ?
+  PipeResult<Name> extends Promise<undefined> ?
     new (...args: PipeParameters<Name>) => Plug<void | undefined> :
-  PipeResult<Name> extends (Pipe | Call) ?
+  PipeResult<Name> extends (Pipe | Promise<undefined>) ?
     new (...args: PipeParameters<Name>) => Plug<Files | void | undefined> :
   never
 
@@ -137,7 +199,7 @@ export function install<
   Ctor extends PlugConstructor<Name>,
 >(name: Name, ctor: Ctor): void {
   /* The function plugging the newly constructed plug in a pipe */
-  function plug(this: PipeProto, ...args: PipeParameters<Name>): Pipe | Call {
+  function plug(this: PipeProto, ...args: PipeParameters<Name>): Pipe | Promise<undefined> {
     // eslint-disable-next-line new-cap
     return this.plug(new ctor(...args))
   }

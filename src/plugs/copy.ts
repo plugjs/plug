@@ -2,8 +2,7 @@ import { assert } from '../assert'
 import { Files } from '../files'
 import { $p } from '../log'
 import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { install, PipeParameters } from '../pipe'
-import { Plug, RunContext } from '../types'
+import { install, PipeParameters, Plug, Context } from '../pipe'
 import { chmod, copyFile, fsConstants, mkdir } from '../utils/asyncfs'
 
 /** Options for copying files */
@@ -48,7 +47,7 @@ install('copy', class Copy implements Plug<Files> {
       private readonly _options: CopyOptions = {},
   ) {}
 
-  async pipe(files: Files, run: RunContext): Promise<Files> {
+  async pipe(files: Files, context: Context): Promise<Files> {
     /* Destructure our options with some defaults and compute write flags */
     const { mode, dirMode, overwrite, rename = (s): string => s } = this._options
     const flags = overwrite ? fsConstants.COPYFILE_EXCL : 0
@@ -56,7 +55,7 @@ install('copy', class Copy implements Plug<Files> {
     const fmode = parseMode(mode)
 
     /* Our files builder for all written files */
-    const directory = run.resolve(this._directory)
+    const directory = context.resolve(this._directory)
     const builder = Files.builder(directory)
 
     /* Iterate through all the mappings of the source files */
@@ -67,7 +66,7 @@ install('copy', class Copy implements Plug<Files> {
 
       /* We never copy a file onto itself, but not fail either */
       if (target === absolute) {
-        run.log.warn('Cowardly refusing to copy same file', $p(absolute))
+        context.log.warn('Cowardly refusing to copy same file', $p(absolute))
         continue
       }
 
@@ -79,19 +78,19 @@ install('copy', class Copy implements Plug<Files> {
       if (firstParent && (dmode !== undefined)) {
         assertAbsolutePath(firstParent)
         for (let dir = directory; ; dir = getAbsoluteParent(dir)) {
-          run.log.trace(`Setting mode ${stringifyMode(dmode)} for directory`, $p(dir))
+          context.log.trace(`Setting mode ${stringifyMode(dmode)} for directory`, $p(dir))
           await chmod(dir, dmode)
           if (dir === firstParent) break
         }
       }
 
       /* Actually _copy_ the file */
-      run.log.trace(`Copying "${$p(absolute)}" to "${$p(target)}"`)
+      context.log.trace(`Copying "${$p(absolute)}" to "${$p(target)}"`)
       await copyFile(absolute, target, flags)
 
       /* Set the mode, if we need to */
       if (fmode !== undefined) {
-        run.log.trace(`Setting mode ${stringifyMode(fmode)} for file`, $p(target))
+        context.log.trace(`Setting mode ${stringifyMode(fmode)} for file`, $p(target))
         await chmod(target, fmode)
       }
 
@@ -100,7 +99,7 @@ install('copy', class Copy implements Plug<Files> {
     }
 
     const result = builder.build()
-    run.log.info('Copied', result.length, 'files to', $p(builder.directory))
+    context.log.info('Copied', result.length, 'files to', $p(builder.directory))
     return result
   }
 })

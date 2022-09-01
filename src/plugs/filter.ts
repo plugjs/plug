@@ -1,9 +1,8 @@
 import { Files } from '../files'
 import { resolveRelativeChildPath } from '../paths'
-import { install, PipeParameters } from '../pipe'
-import { Plug, RunContext } from '../types'
+import { Context, install, PipeParameters, Plug } from '../pipe'
 import { match, MatchOptions } from '../utils/match'
-import { ParseOptions, parseOptions } from '../utils/options'
+import { parseOptions } from '../utils/options'
 
 /** Options for filtering {@link Files}. */
 export interface FilterOptions extends MatchOptions {
@@ -44,17 +43,16 @@ install('filter', class Filter implements Plug<Files> {
   private readonly _globs: readonly [ string, ...readonly string[] ]
   private readonly _options: FilterOptions
 
-  constructor(...args: PipeParameters<'filter'>)
-  constructor(glob: string, ...args: ParseOptions<FilterOptions>) {
+  constructor(...args: PipeParameters<'filter'>) {
     const { params, options } = parseOptions(args, {})
-    this._globs = [ glob, ...params ]
     this._options = options
+    this._globs = params
   }
 
-  pipe(files: Files, run: RunContext): Files {
+  pipe(files: Files, context: Context): Files {
     const { directory, ...options } = this._options
 
-    const dir = directory ? run.resolve(directory) : files.directory
+    const dir = directory ? context.resolve(directory) : files.directory
     const builder = Files.builder(dir)
     const matcher = match(this._globs, options)
 
@@ -65,7 +63,7 @@ install('filter', class Filter implements Plug<Files> {
 
     const result = builder.build()
     const discarded = files.length - result.length
-    run.log.debug('Filtered', result.length, 'files (discarded', discarded, 'files)')
+    context.log.debug('Filtered', result.length, 'files (discarded', discarded, 'files)')
 
     return result
   }

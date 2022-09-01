@@ -1,4 +1,4 @@
-import { $t, build, fixExtensions, log, Pipe, rmrf } from './src/index.js'
+import { $t, build, find, fixExtensions, log, merge, Pipe, rmrf } from './src/index.js'
 
 /** When `true` the coverage dir comes from the environment */
 const environmentCoverage = !! process.env.NODE_V8_COVERAGE
@@ -7,11 +7,11 @@ const coverageDir = process.env.NODE_V8_COVERAGE || '.coverage-data'
 
 export default build({
   find_sources(): Pipe {
-    return this.find('**/*.ts', { directory: 'src' })
+    return find('**/*.ts', { directory: 'src' })
   },
 
   find_tests(): Pipe {
-    return this.find('**/*.ts', { directory: 'test' })
+    return find('**/*.ts', { directory: 'test' })
   },
 
   /* ======================================================================== *
@@ -25,7 +25,7 @@ export default build({
       await rmrf(coverageDir)
     }
 
-    this.pipe('find_tests').mocha({ coverageDir })
+    await this.find_tests().mocha({ coverageDir })
   },
 
   /* ======================================================================== *
@@ -34,7 +34,7 @@ export default build({
 
   async coverage() {
     try {
-      await this.pipe('find_sources').coverage(coverageDir, {
+      await this.find_sources().coverage(coverageDir, {
         reportDir: 'coverage',
       }).run()
     } catch (error) {
@@ -43,11 +43,14 @@ export default build({
   },
 
   async eslint() {
-    await this.merge('find_sources', 'find_tests').eslint()
+    await merge(this.find_sources(), this.find_tests()).eslint()
   },
 
   async checks() {
-    await this.parallel('coverage', 'eslint')
+    await Promise.all([
+      this.coverage(),
+      this.eslint(),
+    ])
   },
 
   /* ======================================================================== *
@@ -55,7 +58,7 @@ export default build({
    * ======================================================================== */
 
   transpile_cjs(): Pipe {
-    return this.pipe('find_sources').esbuild({
+    return this.find_sources().esbuild({
       outdir: 'dist',
       format: 'cjs',
       outExtension: { '.js': '.cjs' },
@@ -69,7 +72,7 @@ export default build({
   },
 
   transpile_mjs(): Pipe {
-    return this.pipe('find_sources').esbuild({
+    return this.find_sources().esbuild({
       outdir: 'dist',
       format: 'esm',
       outExtension: { '.js': '.mjs' },
@@ -83,15 +86,15 @@ export default build({
   },
 
   copy_resources(): Pipe {
-    return this.find('!**/*.ts', { directory: 'src' })
+    return find('!**/*.ts', { directory: 'src' })
         .copy('dist')
   },
 
   transpile_types(): Pipe {
-    const extra = this.find('**/*.d.ts', { directory: 'extra' })
-    const sources = this.pipe('find_sources')
+    const extra = find('**/*.d.ts', { directory: 'extra' })
+    const sources = this.find_sources()
 
-    return this.merge(extra, sources).tsc('tsconfig.json', {
+    return merge(extra, sources).tsc('tsconfig.json', {
       rootDir: 'src', // root this in "src" (filters out "extra/...")
       noEmit: false,
       declaration: true,
@@ -103,12 +106,12 @@ export default build({
   async transpile() {
     await rmrf('dist')
 
-    await this.parallel(
-        'copy_resources',
-        'transpile_cjs',
-        'transpile_mjs',
-        'transpile_types',
-    )
+    await Promise.all([
+      this.copy_resources(),
+      this.transpile_cjs(),
+      this.transpile_mjs(),
+      this.transpile_types(),
+    ])
   },
 
   /* ======================================================================== *
@@ -116,11 +119,11 @@ export default build({
    * ======================================================================== */
 
   async default() {
-    await this.run('transpile')
+    await this.transpile()
     try {
-      await this.run('test')
+      await this.test()
     } finally {
-      await this.run('checks')
+      await this.checks()
     }
   },
 })

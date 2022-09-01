@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import type { CompiledBuild, BuildFailure } from '../src/index.js'
+import type { Build, BuildFailure } from '../src/index.js'
 
 import _yargs from 'yargs-parser'
 
@@ -23,7 +23,8 @@ async function main(options: CommandLineOptions): Promise<void> {
   if (tasks.length === 0) tasks.push('default')
 
   let build = await import(buildFile)
-  while (build && (build[buildMarker] !== buildMarker)) {
+  while (build) {
+    if (isBuild(build)) break
     build = build.default
   }
 
@@ -42,7 +43,7 @@ async function main(options: CommandLineOptions): Promise<void> {
   if (listOnly) {
     console.log('Build file tasks\n- ' + Object.keys(build).sort().join('\n- '))
   } else {
-    await build(...tasks)
+    await build[buildMarker](tasks)
   }
 }
 
@@ -150,8 +151,10 @@ const buildMarker = Symbol.for('plugjs:isBuild')
 const buildFailure = Symbol.for('plugjs:buildFailure')
 
 /** Check if the specified build is actually a {@link Build} */
-function isBuild(build: any): build is CompiledBuild<Record<string, any>> {
-  return build && build[buildMarker] === buildMarker
+function isBuild(build: any): build is Build<Record<string, any>> & {
+  [buildMarker]: (tasks: string[], props?: Record<string, string | undefined>) => Promise<void>
+} {
+  return build && typeof build[buildMarker] === 'function'
 }
 
 /** Check if the specified argument is a {@link BuildFailure} */
