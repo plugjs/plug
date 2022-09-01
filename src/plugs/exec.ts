@@ -3,12 +3,12 @@ import reaadline from 'node:readline'
 
 import { spawn, SpawnOptions } from 'node:child_process'
 import { assert } from '../assert'
-import { runContext } from '../async'
 import { Files } from '../files'
 import { $p, logOptions } from '../log'
 import { AbsolutePath, getCurrentWorkingDirectory, resolveDirectory } from '../paths'
 import { Context, install, PipeParameters, Plug } from '../pipe'
 import { parseOptions } from '../utils/options'
+import { requireContext } from '../async'
 
 /** Options for executing scripts */
 export interface ExecOptions {
@@ -144,11 +144,8 @@ export function exec(
     | [ ...args: string[] ]
     | [ ...args: string[], options: ExecOptions ]
 ): Promise<void> {
-  const context = runContext()
-  assert(context, 'Unable to execute commands outside a running task')
-
   const { params, options } = parseOptions(args)
-  return spawnChild(cmd, params, options, context)
+  return spawnChild(cmd, params, options, requireContext())
 }
 
 

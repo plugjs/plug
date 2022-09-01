@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
+import { assert } from './assert'
 import { Context } from './pipe'
 
 /* ========================================================================== *
@@ -25,11 +26,21 @@ export function runAsync<T>(
 }
 
 /**
- * Returns the {@link Context} associated with the current asynchronous invocation
- * context or `undefined`.
+ * Returns the {@link Context} associated with the current asynchronous
+ * invocation context or `undefined`.
  */
-export function runContext(): Context | undefined {
+export function currentContext(): Context | undefined {
   return storage.getStore()
+}
+
+/**
+ * Returns the {@link Context} associated with the current asynchronous
+ * invocation context and fail if none was found.
+ */
+export function requireContext(): Context {
+  const context = storage.getStore()
+  assert(context, 'Unable to retrieve current context')
+  return context
 }
 
 /**

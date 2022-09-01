@@ -1,5 +1,5 @@
 import { assert } from './assert'
-import { runContext } from './async'
+import { requireContext } from './async'
 import { Files } from './files'
 import { $p, log } from './log'
 import { AbsolutePath, commonPath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
@@ -30,9 +30,7 @@ class PipeImpl extends Pipe implements Pipe {
   }
 
   async run(): Promise<Files> {
-    const context = runContext()
-    assert(context, 'Unable to determine current Run')
-    return this._start(context)
+    return this._start(requireContext())
   }
 }
 
@@ -92,8 +90,7 @@ export function merge(...pipes: Pipe[]): Pipe {
  * Recursively remove the specified directory _**(use with care)**_.
  */
 export async function rmrf(directory: string): Promise<void> {
-  const context = runContext()
-  assert(context, 'Unable to determine current Run')
+  const context = requireContext()
   const dir = context.resolve(directory)
 
   assert(dir !== getCurrentWorkingDirectory(),
@@ -113,18 +110,12 @@ export async function rmrf(directory: string): Promise<void> {
 
 /** Return an absolute path of the file if it exist on disk */
 export function isFile(...paths: [ string, ...string[] ]): AbsolutePath | undefined {
-  const context = runContext()
-  assert(context, 'Unable to determine current Run')
-  const path = context.resolve(...paths)
-
+  const path = requireContext().resolve(...paths)
   return resolveFile(path)
 }
 
 /** Return an absolute path of the file if it exist on disk */
 export function isDirectory(...paths: [ string, ...string[] ]): AbsolutePath | undefined {
-  const context = runContext()
-  assert(context, 'Unable to determine current Run')
-  const path = context.resolve(...paths)
-
+  const path = requireContext().resolve(...paths)
   return resolveDirectory(path)
 }

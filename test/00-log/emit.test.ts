@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import assert from 'node:assert'
 import { Writable } from 'node:stream'
-import { runContext } from '../../src/async.js'
+import { currentContext } from '../../src/async.js'
 import { $gry } from '../../src/log/colors.js'
 import { emitColor, emitPlain } from '../../src/log/emit.js'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from '../../src/log/levels.js'
@@ -10,7 +10,7 @@ import { zapSpinner } from '../../src/log/spinner.js'
 
 describe('Emit', () => {
   it('should log some messages', () => {
-    const run = runContext() // this might fail if not just-in-time transpiled
+    const run = currentContext() // this might fail if not just-in-time transpiled
     assert(run)
 
     const _level = run.log.level
@@ -29,7 +29,7 @@ describe('Emit', () => {
   })
 
   it('should emit the correct values for colorized output', () => {
-    const run = runContext() // this might fail if not just-in-time transpiled
+    const run = currentContext() // this might fail if not just-in-time transpiled
     assert(run)
 
     let string = ''
@@ -80,7 +80,7 @@ describe('Emit', () => {
 
 
   it('should emit the correct values for plain output', () => {
-    const run = runContext() // this might fail if not just-in-time transpiled
+    const run = currentContext() // this might fail if not just-in-time transpiled
     assert(run)
 
     let string = ''
