@@ -2,10 +2,11 @@ import { $t, build, find, fixExtensions, log, merge, Pipe, rmrf } from './src/in
 
 /** When `true` the coverage dir comes from the environment */
 const environmentCoverage = !! process.env.NODE_V8_COVERAGE
-/** The coverage data dir, might be supplied as an env variable  */
-const coverageDir = process.env.NODE_V8_COVERAGE || '.coverage-data'
 
 export default build({
+  /** The coverage data dir, might be supplied as an env variable  */
+  coverageDir: process.env.NODE_V8_COVERAGE || '.coverage-data',
+
   find_sources(): Pipe {
     return find('**/*.ts', { directory: 'src' })
   },
@@ -22,10 +23,10 @@ export default build({
     if (environmentCoverage) {
       log.notice(`External coverage enabled, re-run task ${$t('coverage')} to generate full report`)
     } else {
-      await rmrf(coverageDir)
+      await rmrf(this.coverageDir)
     }
 
-    await this.find_tests().mocha({ coverageDir })
+    await this.find_tests().mocha({ coverageDir: this.coverageDir })
   },
 
   /* ======================================================================== *
@@ -34,7 +35,7 @@ export default build({
 
   async coverage() {
     try {
-      await this.find_sources().coverage(coverageDir, {
+      await this.find_sources().coverage(this.coverageDir, {
         reportDir: 'coverage',
       }).run()
     } catch (error) {
