@@ -47,7 +47,7 @@ export function parseOptions<
   }
 
   // The options is the _last_ element in our arguments array (if any)
-  const options = Object.assign({}, defaults, clone.pop)
+  const options = Object.assign({}, defaults, clone.pop())
 
   // All done
   return { params, options } as ParsedResult<Args, Options, Defaults>
