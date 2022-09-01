@@ -96,20 +96,19 @@ export interface BuildDef {
  * {@link TaskDef | task definitions }.
  */
 export type ThisBuild<D extends BuildDef> = {
-  readonly [ k in string & keyof D as
-    D[k] extends string | TaskDef | Task ? k :
-    never
-  ] :
-    D[k] extends TaskDef<infer R> ?
-      R extends Promise<undefined> | void | undefined ? () => Promise<undefined> :
-      R extends Pipe | Files ? () => Pipe & Promise<Files> :
+  readonly [ k in keyof D ] :
+    k extends string ?
+      D[k] extends TaskDef<infer R> ?
+        R extends Promise<undefined> | void | undefined ? () => Promise<undefined> :
+        R extends Pipe | Files ? () => Pipe & Promise<Files> :
+        never :
+      D[k] extends Task<infer R> ?
+        R extends undefined ? () => Promise<undefined> :
+        R extends Files ? () => Pipe & Promise<Files> :
+        never :
+      D[k] extends string ?
+        string :
       never :
-    D[k] extends Task<infer R> ?
-      R extends undefined ? () => Promise<undefined> :
-      R extends Files ? () => Pipe & Promise<Files> :
-      never :
-    D[k] extends string ?
-      string :
     never
 }
 
