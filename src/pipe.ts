@@ -4,6 +4,7 @@ import { AbsolutePath, getAbsoluteParent, getCurrentWorkingDirectory, resolveAbs
 
 import { sep } from 'path'
 import { ForkingPlug } from './fork'
+import { assert } from './assert'
 
 /* ========================================================================== *
  * PLUGS                                                                      *
@@ -90,13 +91,34 @@ abstract class PipeProto {
  * The {@link Pipe} abstract defines processing pipeline where multiple
  * {@link Plug}s can transform lists of {@link Files}.
  */
-export abstract class Pipe extends PipeProto {
-  abstract plug(plug: Plug<Files>): Pipe
-  abstract plug(plug: PlugFunction<Files>): Pipe
-  abstract plug(plug: Plug<void | undefined>): Promise<undefined>
-  abstract plug(plug: PlugFunction<void | undefined>): Promise<undefined>
+export class Pipe extends PipeProto {
+  constructor(
+      private readonly _context: Context,
+      private readonly _run: () => Promise<Files>,
+  ) {
+    super()
+  }
 
-  abstract run(): Promise<Files>
+  plug(plug: Plug<Files>): Pipe
+  plug(plug: PlugFunction<Files>): Pipe
+  plug(plug: Plug<void | undefined>): Promise<undefined>
+  plug(plug: PlugFunction<void | undefined>): Promise<undefined>
+  plug(arg: Plug<PlugResult> | PlugFunction<PlugResult>): Pipe | Promise<undefined> {
+    const plug = typeof arg === 'function' ? { pipe: arg } : arg
+
+    const parent = this
+    const context = this._context
+    return new Pipe(context, async (): Promise<Files> => {
+      const previous = await parent.run()
+      const current = await plug.pipe(previous, context)
+      assert(current, 'Unable to extend pipe')
+      return current
+    })
+  }
+
+  run(): Promise<Files> {
+    return this._run()
+  }
 }
 
 /* ========================================================================== *
