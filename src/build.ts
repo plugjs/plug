@@ -10,12 +10,11 @@ import type {
   ThisBuild,
 } from './types'
 
-import { assert, fail, failure, isBuildFailure } from './assert'
+import { assert, fail, failure } from './assert'
 import { runAsync } from './async'
-import { Files } from './files'
 import { $ms, $t, getLogger, logOptions } from './log'
 import { AbsolutePath } from './paths'
-import { Context, Pipe, Plug, PlugFunction } from './pipe'
+import { Context, Pipe } from './pipe'
 import { findCaller } from './utils/caller'
 import { parseOptions } from './utils/options'
 
@@ -23,16 +22,14 @@ import { parseOptions } from './utils/options'
  * PIPE                                                                       *
  * ========================================================================== */
 
-class PipeImpl extends Pipe implements Pipe, Promise<Result> {
+class PipeImpl extends Pipe implements Promise<Result> {
   readonly [Symbol.toStringTag] = 'PipeImpl'
 
-  constructor(
-      private readonly _promise: Promise<Result>,
-      private readonly _promises: Set<Promise<Result>>,
-      private readonly _context: Context,
-  ) {
-    super()
-    _promises.add(_promise)
+  constructor(context: Context, private readonly _promise: Promise<Result>) {
+    super(context, () => _promise.then((result) => {
+      assert(result, 'Unable to extend pipe')
+      return result
+    }))
   }
 
   /* ------------------------------------------------------------------------ *
@@ -54,34 +51,6 @@ class PipeImpl extends Pipe implements Pipe, Promise<Result> {
 
   finally(onfinally?: (() => void) | null | undefined): Promise<Result> {
     return this._promise.finally(onfinally)
-  }
-
-  /* ------------------------------------------------------------------------ *
-   * Pipe implementation                                                      *
-   * ------------------------------------------------------------------------ */
-
-  plug(plug: Plug<Files>): Pipe
-  plug(plug: PlugFunction<Files>): Pipe
-  plug(plug: Plug<void | undefined>): Promise<undefined>
-  plug(plug: PlugFunction<void | undefined>): Promise<undefined>
-  plug(arg: Plug<Result | void> | PlugFunction<Result | void>): Pipe | Promise<undefined> {
-    const plug = typeof arg === 'function' ? { pipe: arg } : arg
-
-    const promise = this._promise.then(async (files) => {
-      assert(files, 'Unable to extend Pipe')
-      const result = await plug.pipe(files, this._context)
-      assert(result, 'Plug did not return a Files instance')
-      return result
-    })
-
-    return new PipeImpl(promise, this._promises, this._context)
-  }
-
-  async run(): Promise<Files> {
-    return this._promise.then((whaps) => {
-      assert(whaps, 'Unable to run Pipe')
-      return whaps
-    })
   }
 }
 
@@ -111,7 +80,7 @@ class TaskImpl implements Task {
     const cache = state.cache
 
     /* Create run context and build */
-    const promises = new Set<Promise<Result>>()
+    // const promises = new Set<Promise<Result>>()
     const context = new Context(this.buildFile, taskName)
 
     const build = new Proxy({}, {
@@ -121,7 +90,7 @@ class TaskImpl implements Task {
           return (): Pipe & Promise<Result> => {
             const state = { stack, cache, tasks, props }
             const promise = tasks[name].call(state, name)
-            return new PipeImpl(promise, promises, context)
+            return new PipeImpl(context, promise)
           }
         } else if (name in props) {
           return props[name]
@@ -135,27 +104,10 @@ class TaskImpl implements Task {
 
     /* Run asynchronously in an asynchronous context */
     const promise = runAsync(context, taskName, async () => {
-      try {
-        /* Call the task definition and run the eventually returned pipe */
-        let result = await this._def.call(build)
-        if (result && 'run' in result) result = await result.run()
-        return result || undefined
-      } finally {
-        /* Make sure we _await_ all promises (PipeImpl) created by the task */
-        const settlements = await Promise.allSettled([ ...promises ])
-
-        /* Get any error */
-        const errors = new Set<any>()
-        for (const settlement of settlements) {
-          if (settlement.status === 'fulfilled') continue
-          if (! isBuildFailure(settlement.reason)) {
-            errors.add(settlement.reason)
-          }
-        }
-
-        /* Log any error detected, but don't file (think try/catch) */
-        for (const error of errors) context.log.error(error)
-      }
+      /* Call the task definition and run the eventually returned pipe */
+      let result = await this._def.call(build)
+      if (result && 'run' in result) result = await result.run()
+      return result || undefined
     }).then((result) => {
       context.log.notice(`Success ${$ms(Date.now() - now)}`)
       return result
