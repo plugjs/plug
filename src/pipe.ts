@@ -2,8 +2,8 @@ import type { Files } from './files'
 import { getLogger, Logger } from './log'
 import { AbsolutePath, getAbsoluteParent, getCurrentWorkingDirectory, resolveAbsolutePath } from './paths'
 
-import { ForkingPlug } from './fork'
 import { sep } from 'path'
+import { ForkingPlug } from './fork'
 
 /* ========================================================================== *
  * PLUGS                                                                      *
@@ -50,6 +50,14 @@ export class Context {
     this.log = getLogger(taskName)
   }
 
+  /**
+   * Resolve a (set of) path(s) in this {@link Context}.
+   *
+   * If the path (or first component thereof) starts with `@...`, then the
+   * resolved path will be relative to the directory containing the build file
+   * where the current task was defined, otherwise it will be relative to the
+   * current working directory.
+   */
   resolve(path: string, ...paths: string[]): AbsolutePath {
     // Paths starting with "@" are relative to the build file directory
     if (path && path.startsWith('@')) {
