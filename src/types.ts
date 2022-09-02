@@ -100,11 +100,11 @@ export type ThisBuild<D extends BuildDef> = {
     k extends string ?
       D[k] extends TaskDef<infer R> ?
         R extends Promise<undefined> | void | undefined ? () => Promise<undefined> :
-        R extends Pipe | Files ? () => Pipe :
+        R extends Pipe | Files ? () => Pipe & Promise<Files> :
         never :
       D[k] extends Task<infer R> ?
         R extends undefined ? () => Promise<undefined> :
-        R extends Files ? () => Pipe :
+        R extends Files ? () => Pipe & Promise<Files> :
         never :
       D[k] extends string ?
         string :
