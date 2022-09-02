@@ -51,7 +51,7 @@ export interface Task<T extends Result = Result> {
  * The {@link TaskResult} type identifies _what_ can be returned by a
  * {@link TaskDef | _task definition_}.
  */
-export type TaskResult = Pipe | Promise<undefined> | Files | void | undefined
+export type TaskResult = Pipe | Files | void | undefined
 
 /** The {@link TaskDef} type identifies the _definition_ of a task. */
 export type TaskDef<R extends TaskResult = TaskResult> = () => R | Promise<R>
@@ -70,9 +70,7 @@ export type Tasks<D extends BuildDef = BuildDef> = {
   readonly [ k in string & keyof D as D[k] extends TaskDef | Task ? k : never ] :
     D[k] extends TaskDef<infer R> ?
       R extends void | undefined ? Task<undefined> :
-      R extends Promise<undefined> ? Task<undefined> :
-      R extends Pipe ? Task<Files> :
-      R extends Files ? Task<Files> :
+      R extends Pipe | Files ? Task<Files> :
       never :
     D[k] extends Task ? D[k] :
     never
@@ -83,9 +81,8 @@ export type Tasks<D extends BuildDef = BuildDef> = {
  * ========================================================================== */
 
 /**
- * The {@link BuildDef} interface describes the _definition_ of a
- * {@link Context}, that is the object passed to {@link build} to produce
- * a {@link Build}.
+ * The {@link BuildDef} interface describes the _definition_ of a {@link Build},
+ * all its properties and tasks.
  */
 export interface BuildDef {
   [ k : string ] : string | TaskDef | Task
@@ -116,8 +113,4 @@ export type ThisBuild<D extends BuildDef> = {
  * The {@link Build} type represents the collection of {@link Task}s
  * and _properties_ compiled from a {@link BuildDef | build definition}.
  */
-export type Build<
-  D extends BuildDef = BuildDef,
-  T extends Tasks<D> = Tasks<D>,
-  P extends Props<D> = Props<D>,
-> = T & P
+export type Build<D extends BuildDef = BuildDef> = Tasks<D> & Props<D>

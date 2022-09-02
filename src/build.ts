@@ -199,8 +199,9 @@ export function build<
 }
 
 /** Internal type identifying all _task names_ in a {@link Build} */
-type TaskNames<B extends Build> = string & keyof B &
-(B extends Build<BuildDef, infer Tasks, Props> ? keyof Tasks : never)
+type TaskNames<B extends Build> = string & keyof {
+  [ k in keyof B as B[k] extends Task ? k : never ]?: B[k]
+}
 
 /** Internal type identifying all _property names_ in a {@link Build} */
 type OverrideProps<B extends Build> = {
