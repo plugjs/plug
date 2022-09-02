@@ -1,4 +1,4 @@
-import { $t, build, find, fixExtensions, log, merge, Pipe, rmrf } from './src/index.js'
+import { $t, build, find, fixExtensions, log, Pipe, rmrf } from './src/index.js'
 
 /** When `true` the coverage dir comes from the environment */
 const environmentCoverage = !! process.env.NODE_V8_COVERAGE
@@ -7,13 +7,9 @@ export default build({
   /** The coverage data dir, might be supplied as an env variable  */
   coverageDir: process.env.NODE_V8_COVERAGE || '.coverage-data',
 
-  find_sources(): Pipe {
-    return find('**/*.ts', { directory: 'src' })
-  },
+  find_sources: () => find('**/*.ts', { directory: 'src' }),
 
-  find_tests(): Pipe {
-    return find('**/*.ts', { directory: 'test' })
-  },
+  find_tests: () => find('**/*.ts', { directory: 'test' }),
 
   /* ======================================================================== *
    * RUN TESTS FROM "./test"                                                  *
@@ -44,7 +40,10 @@ export default build({
   },
 
   async eslint() {
-    await merge(this.find_sources(), this.find_tests()).eslint()
+    await Pipe.merge([
+      this.find_sources(),
+      this.find_tests(),
+    ]).eslint()
   },
 
   async checks() {
@@ -86,16 +85,13 @@ export default build({
     })
   },
 
-  copy_resources(): Pipe {
-    return find('!**/*.ts', { directory: 'src' })
-        .copy('dist')
-  },
+  copy_resources: () => find('!**/*.ts', { directory: 'src' }).copy('dist'),
 
   transpile_types(): Pipe {
     const extra = find('**/*.d.ts', { directory: 'extra' })
     const sources = this.find_sources()
 
-    return merge(extra, sources).tsc('tsconfig.json', {
+    return Pipe.merge([ extra, sources ]).tsc('tsconfig.json', {
       rootDir: 'src', // root this in "src" (filters out "extra/...")
       noEmit: false,
       declaration: true,
@@ -104,14 +100,14 @@ export default build({
     })
   },
 
-  async transpile() {
+  async transpile(): Promise<Pipe> {
     await rmrf('dist')
 
-    await Promise.all([
-      this.copy_resources(),
-      this.transpile_cjs(),
-      this.transpile_mjs(),
-      this.transpile_types(),
+    return Pipe.merge([
+      await this.copy_resources().run(),
+      await this.transpile_cjs().run(),
+      await this.transpile_mjs().run(),
+      await this.transpile_types().run(),
     ])
   },
 
