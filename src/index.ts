@@ -2,7 +2,7 @@
 
 export type { AbsolutePath } from './paths'
 export type { Files, FilesBuilder } from './files'
-export type { Pipe } from './pipe'
+export { Pipe } from './pipe'
 
 // Our minimal exports
 export * from './assert'
