@@ -95,7 +95,7 @@ install('copy', class Copy implements Plug<Files> {
       }
 
       /* Record this file */
-      builder.add(relative)
+      builder.add(target)
     }
 
     const result = builder.build()
