@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/plug",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "type": "commonjs",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
