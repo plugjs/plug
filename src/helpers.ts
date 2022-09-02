@@ -2,7 +2,7 @@ import { assert } from './assert'
 import { requireContext } from './async'
 import { Files } from './files'
 import { $p, log } from './log'
-import { AbsolutePath, commonPath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
+import { AbsolutePath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
 import { Pipe } from './pipe'
 import { rm } from './utils/asyncfs'
 import { ParseOptions, parseOptions } from './utils/options'
@@ -42,39 +42,6 @@ export function find(...args: ParseOptions<FindOptions>): Pipe {
     }
 
     return builder.build()
-  })
-}
-
-/**
- * Merge the results of several {@link Pipe}s into a single one.
- *
- * Merging is performed _in parallel_. When serial execution is to be desired,
- * we can merge the awaited _result_ of the {@link Pipe}'s `run()` call.
- *
- * For example:
- *
- * ```
- * const pipe: Pipe = merge([
- *   await this.find_sources().run(),
- *   await this.find_tests().run(),
- * ])
- * ```
- */
-export function merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
-  const context = requireContext()
-  return new Pipe(context, async (): Promise<Files> => {
-    if (pipes.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
-
-    const [ first, ...other ] = await Promise.all(pipes.map((pipe) => {
-      return 'run' in pipe ? pipe.run() : pipe
-    }))
-
-    const firstDir = first.directory
-    const otherDirs = other.map((f) => f.directory)
-
-    const directory = commonPath(firstDir, ...otherDirs)
-
-    return Files.builder(directory).merge(first, ...other).build()
   })
 }
 
