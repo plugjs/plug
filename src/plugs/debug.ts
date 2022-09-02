@@ -1,11 +1,11 @@
 import { Files } from '../files'
-import { $gry, $p, $und } from '../log'
-import { install, Plug, Context } from '../pipe'
+import { $gry, $p, $und, $ylw } from '../log'
+import { install, Plug, Context, PipeParameters } from '../pipe'
 
 declare module '../pipe' {
   export interface Pipe {
     /** Log some info about the current {@link Files} being passed around. */
-    debug(): Pipe
+    debug(title?: string): Pipe
   }
 }
 
@@ -15,8 +15,15 @@ declare module '../pipe' {
 
 /** Writes some info about the current {@link Files} being passed around. */
 install('debug', class Debug implements Plug<Files> {
+  private readonly _title: string
+
+  constructor(...args: PipeParameters<'debug'>) {
+    const [ title = 'Debugging' ] = args
+    this._title = title
+  }
+
   async pipe(files: Files, context: Context): Promise<Files> {
-    context.log.notice('Debugging', files.length, 'files')
+    context.log.notice(this._title, `${$gry('(')}${$ylw(files.length)} ${$gry('files)')}`)
     context.log.notice('-        base dir:', $p(context.resolve('@')))
     context.log.notice('-  build file dir:', $p(context.resolve('.')))
     context.log.notice('-       files dir:', $p(files.directory))
