@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import type { Build, BuildFailure } from '../src/index.js'
+import type { Type } from './ts-loader.mjs'
 
 import _yargs from 'yargs-parser'
 
@@ -108,8 +109,8 @@ if (sourceMapsEnabled && typeScriptEnabled) {
    * we allow the "--force-esm" option, and instruct `ts-loader` that the
    * current directory (and subdirs) will transpile as ESM always.
    */
-  const env = options.forceEsm ?
-    { __TS_LOADER_FORCE_ESM: process.cwd(), ...process.env } :
+  const env = options.force ?
+    { __TS_LOADER_FORCE_TYPE: options.force, ...process.env } :
     process.env
 
   /* Fork ourselves! */
@@ -167,7 +168,7 @@ interface CommandLineOptions {
   buildFile: string,
   tasks: string[],
   listOnly: boolean,
-  forceEsm: boolean,
+  force?: Type | undefined,
 }
 
 
@@ -188,7 +189,6 @@ export function parseCommandLine(): CommandLineOptions {
     },
 
     alias: {
-      'force-esm': [ 'e' ],
       'verbose': [ 'v' ],
       'quiet': [ 'q' ],
       'colors': [ 'c' ],
@@ -198,7 +198,7 @@ export function parseCommandLine(): CommandLineOptions {
     },
 
     string: [ 'file' ],
-    boolean: [ 'help', 'colors', 'list', 'force-esm' ],
+    boolean: [ 'help', 'colors', 'list', 'force-esm', 'force-cjs' ],
     count: [ 'verbose', 'quiet' ],
   })
 
@@ -212,6 +212,7 @@ export function parseCommandLine(): CommandLineOptions {
   let colors: boolean | undefined = undefined
   let file: string | undefined = undefined
   let forceEsm = false
+  let forceCjs = false
   let listOnly = false
   let help = false
 
@@ -232,6 +233,9 @@ export function parseCommandLine(): CommandLineOptions {
         break
       case 'force-esm':
         forceEsm = !! parsed[key]
+        break
+      case 'force-cjs':
+        forceCjs = !! parsed[key]
         break
       case 'colors':
         colors = !! parsed[key]
@@ -258,16 +262,27 @@ export function parseCommandLine(): CommandLineOptions {
 
     plugjs [--options] [... tasks]
 
+    TypeScript module format:
+
+      Normally our TypeScript loader will transpile ".ts" files to the "type"
+      specified in "package.json", either "commonjs" (the default) or "module".
+
+      To force a specific module format we can use one of the following flags:
+
+      --force-esm  Force transpilation of ".ts" files to EcmaScript modules
+      --force-cjs  Force transpilation of ".ts" files to CommonJS modules
+
     Options:
+
       -v --verbose    Increase logging verbosity
       -q --quiet      Decrease logging verbosity
       -c --colors     Force colorful output (use "--no-colors" to force plain text)
-      -e --force-esm  Force our TypeScript loader to interpret ".ts" files as ESM
       -f --file       Specify the build file to use (default "./build.[ts/js/...]")
       -l --list       Only list the tasks defined by the build, nothing more!
       -h --help       Help! You're reading it now!
 
     Tasks:
+
       Any other argument will be treated as a task name. If no task names are
       specified, the "default" task will be executed.
   `)
@@ -325,11 +340,21 @@ export function parseCommandLine(): CommandLineOptions {
   }
 
   /* ======================================================================== *
+   * FORCE MODULE TYPE                                                        *
+   * ======================================================================== */
+
+  if (forceEsm && forceCjs) {
+    console.log('The "--force-cjs" and "--force-esm" flags can not coexist')
+    process.exit(1)
+  }
+
+  const force = forceEsm ? 'module' : forceCjs ? 'commonjs' : undefined
+
+  /* ======================================================================== *
    * ALL DONE                                                                 *
    * ======================================================================== */
 
-  /* All done, here are our arguments parsed! */
-  return { buildFile, tasks, forceEsm, listOnly }
+  return { buildFile, tasks, listOnly, force }
 }
 
 /* ========================================================================== */

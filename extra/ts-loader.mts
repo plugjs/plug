@@ -33,7 +33,7 @@ import _url from 'node:url'
  * ========================================================================== */
 
 /** Supported types from `package.json` */
-type Type = 'commonjs' | 'module'
+export type Type = 'commonjs' | 'module'
 /** Constant identifying a `commonjs` module */
 const CJS = 'commonjs'
 /** Constant identifying an ESM `module` */
@@ -79,10 +79,11 @@ function _throw(
 const _moduleFormatCache = new Map<string, Type>()
 
 /** Force ESM loading? */
-if (process.env.__TS_LOADER_FORCE_ESM) {
-  const dir = process.env.__TS_LOADER_FORCE_ESM
-  _log(null, `Forcing ".ts" files from "${dir}" to be interpreted as ESM modules`)
-  _moduleFormatCache.set(dir, 'module')
+if (process.env.__TS_LOADER_FORCE_TYPE) {
+  const type = process.env.__TS_LOADER_FORCE_TYPE as Type
+  const dir = process.cwd()
+  _log(null, `Forcing ".ts" files from "${dir}" to be interpreted as "${type}"`)
+  _moduleFormatCache.set(dir, type)
 }
 
 /* Dump our cache on exit if debugging */
