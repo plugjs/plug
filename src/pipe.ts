@@ -1,10 +1,17 @@
-import type { Files } from './files'
-import { getLogger, Logger } from './log'
-import { AbsolutePath, getAbsoluteParent, getCurrentWorkingDirectory, resolveAbsolutePath } from './paths'
+import {
+  AbsolutePath,
+  commonPath,
+  getAbsoluteParent,
+  getCurrentWorkingDirectory,
+  resolveAbsolutePath,
+} from './paths'
 
 import { sep } from 'path'
-import { ForkingPlug } from './fork'
 import { assert } from './assert'
+import { requireContext } from './async'
+import { Files } from './files'
+import { ForkingPlug } from './fork'
+import { getLogger, Logger } from './log'
 
 /* ========================================================================== *
  * PLUGS                                                                      *
@@ -88,7 +95,7 @@ abstract class PipeProto {
 }
 
 /**
- * The {@link Pipe} abstract defines processing pipeline where multiple
+ * The {@link Pipe} class defines processing pipeline where multiple
  * {@link Plug}s can transform lists of {@link Files}.
  */
 export class Pipe extends PipeProto {
@@ -118,6 +125,41 @@ export class Pipe extends PipeProto {
 
   run(): Promise<Files> {
     return this._run()
+  }
+
+  /**
+   * Merge the results of several {@link Pipe}s into a single one.
+   *
+   * Merging is performed _in parallel_. When serial execution is to be desired,
+   * we can merge the awaited _result_ of the {@link Pipe}.
+   *
+   * For example:
+   *
+   * ```
+   * const pipe: Pipe = merge([
+   *   // other tasks return `Pipe & Promise<Files>` so we can
+   *   // direcrly await their result without invoking `run()`
+   *   await this.anotherTask1(),
+   *   await this.anotherTask2(),
+   * ])
+   * ```
+   */
+  static merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
+    const context = requireContext()
+    return new Pipe(context, async (): Promise<Files> => {
+      if (pipes.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
+
+      const [ first, ...other ] = await Promise.all(pipes.map((pipe) => {
+        return 'run' in pipe ? pipe.run() : pipe
+      }))
+
+      const firstDir = first.directory
+      const otherDirs = other.map((f) => f.directory)
+
+      const directory = commonPath(firstDir, ...otherDirs)
+
+      return Files.builder(directory).merge(first, ...other).build()
+    })
   }
 }
 
