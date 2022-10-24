@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { assert } from './assert'
-import { Context } from './pipe'
+import type { Context } from './pipe'
 
 /* ========================================================================== *
  * EXPORTED                                                                   *
