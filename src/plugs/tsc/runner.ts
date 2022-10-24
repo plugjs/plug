@@ -1,4 +1,4 @@
-import ts from 'typescript'; // TypeScript does NOT support ESM modules
+import ts from 'typescript' // TypeScript does NOT support ESM modules
 
 import { failure } from '../../assert'
 import { Files } from '../../files'
