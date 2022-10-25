@@ -7,7 +7,7 @@ import {
 } from './paths'
 
 import { sep } from 'path'
-import { assert, failure, isBuildFailure } from './assert'
+import { assert, assertPromises } from './assert'
 import { requireContext } from './async'
 import { Files } from './files'
 import { ForkingPlug } from './fork'
@@ -214,33 +214,8 @@ export class Pipe extends PipeProto implements Promise<Files> {
       // No pipes? Just send off an empty pipe...
       if (pipes.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
 
-      // Await for the settlement of all the promises
-      const settlements = await Promise.allSettled(pipes)
-
-      // Separate the good from the bad... Here we don't report BuildFailures,
-      // but we keep track of them, henceforth we keep track of both "hasFailed"
-      // as a flag and "failures" as a set of what needs to be logged
-      const results: Files[] = []
-      const failures = new Set<any>()
-      let hasFailed = false
-
-      settlements.forEach((settlement) => {
-        if (settlement.status === 'fulfilled') {
-          results.push(settlement.value)
-        } else {
-          hasFailed = true // mark failures
-          const failure = settlement.reason
-          if (! isBuildFailure(failure)) failures.add(failure)
-        }
-      })
-
-      // Check for errors and report/fail if anything happened
-      if (hasFailed) {
-        failures.forEach((failure) => {
-          context.log.error('Error in pipe while merging', failure)
-        })
-        throw failure()
-      }
+      // Await for all pipes / files / files promises
+      const results = await assertPromises<Files>(pipes, 'Error in pipe while merging')
 
       // Find the common directory between all the Files instances
       const [ firstDir, ...otherDirs ] = results.map((f) => f.directory)
