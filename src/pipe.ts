@@ -7,11 +7,12 @@ import {
 } from './paths'
 
 import { sep } from 'path'
-import { assert } from './assert'
+import { assert, failure, isBuildFailure } from './assert'
 import { requireContext } from './async'
 import { Files } from './files'
 import { ForkingPlug } from './fork'
 import { getLogger, Logger } from './log'
+import { Result } from './types'
 
 /* ========================================================================== *
  * PLUGS                                                                      *
@@ -87,6 +88,25 @@ export class Context {
  * ========================================================================== */
 
 /**
+ * In pipe chains, we want to keep track of the _leaf_ `Files` promises (that
+ * is, when a derived pipe is created calling `plug` we want to track only the
+ * new, derived, promise).
+ *
+ * We key these _leaf_ promises by _context_ (with a WeakMap), and those will
+ * be awaited at the end of the task.
+ */
+const contextPromises = new WeakMap<Context, Set<Promise<Result>>>()
+
+export function getContextPromises(context: Context): Set<Promise<Result>> {
+  let promises = contextPromises.get(context)
+  if (! promises) {
+    promises = new Set<Promise<Files>>()
+    contextPromises.set(context, promises)
+  }
+  return promises
+}
+
+/**
  * A class that will be extended by {@link Pipe} where {@link install} will
  * add prototype properties from installed {@link Plug}s
  */
@@ -98,13 +118,62 @@ abstract class PipeProto {
  * The {@link Pipe} class defines processing pipeline where multiple
  * {@link Plug}s can transform lists of {@link Files}.
  */
-export class Pipe extends PipeProto {
+export class Pipe extends PipeProto implements Promise<Files> {
+  readonly [Symbol.toStringTag] = 'Pipe'
+
   constructor(
       private readonly _context: Context,
-      private readonly _run: () => Promise<Files>,
+      private readonly _promise: Promise<Result>,
   ) {
     super()
+
+    // New "Pipe", remember the promise!
+    getContextPromises(_context).add(_promise)
   }
+
+  /* ------------------------------------------------------------------------ *
+   * Promise implementation                                                   *
+   * ------------------------------------------------------------------------ *
+   * From a _types_ point of view, the `Pipe` implements a `Promise<Files>`   *
+   * (because only when plugging the correct `Plug` the correct value are     *
+   * returned).                                                               *
+   *                                                                          *
+   * Whether to return (as a type) another `Pipe` or a `Promise<undefined>`   *
+   * is determined by the type of the `plug` parameter below.                 *
+   *                                                                          *
+   * That said, in practice, a `Pipe` implements `Promise<Files | undefined>` *
+   * because the result of the plug is _eventually_ computed asynchronously   *
+   * while `plug` returns immediately.
+   *                                                                          *
+   * So, all those "as whatever" below are kind-of-legit...                   *
+   * ------------------------------------------------------------------------ */
+
+  then<R1 = Files, R2 = never>(
+      onfulfilled?: ((value: Files) => R1 | PromiseLike<R1>) | null | undefined,
+      onrejected?: ((reason: any) => R2 | PromiseLike<R2>) | null | undefined,
+  ): Promise<R1 | R2> {
+    // We are delegating the handling of this promise to the caller
+    getContextPromises(this._context).delete(this._promise)
+    return this._promise.then(onfulfilled as (value: Result) => R1 | PromiseLike<R1>, onrejected)
+  }
+
+  catch<R = never>(
+      onrejected?: ((reason: any) => R | PromiseLike<R>) | null | undefined,
+  ): Promise<Files | R> {
+    // We are delegating the handling of this promise to the caller
+    getContextPromises(this._context).delete(this._promise)
+    return this._promise.catch(onrejected) as Promise<Files | R>
+  }
+
+  finally(onfinally?: (() => void) | null | undefined): Promise<Files> {
+    // We are delegating the handling of this promise to the caller
+    getContextPromises(this._context).delete(this._promise)
+    return this._promise.finally(onfinally) as Promise<Files>
+  }
+
+  /* ------------------------------------------------------------------------ *
+   * Pipe implementation                                                      *
+   * ------------------------------------------------------------------------ */
 
   plug(plug: Plug<Files>): Pipe
   plug(plug: PlugFunction<Files>): Pipe
@@ -113,18 +182,15 @@ export class Pipe extends PipeProto {
   plug(arg: Plug<PlugResult> | PlugFunction<PlugResult>): Pipe | Promise<undefined> {
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
 
-    const parent = this
-    const context = this._context
-    return new Pipe(context, async (): Promise<Files> => {
-      const previous = await parent.run()
-      const current = await plug.pipe(previous, context)
-      assert(current, 'Unable to extend pipe')
-      return current
-    })
-  }
+    // We are creating a new "leaf" Pipe, we can forget our promise
+    getContextPromises(this._context).delete(this._promise)
 
-  run(): Promise<Files> {
-    return this._run()
+    // Create and return the new Pipe
+    return new Pipe(this._context, this._promise.then(async (result) => {
+      assert(result, 'Unable to extend pipe')
+      const result2 = await plug.pipe(result, this._context)
+      return result2 || undefined
+    }))
   }
 
   /**
@@ -137,8 +203,6 @@ export class Pipe extends PipeProto {
    *
    * ```
    * const pipe: Pipe = merge([
-   *   // other tasks return `Pipe & Promise<Files>` so we can
-   *   // direcrly await their result without invoking `run()`
    *   await this.anotherTask1(),
    *   await this.anotherTask2(),
    * ])
@@ -146,20 +210,45 @@ export class Pipe extends PipeProto {
    */
   static merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
     const context = requireContext()
-    return new Pipe(context, async (): Promise<Files> => {
+    return new Pipe(context, Promise.resolve().then(async () => {
+      // No pipes? Just send off an empty pipe...
       if (pipes.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
 
-      const [ first, ...other ] = await Promise.all(pipes.map((pipe) => {
-        return 'run' in pipe ? pipe.run() : pipe
-      }))
+      // Await for the settlement of all the promises
+      const settlements = await Promise.allSettled(pipes)
 
-      const firstDir = first.directory
-      const otherDirs = other.map((f) => f.directory)
+      // Separate the good from the bad... Here we don't report BuildFailures,
+      // but we keep track of them, henceforth we keep track of both "hasFailed"
+      // as a flag and "failures" as a set of what needs to be logged
+      const results: Files[] = []
+      const failures = new Set<any>()
+      let hasFailed = false
 
+      settlements.forEach((settlement) => {
+        if (settlement.status === 'fulfilled') {
+          results.push(settlement.value)
+        } else {
+          hasFailed = true // mark failures
+          const failure = settlement.reason
+          if (! isBuildFailure(failure)) failures.add(failure)
+        }
+      })
+
+      // Check for errors and report/fail if anything happened
+      if (hasFailed) {
+        failures.forEach((failure) => {
+          context.log.error('Error in pipe while merging', failure)
+        })
+        throw failure()
+      }
+
+      // Find the common directory between all the Files instances
+      const [ firstDir, ...otherDirs ] = results.map((f) => f.directory)
       const directory = commonPath(firstDir, ...otherDirs)
 
-      return Files.builder(directory).merge(first, ...other).build()
-    })
+      // Build our new files instance merging all the results
+      return Files.builder(directory).merge(...results).build()
+    }))
   }
 }
 
@@ -168,7 +257,7 @@ export class Pipe extends PipeProto {
  * ========================================================================== */
 
 /** The names which can be installed as direct plugs. */
-export type PlugName = string & Exclude<keyof Pipe, 'plug' | 'run'>
+export type PlugName = string & Exclude<keyof Pipe, 'plug' | keyof Promise<any>>
 
 /** The parameters of the plug extension with the given name */
 export type PipeParameters<Name extends PlugName> = PipeOverloads<Name>['args']
