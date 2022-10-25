@@ -30,7 +30,7 @@ class TaskImpl implements Task {
       private readonly _def: TaskDef,
   ) {}
 
-  call(state: State, taskName: string): Promise<Result> {
+  invoke(state: State, taskName: string): Promise<Result> {
     assert(! state.stack.includes(this), `Recursion detected calling ${$t(taskName)}`)
 
     /* Check cache */
@@ -52,7 +52,7 @@ class TaskImpl implements Task {
         if (name in tasks) {
           return (): Pipe => {
             const state = { stack, cache, tasks, props }
-            const promise = tasks[name].call(state, name)
+            const promise = tasks[name].invoke(state, name)
             return new Pipe(context, promise)
           }
         } else if (name in props) {
@@ -117,7 +117,7 @@ export function build<
   }
 
   /* Create the "call" function for this build */
-  const call: BuildCall = async function call(
+  const invoke: InvokeBuild = async function invoke(
       taskNames: string[],
       overrideProps: Record<string, string | undefined> = {},
   ): Promise<void> {
@@ -138,7 +138,7 @@ export function build<
       /* Run tasks _serially_ */
       for (const taskName of taskNames) {
         if (taskName in tasks) {
-          await tasks[taskName].call(state, taskName)
+          await tasks[taskName].invoke(state, taskName)
         } else {
           fail(`Task ${$t(taskName)} not found in build`)
         }
@@ -154,7 +154,7 @@ export function build<
   const compiled = Object.assign({}, props, tasks) as Build<D>
 
   /* Sneak our "call" function in the build, for the CLI and "call" below */
-  Object.defineProperty(compiled, buildMarker, { value: call })
+  Object.defineProperty(compiled, buildMarker, { value: invoke })
 
   /* All done! */
   return compiled
@@ -170,11 +170,11 @@ type OverrideProps<B extends Build> = {
   [ k in keyof B as B[k] extends string ? k : never ]?: string
 }
 
-/** Internal type describing the build call function */
-type BuildCall = (tasks: string[], props?: Record<string, string | undefined>) => Promise<void>
+/** Internal type describing the build invocation function */
+type InvokeBuild = (tasks: string[], props?: Record<string, string | undefined>) => Promise<void>
 
 /** Serially invoke tasks in a {@link Build} optionally overriding properties */
-export function call<B extends Build>(
+export function invoke<B extends Build>(
     build: B,
     ...args:
     | [ ...taskNames: [ TaskNames<B>, ...TaskNames<B>[] ] ]
@@ -183,11 +183,11 @@ export function call<B extends Build>(
   const { params: tasks, options: props } = parseOptions(args, {})
 
   /* Get the calling function from the sneaked-in property in build */
-  const call: BuildCall = (build as any)[buildMarker]
+  const invoke: InvokeBuild = (build as any)[buildMarker]
 
   /* Triple check that we actually _have_ a function */
-  if (typeof call !== 'function') fail('Unknown build type')
+  if (typeof invoke !== 'function') fail('Unknown build type')
 
   /* Call everyhin that needs to be called */
-  return call(tasks, props)
+  return invoke(tasks, props)
 }

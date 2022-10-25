@@ -44,7 +44,7 @@ export interface Task<T extends Result = Result> {
   /** The absolute file name where this {@link Task} was defined */
   readonly buildFile: AbsolutePath,
   /** Invoke a task from (possibly) a different {@link Context} */
-  call(state: State, taskName: string): Promise<T>
+  invoke(state: State, taskName: string): Promise<T>
 }
 
 /**
