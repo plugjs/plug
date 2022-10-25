@@ -31,7 +31,7 @@ export function find(...args: ParseOptions<FindOptions>): Pipe {
   const { params: globs, options } = parseOptions(args, {})
 
   const context = requireContext()
-  return new Pipe(context, async (): Promise<Files> => {
+  return new Pipe(context, Promise.resolve().then(async () => {
     const directory = options.directory ?
       context.resolve(options.directory) :
       getCurrentWorkingDirectory()
@@ -42,7 +42,7 @@ export function find(...args: ParseOptions<FindOptions>): Pipe {
     }
 
     return builder.build()
-  })
+  }))
 }
 
 /**
