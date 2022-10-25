@@ -19,42 +19,6 @@ import { findCaller } from './utils/caller'
 import { parseOptions } from './utils/options'
 
 /* ========================================================================== *
- * PIPE                                                                       *
- * ========================================================================== */
-
-class PipeImpl extends Pipe implements Promise<Result> {
-  readonly [Symbol.toStringTag] = 'PipeImpl'
-
-  constructor(context: Context, private readonly _promise: Promise<Result>) {
-    super(context, () => _promise.then((result) => {
-      assert(result, 'Unable to extend pipe')
-      return result
-    }))
-  }
-
-  /* ------------------------------------------------------------------------ *
-   * Promise<Files | undefined> implementation                                *
-   * ------------------------------------------------------------------------ */
-
-  then<R1 = Result, R2 = never>(
-      onfulfilled?: ((value: Result) => R1 | PromiseLike<R1>) | null | undefined,
-      onrejected?: ((reason: any) => R2 | PromiseLike<R2>) | null | undefined,
-  ): Promise<R1 | R2> {
-    return this._promise.then(onfulfilled, onrejected)
-  }
-
-  catch<R = never>(
-      onrejected?: ((reason: any) => R | PromiseLike<R>) | null | undefined,
-  ): Promise<Result | R> {
-    return this._promise.catch(onrejected)
-  }
-
-  finally(onfinally?: (() => void) | null | undefined): Promise<Result> {
-    return this._promise.finally(onfinally)
-  }
-}
-
-/* ========================================================================== *
  * TASK                                                                       *
  * ========================================================================== */
 
@@ -80,17 +44,16 @@ class TaskImpl implements Task {
     const cache = state.cache
 
     /* Create run context and build */
-    // const promises = new Set<Promise<Result>>()
     const context = new Context(this.buildFile, taskName)
 
     const build = new Proxy({}, {
-      get(_: any, name: string): void | string | (() => Pipe & Promise<Result>) {
+      get(_: any, name: string): void | string | (() => Pipe) {
         // Tasks first, props might come also from environment
         if (name in tasks) {
-          return (): Pipe & Promise<Result> => {
+          return (): Pipe => {
             const state = { stack, cache, tasks, props }
             const promise = tasks[name].call(state, name)
-            return new PipeImpl(context, promise)
+            return new Pipe(context, promise)
           }
         } else if (name in props) {
           return props[name]
@@ -104,10 +67,7 @@ class TaskImpl implements Task {
 
     /* Run asynchronously in an asynchronous context */
     const promise = runAsync(context, taskName, async () => {
-      /* Call the task definition and run the eventually returned pipe */
-      let result = await this._def.call(build)
-      if (result && 'run' in result) result = await result.run()
-      return result || undefined
+      return await this._def.call(build) || undefined
     }).then((result) => {
       context.log.notice(`Success ${$ms(Date.now() - now)}`)
       return result
@@ -115,6 +75,8 @@ class TaskImpl implements Task {
       context.log.error(`Failure ${$ms(Date.now() - now)}`, error)
       throw failure()
     })
+
+    // TODO: getContextPromises and await...
 
     /* Cache the resulting promise and return it */
     cache.set(this, promise)
