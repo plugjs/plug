@@ -33,7 +33,7 @@ export default build({
     try {
       await this.find_sources().coverage(this.coverageDir, {
         reportDir: 'coverage',
-      }).run()
+      })
     } catch (error) {
       if (! environmentCoverage) throw error
     }
@@ -104,10 +104,10 @@ export default build({
     await rmrf('dist')
 
     return Pipe.merge([
-      await this.copy_resources().run(),
-      await this.transpile_cjs().run(),
-      await this.transpile_mjs().run(),
-      await this.transpile_types().run(),
+      await this.copy_resources(),
+      await this.transpile_cjs(),
+      await this.transpile_mjs(),
+      await this.transpile_types(),
     ])
   },
 
