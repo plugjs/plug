@@ -23,6 +23,8 @@ export interface MochaOptions {
   retries?: number,
   /** Slow threshold value. */
   slow?: number,
+  /** Setup file to import before running Mocha. */
+  require?: string,
   /** Timeout threshold value. */
   timeout?: number,
 }

@@ -1,8 +1,10 @@
 import RealMocha from 'mocha' // Mocha types pollute the global scope!
+import { assert } from '../../assert'
 
 import { BuildFailure } from '../../failure'
 import { Files } from '../../files'
-import { $wht, NOTICE } from '../../log'
+import { $p, $wht, NOTICE } from '../../log'
+import { resolveFile } from '../../paths'
 import { Context, PipeParameters, Plug } from '../../pipe'
 import { MochaOptions } from '../mocha'
 import { logSymbol, PlugReporter } from './reporter'
@@ -18,13 +20,25 @@ export default class Mocha implements Plug<void> {
     context.log.notice('') // empty line
     context.log.enter(NOTICE, $wht('Starting Mocha'))
 
+    // Expand our options
+    const { require, ...options } = this._options
+
+    // See if we require a setup script...
+    if (require) {
+      const requiredFile = context.resolve(require)
+      const scriptFile = resolveFile(requiredFile)
+      assert(scriptFile, `Mocha setup file ${$p(requiredFile)} not found`)
+      context.log.debug(`Importing setup script ${$p(requiredFile)}`)
+      await import(scriptFile)
+    }
+
     // Create the mocha runner
     const mocha = new RealMocha({
       diff: true, // by defaut enable diffs
       reporter: PlugReporter, // default to our reporter
-      ...this._options, // override defaults with all other options
+      ...options, // override defaults with all other options
       reporterOptions: {
-        ...this._options.reporterOptions,
+        ...options.reporterOptions,
         [logSymbol]: context.log, // always force a log
       },
       allowUncaught: false, // never allow uncaught exceptions

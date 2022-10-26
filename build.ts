@@ -22,7 +22,10 @@ export default build({
       await rmrf(this.coverageDir)
     }
 
-    await this.find_tests().mocha({ coverageDir: this.coverageDir })
+    await this.find_tests().mocha({
+      coverageDir: this.coverageDir,
+      require: './test/.setup.ts',
+    })
   },
 
   /* ======================================================================== *
