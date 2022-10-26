@@ -1,6 +1,6 @@
 import RealMocha from 'mocha' // Mocha types pollute the global scope!
+import { BuildFailure } from '../../failure'
 
-import { failure } from '../../assert'
 import { Files } from '../../files'
 import { $wht, NOTICE } from '../../log'
 import { PipeParameters, Plug, Context } from '../../pipe'
@@ -40,7 +40,7 @@ export default class Mocha implements Plug<void> {
     return new Promise((resolve, reject) => {
       try {
         mocha.run((failures) => {
-          if (failures) reject(failure())
+          if (failures) reject(new BuildFailure({ logged: true }))
           resolve(undefined)
         })
       } catch (error) {
