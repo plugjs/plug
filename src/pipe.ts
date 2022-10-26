@@ -10,7 +10,6 @@ import { sep } from 'path'
 import { assert, assertPromises } from './assert'
 import { requireContext } from './async'
 import { Files } from './files'
-import { ForkingPlug } from './fork'
 import { getLogger, Logger } from './log'
 import { Result } from './types'
 
@@ -345,36 +344,4 @@ export function install<
 
   /* Inject the create function in the Pipe's prototype */
   Object.defineProperty(PipeProto.prototype, name, { value: plug })
-}
-
-/**
- * Install a _forking_ {@link Plug} in the {@link Pipe}, in other words
- * execute the plug in a separate process.
- *
- * As a contract, if the _last non-null_ parameter of the constructor is an
- * object and contains the key `coverageDir`, the process will be forked with
- * the approptiately resolved `NODE_V8_COVERAGE` environment variable.
- *
- * Also, forking plugs require some special attention:
- *
- * * plug functions are not supported, only classes implementing the
- *   {@link Plug} interface can be used with this.
- *
- * * the class itself _MUST_ be exported as the _default_ export for the
- *   `scriptFile` specified below. This is to simplify interoperability between
- *   CommonJS and ESM modules as we use dynamic `import(...)` statements.
- */
-export function installForking<Name extends PlugName>(
-    plugName: Name,
-    scriptFile: AbsolutePath,
-): void {
-  /** Extend out our ForkingPlug below */
-  const ctor = class extends ForkingPlug {
-    constructor(...args: any[]) {
-      super(scriptFile, args)
-    }
-  } as unknown as PlugConstructor<Name>
-
-  /** Install the plug in  */
-  install(plugName, ctor)
 }

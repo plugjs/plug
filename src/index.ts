@@ -7,9 +7,8 @@ export { Pipe } from './pipe'
 // Our minimal exports
 export * from './assert'
 export * from './build'
+export * from './fork'
 export * from './helpers'
 export * from './log'
-
-// PlugJS types
 export * from './plugs'
 export * from './types'

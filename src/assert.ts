@@ -2,8 +2,8 @@
  * BUILD FAILURES                                                             *
  * ========================================================================== */
 
-import { currentContext } from './async'
-import { log } from './log'
+// import { currentContext } from './async'
+// import { log } from './log'
 
 const buildError = Symbol.for('plugjs:buildError')
 const buildFailure = Symbol.for('plugjs:buildFailure')
@@ -58,11 +58,12 @@ export async function assertPromises<T>(promises: (T | Promise<T>)[], message: s
 
   // Check for errors and report/fail if anything happened
   if (hasFailed) {
-    const context = currentContext()
-    const logger = context ? context.log : log
-    failures.forEach((failure) => {
-      logger.error(message, failure)
-    })
+    console.log(message) // TODO
+    // const context = currentContext()
+    // const logger = context ? context.log : log
+    // failures.forEach((failure) => {
+    //   logger.error(message, failure)
+    // })
     throw failure()
   }
 

@@ -1,7 +1,7 @@
 import type { CompilerOptions } from 'typescript'
 
 import { requireResolve } from '../paths'
-import { installForking } from '../pipe'
+import { installForking } from '../fork'
 
 declare module '../pipe' {
   export interface Pipe {
