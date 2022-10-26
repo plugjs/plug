@@ -85,11 +85,18 @@ class LoggerImpl implements Logger {
   private _emit(level: LogLevel, args: [ any, ...any ]): this {
     if (this._level > level) return this
 
-    // Filter out build failures that were already logged
+    // The `BuildFailure` is a bit special case
     const params = args.filter((arg) => {
       if (isBuildFailure(arg)) {
-        if (arg.logged) return false // already logged? skip!
-        return arg.logged = true // set logged to true and log!
+        // Filter out any previously logged build failure and mark
+        if (arg.logged) return false
+        arg.logged = true
+
+        // If the build failure has any root cause, log those
+        arg.errors.forEach((error) => this._emit(level, [ error ]))
+
+        // Log this only if it has a message
+        return !! arg.message
       } else {
         return true
       }
@@ -148,7 +155,7 @@ class LoggerImpl implements Logger {
 
   fail(...args: [ any, ...any ]): never {
     this._emit(ERROR, args)
-    throw new BuildFailure({ logged: true })
+    throw BuildFailure.fail()
   }
 
   enter(): this

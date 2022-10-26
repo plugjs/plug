@@ -73,7 +73,7 @@ class TaskImpl implements Task {
       return result
     }).catch((error) => {
       throw context.log.fail(`Failure ${$ms(Date.now() - now)}`, error)
-    }).finally(() => ContextPromises.wait(context, 'Error awaiting task pipes'))
+    }).finally(() => ContextPromises.wait(context))
 
     /* Cache the resulting promise and return it */
     cache.set(this, promise)

@@ -123,12 +123,12 @@ export class ContextPromises {
    * Await all tracked {@link Promise}s, triggering a build failure if any of
    * the _hot_ ones is rejected.
    */
-  static async wait(context: Context, message: string): Promise<void> {
+  static async wait(context: Context): Promise<void> {
     const instance = contextPromises.get(context)
     if (! instance) return
 
     await Promise.allSettled([ ...instance._cold ])
-    await assertPromises([ ...instance._hot ], message)
+    await assertPromises([ ...instance._hot ])
   }
 
   /** Get a {@link ContextPromises} instance for the given {@link Context} */
@@ -251,7 +251,7 @@ export class Pipe extends PipeProto implements Promise<Files> {
       if (pipes.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
 
       // Await for all pipes / files / files promises
-      const results = await assertPromises<Files>(pipes, 'Error in pipe while merging')
+      const results = await assertPromises<Files>(pipes)
 
       // Find the common directory between all the Files instances
       const [ firstDir, ...otherDirs ] = results.map((f) => f.directory)

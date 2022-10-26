@@ -60,7 +60,7 @@ export default class ESLint implements Plug<void> {
 
     /* In case of failures from promises, fail! */
     const { results, failures } = summary
-    if (failures) throw new BuildFailure({ logged: true })
+    if (failures) throw BuildFailure.fail()
 
     /* Create our report */
     const report = context.log.report('ESLint Report')

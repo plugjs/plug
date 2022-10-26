@@ -194,7 +194,7 @@ export class ReportImpl implements Report {
       if (! messages.length) {
         const options = { taskName: this._task, level: ERROR }
         this._emitter(options, [ 'No message for report record' ])
-        throw new BuildFailure({ logged: true })
+        throw BuildFailure.fail()
       }
 
       const level = record.level
@@ -267,7 +267,7 @@ export class ReportImpl implements Report {
   done(showSources?: boolean | undefined): void {
     if (showSources == null) showSources = logOptions.showSources
     if (! this.empty) this._emit(showSources)
-    if (this.errors) throw new BuildFailure({ logged: true })
+    if (this.errors) throw BuildFailure.fail()
   }
 
   private _emit(showSources: boolean): this {

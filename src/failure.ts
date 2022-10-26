@@ -8,24 +8,36 @@ export function isBuildFailure(arg: any): arg is BuildFailure {
 
 /** A {@link BuildFailure} represents an error _already logged_ in our build. */
 export class BuildFailure extends Error {
-  readonly errors: readonly any[]
+  readonly errors!: readonly any[]
   logged: boolean
 
-  /** Construct a {@link BuildFailure} that was already _logged_ (internal) */
-  constructor(options: { logged: true })
-  /** Construct a {@link BuildFailure} with a detail message */
-  constructor(message: string, errors?: any[])
-  // Constructor overload implementation
-  constructor(options: string | { logged: boolean } = 'Build Failure', errors: any[] = []) {
-    const { logged, message } =
-      typeof options === 'string' ?
-        { message: options, logged: false } :
-        { message: 'Build Failure', ...options }
+  /** Construct a {@link BuildFailure} */
+  private constructor(message: string | undefined, errors: any[]) {
+    super(message || '')
 
-    super(message)
+    /* Filter out any previously logged build failure */
+    errors = errors.filter((e) => ! (isBuildFailure(e) && e.logged))
+
+    /* Basic error setup, stack and marker */
     Error.captureStackTrace(this, BuildFailure)
-    Object.defineProperty(this, buildFailure, { value: buildFailure })
-    this.errors = errors.filter((e) => ! (isBuildFailure(e) && e.logged))
-    this.logged = logged
+    Object.defineProperties(this, {
+      'errors': { value: Object.freeze(errors) },
+      [buildFailure]: { value: buildFailure },
+    })
+
+    /* Request logging only if we have a message or some errors */
+    this.logged = ! (message || errors.length)
+  }
+
+  static fail(): BuildFailure {
+    return new BuildFailure(undefined, [])
+  }
+
+  static withMessage(message: string): BuildFailure {
+    return new BuildFailure(message || undefined, [])
+  }
+
+  static withErrors(errors: any[]): BuildFailure {
+    return new BuildFailure(undefined, errors)
   }
 }

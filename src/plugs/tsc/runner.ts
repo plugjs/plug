@@ -4,7 +4,7 @@ import { assertPromises } from '../../assert'
 import { BuildFailure } from '../../failure'
 import { Files } from '../../files'
 import { $p, log } from '../../log'
-import { AbsolutePath, resolveFile } from '../../paths'
+import { AbsolutePath, resolveAbsolutePath, resolveFile } from '../../paths'
 import { Context, PipeParameters, Plug } from '../../pipe'
 import { parseOptions } from '../../utils/options'
 import { TypeScriptHost } from './compiler'
@@ -96,12 +96,14 @@ export default class Tsc implements Plug<Files> {
       promises.push(builder.write(fileName, code).then((file) => {
         log.trace('Written', $p(file))
       }).catch((error) => {
-        throw new BuildFailure(`Error writing to ${fileName}`, [ error ])
+        const outFile = resolveAbsolutePath(outDir, fileName)
+        log.error('Error writing to', $p(outFile), error)
+        throw BuildFailure.fail()
       }))
     })
 
     /* Await for all files to be written and check */
-    await assertPromises(promises, 'Error writing files')
+    await assertPromises(promises)
 
     /* Update report and fail on errors */
     updateReport(report, result.diagnostics, rootDir)

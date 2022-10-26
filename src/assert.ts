@@ -5,7 +5,7 @@
 import { BuildFailure } from './failure'
 
 /** Await and assert that all specified promises were fulfilled */
-export async function assertPromises<T>(promises: (T | Promise<T>)[], message: string): Promise<T[]> {
+export async function assertPromises<T>(promises: (T | Promise<T>)[]): Promise<T[]> {
   // Await for the settlement of all the promises
   const settlements = await Promise.allSettled(promises)
 
@@ -22,12 +22,12 @@ export async function assertPromises<T>(promises: (T | Promise<T>)[], message: s
   })
 
   // Check for errors and report/fail if anything happened
-  if (failures.size) throw new BuildFailure(message, [ ...failures ])
+  if (failures.size) throw BuildFailure.withErrors([ ...failures ])
 
   return results
 }
 
 /** Asserts something as _truthy_ and fail the build if not */
 export function assert(assertion: any, message: string): asserts assertion {
-  if (! assertion) throw new BuildFailure(message)
+  if (! assertion) throw BuildFailure.withMessage(message)
 }

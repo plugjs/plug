@@ -89,7 +89,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
 
       child.on('error', (error) => {
         context.log.error('Child process error', error)
-        return done || reject(new BuildFailure({ logged: true }))
+        return done || reject(BuildFailure.fail())
       })
 
       child.on('message', (message: ForkResult) => {
@@ -100,16 +100,16 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
       child.on('exit', (code, signal) => {
         if (signal) {
           context.log.error(`Child process exited with signal ${signal}`, $gry(`(pid=${child.pid})`))
-          return done || reject(new BuildFailure({ logged: true }))
+          return done || reject(BuildFailure.fail())
         } else if (code !== 0) {
           context.log.error(`Child process exited with code ${code}`, $gry(`(pid=${child.pid})`))
-          return done || reject(new BuildFailure({ logged: true }))
+          return done || reject(BuildFailure.fail())
         } else if (! result) {
           context.log.error('Child process exited with no result', $gry(`(pid=${child.pid})`))
-          return done || reject(new BuildFailure({ logged: true }))
+          return done || reject(BuildFailure.fail())
         } else if (result.failed) {
           // definitely logged on the child side
-          return done || reject(new BuildFailure({ logged: true }))
+          return done || reject(BuildFailure.fail())
         }
 
         /* We definitely have a successful result! */
@@ -123,16 +123,16 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
         const result = child.send(message, (error) => {
           if (error) {
             context.log.error('Error sending message to child process (callback failure)', error)
-            reject(new BuildFailure({ logged: true }))
+            reject(BuildFailure.fail())
           }
         })
         if (! result) {
           context.log.error('Error sending message to child process (send returned false)')
-          reject(new BuildFailure({ logged: true }))
+          reject(BuildFailure.fail())
         }
       } catch (error) {
         context.log.error('Error sending message to child process (exception caught)', error)
-        reject(new BuildFailure({ logged: true }))
+        reject(BuildFailure.fail())
       }
     }).finally(() => done = true)
   }

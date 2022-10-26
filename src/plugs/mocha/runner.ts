@@ -40,7 +40,7 @@ export default class Mocha implements Plug<void> {
     return new Promise((resolve, reject) => {
       try {
         mocha.run((failures) => {
-          if (failures) reject(new BuildFailure({ logged: true }))
+          if (failures) reject(BuildFailure.fail())
           resolve(undefined)
         })
       } catch (error) {
