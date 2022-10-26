@@ -3,6 +3,19 @@ import type { CompilerOptions } from 'typescript'
 import { installForking } from '../fork'
 import { requireResolve } from '../paths'
 
+/** TypeScript Compiler options with some additional properties */
+export interface ExtendedCompilerOptions extends CompilerOptions {
+  /**
+   * An additional directory containing a set of `.d.ts` files which will
+   * be part of the compilation input, but not of the output.
+   *
+   * This can be useful when requiring (or fixing) specific types while
+   * compiling a project, but the definition of those types does not affect
+   * the resulting files (e.g. used only internally).
+   */
+  extraTypesDir?: string | undefined
+}
+
 declare module '../pipe' {
   export interface Pipe {
     /**
@@ -24,10 +37,10 @@ declare module '../pipe' {
      * over the input source files, using the default `tsconfig.json` file
      * and overriding some options
      *
-     * @param options {@link CompilerOptions | Options} overriding what's
-     *                currently specified in the default `tsconfig.json`.
+     * @param options {@link ExtendedCompilerOptions | Options} overriding
+     *                the contents of the default `tsconfig.json`.
      */
-    tsc(options: CompilerOptions): Pipe
+    tsc(options: ExtendedCompilerOptions): Pipe
 
     /**
      * Run the {@link https://www.typescriptlang.org/ TypeScript Compiler}
@@ -35,10 +48,10 @@ declare module '../pipe' {
      * and overriding some options
      *
      * @param configFile The `tsconfig.json` file to use.
-     * @param options {@link CompilerOptions | Options} overriding what's
-     *                currently specified in the specified `tsconfig.json`.
+     * @param options {@link ExtendedCompilerOptions | Options} overriding
+     *                the contents of the specified `tsconfig.json`.
      */
-    tsc(configFile: string, options: CompilerOptions): Pipe
+    tsc(configFile: string, options: ExtendedCompilerOptions): Pipe
   }
 }
 

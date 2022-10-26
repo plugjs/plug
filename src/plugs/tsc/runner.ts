@@ -1,5 +1,7 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
 
+import type { ExtendedCompilerOptions } from '../tsc'
+
 import { assertPromises } from '../../assert'
 import { BuildFailure } from '../../failure'
 import { Files } from '../../files'
@@ -10,6 +12,7 @@ import { parseOptions } from '../../utils/options'
 import { TypeScriptHost } from './compiler'
 import { getCompilerOptions } from './options'
 import { updateReport } from './report'
+import { walk } from '../../utils/walk'
 
 /* ========================================================================== *
  * WORKER PLUG                                                                *
@@ -17,7 +20,7 @@ import { updateReport } from './report'
 
 export default class Tsc implements Plug<Files> {
   private readonly _tsconfig?: string
-  private readonly _options: ts.CompilerOptions
+  private readonly _options: ExtendedCompilerOptions
 
   constructor(...args: PipeParameters<'tsc'>) {
     const { params: [ tsconfig ], options } = parseOptions(args, {})
@@ -28,7 +31,7 @@ export default class Tsc implements Plug<Files> {
   async pipe(files: Files, context: Context): Promise<Files> {
     const baseDir = context.resolve('.') // "this" directory, base of all relative paths
     const report = context.log.report('TypeScript Report') // report used throughout
-    const overrides = { ...this._options } // clone our options
+    const { extraTypesDir, ...overrides } = { ...this._options } // clone our options
 
     /*
      * The "tsconfig" file is either specified, or (if existing) first checked
@@ -76,8 +79,20 @@ export default class Tsc implements Plug<Files> {
     /* Prep for compilation */
     const paths = [ ...files.absolutePaths() ]
     for (const path of paths) log.trace(`Compiling "${$p(path)}"`)
-
     log.info('Compiling', paths.length, 'files')
+
+    /* If we have an extra types directory, add all the .d.ts files in there */
+    if (extraTypesDir) {
+      const directory = context.resolve(extraTypesDir)
+
+      for await (const file of walk(directory, [ '**/*.d.ts' ])) {
+        const path = resolveAbsolutePath(directory, file)
+        log.debug(`Including extra type file "${$p(path)}"`)
+        paths.push(path)
+      }
+    }
+
+    /* Log out what we'll be our final compilation options */
     log.debug('Compliation options', options)
 
     /* Typescript host, create program and compile */

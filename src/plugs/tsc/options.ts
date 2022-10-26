@@ -89,6 +89,7 @@ export async function getCompilerOptions(
   if (override.length) {
     const [ overrides, overridesFile, overridesDir ] = override
     const options = ts.convertCompilerOptionsFromJson(overrides, overridesDir, overridesFile)
+    delete options.options.configFilePath // remove build file name...
     result = mergeResults(result, options)
   }
 
