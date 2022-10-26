@@ -1,6 +1,5 @@
 import { html, initFunction } from '@plugjs/cov8-html'
 import { sep } from 'node:path'
-import { fail } from '../assert'
 import { Files } from '../files'
 import { $gry, $ms, $p, $red, $ylw, ERROR, NOTICE, WARN } from '../log'
 import { AbsolutePath, resolveAbsolutePath } from '../paths'
@@ -79,7 +78,7 @@ install('coverage', class Coverage implements Plug<Files | undefined> {
     }
 
     if (coverageFiles.length === 0) {
-      fail(`No coverage files found in ${$p(coverageDir)}`)
+      throw context.log.fail(`No coverage files found in ${$p(coverageDir)}`)
     }
 
     const sourceFiles = [ ...files.absolutePaths() ]
