@@ -1,8 +1,8 @@
-import { fail, failure } from '../assert'
 import { AbsolutePath } from '../paths'
 import { readFile } from '../utils/asyncfs'
 import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
 import { LogEmitter } from './emit'
+import { BuildFailure } from '../failure'
 import { ERROR, LogLevels, NOTICE, WARN } from './levels'
 import { logOptions } from './options'
 
@@ -191,7 +191,11 @@ export class ReportImpl implements Report {
             [ ...record.message.map((msg) => msg.split('\n')).flat(1) ] :
             record.message.split('\n')
       messages = messages.filter((message) => !! message)
-      if (! messages.length) fail('No message for report record')
+      if (! messages.length) {
+        const options = { taskName: this._task, level: ERROR }
+        this._emitter(options, [ 'No message for report record' ])
+        throw new BuildFailure({ logged: true })
+      }
 
       const level = record.level
       const file = record.file
@@ -263,7 +267,7 @@ export class ReportImpl implements Report {
   done(showSources?: boolean | undefined): void {
     if (showSources == null) showSources = logOptions.showSources
     if (! this.empty) this._emit(showSources)
-    if (this.errors) throw failure()
+    if (this.errors) throw new BuildFailure({ logged: true })
   }
 
   private _emit(showSources: boolean): this {
