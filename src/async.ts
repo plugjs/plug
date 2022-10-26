@@ -1,5 +1,4 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { assert } from './assert'
 import type { Context } from './pipe'
 
 /* ========================================================================== *
@@ -39,7 +38,7 @@ export function currentContext(): Context | undefined {
  */
 export function requireContext(): Context {
   const context = storage.getStore()
-  assert(context, 'Unable to retrieve current context')
+  if (! context) throw new Error('Unable to retrieve current context')
   return context
 }
 
