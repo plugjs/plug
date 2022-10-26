@@ -24,7 +24,7 @@ export class BuildFailure extends Error {
 
     super(message)
     Error.captureStackTrace(this, BuildFailure)
-    Object.defineProperty(this, 'buildFailure', { value: buildFailure })
+    Object.defineProperty(this, buildFailure, { value: buildFailure })
     this.errors = errors.filter((e) => ! (isBuildFailure(e) && e.logged))
     this.logged = logged
   }
