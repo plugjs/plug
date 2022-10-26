@@ -4,7 +4,7 @@ import { assert } from '../assert'
 import { Files, FilesBuilder } from '../files'
 import { $p, ERROR, Logger, ReportLevel, ReportRecord, WARN } from '../log'
 import { AbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { install, PipeParameters, Plug, Context } from '../pipe'
+import { Context, install, PipeParameters, Plug } from '../pipe'
 import { readFile } from '../utils/asyncfs'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>

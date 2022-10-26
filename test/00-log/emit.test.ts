@@ -1,5 +1,6 @@
-import { expect } from 'chai'
 import assert from 'node:assert'
+
+import { expect } from 'chai'
 import { Writable } from 'node:stream'
 import { currentContext } from '../../src/async.js'
 import { $gry } from '../../src/log/colors.js'

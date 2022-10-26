@@ -1,6 +1,6 @@
 import { Files } from '../files'
 import { $gry, $p, $und, $ylw } from '../log'
-import { install, Plug, Context, PipeParameters } from '../pipe'
+import { Context, install, PipeParameters, Plug } from '../pipe'
 
 declare module '../pipe' {
   export interface Pipe {

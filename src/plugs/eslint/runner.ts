@@ -1,10 +1,10 @@
 import { ESLint as RealESLint } from 'eslint'
 import { assert } from '../../assert'
+import { BuildFailure } from '../../failure'
 import { Files } from '../../files'
 import { $p, ERROR, NOTICE, WARN } from '../../log'
-import { BuildFailure } from '../../failure'
 import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from '../../paths'
-import { PipeParameters, Plug, Context } from '../../pipe'
+import { Context, PipeParameters, Plug } from '../../pipe'
 import { readFile } from '../../utils/asyncfs'
 import { ESLintOptions } from '../eslint'
 

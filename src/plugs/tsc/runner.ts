@@ -1,7 +1,7 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
+
 import { assertPromises } from '../../assert'
 import { BuildFailure } from '../../failure'
-
 import { Files } from '../../files'
 import { $p, log } from '../../log'
 import { AbsolutePath, resolveFile } from '../../paths'

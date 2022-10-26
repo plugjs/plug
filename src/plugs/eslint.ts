@@ -1,5 +1,5 @@
-import { requireResolve } from '../paths'
 import { installForking } from '../fork'
+import { requireResolve } from '../paths'
 
 export interface ESLintOptions {
   /** ESLint's own _current working directory_, where config files are. */

@@ -1,5 +1,5 @@
-import { emitColor, emitPlain, LogEmitter } from './emit'
 import { BuildFailure, isBuildFailure } from '../failure'
+import { emitColor, emitPlain, LogEmitter } from './emit'
 import { DEBUG, ERROR, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
 import { Report, ReportImpl } from './report'

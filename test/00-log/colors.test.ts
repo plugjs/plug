@@ -1,9 +1,8 @@
 import { expect } from 'chai'
-
-import * as colors from '../../src/log/colors.js'
-
 import { log, logOptions } from '../../src/log.js'
 import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../../src/paths.js'
+
+import * as colors from '../../src/log/colors.js'
 
 describe('Colors', () => {
   const cwd = getCurrentWorkingDirectory()

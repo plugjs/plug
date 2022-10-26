@@ -1,8 +1,8 @@
+import { BuildFailure } from '../failure'
 import { AbsolutePath } from '../paths'
 import { readFile } from '../utils/asyncfs'
 import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
 import { LogEmitter } from './emit'
-import { BuildFailure } from '../failure'
 import { ERROR, LogLevels, NOTICE, WARN } from './levels'
 import { logOptions } from './options'
 

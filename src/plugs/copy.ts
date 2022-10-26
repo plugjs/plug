@@ -2,7 +2,7 @@ import { assert } from '../assert'
 import { Files } from '../files'
 import { $p } from '../log'
 import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { install, PipeParameters, Plug, Context } from '../pipe'
+import { Context, install, PipeParameters, Plug } from '../pipe'
 import { chmod, copyFile, fsConstants, mkdir } from '../utils/asyncfs'
 
 /** Options for copying files */

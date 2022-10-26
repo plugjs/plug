@@ -10,7 +10,7 @@ import {
   isTSTypeReference,
   isTypeScript,
   Node,
-  VISITOR_KEYS
+  VISITOR_KEYS,
 } from '@babel/types'
 
 import { parse } from '@babel/parser'

@@ -1,9 +1,9 @@
 import RealMocha from 'mocha' // Mocha types pollute the global scope!
-import { BuildFailure } from '../../failure'
 
+import { BuildFailure } from '../../failure'
 import { Files } from '../../files'
 import { $wht, NOTICE } from '../../log'
-import { PipeParameters, Plug, Context } from '../../pipe'
+import { Context, PipeParameters, Plug } from '../../pipe'
 import { MochaOptions } from '../mocha'
 import { logSymbol, PlugReporter } from './reporter'
 

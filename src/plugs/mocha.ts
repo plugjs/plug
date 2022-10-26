@@ -1,5 +1,5 @@
-import { requireResolve } from '../paths'
 import { installForking } from '../fork'
+import { requireResolve } from '../paths'
 
 /** Options to construct our {@link Mocha} plug. */
 export interface MochaOptions {
