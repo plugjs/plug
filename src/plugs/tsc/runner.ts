@@ -1,6 +1,7 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
+import { assertPromises } from '../../assert'
+import { BuildFailure } from '../../failure'
 
-import { failure } from '../../assert'
 import { Files } from '../../files'
 import { $p, log } from '../../log'
 import { AbsolutePath, resolveFile } from '../../paths'
@@ -95,16 +96,12 @@ export default class Tsc implements Plug<Files> {
       promises.push(builder.write(fileName, code).then((file) => {
         log.trace('Written', $p(file))
       }).catch((error) => {
-        context.log.error('Error writing to', fileName, error)
-        throw failure() // no more logs!
+        throw new BuildFailure(`Error writing to ${fileName}`, [ error ])
       }))
     })
 
     /* Await for all files to be written and check */
-    const settlements = await Promise.allSettled(promises)
-    const failures = settlements
-        .reduce((failures, s) => failures + s.status === 'rejected' ? 1 : 0, 0)
-    if (failures) throw failure() // already logged above
+    await assertPromises(promises, 'Error writing files')
 
     /* Update report and fail on errors */
     updateReport(report, result.diagnostics, rootDir)
