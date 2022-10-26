@@ -1,7 +1,8 @@
 import { ESLint as RealESLint } from 'eslint'
-import { assert, failure } from '../../assert'
+import { assert } from '../../assert'
 import { Files } from '../../files'
 import { $p, ERROR, NOTICE, WARN } from '../../log'
+import { BuildFailure } from '../../failure'
 import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from '../../paths'
 import { PipeParameters, Plug, Context } from '../../pipe'
 import { readFile } from '../../utils/asyncfs'
@@ -59,7 +60,7 @@ export default class ESLint implements Plug<void> {
 
     /* In case of failures from promises, fail! */
     const { results, failures } = summary
-    if (failures) throw failure() // already logged above
+    if (failures) throw new BuildFailure({ logged: true })
 
     /* Create our report */
     const report = context.log.report('ESLint Report')
