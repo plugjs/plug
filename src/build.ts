@@ -10,11 +10,11 @@ import type {
   ThisBuild,
 } from './types'
 
-import { assert, assertPromises } from './assert'
+import { assert } from './assert'
 import { runAsync } from './async'
 import { $ms, $t, getLogger, log, logOptions } from './log'
 import { AbsolutePath } from './paths'
-import { Context, getContextPromises, Pipe } from './pipe'
+import { Context, ContextPromises, Pipe } from './pipe'
 import { findCaller } from './utils/caller'
 import { parseOptions } from './utils/options'
 
@@ -67,18 +67,13 @@ class TaskImpl implements Task {
 
     /* Run asynchronously in an asynchronous context */
     const promise = runAsync(context, taskName, async () => {
-      const result = await this._def.call(build) || undefined
-
-      const promises = getContextPromises(context)
-      await assertPromises([ ...promises ], 'Error awaiting task pipes')
-
-      return result
+      return await this._def.call(build) || undefined
     }).then((result) => {
       context.log.notice(`Success ${$ms(Date.now() - now)}`)
       return result
     }).catch((error) => {
       throw context.log.fail(`Failure ${$ms(Date.now() - now)}`, error)
-    })
+    }).finally(() => ContextPromises.wait(context, 'Error awaiting task pipes'))
 
     /* Cache the resulting promise and return it */
     cache.set(this, promise)
