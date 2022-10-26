@@ -2,6 +2,8 @@
 
 export type { AbsolutePath } from './paths'
 export type { Files, FilesBuilder } from './files'
+
+export { BuildFailure } from './failure'
 export { Pipe } from './pipe'
 
 // Our minimal exports
