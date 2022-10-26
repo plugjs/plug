@@ -1,5 +1,5 @@
-import { isBuildError, isBuildFailure } from '../assert'
 import { emitColor, emitPlain, LogEmitter } from './emit'
+import { BuildFailure, isBuildFailure } from '../failure'
 import { DEBUG, ERROR, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
 import { Report, ReportImpl } from './report'
@@ -34,6 +34,8 @@ export interface Log {
   warn(...args: [ any, ...any ]): this
   /** Log an `ERROR` message */
   error(...args: [ any, ...any ]): this
+  /** Log an `ERROR` message and fail the build */
+  fail(...args: [ any, ...any ]): never
 }
 
 /** A {@link Logger} extends the basic {@link Log} adding some state. */
@@ -83,9 +85,18 @@ class LoggerImpl implements Logger {
   private _emit(level: LogLevel, args: [ any, ...any ]): this {
     if (this._level > level) return this
 
-    // Filter out build failures (they are not to be logged)
-    const params = args.filter((arg) => ! isBuildFailure(arg))
-    if (params.length === 0) return this // no logging only build failures
+    // Filter out build failures that were already logged
+    const params = args.filter((arg) => {
+      if (isBuildFailure(arg)) {
+        if (arg.logged) return false // already logged? skip!
+        return arg.logged = true // set logged to true and log!
+      } else {
+        return true
+      }
+    })
+
+    // If there's nothing left to log, then we're done
+    if (params.length === 0) return this
 
     // Prepare our options for logging
     const options = { level, taskName: this._task, indent: this._indent }
@@ -98,18 +109,8 @@ class LoggerImpl implements Logger {
       this._stack.splice(0)
     }
 
-    // Print all `BuildError`s _before_ any other entry
-    const remaining = params.filter((arg) => {
-      if (isBuildError(arg)) {
-        this._emitter({ ...options, level: ERROR }, [ arg.message ])
-        return false
-      } else {
-        return true
-      }
-    })
-
-    // If we have any leftovers, dump them out, too!
-    if (remaining) this._emitter(options, remaining)
+    // Emit our log lines and return
+    this._emitter(options, params)
     return this
   }
 
@@ -143,6 +144,11 @@ class LoggerImpl implements Logger {
 
   error(...args: [ any, ...any ]): this {
     return this._emit(ERROR, args)
+  }
+
+  fail(...args: [ any, ...any ]): never {
+    this._emit(ERROR, args)
+    throw new BuildFailure({ logged: true })
   }
 
   enter(): this

@@ -58,6 +58,10 @@ export const log: LogFunction = ((): LogFunction => {
       logger().error(...args)
       return wrapper
     },
+
+    fail(...args: [ any, ...any ]): never {
+      throw logger().fail(...args) // fail() returns never but ?!?!?!?!?
+    },
   }
 
   /* Create a function that will default logging to "NOTICE" */
