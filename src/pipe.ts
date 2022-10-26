@@ -87,22 +87,59 @@ export class Context {
  * ========================================================================== */
 
 /**
- * In pipe chains, we want to keep track of the _leaf_ `Files` promises (that
+ * In pipe chains, we want to keep track of the _leaf_ promises (that
  * is, when a derived pipe is created calling `plug` we want to track only the
  * new, derived, promise).
  *
  * We key these _leaf_ promises by _context_ (with a WeakMap), and those will
  * be awaited at the end of the task.
  */
-const contextPromises = new WeakMap<Context, Set<Promise<Result>>>()
+const contextPromises = new WeakMap<Context, ContextPromises>()
 
-export function getContextPromises(context: Context): Set<Promise<Result>> {
-  let promises = contextPromises.get(context)
-  if (! promises) {
-    promises = new Set<Promise<Files>>()
-    contextPromises.set(context, promises)
+/**
+ * An internal class recording _hot_ (failure will fail the task) and _cold_
+ * (failure will be ignored) {@link Promise}s for a task's {@link Context}.
+ */
+export class ContextPromises {
+  private readonly _cold = new Set<Promise<Result>>()
+  private readonly _hot = new Set<Promise<Result>>()
+
+  /* Private constructor */
+  private constructor(readonly context: Context) {}
+
+  /** Track a {@link Promise} _hot_ (failure will fail the task) */
+  hot(promise: Promise<Result>): void {
+    this._cold.delete(promise)
+    this._hot.add(promise)
   }
-  return promises
+
+  /** Track a {@link Promise} _cold_ (failure will be ignored) */
+  cold(promise: Promise<Result>): void {
+    this._hot.delete(promise)
+    this._cold.add(promise)
+  }
+
+  /**
+   * Await all tracked {@link Promise}s, triggering a build failure if any of
+   * the _hot_ ones is rejected.
+   */
+  static async wait(context: Context, message: string): Promise<void> {
+    const instance = contextPromises.get(context)
+    if (! instance) return
+
+    await Promise.allSettled([ ...instance._cold ])
+    await assertPromises([ ...instance._hot ], message)
+  }
+
+  /** Get a {@link ContextPromises} instance for the given {@link Context} */
+  static get(context: Context): ContextPromises {
+    let promises = contextPromises.get(context)
+    if (! promises) {
+      promises = new ContextPromises(context)
+      contextPromises.set(context, promises)
+    }
+    return promises
+  }
 }
 
 /**
@@ -127,7 +164,7 @@ export class Pipe extends PipeProto implements Promise<Files> {
     super()
 
     // New "Pipe", remember the promise!
-    getContextPromises(_context).add(_promise)
+    ContextPromises.get(_context).hot(_promise)
   }
 
   /* ------------------------------------------------------------------------ *
@@ -152,7 +189,7 @@ export class Pipe extends PipeProto implements Promise<Files> {
       onrejected?: ((reason: any) => R2 | PromiseLike<R2>) | null | undefined,
   ): Promise<R1 | R2> {
     // We are delegating the handling of this promise to the caller
-    getContextPromises(this._context).delete(this._promise)
+    ContextPromises.get(this._context).cold(this._promise)
     return this._promise.then(onfulfilled as (value: Result) => R1 | PromiseLike<R1>, onrejected)
   }
 
@@ -160,13 +197,13 @@ export class Pipe extends PipeProto implements Promise<Files> {
       onrejected?: ((reason: any) => R | PromiseLike<R>) | null | undefined,
   ): Promise<Files | R> {
     // We are delegating the handling of this promise to the caller
-    getContextPromises(this._context).delete(this._promise)
+    ContextPromises.get(this._context).cold(this._promise)
     return this._promise.catch(onrejected) as Promise<Files | R>
   }
 
   finally(onfinally?: (() => void) | null | undefined): Promise<Files> {
     // We are delegating the handling of this promise to the caller
-    getContextPromises(this._context).delete(this._promise)
+    ContextPromises.get(this._context).cold(this._promise)
     return this._promise.finally(onfinally) as Promise<Files>
   }
 
@@ -182,7 +219,7 @@ export class Pipe extends PipeProto implements Promise<Files> {
     const plug = typeof arg === 'function' ? { pipe: arg } : arg
 
     // We are creating a new "leaf" Pipe, we can forget our promise
-    getContextPromises(this._context).delete(this._promise)
+    ContextPromises.get(this._context).cold(this._promise)
 
     // Create and return the new Pipe
     return new Pipe(this._context, this._promise.then(async (result) => {
