@@ -152,7 +152,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
   /* If we haven't processed our message in 5 seconds, fail _badly_ */
   const timeout = setTimeout(() => {
     // eslint-disable-next-line no-console
-    console.error('Mocha not initialized in 5 seconds')
+    console.error('Fork not initialized in 5 seconds')
     process.exit(2)
   }, 5000)
 
