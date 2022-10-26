@@ -1,8 +1,9 @@
 import { fork } from 'node:child_process'
-import { assert, failure } from './assert'
+import { assert } from './assert'
 import { runAsync } from './async'
 import { Files } from './files'
 import { $gry, $p, LogOptions, logOptions } from './log'
+import { BuildFailure } from './failure'
 import { AbsolutePath, requireFilename, resolveFile } from './paths'
 import { Plug, PlugResult, Context, install, PlugName } from './pipe'
 
@@ -88,7 +89,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
 
       child.on('error', (error) => {
         context.log.error('Child process error', error)
-        return done || reject(failure())
+        return done || reject(new BuildFailure({ logged: true }))
       })
 
       child.on('message', (message: ForkResult) => {
@@ -99,16 +100,16 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
       child.on('exit', (code, signal) => {
         if (signal) {
           context.log.error(`Child process exited with signal ${signal}`, $gry(`(pid=${child.pid})`))
-          return done || reject(failure())
+          return done || reject(new BuildFailure({ logged: true }))
         } else if (code !== 0) {
           context.log.error(`Child process exited with code ${code}`, $gry(`(pid=${child.pid})`))
-          return done || reject(failure())
+          return done || reject(new BuildFailure({ logged: true }))
         } else if (! result) {
           context.log.error('Child process exited with no result', $gry(`(pid=${child.pid})`))
-          return done || reject(failure())
+          return done || reject(new BuildFailure({ logged: true }))
         } else if (result.failed) {
           // definitely logged on the child side
-          return done || reject(failure())
+          return done || reject(new BuildFailure({ logged: true }))
         }
 
         /* We definitely have a successful result! */
@@ -122,16 +123,16 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
         const result = child.send(message, (error) => {
           if (error) {
             context.log.error('Error sending message to child process (callback failure)', error)
-            reject(failure())
+            reject(new BuildFailure({ logged: true }))
           }
         })
         if (! result) {
           context.log.error('Error sending message to child process (send returned false)')
-          reject(failure())
+          reject(new BuildFailure({ logged: true }))
         }
       } catch (error) {
         context.log.error('Error sending message to child process (exception caught)', error)
-        reject(failure())
+        reject(new BuildFailure({ logged: true }))
       }
     }).finally(() => done = true)
   }
