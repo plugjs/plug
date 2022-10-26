@@ -10,9 +10,9 @@ import type {
   ThisBuild,
 } from './types'
 
-import { assert, assertPromises, fail, failure } from './assert'
+import { assert, assertPromises } from './assert'
 import { runAsync } from './async'
-import { $ms, $t, getLogger, logOptions } from './log'
+import { $ms, $t, getLogger, log, logOptions } from './log'
 import { AbsolutePath } from './paths'
 import { Context, getContextPromises, Pipe } from './pipe'
 import { findCaller } from './utils/caller'
@@ -77,8 +77,7 @@ class TaskImpl implements Task {
       context.log.notice(`Success ${$ms(Date.now() - now)}`)
       return result
     }).catch((error) => {
-      context.log.error(`Failure ${$ms(Date.now() - now)}`, error)
-      throw failure()
+      throw context.log.fail(`Failure ${$ms(Date.now() - now)}`, error)
     })
 
     /* Cache the resulting promise and return it */
@@ -143,13 +142,12 @@ export function build<
         if (taskName in tasks) {
           await tasks[taskName].invoke(state, taskName)
         } else {
-          fail(`Task ${$t(taskName)} not found in build`)
+          throw logger.fail(`Task ${$t(taskName)} not found in build`)
         }
       }
       logger.notice(`Build successful ${$ms(Date.now() - now)}`)
     } catch (error) {
-      logger.error(`Build failed ${$ms(Date.now() - now)}`, error)
-      throw failure()
+      throw logger.fail(`Build failed ${$ms(Date.now() - now)}`, error)
     }
   }
 
@@ -189,7 +187,7 @@ export function invoke<B extends Build>(
   const invoke: InvokeBuild = (build as any)[buildMarker]
 
   /* Triple check that we actually _have_ a function */
-  if (typeof invoke !== 'function') fail('Unknown build type')
+  if (typeof invoke !== 'function') log.fail('Unknown build type')
 
   /* Call everyhin that needs to be called */
   return invoke(tasks, props)
