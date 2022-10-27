@@ -1,4 +1,6 @@
-/// <reference path="../extra/webassembly.d.ts" />
+// Reference our extra "webassembly" type fix here. As we're using esbuild
+// everywhere, we want our dependants to have this type known...
+/// <reference path="../types/webassembly.d.ts" />
 
 export type { AbsolutePath } from './paths'
 export type { Files, FilesBuilder } from './files'

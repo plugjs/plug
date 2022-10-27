@@ -105,7 +105,7 @@ export default build({
       declaration: true,
       emitDeclarationOnly: true,
       outDir: './dist',
-      extraTypesDir: 'extra',
+      extraTypesDir: 'types',
     })
   },
 

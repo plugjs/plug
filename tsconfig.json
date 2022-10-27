@@ -22,5 +22,6 @@
     "extra/*.mts",
     "src/**/*.ts",
     "test/**/*.ts",
+    "types/**.ts",
   ]
 }
