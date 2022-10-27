@@ -1,3 +1,5 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
+
 import { assert } from './assert'
 import { runAsync } from './async'
 import { $ms, $t, getLogger, log, logOptions } from './log'
@@ -85,8 +87,10 @@ class TaskImpl implements Task {
  * BUILD COMPILER                                                             *
  * ========================================================================== */
 
-/** Symbol indicating that an object is a Build */
+/** Symbol indicating that an object is a {@link Build} */
 const buildMarker = Symbol.for('plugjs:isBuild')
+/** Asynchronous local storage for the current {@link Build} */
+const buildStorage = new AsyncLocalStorage<Build>()
 
 /** Compile a {@link BuildDef | build definition} into a {@link Build} */
 export function build<
@@ -114,7 +118,7 @@ export function build<
   }
 
   /* Create the "call" function for this build */
-  const invoke: InvokeBuild = async function invoke(
+  const invoke: InvokeBuild = function invoke(
       taskNames: string[],
       overrideProps: Record<string, string | undefined> = {},
   ): Promise<void> {
@@ -131,19 +135,21 @@ export function build<
     logger.notice('Starting...')
     const now = Date.now()
 
-    try {
-      /* Run tasks _serially_ */
-      for (const taskName of taskNames) {
-        if (taskName in tasks) {
-          await tasks[taskName].invoke(state, taskName)
-        } else {
-          throw logger.fail(`Task ${$t(taskName)} not found in build`)
+    return buildStorage.run(compiled, async () => {
+      try {
+        /* Run tasks _serially_ */
+        for (const taskName of taskNames) {
+          if (taskName in tasks) {
+            await tasks[taskName].invoke(state, taskName)
+          } else {
+            throw logger.fail(`Task ${$t(taskName)} not found in build`)
+          }
         }
+        logger.notice(`Build successful ${$ms(Date.now() - now)}`)
+      } catch (error) {
+        throw logger.fail(`Build failed ${$ms(Date.now() - now)}`, error)
       }
-      logger.notice(`Build successful ${$ms(Date.now() - now)}`)
-    } catch (error) {
-      throw logger.fail(`Build failed ${$ms(Date.now() - now)}`, error)
-    }
+    })
   }
 
   /* Create our build, the collection of all props and tasks */
@@ -186,4 +192,9 @@ export function invoke<B extends Build>(
 
   /* Call everyhin that needs to be called */
   return invoke(tasks, props)
+}
+
+/** Return the current {@link Build} in the asynchronous invocation context. */
+export function currentBuild(): Build | undefined {
+  return buildStorage.getStore()
 }
