@@ -1,4 +1,4 @@
-import { $t, build, find, fixExtensions, log, Pipe, rmrf } from './src/index.js'
+import { $t, build, find, fixExtensions, log, merge, Pipe, rmrf } from './src/index.js'
 
 /** When `true` the coverage dir comes from the environment */
 const environmentCoverage = !! process.env.NODE_V8_COVERAGE
@@ -6,6 +6,7 @@ const environmentCoverage = !! process.env.NODE_V8_COVERAGE
 export default build({
   /** The coverage data dir, might be supplied as an env variable  */
   coverageDir: process.env.NODE_V8_COVERAGE || '.coverage-data',
+  flubber: '',
 
   find_sources: () => find('**/*.ts', { directory: 'src' }),
 
@@ -43,7 +44,7 @@ export default build({
   },
 
   async eslint() {
-    await Pipe.merge([
+    await merge([
       this.find_sources(),
       this.find_tests(),
     ]).eslint()
@@ -94,7 +95,7 @@ export default build({
     const extra = find('**/*.d.ts', { directory: 'extra' })
     const sources = this.find_sources()
 
-    return Pipe.merge([ extra, sources ]).tsc('tsconfig.json', {
+    return merge([ extra, sources ]).tsc('tsconfig.json', {
       rootDir: 'src', // root this in "src" (filters out "extra/...")
       noEmit: false,
       declaration: true,
@@ -106,7 +107,7 @@ export default build({
   async transpile(): Promise<Pipe> {
     await rmrf('dist')
 
-    return Pipe.merge([
+    return merge([
       await this.copy_resources(),
       await this.transpile_cjs(),
       await this.transpile_mjs(),
