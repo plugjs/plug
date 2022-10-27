@@ -1,6 +1,5 @@
 import {
   AbsolutePath,
-  commonPath,
   getAbsoluteParent,
   getCurrentWorkingDirectory,
   resolveAbsolutePath,
@@ -8,7 +7,6 @@ import {
 
 import { sep } from 'path'
 import { assert, assertPromises } from './assert'
-import { requireContext } from './async'
 import { Files } from './files'
 import { getLogger, Logger } from './log'
 import { Result } from './types'
@@ -228,40 +226,8 @@ export class Pipe extends PipeProto implements Promise<Files> {
       return result2 || undefined
     }))
   }
-
-  /**
-   * Merge the results of several {@link Pipe}s into a single one.
-   *
-   * Merging is performed _in parallel_. When serial execution is to be desired,
-   * we can merge the awaited _result_ of the {@link Pipe}.
-   *
-   * For example:
-   *
-   * ```
-   * const pipe: Pipe = merge([
-   *   await this.anotherTask1(),
-   *   await this.anotherTask2(),
-   * ])
-   * ```
-   */
-  static merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
-    const context = requireContext()
-    return new Pipe(context, Promise.resolve().then(async () => {
-      // No pipes? Just send off an empty pipe...
-      if (pipes.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
-
-      // Await for all pipes / files / files promises
-      const results = await assertPromises<Files>(pipes)
-
-      // Find the common directory between all the Files instances
-      const [ firstDir, ...otherDirs ] = results.map((f) => f.directory)
-      const directory = commonPath(firstDir, ...otherDirs)
-
-      // Build our new files instance merging all the results
-      return Files.builder(directory).merge(...results).build()
-    }))
-  }
 }
+
 
 /* ========================================================================== *
  * PLUG INSTALLATION (NEW)                                                    *
