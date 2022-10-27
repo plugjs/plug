@@ -341,13 +341,13 @@ export function parseCommandLine(): CommandLineOptions {
 
     ${$blu}${$und}Options:${$rst}
 
-        ${$wht}-v --verbose ${$rst}   Increase logging verbosity
-        ${$wht}-q --quiet   ${$rst}   Decrease logging verbosity
-        ${$wht}-c --colors  ${$rst}   Force colorful output (use "--no-colors" to force plain text)
-        ${$wht}-f --file    ${$rst}   Specify the build file to use (default "./build.[ts/js/...]")
-        ${$wht}-w --watch   ${$rst}   Watch for changes on the specified directory and run build
-        ${$wht}-l --list    ${$rst}   Only list the tasks defined by the build, nothing more!
-        ${$wht}-h --help    ${$rst}   Help! You're reading it now!
+        ${$wht}-f --file ${$gry}${$und}file${$rst}  Specify the build file to use (default "./build.[ts/js/...]")
+        ${$wht}-w --watch ${$gry}${$und}dir${$rst}  Watch for changes on the specified directory and run build
+        ${$wht}-v --verbose${$rst}    Increase logging verbosity
+        ${$wht}-q --quiet${$rst}      Decrease logging verbosity
+        ${$wht}-c --colors${$rst}     Force colorful output (use "--no-colors" to force plain text)
+        ${$wht}-l --list${$rst}       Only list the tasks defined by the build, nothing more!
+        ${$wht}-h --help${$rst}       Help! You're reading it now!
 
     ${$blu}${$und}Properties:${$rst}
 
