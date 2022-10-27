@@ -432,7 +432,6 @@ export function parseCommandLine(): CommandLineOptions {
    * WATCH MODE                                                               *
    * ======================================================================== */
 
-  console.log('WD', watchDirs)
   watchDirs.forEach((watchDir) => {
     const absolute = _path.resolve(watchDir)
     if (! isDir(absolute)) {
