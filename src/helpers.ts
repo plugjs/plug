@@ -1,8 +1,8 @@
-import { assert } from './assert'
+import { assert, assertPromises } from './assert'
 import { requireContext } from './async'
 import { Files } from './files'
 import { $p, log } from './log'
-import { AbsolutePath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
+import { AbsolutePath, commonPath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
 import { Pipe } from './pipe'
 import { rm } from './utils/asyncfs'
 import { ParseOptions, parseOptions } from './utils/options'
@@ -65,6 +65,59 @@ export async function rmrf(directory: string): Promise<void> {
 
   log.notice('Removing directory', $p(dir), 'recursively')
   await rm(dir, { recursive: true })
+}
+
+/**
+ * Merge the results of several {@link Pipe}s into a single one.
+ *
+ * Merging is performed _in parallel_. When serial execution is to be desired,
+ * we can merge the awaited _result_ of the {@link Pipe}.
+ *
+ * For example:
+ *
+ * ```
+ * const pipe: Pipe = merge([
+ *   await this.anotherTask1(),
+ *   await this.anotherTask2(),
+ * ])
+ * ```
+ */
+export function merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
+  const context = requireContext()
+  return new Pipe(context, Promise.resolve().then(async () => {
+    // No pipes? Just send off an empty pipe...
+    if (pipes.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
+
+    // Await for all pipes / files / files promises
+    const results = await assertPromises<Files>(pipes)
+
+    // Find the common directory between all the Files instances
+    const [ firstDir, ...otherDirs ] = results.map((f) => f.directory)
+    const directory = commonPath(firstDir, ...otherDirs)
+
+    // Build our new files instance merging all the results
+    return Files.builder(directory).merge(...results).build()
+  }))
+}
+
+/**
+ * Create an empty _no-op_ {@link Pipe}.
+ *
+ * This is useful when creating tasks with conditional pipes and returning the
+ * correct type, for example:
+ *
+ * ```
+ * if (someCondition) {
+ *   return find(...).pipe(...)
+ * } else {
+ *   return noop()
+ * }
+ * ```
+ */
+export function noop(): Pipe {
+  const context = requireContext()
+  const files = new Files(getCurrentWorkingDirectory())
+  return new Pipe(context, Promise.resolve(files))
 }
 
 /**
