@@ -99,15 +99,13 @@ export default build({
   },
 
   transpile_types(): Pipe {
-    const extra = find('**/*.d.ts', { directory: 'extra' })
-    const sources = this.find_sources()
-
-    return merge([ extra, sources ]).tsc('tsconfig.json', {
-      rootDir: 'src', // root this in "src" (filters out "extra/...")
+    return this.find_sources().tsc('tsconfig.json', {
+      rootDir: 'src',
       noEmit: false,
       declaration: true,
       emitDeclarationOnly: true,
       outDir: './dist',
+      extraTypesDir: 'extra',
     })
   },
 
