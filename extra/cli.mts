@@ -10,6 +10,14 @@ import _fs from 'node:fs'
 import _path from 'node:path'
 import _url from 'node:url'
 
+// Colors...
+const $rst = process.stdout.isTTY ? '\u001b[0m' : '' // reset all colors to default
+const $und = process.stdout.isTTY ? '\u001b[4m' : '' // underline on
+const $gry = process.stdout.isTTY ? '\u001b[38;5;240m' : '' // somewhat gray
+const $blu = process.stdout.isTTY ? '\u001b[38;5;69m' : '' // brighter blue
+const $wht = process.stdout.isTTY ? '\u001b[1;38;5;255m' : '' // full-bright white
+const $tsk = process.stdout.isTTY ? '\u001b[38;5;141m' : '' // the color for tasks (purple)
+
 /* ========================================================================== *
  * ========================================================================== *
  * PROCESS SETUP                                                              *
@@ -20,7 +28,7 @@ import _url from 'node:url'
 
 /* We have everyhing we need to start our asynchronous main! */
 async function main(options: CommandLineOptions): Promise<void> {
-  const { buildFile, tasks, listOnly } = options
+  const { buildFile, tasks, props, listOnly } = options
   if (tasks.length === 0) tasks.push('default')
 
   let build = await import(buildFile)
@@ -42,11 +50,38 @@ async function main(options: CommandLineOptions): Promise<void> {
   }
 
   if (listOnly) {
-    console.log('Build file tasks\n- ' + Object.keys(build).sort().join('\n- '))
+    const taskNames: string[] = []
+    const propNames: string[] = []
+
+    for (const [ key, value ] of Object.entries(build)) {
+      (typeof value === 'string' ? propNames : taskNames).push(key)
+    }
+
+    const buildFileName = _path.relative(process.cwd(), buildFile)
+
+    console.log(`\n${$gry}Outline of ${$wht}${buildFileName}${$rst}`)
+
+    console.log('\nKnown tasks:\n')
+    for (const taskName of taskNames.sort()) {
+      console.log(` ${$gry}\u25a0${$tsk} ${taskName}${$rst}`)
+    }
+
+    console.log('\nKnown properties:\n')
+    for (const propName of propNames.sort()) {
+      const value = build[propName] ?
+        ` ${$gry}(default "${$rst}${$und}${build[propName]}${$gry})` : ''
+      console.log(` ${$gry}\u25a1${$blu} ${propName}${value}${$rst}`)
+    }
+
+    console.log()
   } else {
-    await build[buildMarker](tasks)
+    await build[buildMarker](tasks, props)
   }
 }
+
+/* ========================================================================== *
+ * MAIN ENTRY POINT                                                           *
+ * ========================================================================== */
 
 /* Check for source maps and typescript support */
 const sourceMapsEnabled = process.execArgv.indexOf('--enable-source-maps') >= 0
@@ -55,7 +90,7 @@ const sourceMapsEnabled = process.execArgv.indexOf('--enable-source-maps') >= 0
 const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
 const typeScriptEnabled = (globalThis as any)[tsLoaderMarker] === tsLoaderMarker
 
-
+/* Some debugging if needed */
 if (process.env.DEBUG_CLI === 'true') {
   console.log('SourceMaps enabled =', sourceMapsEnabled)
   console.log('TypeScript enabled =', typeScriptEnabled)
@@ -167,6 +202,7 @@ function isBuildFailure(arg: any): arg is BuildFailure {
 interface CommandLineOptions {
   buildFile: string,
   tasks: string[],
+  props: Record<string, string>
   listOnly: boolean,
   force?: Type | undefined,
 }
@@ -208,6 +244,7 @@ export function parseCommandLine(): CommandLineOptions {
 
   /* Our options */
   const tasks: string[] = []
+  const props: Record<string, string> = {}
   let verbosity = 0 // yargs always returns 0 for count (quiet/verbose)
   let colors: boolean | undefined = undefined
   let file: string | undefined = undefined
@@ -217,10 +254,14 @@ export function parseCommandLine(): CommandLineOptions {
   let help = false
 
   /* Switcharoo on arguments */
-  for (const key in parsed) {
+  for (const [ key, value ] of Object.entries(parsed)) {
     switch (key) {
       case '_': // extra arguments
-        tasks.push(...parsed[key].map((s) => `${s}`))
+        value.forEach((current: string) => {
+          const [ key, val ] = current.split(/=(.*)/, 2)
+          if (val) props[key] = val
+          else tasks.push(current)
+        })
         break
       case 'verbose': // increase verbosity
         verbosity = verbosity + parsed[key]
@@ -260,7 +301,7 @@ export function parseCommandLine(): CommandLineOptions {
   if (help) {
     console.log(`Usage:
 
-    plugjs [--options] [... tasks]
+    plugjs [--options] [... prop=val] [... tasks]
 
     TypeScript module format:
 
@@ -280,6 +321,10 @@ export function parseCommandLine(): CommandLineOptions {
       -f --file       Specify the build file to use (default "./build.[ts/js/...]")
       -l --list       Only list the tasks defined by the build, nothing more!
       -h --help       Help! You're reading it now!
+
+    Properties:
+      Any argument in the format "key=value" will be interpeted as a property to
+      be injected in the build process (e.g. "mode=production").
 
     Tasks:
 
@@ -354,7 +399,7 @@ export function parseCommandLine(): CommandLineOptions {
    * ALL DONE                                                                 *
    * ======================================================================== */
 
-  return { buildFile, tasks, listOnly, force }
+  return { buildFile, tasks, props, listOnly, force }
 }
 
 /* ========================================================================== */
