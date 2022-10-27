@@ -18,15 +18,14 @@
  * in the `_extensions` of `node:module` (same as `require.extensions`).      *
  * ========================================================================== */
 
-// ESBuild is the only external dependency
-import _esbuild, { TransformFailure } from 'esbuild'
-
 // NodeJS dependencies
 import _fs from 'node:fs'
 import _module from 'node:module'
 import _path from 'node:path'
 import _url from 'node:url'
 
+// ESBuild is the only external dependency
+import _esbuild from 'esbuild'
 
 /* ========================================================================== *
  * DEBUGGING AND ERRORS                                                       *
@@ -210,8 +209,8 @@ function _esbTranpile(filename: string, type: Type): string {
     const source = _fs.readFileSync(filename, 'utf-8')
     result = _esbuild.transformSync(source, options)
   } catch (cause: any) {
-    _esbReport('error', (cause as TransformFailure).errors)
-    _esbReport('warning', (cause as TransformFailure).warnings)
+    _esbReport('error', (cause as _esbuild.TransformFailure).errors)
+    _esbReport('warning', (cause as _esbuild.TransformFailure).warnings)
     _throw(type, `ESBuild error transpiling "${filename}"`, { cause, start: _esbTranpile })
   }
 

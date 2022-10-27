@@ -10,7 +10,7 @@ export default build({
   coverageDir: process.env.NODE_V8_COVERAGE || '.coverage-data',
 
   find_sources: () => find('**/*.ts', { directory: 'src', ignore: '**/*.d.ts' }),
-
+  find_extras: () => find('**/*.ts', { directory: 'extra', ignore: '**/*.d.ts' }),
   find_tests: () => find('**/*.ts', { directory: 'test', ignore: '**/*.d.ts' }),
 
   /* ======================================================================== *
@@ -47,6 +47,7 @@ export default build({
   async eslint() {
     await merge([
       this.find_sources(),
+      this.find_extras(),
       this.find_tests(),
     ]).eslint()
   },

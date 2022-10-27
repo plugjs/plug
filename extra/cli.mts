@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
-import type { Build, BuildFailure } from '../src/index.js'
-import type { Type } from './ts-loader.mjs'
-
-import _yargs from 'yargs-parser'
-
 import _childProcess from 'node:child_process'
 import _fs from 'node:fs'
 import _path from 'node:path'
 import _url from 'node:url'
+
+import _yargs from 'yargs-parser'
+
+import type { Type } from './ts-loader.mjs'
+import type { Build, BuildFailure } from '../src/index.js'
 
 // Colors...
 const $rst = process.stdout.isTTY ? '\u001b[0m' : '' // reset all colors to default
