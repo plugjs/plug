@@ -1,7 +1,7 @@
-import type { CompilerOptions } from 'typescript'
-
 import { installForking } from '../fork'
 import { requireResolve } from '../paths'
+
+import type { CompilerOptions } from 'typescript'
 
 /** TypeScript Compiler options with some additional properties */
 export interface ExtendedCompilerOptions extends CompilerOptions {

@@ -1,7 +1,10 @@
 import { EventEmitter } from 'node:events'
-import { Writable } from 'node:stream'
-import { InspectOptions } from 'node:util'
-import { getLevelNumber, LogLevel, LogLevelString, NOTICE } from './levels'
+
+import { getLevelNumber, NOTICE } from './levels'
+
+import type { LogLevel, LogLevelString } from './levels'
+import type { Writable } from 'node:stream'
+import type { InspectOptions } from 'node:util'
 
 /* ========================================================================== */
 

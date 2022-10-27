@@ -1,7 +1,9 @@
-import { Files } from '../files'
 import { $gry, $p } from '../log'
-import { Context, install, PipeParameters, Plug } from '../pipe'
+import { install } from '../pipe'
 import { rm } from '../utils/asyncfs'
+
+import type { Files } from '../files'
+import type { Context, PipeParameters, Plug } from '../pipe'
 
 declare module '../pipe' {
   export interface Pipe {

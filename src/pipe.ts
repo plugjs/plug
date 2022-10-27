@@ -1,15 +1,13 @@
-import {
-  AbsolutePath,
-  getAbsoluteParent,
-  getCurrentWorkingDirectory,
-  resolveAbsolutePath,
-} from './paths'
-
 import { sep } from 'path'
+
 import { assert, assertPromises } from './assert'
-import { Files } from './files'
-import { getLogger, Logger } from './log'
-import { Result } from './types'
+import { getLogger } from './log'
+import { getAbsoluteParent, getCurrentWorkingDirectory, resolveAbsolutePath } from './paths'
+
+import type { Files } from './files'
+import type { Logger } from './log'
+import type { AbsolutePath } from './paths'
+import type { Result } from './types'
 
 /* ========================================================================== *
  * PLUGS                                                                      *

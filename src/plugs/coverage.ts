@@ -1,12 +1,19 @@
-import { html, initFunction } from '@plugjs/cov8-html'
 import { sep } from 'node:path'
+
+import { html, initFunction } from '@plugjs/cov8-html'
+
 import { Files } from '../files'
 import { $gry, $ms, $p, $red, $ylw, ERROR, NOTICE, WARN } from '../log'
-import { AbsolutePath, resolveAbsolutePath } from '../paths'
-import { Context, install, PipeParameters, Plug } from '../pipe'
+import { resolveAbsolutePath } from '../paths'
+import { install } from '../pipe'
 import { walk } from '../utils/walk'
-import { createAnalyser, SourceMapBias } from './coverage/analysis'
-import { coverageReport, CoverageResult } from './coverage/report'
+import { createAnalyser } from './coverage/analysis'
+import { coverageReport } from './coverage/report'
+
+import type { AbsolutePath } from '../paths'
+import type { Context, PipeParameters, Plug } from '../pipe'
+import type { SourceMapBias } from './coverage/analysis'
+import type { CoverageResult } from './coverage/report'
 
 /** Options to analyse coverage reports */
 export interface CoverageOptions {

@@ -1,12 +1,14 @@
 import { ESLint as RealESLint } from 'eslint'
+
 import { assert } from '../../assert'
 import { BuildFailure } from '../../failure'
-import { Files } from '../../files'
 import { $p, ERROR, NOTICE, WARN } from '../../log'
 import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from '../../paths'
-import { Context, PipeParameters, Plug } from '../../pipe'
 import { readFile } from '../../utils/asyncfs'
-import { ESLintOptions } from '../eslint'
+
+import type { Files } from '../../files'
+import type { Context, PipeParameters, Plug } from '../../pipe'
+import type { ESLintOptions } from '../eslint'
 
 /** Runner implementation for the `ESLint` plug. */
 export default class ESLint implements Plug<void> {

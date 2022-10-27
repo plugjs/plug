@@ -1,8 +1,9 @@
 import path from 'node:path'
 
-import { Plugin } from 'esbuild'
 import { assertAbsolutePath, resolveAbsolutePath, resolveFile } from '../../paths'
 import { stat } from '../../utils/asyncfs'
+
+import type { Plugin } from 'esbuild'
 
 /**
  * A simple ESBuild plugin fixing extensions for `require` and `import` calls.

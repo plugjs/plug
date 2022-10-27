@@ -1,7 +1,8 @@
 import assert from 'node:assert'
+import { Writable } from 'node:stream'
 
 import { expect } from 'chai'
-import { Writable } from 'node:stream'
+
 import { currentContext } from '../../src/async.js'
 import { $gry } from '../../src/log/colors.js'
 import { emitColor, emitPlain } from '../../src/log/emit.js'

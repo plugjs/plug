@@ -1,11 +1,19 @@
-import { build, BuildFailure, BuildOptions, BuildResult, Format, Message, Metafile } from 'esbuild'
 import { basename } from 'node:path'
+
+import { build } from 'esbuild'
+
 import { assert } from '../assert'
-import { Files, FilesBuilder } from '../files'
-import { $p, ERROR, Logger, ReportLevel, ReportRecord, WARN } from '../log'
-import { AbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { Context, install, PipeParameters, Plug } from '../pipe'
+import { Files } from '../files'
+import { $p, ERROR, WARN } from '../log'
+import { getAbsoluteParent, resolveAbsolutePath } from '../paths'
+import { install } from '../pipe'
 import { readFile } from '../utils/asyncfs'
+
+import type { FilesBuilder } from '../files'
+import type { Logger, ReportLevel, ReportRecord } from '../log'
+import type { AbsolutePath } from '../paths'
+import type { Context, PipeParameters, Plug } from '../pipe'
+import type { BuildFailure, BuildOptions, BuildResult, Format, Message, Metafile } from 'esbuild'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 

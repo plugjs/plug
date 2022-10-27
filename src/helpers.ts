@@ -2,11 +2,15 @@ import { assert, assertPromises } from './assert'
 import { requireContext } from './async'
 import { Files } from './files'
 import { $p, log } from './log'
-import { AbsolutePath, commonPath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
+import { commonPath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
 import { Pipe } from './pipe'
 import { rm } from './utils/asyncfs'
-import { ParseOptions, parseOptions } from './utils/options'
-import { walk, WalkOptions } from './utils/walk'
+import { parseOptions } from './utils/options'
+import { walk } from './utils/walk'
+
+import type { AbsolutePath } from './paths'
+import type { ParseOptions } from './utils/options'
+import type { WalkOptions } from './utils/walk'
 
 /* ========================================================================== *
  * EXTERNAL HELPERS                                                           *

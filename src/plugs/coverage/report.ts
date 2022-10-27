@@ -1,24 +1,24 @@
-
 import {
-  Comment, isDeclaration,
+  Comment,
+  isDeclaration,
   isExportDeclaration,
   isFile,
   isIfStatement,
   isImportDeclaration,
-  isProgram, isTryStatement,
+  isProgram,
+  isTryStatement,
   isTSDeclareMethod,
   isTSTypeReference,
   isTypeScript,
   Node,
   VISITOR_KEYS,
 } from '@babel/types'
-
+import type { AbsolutePath } from '../../paths'
 import { parse } from '@babel/parser'
 import { pathToFileURL } from 'node:url'
 import { $p, Logger } from '../../log'
-import { AbsolutePath } from '../../paths'
 import { readFile } from '../../utils/asyncfs'
-import { CoverageAnalyser } from './analysis'
+import type { CoverageAnalyser } from './analysis'
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *

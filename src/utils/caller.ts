@@ -1,8 +1,11 @@
 import { statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+
 import { assert } from '../assert'
 import { $p } from '../log'
-import { AbsolutePath, assertAbsolutePath } from '../paths'
+import { assertAbsolutePath } from '../paths'
+
+import type { AbsolutePath } from '../paths'
 
 export function findCaller(of: (...args: any[]) => any): AbsolutePath {
   const oldPrepareStackTrace = Error.prepareStackTrace

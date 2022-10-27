@@ -29,5 +29,11 @@ module.exports = {
   rules: {
     'import/no-cycle': 'error',
     'import/no-duplicates': 'error',
+    'import/order': [ 'error', {
+      'groups': [ 'builtin', 'external', 'internal', [ 'parent', 'sibling' ], 'index', 'object', 'type' ],
+      'newlines-between': 'always',
+      'warnOnUnassignedImports': true,
+    } ],
+    '@typescript-eslint/consistent-type-imports': 'error',
   },
 }

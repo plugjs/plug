@@ -2,8 +2,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { RawSourceMap, SourceMapConsumer } from 'source-map'
 import { assert } from '../../assert'
 import { $gry, $p, Logger } from '../../log'
-import { AbsolutePath } from '../../paths'
 import { readFile } from '../../utils/asyncfs'
+import type { AbsolutePath } from '../../paths'
 
 /* ========================================================================== *
  * V8 COVERAGE TYPES                                                          *

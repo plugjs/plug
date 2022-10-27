@@ -1,5 +1,5 @@
 import { currentContext } from './async'
-import { getLogger, Log } from './log/logger'
+import { getLogger, type Log } from './log/logger'
 import { setupSpinner } from './log/spinner'
 
 export * from './log/colors'

@@ -1,3 +1,11 @@
+import { assert } from './assert'
+import { runAsync } from './async'
+import { $ms, $t, getLogger, log, logOptions } from './log'
+import { Context, ContextPromises, Pipe } from './pipe'
+import { findCaller } from './utils/caller'
+import { parseOptions } from './utils/options'
+
+import type { AbsolutePath } from './paths'
 import type {
   Build,
   BuildDef,
@@ -9,14 +17,6 @@ import type {
   Tasks,
   ThisBuild,
 } from './types'
-
-import { assert } from './assert'
-import { runAsync } from './async'
-import { $ms, $t, getLogger, log, logOptions } from './log'
-import { AbsolutePath } from './paths'
-import { Context, ContextPromises, Pipe } from './pipe'
-import { findCaller } from './utils/caller'
-import { parseOptions } from './utils/options'
 
 /* ========================================================================== *
  * TASK                                                                       *

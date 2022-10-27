@@ -1,8 +1,11 @@
 import { Files } from '../files'
 import { resolveRelativeChildPath } from '../paths'
-import { Context, install, PipeParameters, Plug } from '../pipe'
-import { match, MatchOptions } from '../utils/match'
+import { install } from '../pipe'
+import { match } from '../utils/match'
 import { parseOptions } from '../utils/options'
+
+import type { Context, PipeParameters, Plug } from '../pipe'
+import type { MatchOptions } from '../utils/match'
 
 /** Options for filtering {@link Files}. */
 export interface FilterOptions extends MatchOptions {

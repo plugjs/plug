@@ -1,8 +1,11 @@
 import { formatWithOptions } from 'node:util'
+
 import { $blu, $grn, $gry, $red, $t, $ylw } from './colors'
-import { DEBUG, INFO, LogLevel, NOTICE, TRACE, WARN } from './levels'
+import { DEBUG, INFO, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
 import { zapSpinner } from './spinner'
+
+import type { LogLevel } from './levels'
 
 /* ========================================================================== */
 

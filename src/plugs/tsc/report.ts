@@ -1,7 +1,10 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
 
-import { ERROR, NOTICE, Report, ReportLevel, ReportRecord, WARN } from '../../log'
-import { AbsolutePath, resolveAbsolutePath } from '../../paths'
+import { ERROR, NOTICE, WARN } from '../../log'
+import { resolveAbsolutePath } from '../../paths'
+
+import type { Report, ReportLevel, ReportRecord } from '../../log'
+import type { AbsolutePath } from '../../paths'
 
 function convertMessageChain(chain: ts.DiagnosticMessageChain, indent = 0): string[] {
   const message = `${''.padStart(indent * 2)}${chain.messageText}`

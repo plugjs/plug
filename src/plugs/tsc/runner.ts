@@ -1,18 +1,19 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
 
-import type { ExtendedCompilerOptions } from '../tsc'
-
 import { assertPromises } from '../../assert'
 import { BuildFailure } from '../../failure'
 import { Files } from '../../files'
 import { $p, log } from '../../log'
-import { AbsolutePath, resolveAbsolutePath, resolveFile } from '../../paths'
-import { Context, PipeParameters, Plug } from '../../pipe'
+import { resolveAbsolutePath, resolveFile } from '../../paths'
 import { parseOptions } from '../../utils/options'
+import { walk } from '../../utils/walk'
 import { TypeScriptHost } from './compiler'
 import { getCompilerOptions } from './options'
 import { updateReport } from './report'
-import { walk } from '../../utils/walk'
+
+import type { AbsolutePath } from '../../paths'
+import type { Context, PipeParameters, Plug } from '../../pipe'
+import type { ExtendedCompilerOptions } from '../tsc'
 
 /* ========================================================================== *
  * WORKER PLUG                                                                *

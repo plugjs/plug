@@ -1,7 +1,9 @@
 import ts from 'typescript' // TypeScript does NOT support ESM modules
 
-import { AbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../../paths'
+import { getAbsoluteParent, resolveAbsolutePath } from '../../paths'
 import { readFile } from '../../utils/asyncfs'
+
+import type { AbsolutePath } from '../../paths'
 
 /* ========================================================================== */
 

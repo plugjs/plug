@@ -1,13 +1,14 @@
 import RealMocha from 'mocha' // Mocha types pollute the global scope!
-import { assert } from '../../assert'
 
+import { assert } from '../../assert'
 import { BuildFailure } from '../../failure'
-import { Files } from '../../files'
 import { $p, $wht, NOTICE } from '../../log'
 import { resolveFile } from '../../paths'
-import { Context, PipeParameters, Plug } from '../../pipe'
-import { MochaOptions } from '../mocha'
 import { logSymbol, PlugReporter } from './reporter'
+
+import type { Files } from '../../files'
+import type { Context, PipeParameters, Plug } from '../../pipe'
+import type { MochaOptions } from '../mocha'
 
 /** Writes some info about the current {@link Files} being passed around. */
 export default class Mocha implements Plug<void> {

@@ -1,11 +1,16 @@
 import { fork } from 'node:child_process'
+
 import { assert } from './assert'
 import { runAsync } from './async'
 import { BuildFailure } from './failure'
 import { Files } from './files'
-import { $gry, $p, LogOptions, logOptions } from './log'
-import { AbsolutePath, requireFilename, resolveFile } from './paths'
-import { Context, install, Plug, PlugName, PlugResult } from './pipe'
+import { $gry, $p, logOptions } from './log'
+import { requireFilename, resolveFile } from './paths'
+import { Context, install } from './pipe'
+
+import type { LogOptions } from './log'
+import type { AbsolutePath } from './paths'
+import type { Plug, PlugName, PlugResult } from './pipe'
 
 /** Fork data, from parent to child process */
 export interface ForkData {

@@ -1,5 +1,7 @@
-import { AbsolutePath, assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths'
+import { assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths'
 import { mkdir, writeFile } from './utils/asyncfs'
+
+import type { AbsolutePath } from './paths'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
 export interface FilesBuilder {
