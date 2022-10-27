@@ -6,11 +6,10 @@ const environmentCoverage = !! process.env.NODE_V8_COVERAGE
 export default build({
   /** The coverage data dir, might be supplied as an env variable  */
   coverageDir: process.env.NODE_V8_COVERAGE || '.coverage-data',
-  flubber: '',
 
-  find_sources: () => find('**/*.ts', { directory: 'src' }),
+  find_sources: () => find('**/*.ts', { directory: 'src', ignore: '**/*.d.ts' }),
 
-  find_tests: () => find('**/*.ts', { directory: 'test' }),
+  find_tests: () => find('**/*.ts', { directory: 'test', ignore: '**/*.d.ts' }),
 
   /* ======================================================================== *
    * RUN TESTS FROM "./test"                                                  *
@@ -89,7 +88,12 @@ export default build({
     })
   },
 
-  copy_resources: () => find('!**/*.ts', { directory: 'src' }).copy('dist'),
+  copy_resources: () => {
+    return merge([
+      find('**/*.d.ts', { directory: 'src' }).copy('dist'),
+      find('!**/*.ts', { directory: 'src' }).copy('dist'),
+    ])
+  },
 
   transpile_types(): Pipe {
     const extra = find('**/*.d.ts', { directory: 'extra' })
