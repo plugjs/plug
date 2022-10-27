@@ -1,5 +1,6 @@
+import { pathToFileURL } from 'node:url'
+
 import {
-  Comment,
   isDeclaration,
   isExportDeclaration,
   isFile,
@@ -10,14 +11,18 @@ import {
   isTSDeclareMethod,
   isTSTypeReference,
   isTypeScript,
-  Node,
   VISITOR_KEYS,
 } from '@babel/types'
-import type { AbsolutePath } from '../../paths'
 import { parse } from '@babel/parser'
-import { pathToFileURL } from 'node:url'
-import { $p, Logger } from '../../log'
+
+import { $p } from '../../log'
 import { readFile } from '../../utils/asyncfs'
+
+import type { Logger } from '../../log'
+import type {
+  Comment,
+  Node } from '@babel/types'
+import type { AbsolutePath } from '../../paths'
 import type { CoverageAnalyser } from './analysis'
 
 /* ========================================================================== *

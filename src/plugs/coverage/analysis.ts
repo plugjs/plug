@@ -1,8 +1,13 @@
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { RawSourceMap, SourceMapConsumer } from 'source-map'
+
+import { SourceMapConsumer } from 'source-map'
+
 import { assert } from '../../assert'
-import { $gry, $p, Logger } from '../../log'
+import { $gry, $p } from '../../log'
 import { readFile } from '../../utils/asyncfs'
+
+import type { Logger } from '../../log'
+import type { RawSourceMap } from 'source-map'
 import type { AbsolutePath } from '../../paths'
 
 /* ========================================================================== *
@@ -335,10 +340,10 @@ export class CombiningCoverageAnalyser extends CoverageAnalyserImpl {
  * specified coverage files and produce a {@link CoverageReport}.
  */
 export async function createAnalyser(
-  sourceFiles: AbsolutePath[],
-  coverageFiles: AbsolutePath[],
-  sourceMapBias: SourceMapBias,
-  log: Logger,
+    sourceFiles: AbsolutePath[],
+    coverageFiles: AbsolutePath[],
+    sourceMapBias: SourceMapBias,
+    log: Logger,
 ): Promise<CoverageAnalyser> {
   /* Internally V8 coverage uses URLs for everything */
   const urls = sourceFiles.map((path) => pathToFileURL(path).toString())
