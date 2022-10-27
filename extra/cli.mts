@@ -28,16 +28,16 @@ const $tsk = process.stdout.isTTY ? '\u001b[38;5;141m' : '' // the color for tas
 
 /* We have everyhing we need to start our asynchronous main! */
 async function main(options: CommandLineOptions): Promise<void> {
-  const { buildFile, tasks, props, listOnly } = options
+  const { buildFile, watchDirs, tasks, props, listOnly } = options
   if (tasks.length === 0) tasks.push('default')
 
-  let build = await import(buildFile)
-  while (build) {
-    if (isBuild(build)) break
-    build = build.default
+  let maybeBuild = await import(buildFile)
+  while (maybeBuild) {
+    if (isBuild(maybeBuild)) break
+    maybeBuild = maybeBuild.default
   }
 
-  if (! isBuild(build)) {
+  if (! isBuild(maybeBuild)) {
     console.log('Build file did not export a proper build')
     console.log()
     console.log('- If using CommonJS export your build as "module.exports"')
@@ -48,6 +48,8 @@ async function main(options: CommandLineOptions): Promise<void> {
     console.log()
     process.exit(1)
   }
+
+  const build = maybeBuild
 
   if (listOnly) {
     const taskNames: string[] = []
@@ -74,6 +76,33 @@ async function main(options: CommandLineOptions): Promise<void> {
     }
 
     console.log()
+  } else if (watchDirs.length) {
+    let timeout: NodeJS.Timeout | undefined = undefined
+
+    const runme = (): void => {
+      build[buildMarker](tasks, props)
+          .then(() => {
+            console.log(`\n${$gry}Watching for files change...${$rst}\n`)
+          }, (error) => {
+            if (isBuildFailure(error)) {
+              console.log(`\n${$gry}Watching for files change...${$rst}\n`)
+            } else {
+              console.log(error)
+              watchers.forEach((watcher) => watcher.close())
+            }
+          })
+          .finally(() => {
+            timeout = undefined
+          })
+    }
+
+    const watchers = watchDirs.map((watchDir) => {
+      return _fs.watch(watchDir, { recursive: true }, () => {
+        if (! timeout) timeout = setTimeout(runme, 250)
+      })
+    })
+
+    runme()
   } else {
     await build[buildMarker](tasks, props)
   }
@@ -104,7 +133,7 @@ const options = parseCommandLine()
 /* If both source maps and typescript are on, run! */
 if (sourceMapsEnabled && typeScriptEnabled) {
   main(options)
-      .then(() => process.exit(0))
+      // .then(() => process.exit(0))
       .catch((error) => {
         if (! isBuildFailure(error)) console.log(error)
         process.exit(1)
@@ -198,21 +227,22 @@ function isBuildFailure(arg: any): arg is BuildFailure {
   return arg && arg[buildFailure] === buildFailure
 }
 
+/* ========================================================================== *
+ * ========================================================================== *
+ * PARSE COMMAND LINE ARGUMENTS                                               *
+ * ========================================================================== *
+ * ========================================================================== */
+
 /* Parsed and normalised command line options */
 interface CommandLineOptions {
   buildFile: string,
+  watchDirs: string[],
   tasks: string[],
   props: Record<string, string>
   listOnly: boolean,
   force?: Type | undefined,
 }
 
-
-/* ========================================================================== *
- * ========================================================================== *
- * PARSE COMMAND LINE ARGUMENTS                                               *
- * ========================================================================== *
- * ========================================================================== */
 
 /** Parse `perocess.argv` and return our normalised command line options */
 export function parseCommandLine(): CommandLineOptions {
@@ -230,10 +260,11 @@ export function parseCommandLine(): CommandLineOptions {
       'colors': [ 'c' ],
       'file': [ 'f' ],
       'list': [ 'l' ],
+      'watch': [ 'w' ],
       'help': [ 'h' ],
     },
 
-    string: [ 'file' ],
+    string: [ 'file', 'watch' ],
     boolean: [ 'help', 'colors', 'list', 'force-esm', 'force-cjs' ],
     count: [ 'verbose', 'quiet' ],
   })
@@ -245,6 +276,7 @@ export function parseCommandLine(): CommandLineOptions {
   /* Our options */
   const tasks: string[] = []
   const props: Record<string, string> = {}
+  const watchDirs: string[] = []
   let verbosity = 0 // yargs always returns 0 for count (quiet/verbose)
   let colors: boolean | undefined = undefined
   let file: string | undefined = undefined
@@ -264,28 +296,32 @@ export function parseCommandLine(): CommandLineOptions {
         })
         break
       case 'verbose': // increase verbosity
-        verbosity = verbosity + parsed[key]
+        verbosity = verbosity + value
         break
       case 'quiet': // decrease verbosity
-        verbosity = verbosity - parsed[key]
+        verbosity = verbosity - value
         break
       case 'file': // build file
-        file = parsed[key]
+        file = value
+        break
+      case 'watch': // watch directory
+        if (Array.isArray(value)) watchDirs.push(...value)
+        else if (value) watchDirs.push(value)
         break
       case 'force-esm':
-        forceEsm = !! parsed[key]
+        forceEsm = !! value
         break
       case 'force-cjs':
-        forceCjs = !! parsed[key]
+        forceCjs = !! value
         break
       case 'colors':
-        colors = !! parsed[key]
+        colors = !! value
         break
       case 'list':
-        listOnly = !! parsed[key]
+        listOnly = !! value
         break
       case 'help':
-        help = !! parsed[key]
+        help = !! value
         break
       default:
         console.log(`Unsupported option "${key}" (try "--help")`)
@@ -299,39 +335,47 @@ export function parseCommandLine(): CommandLineOptions {
 
   /* If help, end here! */
   if (help) {
-    console.log(`Usage:
+    console.log(`${$blu}${$und}Usage:${$rst}
 
-    plugjs [--options] [... prop=val] [... tasks]
+    ${$wht}plugjs${$rst} ${$gry}[${$rst}--options${$gry}] [...${$rst}prop=val${$gry}] [...${$rst}tasks${$gry}]${$rst}
 
-    TypeScript module format:
+    ${$blu}${$und}Options:${$rst}
 
-      Normally our TypeScript loader will transpile ".ts" files to the "type"
-      specified in "package.json", either "commonjs" (the default) or "module".
+        ${$wht}-v --verbose ${$rst}   Increase logging verbosity
+        ${$wht}-q --quiet   ${$rst}   Decrease logging verbosity
+        ${$wht}-c --colors  ${$rst}   Force colorful output (use "--no-colors" to force plain text)
+        ${$wht}-f --file    ${$rst}   Specify the build file to use (default "./build.[ts/js/...]")
+        ${$wht}-w --watch   ${$rst}   Watch for changes on the specified directory and run build
+        ${$wht}-l --list    ${$rst}   Only list the tasks defined by the build, nothing more!
+        ${$wht}-h --help    ${$rst}   Help! You're reading it now!
 
-      To force a specific module format we can use one of the following flags:
+    ${$blu}${$und}Properties:${$rst}
 
-      --force-esm  Force transpilation of ".ts" files to EcmaScript modules
-      --force-cjs  Force transpilation of ".ts" files to CommonJS modules
+        Any argument in the format "key=value" will be interpeted as a property to
+        be injected in the build process (e.g. "mode=production").
 
-    Options:
+    ${$blu}${$und}Tasks:${$rst}
 
-      -v --verbose    Increase logging verbosity
-      -q --quiet      Decrease logging verbosity
-      -c --colors     Force colorful output (use "--no-colors" to force plain text)
-      -f --file       Specify the build file to use (default "./build.[ts/js/...]")
-      -l --list       Only list the tasks defined by the build, nothing more!
-      -h --help       Help! You're reading it now!
+        Any other argument will be treated as a task name. If no task names are
+        specified, the "default" task will be executed.
 
-    Properties:
-      Any argument in the format "key=value" will be interpeted as a property to
-      be injected in the build process (e.g. "mode=production").
+    ${$blu}${$und}Watch Mode:${$rst}
 
-    Tasks:
+        The "-w" option can be specified multiple times, and each single directory
+        specified will be watched for changes. Please note that Plug's own watch
+        mode is incredibly basic, for more complex scenarios use something more
+        advanced like nodemon (https://www.npmjs.com/package/nodemon).
 
-      Any other argument will be treated as a task name. If no task names are
-      specified, the "default" task will be executed.
-  `)
+    ${$blu}${$und}TypeScript module format:${$rst}
 
+        Normally our TypeScript loader will transpile ".ts" files to the "type"
+        specified in "package.json", either "commonjs" (the default) or "module".
+
+        To force a specific module format we can use one of the following flags:
+
+        ${$wht}--force-esm  ${$rst}   Force transpilation of ".ts" files to EcmaScript modules
+        ${$wht}--force-cjs  ${$rst}   Force transpilation of ".ts" files to CommonJS modules
+    `)
     process.exit(1)
   }
 
@@ -385,6 +429,21 @@ export function parseCommandLine(): CommandLineOptions {
   }
 
   /* ======================================================================== *
+   * WATCH MODE                                                               *
+   * ======================================================================== */
+
+  console.log('WD', watchDirs)
+  watchDirs.forEach((watchDir) => {
+    const absolute = _path.resolve(watchDir)
+    if (! isDir(absolute)) {
+      console.log(`Specified watch directory "${watchDir}" was not found`)
+      process.exit(1)
+    } else {
+      watchDir = absolute
+    }
+  })
+
+  /* ======================================================================== *
    * FORCE MODULE TYPE                                                        *
    * ======================================================================== */
 
@@ -399,7 +458,7 @@ export function parseCommandLine(): CommandLineOptions {
    * ALL DONE                                                                 *
    * ======================================================================== */
 
-  return { buildFile, tasks, props, listOnly, force }
+  return { buildFile, watchDirs, tasks, props, listOnly, force }
 }
 
 /* ========================================================================== */
@@ -408,6 +467,15 @@ export function parseCommandLine(): CommandLineOptions {
 function isFile(path: string): boolean {
   try {
     return _fs.statSync(path).isFile()
+  } catch (error) {
+    return false
+  }
+}
+
+/* Returns a boolean indicating whether the specified directory exists or not */
+function isDir(path: string): boolean {
+  try {
+    return _fs.statSync(path).isDirectory()
   } catch (error) {
     return false
   }
