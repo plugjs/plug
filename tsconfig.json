@@ -14,13 +14,12 @@
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "importsNotUsedAsValues": "error",
     // "noUncheckedIndexedAccess": true,
+    "importsNotUsedAsValues": "error",
   },
   "include": [
-    "./extra/*.mts",
-    "./extra/*.d.ts",
     "build.ts",
+    "extra/*.mts",
     "src/**/*.ts",
     "test/**/*.ts",
   ]
