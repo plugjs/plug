@@ -39,8 +39,7 @@
     "mocha": "^10.1.0",
     "picomatch": "^2.3.1",
     "source-map": "^0.7.4",
-    "typescript": "^4.8.4",
-    "yargs-parser": "^21.1.1"
+    "typescript": "^4.8.4"
   },
   "devDependencies": {
     "@plugjs/eslint-plugin": "^0.0.2",
@@ -54,6 +53,7 @@
     "chai": "^4.3.6",
     "eslint-config-google": "^0.14.0",
     "eslint-import-resolver-typescript": "^3.5.2",
-    "eslint-plugin-import": "^2.26.0"
+    "eslint-plugin-import": "^2.26.0",
+    "yargs-parser": "^21.1.1"
   }
 }

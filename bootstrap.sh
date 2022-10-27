@@ -12,6 +12,8 @@ exec ./node_modules/.bin/esbuild \
 	--sourcemap=inline \
 	--sources-content=false \
 	--out-extension:.js=.mjs \
+	--external:esbuild \
+	--bundle \
 		./extra/*.mts
 
 # We don't need to run the compilation step, as "build.ts" imports from
