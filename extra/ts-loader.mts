@@ -382,9 +382,9 @@ export const resolve: ResolveHook = (specifier, context, nextResolve): ResolveRe
   /* If the file is a directory, then see if we have an "index.ts" in there */
   if (_isDirectory(path)) {
     const file = _path.resolve(path, 'index.ts') // resolve, as path is absolute
-    const spec = _path.join(specifier, 'index.ts') // join only, specifier is relative
     if (_isFile(file)) {
-      _log(ESM, `Positive match for "${spec}" as "${file}"  (4)`)
+      _log(ESM, `Positive match for "${specifier}" as "${file}"  (4)`)
+      const spec = _url.pathToFileURL(file).pathname
       return nextResolve(spec, context)
     }
   }
