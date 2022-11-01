@@ -54,6 +54,11 @@ export class PlugReporter extends RealMocha.reporters.Base {
       log.enter(NOTICE, `${$blu(_pending)} ${test.title}`)
     })
 
+    // Enter a pending test (increase indent)
+    runner.on('pending', (test) => {
+      log.enter(NOTICE, `${$blu(_pending)} ${test.title}`)
+    })
+
     // Leave a test (handle warning/failures and decrease indent)
     runner.on('test end', (test) => {
       if (test.isPassed()) {
@@ -155,7 +160,7 @@ export class PlugReporter extends RealMocha.reporters.Base {
           if (passes) log.notice($grn(fmt(passes)), 'passing', $ms(duration))
           if (slow) log.warn($ylw(fmt(slow)), 'slow')
           if (pending) log.warn($ylw(fmt(pending)), 'pending')
-          if (failures) log.error($red(fmt(failures)), 'pending')
+          if (failures) log.error($red(fmt(failures)), 'failed')
         }
 
         // Done...
