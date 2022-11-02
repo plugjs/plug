@@ -363,7 +363,7 @@ export const resolve: ResolveHook = (specifier, context, nextResolve): ResolveRe
   const match = specifier.match(/(.*)(\.[mc]?js$)/)
   if (match) {
     const [ , base, ext ] = match
-    const tsspecifier = base + ext.replace('js', 'ts')
+    const tsspecifier = base + ext!.replace('js', 'ts')
     const tsurl = new URL(tsspecifier, parentURL).href
     const tspath = _url.fileURLToPath(tsurl)
 
@@ -530,7 +530,7 @@ _module._resolveFilename = function(
      */
     if (parent && match) {
       const [ , name, ext ] = match
-      const tsrequest = name + ext.replace('js', 'ts')
+      const tsrequest = name + ext!.replace('js', 'ts')
       try {
         const result = _oldResolveFilename.call(this, tsrequest, parent, ...args)
         _log('commonjs', `Resolution for "${request}" intercepted as "${tsrequest}`)
@@ -553,5 +553,4 @@ _module._resolveFilename = function(
 const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
 ;(globalThis as any)[tsLoaderMarker] = tsLoaderMarker
 
-// @ts-ignore: https://github.com/microsoft/TypeScript/issues/49842
 _log(null, `Installing loader from "${import.meta.url}"`)
