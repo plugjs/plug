@@ -1,0 +1,53 @@
+{
+  "name": "@plugjs/mocha",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      }
+    },
+    "./mocha": {
+      "require": {
+        "types": "./dist/mocha.d.ts",
+        "default": "./dist/mocha.cjs"
+      },
+      "import": {
+        "types": "./dist/mocha.d.ts",
+        "default": "./dist/mocha.mjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "plug"
+  },
+  "author": "Juit Developers <developers@juit.com>",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@plugjs/eslint-plugin": "^0.0.3",
+    "@plugjs/plug": "file:../plug/plugjs-plug-0.0.27.tgz",
+    "@types/diff": "^5.0.2",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "@plugjs/mocha": "file:plugjs-mocha-0.1.0.tgz",
+    "diff": "^5.1.0"
+  },
+  "peerDependencies": {
+    "@plugjs/plug": "0.0.27"
+  },
+  "files": [
+    "*.md",
+    "dist/",
+    "src/"
+  ]
+}
