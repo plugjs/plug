@@ -40,4 +40,4 @@ declare module '../pipe' {
   }
 }
 
-installForking('mocha', requireResolve(__fileurl, './mocha/runner'))
+installForking('mocha', requireResolve(__fileurl, './mocha/runner'), 'Mocha')

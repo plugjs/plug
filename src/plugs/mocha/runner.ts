@@ -10,7 +10,7 @@ import type { Context, PipeParameters, Plug } from '../../pipe'
 import type { MochaOptions } from '../mocha'
 
 /** Writes some info about the current {@link Files} being passed around. */
-export default class Mocha implements Plug<void> {
+export class Mocha implements Plug<void> {
   constructor(...args: PipeParameters<'mocha'>)
   constructor(private readonly _options: MochaOptions = {}) {}
 
