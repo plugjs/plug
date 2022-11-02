@@ -1,5 +1,5 @@
 import { assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths'
-import { mkdir, writeFile } from './utils/asyncfs'
+import { mkdir, writeFile } from './fs'
 
 import type { AbsolutePath } from './paths'
 

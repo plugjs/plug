@@ -1,5 +1,5 @@
 import { install } from '../pipe'
-import { readFile, writeFile } from '../utils/asyncfs'
+import { readFile, writeFile } from '../fs'
 
 import type { Files } from '../files'
 import type { PipeParameters, Plug } from '../pipe'

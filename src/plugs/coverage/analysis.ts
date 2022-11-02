@@ -4,7 +4,7 @@ import { SourceMapConsumer } from 'source-map'
 
 import { assert } from '../../assert'
 import { $gry, $p } from '../../log'
-import { readFile } from '../../utils/asyncfs'
+import { readFile } from '../../fs'
 
 import type { Logger } from '../../log'
 import type { RawSourceMap } from 'source-map'

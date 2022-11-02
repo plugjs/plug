@@ -7,7 +7,7 @@ import { Files } from '../files'
 import { $p, ERROR, WARN } from '../log'
 import { getAbsoluteParent, resolveAbsolutePath } from '../paths'
 import { install } from '../pipe'
-import { readFile } from '../utils/asyncfs'
+import { readFile } from '../fs'
 
 import type { FilesBuilder } from '../files'
 import type { Logger, ReportLevel, ReportRecord } from '../log'

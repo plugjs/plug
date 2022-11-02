@@ -16,7 +16,7 @@ import {
 import { parse } from '@babel/parser'
 
 import { $p } from '../../log'
-import { readFile } from '../../utils/asyncfs'
+import { readFile } from '../../fs'
 
 import type { Logger } from '../../log'
 import type {

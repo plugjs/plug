@@ -1,5 +1,5 @@
 import { BuildFailure } from '../failure'
-import { readFile } from '../utils/asyncfs'
+import { readFile } from '../fs'
 import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
 import { ERROR, NOTICE, WARN } from './levels'
 import { logOptions } from './options'

@@ -2,7 +2,7 @@ import { basename, join } from 'node:path'
 
 import { $p, log } from '../log'
 import { resolveAbsolutePath } from '../paths'
-import { opendir, stat } from './asyncfs'
+import { opendir, stat } from '../fs'
 import { match } from './match'
 
 import type { AbsolutePath } from '../paths'

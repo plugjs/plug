@@ -1,6 +1,6 @@
 import { $gry, $p } from '../log'
 import { install } from '../pipe'
-import { rm } from '../utils/asyncfs'
+import { rm } from '../fs'
 
 import type { Files } from '../files'
 import type { Context, PipeParameters, Plug } from '../pipe'

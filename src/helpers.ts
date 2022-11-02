@@ -4,7 +4,7 @@ import { Files } from './files'
 import { $p, log } from './log'
 import { commonPath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
 import { Pipe } from './pipe'
-import { rm } from './utils/asyncfs'
+import { rm } from './fs'
 import { parseOptions } from './utils/options'
 import { walk } from './utils/walk'
 
