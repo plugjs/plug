@@ -9,9 +9,9 @@ export default build({
   /** The coverage data dir, might be supplied as an env variable  */
   coverageDir: process.env.NODE_V8_COVERAGE || '.coverage-data',
 
-  find_sources: () => find('**/*.ts', { directory: 'src', ignore: '**/*.d.ts' }),
-  find_extras: () => find('**/*.ts', { directory: 'extra', ignore: '**/*.d.ts' }),
-  find_tests: () => find('**/*.ts', { directory: 'test', ignore: '**/*.d.ts' }),
+  find_sources: () => find('**/*.([cm])?ts', { directory: 'src', ignore: '**/*.d.ts' }),
+  find_extras: () => find('**/*.([cm])?ts', { directory: 'extra', ignore: '**/*.d.ts' }),
+  find_tests: () => find('**/*.([cm])?ts', { directory: 'test', ignore: '**/*.d.ts' }),
 
   /* ======================================================================== *
    * RUN TESTS FROM "./test"                                                  *
@@ -34,6 +34,13 @@ export default build({
    * EXTRA CHECKS (dependencies, linting, coverage)                           *
    * ======================================================================== */
 
+  async check_extras() {
+    await this.find_extras().debug().tsc('tsconfig.json', {
+      extraTypesDir: 'types',
+      rootDir: '.',
+    })
+  },
+
   async coverage() {
     try {
       await this.find_sources().coverage(this.coverageDir, {
@@ -54,6 +61,7 @@ export default build({
 
   async checks() {
     await Promise.all([
+      this.check_extras(),
       this.coverage(),
       this.eslint(),
     ])
@@ -94,7 +102,7 @@ export default build({
   copy_resources: () => {
     return merge([
       find('**/*.d.ts', { directory: 'src' }).copy('dist'),
-      find('!**/*.ts', { directory: 'src' }).copy('dist'),
+      find('!**/*.([cm])?ts', { directory: 'src' }).copy('dist'),
     ])
   },
 
