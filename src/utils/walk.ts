@@ -1,6 +1,6 @@
 import { basename, join } from 'node:path'
 
-import { $p, log } from '../log'
+import { $p, log } from '../logging'
 import { resolveAbsolutePath } from '../paths'
 import { opendir, stat } from '../fs'
 import { match } from './match'

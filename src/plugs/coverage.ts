@@ -3,7 +3,7 @@ import { sep } from 'node:path'
 import { html, initFunction } from '@plugjs/cov8-html'
 
 import { Files } from '../files'
-import { $gry, $ms, $p, $red, $ylw, ERROR, NOTICE, WARN } from '../log'
+import { $gry, $ms, $p, $red, $ylw, ERROR, NOTICE, WARN } from '../logging'
 import { resolveAbsolutePath } from '../paths'
 import { install } from '../pipe'
 import { walk } from '../utils/walk'

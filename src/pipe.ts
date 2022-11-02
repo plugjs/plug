@@ -1,11 +1,11 @@
 import { sep } from 'node:path'
 
 import { assert, assertPromises } from './assert'
-import { getLogger } from './log'
+import { getLogger } from './logging'
 import { getAbsoluteParent, getCurrentWorkingDirectory, resolveAbsolutePath } from './paths'
 
 import type { Files } from './files'
-import type { Logger } from './log'
+import type { Logger } from './logging'
 import type { AbsolutePath } from './paths'
 import type { Result } from './types'
 

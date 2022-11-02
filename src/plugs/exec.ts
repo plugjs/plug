@@ -4,7 +4,7 @@ import reaadline from 'node:readline'
 
 import { assert } from '../assert'
 import { requireContext } from '../async'
-import { $p, logOptions } from '../log'
+import { $p, logOptions } from '../logging'
 import { getCurrentWorkingDirectory, resolveDirectory } from '../paths'
 import { install } from '../pipe'
 import { parseOptions } from '../utils/options'

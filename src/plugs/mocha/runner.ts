@@ -2,7 +2,7 @@ import RealMocha from 'mocha' // Mocha types pollute the global scope!
 
 import { assert } from '../../assert'
 import { BuildFailure } from '../../failure'
-import { $p, $wht, NOTICE } from '../../log'
+import { $p, $wht, NOTICE } from '../../logging'
 import { resolveFile } from '../../paths'
 import { logSymbol, PlugReporter } from './reporter'
 

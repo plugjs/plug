@@ -1,6 +1,6 @@
 import { assert } from './assert'
 import { runAsync } from './async'
-import { $ms, $t, getLogger, log, logOptions } from './log'
+import { $ms, $t, getLogger, log, logOptions } from './logging'
 import { Context, ContextPromises, Pipe } from './pipe'
 import { findCaller } from './utils/caller'
 import { parseOptions } from './utils/options'

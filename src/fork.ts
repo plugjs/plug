@@ -4,11 +4,11 @@ import { assert } from './assert'
 import { runAsync } from './async'
 import { BuildFailure } from './failure'
 import { Files } from './files'
-import { $gry, $p, logOptions } from './log'
+import { $gry, $p, logOptions } from './logging'
 import { requireFilename, resolveFile } from './paths'
 import { Context, install } from './pipe'
 
-import type { LogOptions } from './log'
+import type { LogOptions } from './logging'
 import type { AbsolutePath } from './paths'
 import type { Plug, PlugName, PlugResult } from './pipe'
 

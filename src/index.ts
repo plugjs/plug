@@ -7,13 +7,14 @@ export * as assert from './assert'
 export * as files from './files'
 export * as fork from './fork'
 export * as fs from './fs'
+export * as logging from './logging'
 export * as paths from './paths'
 export * as pipe from './pipe'
 export * as utils from './utils'
 
 // This is a main constituent of our build system!
 export type { Pipe } from './pipe'
-export { log } from './log'
+export { log } from './logging'
 
 // Our minimal exports
 export * from './build'

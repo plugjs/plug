@@ -1,7 +1,7 @@
 import { assert, assertPromises } from './assert'
 import { requireContext } from './async'
 import { Files } from './files'
-import { $p, log } from './log'
+import { $p, log } from './logging'
 import { commonPath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
 import { Pipe } from './pipe'
 import { rm } from './fs'

@@ -15,10 +15,10 @@ import {
 } from '@babel/types'
 import { parse } from '@babel/parser'
 
-import { $p } from '../../log'
+import { $p } from '../../logging'
 import { readFile } from '../../fs'
 
-import type { Logger } from '../../log'
+import type { Logger } from '../../logging'
 import type {
   Comment,
   Node } from '@babel/types'

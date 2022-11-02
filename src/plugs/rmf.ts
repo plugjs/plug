@@ -1,4 +1,4 @@
-import { $gry, $p } from '../log'
+import { $gry, $p } from '../logging'
 import { install } from '../pipe'
 import { rm } from '../fs'
 

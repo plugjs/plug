@@ -1,4 +1,4 @@
-import { $gry, $p, $und, $ylw } from '../log'
+import { $gry, $p, $und, $ylw } from '../logging'
 import { install } from '../pipe'
 
 import type { Files } from '../files'

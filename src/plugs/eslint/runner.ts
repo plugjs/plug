@@ -2,7 +2,7 @@ import { ESLint as RealESLint } from 'eslint'
 
 import { assert } from '../../assert'
 import { BuildFailure } from '../../failure'
-import { $p, ERROR, NOTICE, WARN } from '../../log'
+import { $p, ERROR, NOTICE, WARN } from '../../logging'
 import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from '../../paths'
 import { readFile } from '../../fs'
 
