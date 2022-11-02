@@ -1,12 +1,12 @@
 import { currentContext } from './async'
-import { getLogger, type Log } from './log/logger'
-import { setupSpinner } from './log/spinner'
+import { getLogger, type Log } from './logging/logger'
+import { setupSpinner } from './logging/spinner'
 
-export * from './log/colors'
-export * from './log/levels'
-export * from './log/logger'
-export * from './log/options'
-export * from './log/report'
+export * from './logging/colors'
+export * from './logging/levels'
+export * from './logging/logger'
+export * from './logging/options'
+export * from './logging/report'
 
 /* ========================================================================== *
  * INITIALIZATION                                                             *
