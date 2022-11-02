@@ -17,7 +17,8 @@ implements ts.CompilerHost {
       languageVersion: ts.ScriptTarget,
   ): ts.SourceFile | undefined {
     const code = this.readFile(fileName)
-    return code ? ts.createSourceFile(fileName, code, languageVersion) : void 0
+    if (code == null) return undefined // loose "undefined" check
+    return ts.createSourceFile(fileName, code, languageVersion)
   }
 
   /** Never write any files */
