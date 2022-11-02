@@ -28,9 +28,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@babel/parser": "^7.20.0",
+    "@babel/parser": "^7.20.1",
     "@babel/types": "^7.20.0",
-    "@plugjs/cov8-html": "^0.0.4",
+    "@plugjs/cov8-html": "^0.0.5",
     "@types/mocha": "^10.0.0",
     "@types/node": "<17",
     "diff": "^5.1.0",
