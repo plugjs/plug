@@ -127,10 +127,10 @@ install('coverage', class Coverage implements Plug<Files | undefined> {
     const _report = context.log.report('Coverage report')
 
     for (const [ _file, result ] of Object.entries(report.results)) {
-      const { coverage, totalNodes } = result.nodeCoverage
+      const { coverage } = result.nodeCoverage
       const file = _file as AbsolutePath
 
-      if (totalNodes === 0) {
+      if (coverage == null) {
         _report.annotate(NOTICE, file, 'n/a')
       } else if (coverage < minimumFileCoverage) {
         _report.annotate(ERROR, file, `${coverage} %`)
@@ -143,7 +143,10 @@ install('coverage', class Coverage implements Plug<Files | undefined> {
       }
     }
 
-    if (report.nodes.coverage < minimumCoverage) {
+    if (report.nodes.coverage == null) {
+      const message = 'No coverage data collected'
+      _report.add({ level: WARN, message })
+    } else if (report.nodes.coverage < minimumCoverage) {
       const message = `${$red(`${report.nodes.coverage}%`)} does not meet minimum coverage ${$gry(`(${minimumCoverage}%)`)}`
       _report.add({ level: ERROR, message })
     } else if (report.nodes.coverage < optimalCoverage) {
