@@ -56,6 +56,16 @@
         "default": "./dist/fs.mjs"
       }
     },
+    "./logging": {
+      "require": {
+        "types": "./dist/logging.d.ts",
+        "default": "./dist/logging.cjs"
+      },
+      "import": {
+        "types": "./dist/logging.d.ts",
+        "default": "./dist/logging.mjs"
+      }
+    },
     "./paths": {
       "require": {
         "types": "./dist/paths.d.ts",
