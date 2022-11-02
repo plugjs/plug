@@ -2,17 +2,21 @@
 // everywhere, we want our dependants to have this type known...
 /// <reference path="../types/webassembly.d.ts" />
 
-export type { AbsolutePath } from './paths'
-export type { Files, FilesBuilder } from './files'
+// Submodule exports (our package.json exports)
+export * as assert from './assert'
+export * as files from './files'
+export * as fork from './fork'
+export * as paths from './paths'
+export * as pipe from './pipe'
+export * as utils from './utils'
 
-export { BuildFailure } from './failure'
+// This is a main constituent of our build system!
 export type { Pipe } from './pipe'
+export { log } from './log'
 
 // Our minimal exports
-export * from './assert'
 export * from './build'
-export * from './fork'
+export * from './failure'
 export * from './helpers'
-export * from './log'
 export * from './plugs'
 export * from './types'
