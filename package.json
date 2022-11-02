@@ -33,14 +33,15 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@plugjs/eslint-plugin": "^0.0.3",
+    "@plugjs/eslint-plugin": "^0.0.4",
     "@plugjs/plug": "file:../plug/plugjs-plug-0.0.27.tgz",
     "@types/diff": "^5.0.2",
+    "@types/mocha": "^10.0.0",
     "typescript": "^4.8.4"
   },
   "dependencies": {
-    "@plugjs/mocha": "file:plugjs-mocha-0.1.0.tgz",
-    "diff": "^5.1.0"
+    "diff": "^5.1.0",
+    "mocha": "^10.1.0"
   },
   "peerDependencies": {
     "@plugjs/plug": "0.0.27"
