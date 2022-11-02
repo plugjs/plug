@@ -16,6 +16,8 @@ import type { Context, PipeParameters, Plug } from '../pipe'
 
 /** Options for executing scripts */
 export interface ExecOptions {
+  /** Specify the directory where coverage data will be saved */
+  coverageDir?: string,
   /** Extra environment variables, or overrides for existing ones */
   env?: Record<string, any>,
   /** Whether to run in the context of a _shell_ or not */
@@ -191,7 +193,10 @@ async function spawnChild(
   // Build our environment variables record
   const PATH = childPaths.join(path.delimiter)
   const __LOG_OPTIONS = JSON.stringify(logOptions.fork(context.taskName))
-  const childEnv = { ...process.env, ...env, PATH, __LOG_OPTIONS }
+  const childEnv: Record<string, string> = { ...process.env, ...env, PATH, __LOG_OPTIONS }
+  if (extraOptions.coverageDir) {
+    childEnv.NODE_V8_COVERAGE = context.resolve(extraOptions.coverageDir)
+  }
 
   // Prepare the options for calling `spawn`
   const childOptions: SpawnOptions = {
