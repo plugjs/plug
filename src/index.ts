@@ -6,6 +6,7 @@
 export * as assert from './assert'
 export * as files from './files'
 export * as fork from './fork'
+export * as fs from './fs'
 export * as paths from './paths'
 export * as pipe from './pipe'
 export * as utils from './utils'
