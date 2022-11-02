@@ -90,7 +90,7 @@ export class PlugReporter extends RealMocha.reporters.Base {
         // Each failure gets dumped individually
         for (let i = 0; i < failures.length; i ++) {
           log.notice('')
-          const failure = failures[i]
+          const failure = failures[i]!
 
           // The titles (from the suite, up to the test)
           const titles = [ failure.title ]
