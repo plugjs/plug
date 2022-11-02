@@ -3,7 +3,7 @@
 /// <reference path="../types/webassembly.d.ts" />
 
 // Submodule exports (our package.json exports)
-export * as assert from './asserts'
+export * as asserts from './asserts'
 export * as files from './files'
 export * as fork from './fork'
 export * as fs from './fs'
@@ -15,6 +15,7 @@ export * as utils from './utils'
 // This is a main constituent of our build system!
 export type { Pipe } from './pipe'
 export { log } from './logging'
+export { assert } from './asserts'
 
 // Our minimal exports
 export * from './build'
