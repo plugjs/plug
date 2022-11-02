@@ -1,4 +1,4 @@
-import { $t, build, find, fixExtensions, log, merge, rmrf } from './src/index.js'
+import { build, find, fixExtensions, log, merge, rmrf } from './src/index.js'
 
 import type { Pipe } from './src/index.js'
 
@@ -19,7 +19,7 @@ export default build({
 
   async test() {
     if (environmentCoverage) {
-      log.notice(`External coverage enabled, re-run task ${$t('coverage')} to generate full report`)
+      log.notice('External coverage enabled, re-run task "coverage" to generate full report')
     } else {
       await rmrf(this.coverageDir)
     }
@@ -121,10 +121,42 @@ export default build({
   },
 
   /* ======================================================================== *
+   * PACKAGE JSON ENTRY POINTS                                                *
+   * ======================================================================== */
+
+  async entrypoints(): Promise<Pipe> {
+    const exports = [ '', 'assert', 'files', 'fork', 'paths', 'pipe', 'utils' ]
+    const entrypoints = exports.reduce((entrypoints, name) => {
+      const [ key, base ] = name ? [ `./${name}`, `${name}` ] : [ '.', 'index' ]
+      entrypoints[key] = {
+        require: {
+          types: `./dist/${base}.d.ts`,
+          default: `./dist/${base}.cjs`,
+        },
+        import: {
+          types: `./dist/${base}.d.ts`,
+          default: `./dist/${base}.mjs`,
+        },
+      }
+
+      return entrypoints
+    }, {} as Record<string, any>)
+
+    return find('./package.json')
+        .edit((content) => {
+          const data = JSON.parse(content)
+          data.exports = entrypoints
+          return JSON.stringify(data, null, 2).trim() + '\n'
+        })
+  },
+
+
+  /* ======================================================================== *
    * DEFAULT TASK                                                             *
    * ======================================================================== */
 
   async default() {
+    await this.entrypoints()
     await this.transpile()
     try {
       await this.test()
