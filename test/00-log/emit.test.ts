@@ -4,11 +4,11 @@ import { Writable } from 'node:stream'
 import { expect } from 'chai'
 
 import { currentContext } from '../../src/async.js'
-import { $gry } from '../../src/log/colors.js'
-import { emitColor, emitPlain } from '../../src/log/emit.js'
-import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from '../../src/log/levels.js'
-import { logOptions } from '../../src/log/options.js'
-import { zapSpinner } from '../../src/log/spinner.js'
+import { $gry } from '../../src/logging/colors.js'
+import { emitColor, emitPlain } from '../../src/logging/emit.js'
+import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from '../../src/logging/levels.js'
+import { logOptions } from '../../src/logging/options.js'
+import { zapSpinner } from '../../src/logging/spinner.js'
 
 describe('Emit', () => {
   it('should log some messages', () => {

@@ -1,4 +1,4 @@
-import { log } from '../../src/log'
+import { log } from '../../src/logging'
 
 describe('Mocha', () => {
   it('should warn on slow tests', async function() {
