@@ -51,8 +51,14 @@ export interface NodeCoverageResult {
   ignoredNodes: number,
   /** Total number of nodes (sum of `covered`, `missing` and `ignored`) */
   totalNodes: number,
-  /** Percentage of code coverage (covered as a % of total - ignored nodes)*/
-  coverage: number,
+  /**
+   * Percentage of code coverage (covered as a % of total - ignored nodes)
+   *
+   * A `null` value for this field indicates that no coverage data was generated
+   * either because the source was all ignored or skipped (e.g. when using
+   * `coverage ignore file` or when covering a TS source only with types).
+   */
+  coverage: number | null,
 }
 
 /** Per-file coverage result */
@@ -85,10 +91,10 @@ export interface CoverageReport {
  * ========================================================================== */
 
 /** Tokens for `coverage ignore xxx`, this should be self-explanatory */
-type IgnoreCoverage = 'test' | 'if' | 'else' | 'try' | 'catch' | 'finally' | 'next'
+type IgnoreCoverage = 'test' | 'if' | 'else' | 'try' | 'catch' | 'finally' | 'next' | 'file'
 
 /** Regular expression matching strings like `coverage ignore xxx` */
-const ignoreRegexp = /(coverage|istanbul)\s+ignore\s+(test|if|else|try|catch|finally|next)(\s|$)/g
+const ignoreRegexp = /(coverage|istanbul)\s+ignore\s+(test|if|else|try|catch|finally|next|file)(\s|$)/g
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *
@@ -304,16 +310,33 @@ export async function coverageReport(
     nodeCoverage.missingNodes = 0
     nodeCoverage.ignoredNodes = 0
 
-    /* Visit all of the program nodes */
-    visitChildren(tree.program, -1)
+    /* Check if one of the first comments is "coverage ignore file" */
+    let ignoreFileCoverage = false
+    for (const comment of tree.program.body[0]?.leadingComments || []) {
+      for (const match of comment.value.matchAll(ignoreRegexp)) {
+        if (match[2] === 'file') {
+          ignoreFileCoverage = true
+          break
+        }
+      }
+      /* Already matched "coverage ignore file", skip the rest */
+      if (ignoreFileCoverage) break
+    }
+
+    /* If we found a "coverage ignore file" at the beginning, ignore the file */
+    if (ignoreFileCoverage) {
+      setCodeCoverage(tree.program, COVERAGE_IGNORED, true)
+    } else {
+      visitChildren(tree.program, -1)
+    }
 
     /*
-      * As comments are mixed within codes (and do not get visited in the
-      * tree) we force-skip them _AFTER_ the tree is visited, otherwise (for
-      * example) a comment within a block will be shown with the coverage of
-      * the block itself.
-      */
-    // setCodeCoverage(tree.comments, COVERAGE_SKIPPED, true)
+     * As comments are mixed within codes (and do not get visited in the
+     * tree) we force-skip them _AFTER_ the tree is visited, otherwise (for
+     * example) a comment within a block will be shown with the coverage of
+     * the block itself.
+     */
+    setCodeCoverage(tree.comments, COVERAGE_SKIPPED, false)
 
     /* Update nodes coverage results */
     updateNodeCoverageResult(nodeCoverage)
@@ -336,10 +359,10 @@ function updateNodeCoverageResult(result: NodeCoverageResult): void {
   const { coveredNodes, missingNodes, ignoredNodes } = result
   const totalNodes = result.totalNodes = coveredNodes + missingNodes + ignoredNodes
   if (totalNodes === 0) {
-    result.coverage = 100 // No "total" nodes, means all ignored
-  } else if (totalNodes - ignoredNodes) {
-    result.coverage = Math.floor((100 * coveredNodes) / (totalNodes - ignoredNodes))
+    result.coverage = null // No "total" nodes, means all ignored
+  } else if (totalNodes === ignoredNodes) {
+    result.coverage = null // All nodes were ignored (e.g. coverage ignore file)
   } else {
-    result.coverage = 0 // No "infinity" on division by zero...
+    result.coverage = Math.floor((100 * coveredNodes) / (totalNodes - ignoredNodes))
   }
 }
