@@ -51,11 +51,15 @@ export class PlugReporter extends RealMocha.reporters.Base {
 
     // Enter a test (increase indent)
     runner.on('test', (test) => {
+      // mark that we _entered_ the test ('pending' might be called)
+      (<any> test).__plugjs__entered = true
       log.enter(NOTICE, `${$blu(_pending)} ${test.title}`)
     })
 
     // Enter a pending test (increase indent)
     runner.on('pending', (test) => {
+      // pending is also called when "this.skip" gets called inside the test
+      if ((<any> test).__plugjs__entered === true) return
       log.enter(NOTICE, `${$blu(_pending)} ${test.title}`)
     })
 
@@ -81,6 +85,7 @@ export class PlugReporter extends RealMocha.reporters.Base {
 
     // Mocha finished running, dump our report
     runner.once('end', () => {
+      // console.log('[end]')
       try {
         // Each failure gets dumped individually
         for (let i = 0; i < failures.length; i ++) {
