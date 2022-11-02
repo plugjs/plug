@@ -1,6 +1,6 @@
+import { rm } from '../fs'
 import { $gry, $p } from '../logging'
 import { install } from '../pipe'
-import { rm } from '../fs'
 
 import type { Files } from '../files'
 import type { Context, PipeParameters, Plug } from '../pipe'

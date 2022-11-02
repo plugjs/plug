@@ -1,5 +1,5 @@
-import { install } from '../pipe'
 import { readFile, writeFile } from '../fs'
+import { install } from '../pipe'
 
 import type { Files } from '../files'
 import type { PipeParameters, Plug } from '../pipe'

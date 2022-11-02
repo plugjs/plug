@@ -1,13 +1,13 @@
 import { basename, join } from 'node:path'
 
+import { opendir, stat } from '../fs'
 import { $p, log } from '../logging'
 import { resolveAbsolutePath } from '../paths'
-import { opendir, stat } from '../fs'
 import { match } from './match'
 
+import type { Dir } from 'node:fs'
 import type { AbsolutePath } from '../paths'
 import type { MatchOptions } from './match'
-import type { Dir } from 'node:fs'
 
 /** Specific options for walking a directory */
 export interface WalkOptions extends MatchOptions {

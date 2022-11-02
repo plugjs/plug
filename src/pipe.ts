@@ -1,6 +1,6 @@
 import { sep } from 'node:path'
 
-import { assert, assertPromises } from './assert'
+import { assert, assertPromises } from './asserts'
 import { getLogger } from './logging'
 import { getAbsoluteParent, getCurrentWorkingDirectory, resolveAbsolutePath } from './paths'
 

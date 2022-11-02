@@ -2,12 +2,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { SourceMapConsumer } from 'source-map'
 
-import { assert } from '../../assert'
-import { $gry, $p } from '../../logging'
+import { assert } from '../../asserts'
 import { readFile } from '../../fs'
+import { $gry, $p } from '../../logging'
 
-import type { Logger } from '../../logging'
 import type { RawSourceMap } from 'source-map'
+import type { Logger } from '../../logging'
 import type { AbsolutePath } from '../../paths'
 
 /* ========================================================================== *

@@ -2,18 +2,18 @@ import { basename } from 'node:path'
 
 import { build } from 'esbuild'
 
-import { assert } from '../assert'
+import { assert } from '../asserts'
 import { Files } from '../files'
+import { readFile } from '../fs'
 import { $p, ERROR, WARN } from '../logging'
 import { getAbsoluteParent, resolveAbsolutePath } from '../paths'
 import { install } from '../pipe'
-import { readFile } from '../fs'
 
+import type { BuildFailure, BuildOptions, BuildResult, Format, Message, Metafile } from 'esbuild'
 import type { FilesBuilder } from '../files'
 import type { Logger, ReportLevel, ReportRecord } from '../logging'
 import type { AbsolutePath } from '../paths'
 import type { Context, PipeParameters, Plug } from '../pipe'
-import type { BuildFailure, BuildOptions, BuildResult, Format, Message, Metafile } from 'esbuild'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 

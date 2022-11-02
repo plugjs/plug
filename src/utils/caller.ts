@@ -1,7 +1,7 @@
 import { statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
-import { assert } from '../assert'
+import { assert } from '../asserts'
 import { $p } from '../logging'
 import { assertAbsolutePath } from '../paths'
 

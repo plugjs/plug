@@ -1,4 +1,4 @@
-import { BuildFailure } from '../failure'
+import { BuildFailure } from '../asserts'
 import { readFile } from '../fs'
 import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
 import { ERROR, NOTICE, WARN } from './levels'

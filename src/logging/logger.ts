@@ -1,4 +1,4 @@
-import { BuildFailure, isBuildFailure } from '../failure'
+import { BuildFailure, isBuildFailure } from '../asserts'
 import { emitColor, emitPlain } from './emit'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'

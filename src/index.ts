@@ -3,7 +3,7 @@
 /// <reference path="../types/webassembly.d.ts" />
 
 // Submodule exports (our package.json exports)
-export * as assert from './assert'
+export * as assert from './asserts'
 export * as files from './files'
 export * as fork from './fork'
 export * as fs from './fs'
@@ -18,7 +18,6 @@ export { log } from './logging'
 
 // Our minimal exports
 export * from './build'
-export * from './failure'
 export * from './helpers'
 export * from './plugs'
 export * from './types'

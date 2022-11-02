@@ -1,10 +1,10 @@
-import { diffJson } from 'diff'
 import RealMocha from 'mocha' // Mocha types pollute the global scope!
+import { diffJson } from 'diff'
 
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '../../logging'
 
-import type { Logger } from '../../logging'
 import type { AssertionError } from 'node:assert'
+import type { Logger } from '../../logging'
 
 const _pending = '\u22EF' // middle ellipsis
 const _success = '\u2714' // heavy check mark

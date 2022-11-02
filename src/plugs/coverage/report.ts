@@ -1,5 +1,6 @@
 import { pathToFileURL } from 'node:url'
 
+import { parse } from '@babel/parser'
 import {
   isDeclaration,
   isExportDeclaration,
@@ -13,15 +14,15 @@ import {
   isTypeScript,
   VISITOR_KEYS,
 } from '@babel/types'
-import { parse } from '@babel/parser'
 
-import { $p } from '../../logging'
 import { readFile } from '../../fs'
+import { $p } from '../../logging'
 
-import type { Logger } from '../../logging'
 import type {
   Comment,
-  Node } from '@babel/types'
+  Node,
+} from '@babel/types'
+import type { Logger } from '../../logging'
 import type { AbsolutePath } from '../../paths'
 import type { CoverageAnalyser } from './analysis'
 

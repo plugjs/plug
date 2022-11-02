@@ -2,9 +2,9 @@ import { EventEmitter } from 'node:events'
 
 import { getLevelNumber, NOTICE } from './levels'
 
-import type { LogLevel, LogLevelString } from './levels'
 import type { Writable } from 'node:stream'
 import type { InspectOptions } from 'node:util'
+import type { LogLevel, LogLevelString } from './levels'
 
 /* ========================================================================== */
 

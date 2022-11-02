@@ -1,8 +1,7 @@
 import { fork } from 'node:child_process'
 
-import { assert } from './assert'
+import { assert, BuildFailure } from './asserts'
 import { runAsync } from './async'
-import { BuildFailure } from './failure'
 import { Files } from './files'
 import { $gry, $p, logOptions } from './logging'
 import { requireFilename, resolveFile } from './paths'

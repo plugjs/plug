@@ -1,7 +1,7 @@
 import path from 'node:path'
 
-import { assertAbsolutePath, resolveAbsolutePath, resolveFile } from '../../paths'
 import { stat } from '../../fs'
+import { assertAbsolutePath, resolveAbsolutePath, resolveFile } from '../../paths'
 
 import type { Plugin } from 'esbuild'
 

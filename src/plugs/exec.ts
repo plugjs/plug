@@ -2,17 +2,17 @@ import { spawn } from 'node:child_process'
 import path from 'node:path'
 import reaadline from 'node:readline'
 
-import { assert } from '../assert'
+import { assert } from '../asserts'
 import { requireContext } from '../async'
 import { $p, logOptions } from '../logging'
 import { getCurrentWorkingDirectory, resolveDirectory } from '../paths'
 import { install } from '../pipe'
 import { parseOptions } from '../utils/options'
 
+import type { SpawnOptions } from 'node:child_process'
 import type { Files } from '../files'
 import type { AbsolutePath } from '../paths'
 import type { Context, PipeParameters, Plug } from '../pipe'
-import type { SpawnOptions } from 'node:child_process'
 
 /** Options for executing scripts */
 export interface ExecOptions {
