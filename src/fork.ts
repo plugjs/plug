@@ -15,6 +15,8 @@ import type { Plug, PlugName, PlugResult } from './pipe'
 export interface ForkData {
   /** Script name for the Plug to execute */
   scriptFile: AbsolutePath,
+  /** Export name in the script for the Plug to execute */
+  exportName: string,
   /** Plug constructor arguments */
   constructorArgs: any[],
   /** Task name (for logs) */
@@ -47,11 +49,13 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
   constructor(
       private readonly _scriptFile: AbsolutePath,
       private readonly _arguments: any[],
+      private readonly _exportName: string,
   ) {}
 
   pipe(files: Files, context: Context): Promise<PlugResult> {
     const message: ForkData = {
       scriptFile: this._scriptFile,
+      exportName: this._exportName,
       constructorArgs: this._arguments,
       taskName: context.taskName,
       buildFile: context.buildFile,
@@ -166,6 +170,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
 
     const {
       scriptFile,
+      exportName,
       constructorArgs,
       taskName,
       buildFile,
@@ -188,12 +193,15 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
       const script = await import(scriptFile)
 
       /* Figure out the constructor, in the "default" chain */
-      let Ctor = script
-      while (Ctor && (typeof Ctor !== 'function')) Ctor = Ctor.default
-
-      /* Check that we have a proper constructor */
-      assert(typeof Ctor === 'function',
-          `Script ${$p(scriptFile)} does not export a default constructor`)
+      let Ctor
+      if (exportName === 'default') {
+        Ctor = script
+        while (Ctor && (typeof Ctor !== 'function')) Ctor = Ctor.default
+        assert(typeof Ctor === 'function', `Script ${$p(scriptFile)} does not export a default constructor`)
+      } else {
+        Ctor = script[exportName]
+        assert(typeof Ctor === 'function', `Script ${$p(scriptFile)} does not export "${exportName}"`)
+      }
 
       /* Create the Plug instance and our Files instance */
       const plug = new Ctor(...constructorArgs) as Plug<PlugResult>
@@ -249,11 +257,12 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
 export function installForking<Name extends PlugName>(
     plugName: Name,
     scriptFile: AbsolutePath,
+    exportName: string = 'default',
 ): void {
   /** Extend out our ForkingPlug below */
   const ctor = class extends ForkingPlug {
     constructor(...args: any[]) {
-      super(scriptFile, args)
+      super(scriptFile, args, exportName)
     }
   }
 
