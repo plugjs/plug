@@ -153,7 +153,7 @@ class CoverageResultAnalyser extends CoverageAnalyserImpl {
     let offset = 0
 
     /* Calculate the offset at the beginning of the line */
-    for (let l = line - 2; l >= 0; l--) offset += _lineLengths[l] + 1
+    for (let l = line - 2; l >= 0; l--) offset += _lineLengths[l]! + 1
 
     /* Return the number of passes from the coverage data */
     return _coverage[offset + column] || 0

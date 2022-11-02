@@ -47,7 +47,7 @@ export default class ESLint implements Plug<void> {
     const summary = settlements.reduce((summary, settlement, i) => {
       /* Promise rejected, meaining hard failure */
       if (settlement.status === 'rejected') {
-        context.log.error('Error linting', $p(paths[i]), settlement.reason)
+        context.log.error('Error linting', $p(paths[i]!), settlement.reason)
         summary.failures ++
         return summary
       }

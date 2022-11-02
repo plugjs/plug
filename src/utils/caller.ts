@@ -12,7 +12,10 @@ export function findCaller(of: (...args: any[]) => any): AbsolutePath {
 
   try {
     Error.prepareStackTrace = (_, stackTraces): AbsolutePath | undefined => {
-      const nullableFileOrUrl = stackTraces[0].getFileName()
+      const [ stackTrace ] = stackTraces
+      if (! stackTrace) return
+
+      const nullableFileOrUrl = stackTrace.getFileName()
       if (! nullableFileOrUrl) return
 
       const file =

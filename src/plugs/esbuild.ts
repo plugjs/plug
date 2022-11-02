@@ -76,7 +76,7 @@ install('esbuild', class ESBuild implements Plug<Files> {
     if (options.bundle && options.outfile && (entryPoints.length === 1)) {
       builder = Files.builder(absWorkingDir)
       const outputFile = resolveAbsolutePath(absWorkingDir, options.outfile)
-      const entryPoint = resolveAbsolutePath(absWorkingDir, entryPoints[0])
+      const entryPoint = resolveAbsolutePath(absWorkingDir, entryPoints[0]!)
       options.outfile = outputFile
 
       context.log.debug('Bundling', $p(entryPoint), 'into', $p(outputFile))

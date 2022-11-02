@@ -72,7 +72,7 @@ export function fixExtensions(): Plugin {
         const match = args.path.match(/(.*)(\.[mc]?js$)/)
         if (match) {
           const [ , name, ext ] = match
-          const tspath = name + ext.replace('js', 'ts')
+          const tspath = name + ext!.replace('js', 'ts')
           const tsfile = resolveAbsolutePath(resolveDir, tspath)
           if (resolveFile(tsfile)) {
             const newext = ext === '.mjs' ? mjs : ext === '.cjs' ? cjs : js

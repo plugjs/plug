@@ -54,7 +54,7 @@ class TaskImpl implements Task {
         if (name in tasks) {
           return (): Pipe => {
             const state = { stack, cache, tasks, props }
-            const promise = tasks[name].invoke(state, name)
+            const promise = tasks[name]!.invoke(state, name)
             return new Pipe(context, promise)
           }
         } else if (name in props) {
@@ -140,7 +140,7 @@ export function build<
         /* Run tasks _serially_ */
         for (const taskName of taskNames) {
           if (taskName in tasks) {
-            await tasks[taskName].invoke(state, taskName)
+            await tasks[taskName]!.invoke(state, taskName)
           } else {
             throw logger.fail(`Task ${$t(taskName)} not found in build`)
           }

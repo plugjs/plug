@@ -97,7 +97,7 @@ export function merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
 
     // Find the common directory between all the Files instances
     const [ firstDir, ...otherDirs ] = results.map((f) => f.directory)
-    const directory = commonPath(firstDir, ...otherDirs)
+    const directory = commonPath(firstDir!, ...otherDirs)
 
     // Build our new files instance merging all the results
     return Files.builder(directory).merge(...results).build()

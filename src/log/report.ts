@@ -336,7 +336,7 @@ export class ReportImpl implements Report {
 
     /* Iterate through all our [file,reports] tuple */
     for (let f = 0; f < entries.length; f ++) {
-      const { file, records, annotation } = entries[f]
+      const { file, records, annotation } = entries[f]!
       const source = file && file != nul && this._sources.get(file)
 
       if ((f === 0) || entries[f - 1]?.records.length) {
@@ -358,7 +358,7 @@ export class ReportImpl implements Report {
 
       /* Now get each message and do our magic */
       for (let r = 0; r < records.length; r ++) {
-        const { level, messages, tags, line, column, length = 1 } = records[r]
+        const { level, messages, tags, line, column, length = 1 } = records[r]!
 
         /* Prefix includes line and column */
         let pfx: string
@@ -382,13 +382,13 @@ export class ReportImpl implements Report {
 
         /* Print out our messages, one by one */
         if (messages.length === 1) {
-          this._emitter({ ...options, level }, [ $gry(pfx), messages[0].padEnd(mPad), tag ])
+          this._emitter({ ...options, level }, [ $gry(pfx), messages[0]!.padEnd(mPad), tag ])
         } else {
           for (let m = 0; m < messages.length; m ++) {
             if (! m) { // first line
               this._emitter({ ...options, level }, [ $gry(pfx), messages[m] ])
             } else if (m === messages.length - 1) { // last line
-              this._emitter({ ...options, level, prefix }, [ messages[m].padEnd(mPad), tag ])
+              this._emitter({ ...options, level, prefix }, [ messages[m]!.padEnd(mPad), tag ])
             } else { // in between lines
               this._emitter({ ...options, level, prefix }, [ messages[m] ])
             }
@@ -400,9 +400,10 @@ export class ReportImpl implements Report {
           if (column) {
             const $col = level === NOTICE ? $blu : level === WARN ? $ylw : $red
             const offset = column - 1
-            const head = $gry(source[line - 1].substring(0, offset))
-            const body = $und($col(source[line - 1].substring(offset, offset + length)))
-            const tail = $gry(source[line - 1].substring(offset + length))
+            const text = source[line - 1] || ''
+            const head = $gry(text.substring(0, offset))
+            const body = $und($col(text.substring(offset, offset + length)))
+            const tail = $gry(text.substring(offset + length))
 
             this._emitter({ ...options, level, prefix }, [ $gry(`| ${head}${body}${tail}`) ])
           } else {

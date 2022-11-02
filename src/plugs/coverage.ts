@@ -188,7 +188,7 @@ install('coverage', class Coverage implements Plug<Files | undefined> {
     /* The JSONP file (for our HTML report) has relative files and a tree */
     const results: Record<string, CoverageResult> = {}
     for (const [ rel, abs ] of files.pathMappings()) {
-      results[rel] = report.results[abs]
+      results[rel] = report.results[abs]!
     }
 
     const tree: Record<string, any> = {}
