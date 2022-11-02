@@ -244,6 +244,20 @@ interface CommandLineOptions {
   force?: Type | undefined,
 }
 
+/** Read the current version from "package.json" */
+let _version: string | undefined
+export function version(): string {
+  if (_version) return _version
+  try {
+    const thisFile = _url.fileURLToPath(import.meta.url)
+    const packageFile = _path.resolve(thisFile, '..', '..', 'package.json')
+    const packageData = _fs.readFileSync(packageFile, 'utf-8')
+    return _version = JSON.parse(packageData).version || '(unknown)'
+  } catch (error) {
+    if (process.env.DEBUG_CLI === 'true') console.log(error)
+    return _version = '(error)'
+  }
+}
 
 /** Parse `perocess.argv` and return our normalised command line options */
 export function parseCommandLine(): CommandLineOptions {
@@ -266,7 +280,7 @@ export function parseCommandLine(): CommandLineOptions {
     },
 
     string: [ 'file', 'watch' ],
-    boolean: [ 'help', 'colors', 'list', 'force-esm', 'force-cjs' ],
+    boolean: [ 'help', 'colors', 'list', 'force-esm', 'force-cjs', 'version' ],
     count: [ 'verbose', 'quiet' ],
   })
 
@@ -324,6 +338,10 @@ export function parseCommandLine(): CommandLineOptions {
       case 'help':
         help = !! value
         break
+      case 'version':
+        console.log(`v${version()}`)
+        process.exit(0)
+        break
       default:
         console.log(`Unsupported option "${key}" (try "--help")`)
         process.exit(1)
@@ -349,6 +367,7 @@ export function parseCommandLine(): CommandLineOptions {
         ${$wht}-c --colors${$rst}     Force colorful output (use "--no-colors" to force plain text)
         ${$wht}-l --list${$rst}       Only list the tasks defined by the build, nothing more!
         ${$wht}-h --help${$rst}       Help! You're reading it now!
+        ${$wht}   --version${$rst}    Version! This one: ${version()}!
 
     ${$blu}${$und}Properties:${$rst}
 
@@ -377,7 +396,7 @@ export function parseCommandLine(): CommandLineOptions {
         ${$wht}--force-esm  ${$rst}   Force transpilation of ".ts" files to EcmaScript modules
         ${$wht}--force-cjs  ${$rst}   Force transpilation of ".ts" files to CommonJS modules
     `)
-    process.exit(1)
+    process.exit(0)
   }
 
   /* ======================================================================== *
