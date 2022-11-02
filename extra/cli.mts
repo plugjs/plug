@@ -8,7 +8,8 @@ import _url from 'node:url'
 import _yargs from 'yargs-parser'
 
 import type { Type } from './ts-loader.mjs'
-import type { Build, BuildFailure } from '../src/index.js'
+import type { Build } from '../src/index.js'
+import type { BuildFailure } from '../src/asserts.js'
 
 // Colors...
 const $rst = process.stdout.isTTY ? '\u001b[0m' : '' // reset all colors to default
@@ -291,7 +292,7 @@ export function parseCommandLine(): CommandLineOptions {
       case '_': // extra arguments
         value.forEach((current: string) => {
           const [ key, val ] = current.split(/=(.*)/, 2)
-          if (val) props[key] = val
+          if (key && val) props[key] = val
           else tasks.push(current)
         })
         break
