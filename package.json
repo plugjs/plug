@@ -15,6 +15,76 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/index.mjs"
       }
+    },
+    "./assert": {
+      "require": {
+        "types": "./dist/assert.d.ts",
+        "default": "./dist/assert.cjs"
+      },
+      "import": {
+        "types": "./dist/assert.d.ts",
+        "default": "./dist/assert.mjs"
+      }
+    },
+    "./files": {
+      "require": {
+        "types": "./dist/files.d.ts",
+        "default": "./dist/files.cjs"
+      },
+      "import": {
+        "types": "./dist/files.d.ts",
+        "default": "./dist/files.mjs"
+      }
+    },
+    "./fork": {
+      "require": {
+        "types": "./dist/fork.d.ts",
+        "default": "./dist/fork.cjs"
+      },
+      "import": {
+        "types": "./dist/fork.d.ts",
+        "default": "./dist/fork.mjs"
+      }
+    },
+    "./fs": {
+      "require": {
+        "types": "./dist/fs.d.ts",
+        "default": "./dist/fs.cjs"
+      },
+      "import": {
+        "types": "./dist/fs.d.ts",
+        "default": "./dist/fs.mjs"
+      }
+    },
+    "./paths": {
+      "require": {
+        "types": "./dist/paths.d.ts",
+        "default": "./dist/paths.cjs"
+      },
+      "import": {
+        "types": "./dist/paths.d.ts",
+        "default": "./dist/paths.mjs"
+      }
+    },
+    "./pipe": {
+      "require": {
+        "types": "./dist/pipe.d.ts",
+        "default": "./dist/pipe.cjs"
+      },
+      "import": {
+        "types": "./dist/pipe.d.ts",
+        "default": "./dist/pipe.mjs"
+      }
+    },
+    "./utils": {
+      "require": {
+        "types": "./dist/utils.d.ts",
+        "default": "./dist/utils.cjs"
+      },
+      "import": {
+        "types": "./dist/utils.d.ts",
+        "default": "./dist/utils.mjs"
+      }
     }
   },
   "bin": {
