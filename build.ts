@@ -125,7 +125,7 @@ export default build({
    * ======================================================================== */
 
   async entrypoints(): Promise<Pipe> {
-    const exports = [ '', 'assert', 'files', 'fork', 'fs', 'logging', 'paths', 'pipe', 'utils' ]
+    const exports = [ '', 'asserts', 'files', 'fork', 'fs', 'logging', 'paths', 'pipe', 'utils' ]
     const entrypoints = exports.reduce((entrypoints, name) => {
       const [ key, base ] = name ? [ `./${name}`, `${name}` ] : [ '.', 'index' ]
       entrypoints[key] = {

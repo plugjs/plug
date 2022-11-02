@@ -16,14 +16,14 @@
         "default": "./dist/index.mjs"
       }
     },
-    "./assert": {
+    "./asserts": {
       "require": {
-        "types": "./dist/assert.d.ts",
-        "default": "./dist/assert.cjs"
+        "types": "./dist/asserts.d.ts",
+        "default": "./dist/asserts.cjs"
       },
       "import": {
-        "types": "./dist/assert.d.ts",
-        "default": "./dist/assert.mjs"
+        "types": "./dist/asserts.d.ts",
+        "default": "./dist/asserts.mjs"
       }
     },
     "./files": {
