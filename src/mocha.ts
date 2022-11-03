@@ -1,3 +1,6 @@
+// Reference ourselves, so that the constructor's parameters are correct
+/// <reference path="./index.ts"/>
+
 import RealMocha from 'mocha' // Mocha types pollute the global scope!
 import { assert, BuildFailure } from '@plugjs/plug/asserts'
 import { $p, $wht, NOTICE } from '@plugjs/plug/logging'
