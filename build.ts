@@ -1,7 +1,9 @@
 // Reference types from PlugJS plugins used by this build
+/// <reference types="@plugjs/eslint"/>
 /// <reference types="@plugjs/mocha"/>
 
 // Import PlugJS plugins used by this build without using "install"
+import { ESLint } from '@plugjs/eslint/eslint'
 import { Mocha } from '@plugjs/mocha/mocha'
 
 import { build, find, fixExtensions, log, merge, rmrf, type Pipe } from './src/index.js'
@@ -60,7 +62,7 @@ export default build({
       this.find_sources(),
       this.find_extras(),
       this.find_tests(),
-    ]).eslint()
+    ]).plug(new ESLint())
   },
 
   async checks() {
