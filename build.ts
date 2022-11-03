@@ -1,3 +1,7 @@
+// Reference types from PlugJS plugins used by this build
+/// <reference types="@plugjs/mocha"/>
+
+// Import PlugJS plugins used by this build without using "install"
 import { Mocha } from '@plugjs/mocha/mocha'
 
 import { build, find, fixExtensions, log, merge, rmrf, type Pipe } from './src/index.js'
