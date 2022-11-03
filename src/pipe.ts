@@ -8,6 +8,7 @@ import type { Files } from './files'
 import type { Logger } from './logging'
 import type { AbsolutePath } from './paths'
 import type { Result } from './types'
+import type { Pipe } from './index'
 
 /* ========================================================================== *
  * PLUGS                                                                      *
@@ -138,27 +139,19 @@ export class ContextPromises {
   }
 }
 
-/**
- * A class that will be extended by {@link Pipe} where {@link install} will
- * add prototype properties from installed {@link Plug}s
- */
-abstract class PipeProto {
-  abstract plug(plug: Plug<PlugResult>): Pipe | Promise<undefined>
+/** The default implementation of the {@link Pipe} interface. */
+export interface PipeImpl extends Pipe {
+  // used simply for merging types
 }
 
-/**
- * The {@link Pipe} class defines processing pipeline where multiple
- * {@link Plug}s can transform lists of {@link Files}.
- */
-export class Pipe extends PipeProto implements Promise<Files> {
+/** The default implementation of the {@link Pipe} interface. */
+export class PipeImpl implements Pipe {
   readonly [Symbol.toStringTag] = 'Pipe'
 
   constructor(
       private readonly _context: Context,
       private readonly _promise: Promise<Result>,
   ) {
-    super()
-
     // New "Pipe", remember the promise!
     ContextPromises.get(_context).hot(_promise)
   }
@@ -218,7 +211,7 @@ export class Pipe extends PipeProto implements Promise<Files> {
     ContextPromises.get(this._context).cold(this._promise)
 
     // Create and return the new Pipe
-    return new Pipe(this._context, this._promise.then(async (result) => {
+    return new PipeImpl(this._context, this._promise.then(async (result) => {
       assert(result, 'Unable to extend pipe')
       const result2 = await plug.pipe(result, this._context)
       return result2 || undefined
@@ -335,14 +328,14 @@ export function install<
   Ctor extends PlugConstructor<Name>,
 >(name: Name, ctor: Ctor): void {
   /* The function plugging the newly constructed plug in a pipe */
-  function plug(this: PipeProto, ...args: PipeParameters<Name>): Pipe | Promise<undefined> {
+  function plug(this: PipeImpl, ...args: PipeParameters<Name>): Pipe | Promise<undefined> {
     // eslint-disable-next-line new-cap
-    return this.plug(new ctor(...args))
+    return this.plug(new ctor(...args) as any)
   }
 
   /* Setup name so that stack traces look better */
   Object.defineProperty(plug, 'name', { value: name })
 
   /* Inject the create function in the Pipe's prototype */
-  Object.defineProperty(PipeProto.prototype, name, { value: plug })
+  void Object.defineProperty(PipeImpl.prototype, name, { value: plug })
 }
