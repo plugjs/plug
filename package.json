@@ -15,6 +15,16 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/index.mjs"
       }
+    },
+    "./eslint": {
+      "require": {
+        "types": "./dist/eslint.d.ts",
+        "default": "./dist/eslint.cjs"
+      },
+      "import": {
+        "types": "./dist/eslint.d.ts",
+        "default": "./dist/eslint.mjs"
+      }
     }
   },
   "scripts": {
@@ -28,10 +38,15 @@
     "@types/eslint": "^8.4.9",
     "typescript": "^4.8.4"
   },
+  "dependencies": {
+    "eslint": "^8.26.0"
+  },
   "peerDependencies": {
     "@plugjs/plug": "0.1.0"
   },
-  "dependencies": {
-    "eslint": "^8.26.0"
-  }
+  "files": [
+    "*.md",
+    "dist/",
+    "src/"
+  ]
 }
