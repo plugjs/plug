@@ -1,4 +1,3 @@
-/* coverage ignore file */
 import { installForking } from '@plugjs/plug/fork'
 import { requireResolve } from '@plugjs/plug/paths'
 
@@ -40,4 +39,4 @@ declare module '@plugjs/plug' {
   }
 }
 
-installForking('eslint', requireResolve(__fileurl, './eslint/runner'), 'ESLint')
+installForking('eslint', requireResolve(__fileurl, './eslint'), 'ESLint')
