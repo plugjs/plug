@@ -1,7 +1,3 @@
-// Reference types from PlugJS plugins used by this build
-/// <reference types="@plugjs/eslint"/>
-/// <reference types="@plugjs/mocha"/>
-
 // Import PlugJS plugins used by this build without using "install"
 import { ESLint } from '@plugjs/eslint/eslint'
 import { Mocha } from '@plugjs/mocha/mocha'
