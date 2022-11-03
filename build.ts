@@ -11,7 +11,7 @@ import {
   type Pipe,
 } from '@plugjs/plug'
 
-import { ESLint } from './src/runner'
+import { ESLint } from './src/eslint'
 
 /** Shared ESBuild options */
 const esbuildOptions: ESBuildOptions = {
