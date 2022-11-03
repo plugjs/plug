@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/plug",
-  "version": "0.0.27",
+  "version": "0.1.0",
   "type": "commonjs",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -122,7 +122,8 @@
     "typescript": "^4.8.4"
   },
   "devDependencies": {
-    "@plugjs/eslint-plugin": "^0.0.3",
+    "@plugjs/eslint-plugin": "^0.0.4",
+    "@plugjs/mocha": "file:../mocha/plugjs-mocha-0.1.0.tgz",
     "@types/chai": "^4.3.3",
     "@types/diff": "^5.0.2",
     "@types/eslint": "^8.4.9",
