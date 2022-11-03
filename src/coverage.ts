@@ -90,6 +90,7 @@ export class Coverage implements Plug<Files | undefined> {
       }
     }
 
+    /* coverage ignore if */
     if (report.nodes.coverage == null) {
       const message = 'No coverage data collected'
       _report.add({ level: WARN, message })
