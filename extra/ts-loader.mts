@@ -482,7 +482,8 @@ const loader: ExtensionHandler = (module, filename): void => {
   try {
     module._compile(source, filename)
   } catch (cause) {
-    _throw(CJS, `Error compiling module "${filename}"`, { cause })
+    // eslint-disable-next-line no-console
+    console.log(`Error compiling module "${filename}"`, cause)
   }
 }
 
