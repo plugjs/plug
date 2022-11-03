@@ -1,4 +1,3 @@
-/* coverage ignore file */
 import { installForking } from '@plugjs/plug/fork'
 import { requireResolve } from '@plugjs/plug/paths'
 
@@ -41,4 +40,4 @@ declare module '@plugjs/plug' {
   }
 }
 
-installForking('mocha', requireResolve(__fileurl, './mocha/runner'), 'Mocha')
+installForking('mocha', requireResolve(__fileurl, './mocha'), 'Mocha')
