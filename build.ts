@@ -1,3 +1,4 @@
+import '@plugjs/eslint'
 import {
   build,
   exec,
