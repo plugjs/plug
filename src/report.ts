@@ -91,7 +91,7 @@ export interface CoverageReport {
 type IgnoreCoverage = 'test' | 'if' | 'else' | 'try' | 'catch' | 'finally' | 'next' | 'file'
 
 /** Regular expression matching strings like `coverage ignore xxx` */
-const ignoreRegexp = /(coverage|istanbul)\s+ignore\s+(test|if|else|try|catch|finally|next|file)(\s|$)/g
+const ignoreRegexp = /^\s+(coverage|istanbul)\s+ignore\s+(test|if|else|try|catch|finally|next|file)(\s|$)/g
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *
@@ -184,7 +184,7 @@ export async function coverageReport(
 
       if (! recursive) return
 
-      const keys = VISITOR_KEYS[node.type] || []
+      const keys = VISITOR_KEYS[node.type] || /* coverage ignore next */ []
       for (const key of keys) {
         const value: Node | Node[] = (<any> node)[key]
         if (Array.isArray(value)) {
@@ -199,7 +199,7 @@ export async function coverageReport(
 
     /* Recursively invoke "visitNode" on the children of a given node */
     const visitChildren = (node: Node, depth: number): void => {
-      const keys = VISITOR_KEYS[node.type] || []
+      const keys = VISITOR_KEYS[node.type] || /* coverage ignore next */ []
       for (const key of keys) {
         const children: Node | null | (Node | null)[] = (<any> node)[key]
         if (Array.isArray(children)) {
@@ -231,7 +231,9 @@ export async function coverageReport(
       log.trace('-'.padStart((depth * 2) + 1, ' '), node.type, `${node.loc?.start.line}:${node.loc?.start.column}`)
 
       /* Root nodes (file and program) simply go to their children */
+      // coverage ignore if / we start visiting at file.program.body!
       if (isFile(node)) return visitChildren(node, depth)
+      // coverage ignore if / we start visiting at file.program.body!
       if (isProgram(node)) return visitChildren(node, depth)
 
       /* Figure out if we have some "coverage ignore xxxx" in comments */
@@ -247,8 +249,13 @@ export async function coverageReport(
 
       /* Typescript nodes are skipped, but children aren't in some cases */
       if (isTypeScript(node)) {
+        /* Functions/constructors overloads */
         if (isTSDeclareMethod(node)) return setCodeCoverage(node, COVERAGE_SKIPPED, true)
+
+        /* References to imported types */
         if (isTSTypeReference(node)) return setCodeCoverage(node, COVERAGE_SKIPPED, true)
+
+        /* Generic typescript declarations */
         if (isDeclaration(node)) return setCodeCoverage(node, COVERAGE_SKIPPED, true)
 
         /* For things like "X as Y": the "as" node wraps the expression */
@@ -270,8 +277,12 @@ export async function coverageReport(
       if (node.loc) {
         const { line, column } = node.loc.start
         const c = analyser.coverage(url, line, column)
-        if (c == null) log.warn(`No coverage for ${node.type} at ${$p(file)}:${line}:${column}`)
-        else coverage = c
+        // coverage ignore if / broken V8 coverage???
+        if (c == null) {
+          log.warn(`No coverage for ${node.type} at ${$p(file)}:${line}:${column}`)
+        } else {
+          coverage = c
+        }
       }
 
       /* Record the code coverage, and set up our variables */
