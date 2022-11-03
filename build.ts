@@ -12,6 +12,8 @@ import {
   type Pipe,
 } from '@plugjs/plug'
 
+import { Coverage } from './src/coverage'
+
 /** Shared ESBuild options */
 const esbuildOptions: ESBuildOptions = {
   platform: 'node',
@@ -95,16 +97,16 @@ export default build({
   },
 
   async test() {
-    // await rmrf('.coverage-data')
+    await rmrf('.coverage-data')
 
     await this.test_esm()
     await this.test_cjs()
 
-    // await this.find_sources().coverage('.coverage-data', {
-    //   reportDir: 'coverage',
-    //   minimumCoverage: 100,
-    //   minimumFileCoverage: 100,
-    // })
+    await this.find_sources().plug(new Coverage('.coverage-data', {
+      reportDir: 'coverage',
+      minimumCoverage: 100,
+      minimumFileCoverage: 100,
+    }) as any)
   },
 
   /* ======================================================================== *
