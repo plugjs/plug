@@ -1,6 +1,6 @@
 import type { Files } from './files'
 import type { AbsolutePath } from './paths'
-import type { Pipe } from './pipe'
+import type { Pipe } from './index'
 
 /**
  * A type describing the ultimate result of a {@link Plug}, {@link Pipe} or

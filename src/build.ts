@@ -1,10 +1,11 @@
 import { assert } from './asserts'
 import { runAsync } from './async'
 import { $ms, $t, getLogger, log, logOptions } from './logging'
-import { Context, ContextPromises, Pipe } from './pipe'
+import { Context, ContextPromises, PipeImpl } from './pipe'
 import { findCaller } from './utils/caller'
 import { parseOptions } from './utils/options'
 
+import type { Pipe } from './index'
 import type { AbsolutePath } from './paths'
 import type {
   Build,
@@ -53,7 +54,7 @@ class TaskImpl implements Task {
           return (): Pipe => {
             const state = { stack, cache, tasks, props }
             const promise = tasks[name]!.invoke(state, name)
-            return new Pipe(context, promise)
+            return new PipeImpl(context, promise)
           }
         } else if (name in props) {
           return props[name]

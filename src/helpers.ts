@@ -4,13 +4,14 @@ import { Files } from './files'
 import { rm } from './fs'
 import { $p, log } from './logging'
 import { commonPath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
-import { Pipe } from './pipe'
+import { PipeImpl } from './pipe'
 import { parseOptions } from './utils/options'
 import { walk } from './utils/walk'
 
 import type { AbsolutePath } from './paths'
 import type { ParseOptions } from './utils/options'
 import type { WalkOptions } from './utils/walk'
+import type { Pipe } from './index'
 
 /* ========================================================================== *
  * EXTERNAL HELPERS                                                           *
@@ -35,7 +36,7 @@ export function find(...args: ParseOptions<FindOptions>): Pipe {
   const { params: globs, options } = parseOptions(args, {})
 
   const context = requireContext()
-  return new Pipe(context, Promise.resolve().then(async () => {
+  return new PipeImpl(context, Promise.resolve().then(async () => {
     const directory = options.directory ?
       context.resolve(options.directory) :
       getCurrentWorkingDirectory()
@@ -88,7 +89,7 @@ export async function rmrf(directory: string): Promise<void> {
  */
 export function merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
   const context = requireContext()
-  return new Pipe(context, Promise.resolve().then(async () => {
+  return new PipeImpl(context, Promise.resolve().then(async () => {
     // No pipes? Just send off an empty pipe...
     if (pipes.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
 
@@ -121,7 +122,7 @@ export function merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
 export function noop(): Pipe {
   const context = requireContext()
   const files = new Files(getCurrentWorkingDirectory())
-  return new Pipe(context, Promise.resolve(files))
+  return new PipeImpl(context, Promise.resolve(files))
 }
 
 /**
