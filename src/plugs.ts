@@ -9,7 +9,6 @@ export * from './plugs/tsc'
  * ========================================================================== */
 
 export * from './plugs/copy'
-export * from './plugs/coverage'
 export * from './plugs/debug'
 export * from './plugs/edit'
 export * from './plugs/esbuild'

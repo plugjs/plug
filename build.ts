@@ -45,9 +45,9 @@ export default build({
 
   async coverage() {
     try {
-      await this.find_sources().coverage(this.coverageDir, {
-        reportDir: 'coverage',
-      })
+      // await this.find_sources().coverage(this.coverageDir, {
+      //   reportDir: 'coverage',
+      // })
     } catch (error) {
       if (! environmentCoverage) throw error
     }
