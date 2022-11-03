@@ -15,6 +15,8 @@ export interface Pipe extends Promise<Files> {
   plug(plug: PlugFunction<Files>): Pipe
   plug(plug: Plug<void | undefined>): Promise<undefined>
   plug(plug: PlugFunction<void | undefined>): Promise<undefined>
+  plug(plug: Plug<Files | void | undefined>): Pipe | Promise<undefined>
+  plug(plug: PlugFunction<Files | void | undefined>): Pipe | Promise<undefined>
 }
 
 // Submodule exports (our package.json exports)
