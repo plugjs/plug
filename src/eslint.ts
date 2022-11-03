@@ -1,3 +1,6 @@
+// Reference ourselves, so that the constructor's parameters are correct
+/// <reference path="./index.ts"/>
+
 import { assert } from '@plugjs/plug'
 import { BuildFailure } from '@plugjs/plug/asserts'
 import { readFile } from '@plugjs/plug/fs'
