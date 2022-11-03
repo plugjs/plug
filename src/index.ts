@@ -1,5 +1,3 @@
-/* coverage ignore file */
-
 import { install } from '@plugjs/plug/pipe'
 
 import { Coverage } from './coverage'
