@@ -2,6 +2,21 @@
 // everywhere, we want our dependants to have this type known...
 /// <reference path="../types/webassembly.d.ts" />
 
+// This is a main constituent of our build system!
+import type { Files } from './files'
+import type { Plug, PlugFunction } from './pipe'
+
+/**
+ * The {@link Pipe} interface defines a processing pipeline where multiple
+ * {@link Plug}s can transform lists of {@link Files}.
+ */
+export interface Pipe extends Promise<Files> {
+  plug(plug: Plug<Files>): Pipe
+  plug(plug: PlugFunction<Files>): Pipe
+  plug(plug: Plug<void | undefined>): Promise<undefined>
+  plug(plug: PlugFunction<void | undefined>): Promise<undefined>
+}
+
 // Submodule exports (our package.json exports)
 export * as asserts from './asserts'
 export * as files from './files'
@@ -12,8 +27,7 @@ export * as paths from './paths'
 export * as pipe from './pipe'
 export * as utils from './utils'
 
-// This is a main constituent of our build system!
-export type { Pipe } from './pipe'
+// Individual utilities
 export { log } from './logging'
 export { assert } from './asserts'
 
