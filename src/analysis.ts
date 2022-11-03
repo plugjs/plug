@@ -217,20 +217,23 @@ class CoverageSitemapAnalyser extends CoverageResultAnalyser {
     const bias =
       this._sourceMapBias === 'greatest_lower_bound' ? SourceMapConsumer.GREATEST_LOWER_BOUND :
       this._sourceMapBias === 'least_upper_bound' ? SourceMapConsumer.LEAST_UPPER_BOUND :
-      undefined
+      /* coverage ignore next */ undefined
 
     const generated = this._sourceMap.generatedPositionFor({ source, line, column, bias })
 
+    /* coverage ignore if */
     if (! generated) {
       this._log.debug(`No position generated for ${source}:${line}:${column}`)
       return 0
     }
 
+    /* coverage ignore if */
     if (generated.line == null) {
       this._log.debug(`No line generated for ${source}:${line}:${column}`)
       return 0
     }
 
+    /* coverage ignore if */
     if (generated.column == null) {
       this._log.debug(`No column generated for ${source}:${line}:${column}`)
       return 0
@@ -362,6 +365,10 @@ export async function createAnalyser(
 
     /* Let's look inside of the coverage file... */
     for (const result of coverage.result) {
+      if (!result.url.startsWith('node:')) {
+        log.debug('Found coverage data for', result.url)
+      }
+
       /*
         * Each coverage result (script) can be associated with a sitemap or
         * not... Sometimes (as in with ts-node) the sitemap simply points to
@@ -370,6 +377,8 @@ export async function createAnalyser(
         */
       const mapping = coverage['source-map-cache']?.[result.url]
       if (mapping) {
+        log.debug('Found source mapping for', result.url, mapping.data)
+
         /*
           * If we have mapping, we want to see if any of the sourcemap's source
           * files matches one of the sources we have to analyse.
@@ -378,6 +387,8 @@ export async function createAnalyser(
 
         /* If we map any file, we associate it with our source map analyser */
         if (matches.length) {
+          log.debug('Found source mapping matches', matches)
+
           const sourceAnalyser = new CoverageSitemapAnalyser(log, result, mapping, sourceMapBias)
           for (const match of matches) coverageFileAnalyser.add(match, sourceAnalyser)
         }
