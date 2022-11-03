@@ -1,3 +1,5 @@
+import { Mocha } from '@plugjs/mocha/mocha'
+
 import { build, find, fixExtensions, log, merge, rmrf, type Pipe } from './src/index.js'
 
 /** When `true` the coverage dir comes from the environment */
@@ -22,10 +24,10 @@ export default build({
       await rmrf(this.coverageDir)
     }
 
-    await this.find_tests().mocha({
+    await this.find_tests().plug(new Mocha({
       coverageDir: this.coverageDir,
       require: './test/.setup.ts',
-    })
+    }))
   },
 
   /* ======================================================================== *
