@@ -1,3 +1,4 @@
+import '@plugjs/cov8'
 import {
   build,
   exec,
@@ -10,6 +11,7 @@ import {
   type ESBuildOptions,
   type Pipe,
 } from '@plugjs/plug'
+
 
 import { ESLint } from './src/eslint'
 

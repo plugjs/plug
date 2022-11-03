@@ -33,6 +33,7 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@plugjs/cov8": "file:../cov8/plugjs-cov8-0.1.0.tgz",
     "@plugjs/eslint-plugin": "^0.0.5",
     "@plugjs/plug": "file:../plug/plugjs-plug-0.1.0.tgz",
     "@types/eslint": "^8.4.9",
