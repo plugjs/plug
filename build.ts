@@ -1,3 +1,4 @@
+import '@plugjs/cov8'
 import '@plugjs/eslint'
 import {
   build,
