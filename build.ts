@@ -1,4 +1,5 @@
 // Import PlugJS plugins used by this build without using "install"
+import { Coverage } from '@plugjs/cov8/coverage'
 import { ESLint } from '@plugjs/eslint/eslint'
 import { Mocha } from '@plugjs/mocha/mocha'
 
@@ -44,13 +45,9 @@ export default build({
   },
 
   async coverage() {
-    try {
-      // await this.find_sources().coverage(this.coverageDir, {
-      //   reportDir: 'coverage',
-      // })
-    } catch (error) {
-      if (! environmentCoverage) throw error
-    }
+    await this.find_sources().plug(new Coverage(this.coverageDir, {
+      reportDir: 'coverage',
+    })).catch(() => void 0)
   },
 
   async eslint() {
