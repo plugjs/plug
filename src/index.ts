@@ -30,7 +30,7 @@ export interface MochaOptions {
   timeout?: number,
 }
 
-declare module '@plugjs/plug/pipe' {
+declare module '@plugjs/plug' {
   export interface Pipe {
     /**
      * Run tests using {@link https://mochajs.org/ _Mocha_}.

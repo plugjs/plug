@@ -34,7 +34,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@plugjs/eslint-plugin": "^0.0.4",
-    "@plugjs/plug": "file:../plug/plugjs-plug-0.0.27.tgz",
+    "@plugjs/plug": "file:../plug/plugjs-plug-0.1.0.tgz",
     "@types/diff": "^5.0.2",
     "@types/mocha": "^10.0.0",
     "typescript": "^4.8.4"
@@ -44,7 +44,7 @@
     "mocha": "^10.1.0"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.0.27"
+    "@plugjs/plug": "0.1.0"
   },
   "files": [
     "*.md",
