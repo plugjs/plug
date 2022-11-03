@@ -5,7 +5,7 @@ import { install } from '../pipe'
 import type { Files } from '../files'
 import type { Context, PipeParameters, Plug } from '../pipe'
 
-declare module '../pipe' {
+declare module '../index' {
   export interface Pipe {
     /**
      * Remove all {@link Files} piped in.

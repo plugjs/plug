@@ -36,7 +36,7 @@ export interface ExecOptions {
   relativePaths?: boolean
 }
 
-declare module '../pipe' {
+declare module '../index' {
   export interface Pipe {
     /**
      * Execute a shell command, adding to its _arguments_ the list of files

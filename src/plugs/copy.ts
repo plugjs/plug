@@ -19,7 +19,7 @@ export interface CopyOptions {
   rename?: (relative: string) => string
 }
 
-declare module '../pipe' {
+declare module '../index' {
   export interface Pipe {
     /**
      * Copy the curent {@link Files} to a different directory

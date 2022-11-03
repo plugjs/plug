@@ -16,7 +16,7 @@ export interface ExtendedCompilerOptions extends CompilerOptions {
   extraTypesDir?: string | undefined
 }
 
-declare module '../pipe' {
+declare module '../index' {
   export interface Pipe {
     /**
      * Run the {@link https://www.typescriptlang.org/ TypeScript Compiler}

@@ -4,7 +4,7 @@ import { install } from '../pipe'
 import type { Files } from '../files'
 import type { PipeParameters, Plug } from '../pipe'
 
-declare module '../pipe' {
+declare module '../index' {
   export interface Pipe {
     /** Edits the content of all files in a pipeline. */
     edit(callback: (content: string) => string | void | Promise<string | void>): Pipe

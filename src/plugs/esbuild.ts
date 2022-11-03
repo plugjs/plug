@@ -20,7 +20,7 @@ export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' 
 export * from './esbuild/bundle-locals'
 export * from './esbuild/fix-extensions'
 
-declare module '../pipe' {
+declare module '../index' {
   export interface Pipe {
     /**
      * Transpile and bundle with {@link https://esbuild.github.io/ esbuild}.

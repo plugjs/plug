@@ -13,7 +13,7 @@ export interface ESLintOptions {
   configFile?: string
 }
 
-declare module '../pipe' {
+declare module '../index' {
   export interface Pipe {
     /**
      * Run {@link https://eslint.org/ _ESlint_} over the input source files,
