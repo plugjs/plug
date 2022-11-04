@@ -1,5 +1,5 @@
-V8 Coverage Plugin for PlugJS Build System
-==========================================
+V8 Coverage Plugin for the PlugJS Build System
+==============================================
 
 Prototype build system from [Juit GmbH](https://www.juit.com/)
 
