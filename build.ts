@@ -1,9 +1,10 @@
 // Import PlugJS plugins used by this build without using "install"
+import { Coverage } from '@plugjs/cov8/coverage'
 import { ESLint } from '@plugjs/eslint/eslint'
 import { Mocha } from '@plugjs/mocha/mocha'
 import { Tsc } from '@plugjs/typescript/typescript'
 
-import { build, find, fixExtensions, merge, rmrf, type Pipe } from './src/index.js'
+import { build, exec, find, fixExtensions, merge, rmrf, type Pipe } from './src/index.js'
 
 export default build({
   find_sources: () => find('**/*.([cm])?ts', { directory: 'src', ignore: '**/*.d.ts' }),
@@ -22,7 +23,7 @@ export default build({
   },
 
   /* ======================================================================== *
-   * EXTRA CHECKS (dependencies, linting, coverage)                           *
+   * EXTRA CHECKS (dependencies, linting)                                     *
    * ======================================================================== */
 
   async check_extras() {
@@ -139,6 +140,23 @@ export default build({
       await this.test()
     } finally {
       await this.checks()
+    }
+  },
+
+  /* ======================================================================== *
+   * SELF COVERAGE                                                            *
+   * ======================================================================== */
+
+  async coverage() {
+    try {
+      await exec('./extra/cli.mjs', 'default', {
+        coverageDir: '.coverage-data',
+        fork: true,
+      })
+    } finally {
+      this.find_sources()
+          .plug(new Coverage('.coverage-data', { reportDir: 'coverage' }))
+          .catch(() => void 0)
     }
   },
 })
