@@ -54,8 +54,10 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   private _output: Writable = process.stderr
   private _level: LogLevel = NOTICE
   private _colors = (<NodeJS.WriteStream> this._output).isTTY
+  private _colorsSet = false // have colors been set manually?
   private _spinner = true // by default, the spinner is enabled
   private _lineLength = (<NodeJS.WriteStream> this._output).columns || 80
+  private _lineLengthSet = false // has line length been set manually?
   private _showSources = true // by default, always show source snippets
   private _inspectOptions: InspectOptions = {}
   private _defaultTaskName = ''
@@ -106,8 +108,8 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
   set output(output: Writable) {
     this._output = output
-    this._colors = !! (<NodeJS.WriteStream> output).isTTY
-    this._lineLength = (<NodeJS.WriteStream> output).columns
+    if (! this._colorsSet) this._colors = !! (<NodeJS.WriteStream> output).isTTY
+    if (! this._lineLengthSet) this._lineLength = (<NodeJS.WriteStream> output).columns
     this._notifyListeners()
   }
 
@@ -126,6 +128,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
   set colors(color: boolean) {
     this._colors = color
+    this._colorsSet = true
     this._notifyListeners()
   }
 
@@ -144,6 +147,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
   set lineLength(lineLength: number) {
     this._lineLength = lineLength
+    this._lineLengthSet = true
     this._notifyListeners()
   }
 
