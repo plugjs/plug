@@ -1,4 +1,4 @@
-/* Easy-peasy, just to confirm setup is working */
-import { log } from '../src/index'
+import chai from 'chai'
+import chap from 'chai-as-promised'
 
-log('Running Mocha setup script')
+chai.use(chap)
