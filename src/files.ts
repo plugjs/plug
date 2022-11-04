@@ -1,3 +1,4 @@
+import { assert } from './asserts'
 import { mkdir, writeFile } from './fs'
 import { assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths'
 
@@ -88,9 +89,8 @@ export class Files {
       directory: instance.directory,
 
       add(...files: string[]): FilesBuilder {
-        if (built) throw new Error('FileBuilder "build()" already called')
+        assert(! built, 'FileBuilder "build()" already called')
 
-        if (typeof files === 'string') files = [ files ]
         for (const file of files) {
           const relative = assertRelativeChildPath(instance.directory, file)
           set.add(relative)
@@ -100,7 +100,7 @@ export class Files {
       },
 
       merge(...args: Files[]): FilesBuilder {
-        if (built) throw new Error('FileBuilder "build()" already called')
+        assert(! built, 'FileBuilder "build()" already called')
 
         for (const files of args) {
           for (const file of files.absolutePaths()) {
@@ -124,7 +124,7 @@ export class Files {
       },
 
       build(): Files {
-        if (built) throw new Error('FileBuilder "build()" already called')
+        assert(! built, 'FileBuilder "build()" already called')
 
         built = true
         instance._files.push(...set)
