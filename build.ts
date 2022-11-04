@@ -2,6 +2,7 @@
 import { Coverage } from '@plugjs/cov8/coverage'
 import { ESLint } from '@plugjs/eslint/eslint'
 import { Mocha } from '@plugjs/mocha/mocha'
+import { Tsc } from '@plugjs/typescript/typescript'
 
 import { build, find, fixExtensions, log, merge, rmrf, type Pipe } from './src/index.js'
 
@@ -38,10 +39,10 @@ export default build({
    * ======================================================================== */
 
   async check_extras() {
-    await this.find_extras().debug().tsc('tsconfig.json', {
+    await this.find_extras().debug().plug(new Tsc('tsconfig.json', {
       extraTypesDir: 'types',
       rootDir: '.',
-    })
+    }))
   },
 
   async coverage() {
@@ -106,14 +107,14 @@ export default build({
   },
 
   transpile_types(): Pipe {
-    return this.find_sources().tsc('tsconfig.json', {
+    return this.find_sources().plug(new Tsc('tsconfig.json', {
       rootDir: 'src',
       noEmit: false,
       declaration: true,
       emitDeclarationOnly: true,
       outDir: './dist',
       extraTypesDir: 'types',
-    })
+    }))
   },
 
   async transpile(): Promise<Pipe> {
