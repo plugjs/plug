@@ -39,6 +39,7 @@
     "@plugjs/plug": "file:../plug/plugjs-plug-0.1.0.tgz",
     "@plugjs/typescript": "file:../typescript/plugjs-typescript-0.1.0.tgz",
     "@types/diff": "^5.0.2",
+    "@types/node": "<17",
     "typescript": "^4.8.4"
   },
   "dependencies": {
