@@ -35,13 +35,14 @@
   "devDependencies": {
     "@plugjs/cov8": "file:../cov8/plugjs-cov8-0.1.0.tgz",
     "@plugjs/eslint": "file:../eslint/plugjs-eslint-0.1.0.tgz",
-    "@plugjs/eslint-plugin": "^0.0.5",
+    "@plugjs/eslint-plugin": "^0.1.0",
     "@plugjs/plug": "file:../plug/plugjs-plug-0.1.0.tgz",
+    "@plugjs/typescript": "file:../typescript/plugjs-typescript-0.1.0.tgz",
     "@types/diff": "^5.0.2",
-    "@types/mocha": "^10.0.0",
     "typescript": "^4.8.4"
   },
   "dependencies": {
+    "@types/mocha": "^10.0.0",
     "diff": "^5.1.0",
     "mocha": "^10.1.0"
   },
