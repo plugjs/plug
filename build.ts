@@ -79,9 +79,6 @@ export default build({
       sourcemap: 'linked',
       sourcesContent: false,
       plugins: [ fixExtensions() ],
-      define: {
-        __fileurl: '__filename',
-      },
     })
   },
 
@@ -93,9 +90,6 @@ export default build({
       sourcemap: 'linked',
       sourcesContent: false,
       plugins: [ fixExtensions() ],
-      define: {
-        __fileurl: 'import.meta.url',
-      },
     })
   },
 
