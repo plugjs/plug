@@ -5,13 +5,15 @@ import { rm } from './fs'
 import { $p, log } from './logging'
 import { commonPath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
 import { PipeImpl } from './pipe'
+import { execChild } from './utils/exec'
 import { parseOptions } from './utils/options'
 import { walk } from './utils/walk'
 
+import type { Pipe } from './index'
 import type { AbsolutePath } from './paths'
+import type { ExecChildOptions } from './utils/exec'
 import type { ParseOptions } from './utils/options'
 import type { WalkOptions } from './utils/walk'
-import type { Pipe } from './index'
 
 /* ========================================================================== *
  * EXTERNAL HELPERS                                                           *
@@ -155,4 +157,33 @@ export function isFile(...paths: [ string, ...string[] ]): AbsolutePath | undefi
 export function isDirectory(...paths: [ string, ...string[] ]): AbsolutePath | undefined {
   const path = requireContext().resolve(...paths)
   return resolveDirectory(path)
+}
+
+/**
+ * Execute a command and await for its result from within a task.
+ *
+ * For example:
+ *
+ * ```
+ * import { exec } from '@plugjs/plugjs'
+ *
+ * export default build({
+ *   async runme() {
+ *     await exec('ls', '-la', '/')
+ *     // or similarly letting the shell interpret the command
+ *     await exec('ls -la /', { shell: true })
+ *   },
+ * })
+ * ```
+ *
+ * @param cmd The command to execute
+ * @param args Any additional argument for the command to execute
+ * @param options Extra {@link ExecChildOptions | options} for process execution
+ */
+export function exec(
+    cmd: string,
+    ...args: [ ...args: string[] ] | [ ...args: string[], options: ExecChildOptions ]
+): Promise<void> {
+  const { params, options } = parseOptions(args)
+  return execChild(cmd, params, options, requireContext())
 }
