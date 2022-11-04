@@ -1,6 +1,6 @@
 // Reference our extra "webassembly" type fix here. As we're using esbuild
 // everywhere, we want our dependants to have this type known...
-/// <reference path="../types/webassembly.d.ts" />
+/// <reference path="../types/plugjs.d.ts" />
 
 // This is a main constituent of our build system!
 import type { Files } from './files'
