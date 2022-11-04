@@ -157,25 +157,15 @@ export function build<
   return compiled
 }
 
-/** Internal type identifying all _task names_ in a {@link Build} */
-type TaskNames<B extends Build> = string & keyof {
-  [ k in keyof B as B[k] extends Task ? k : never ]?: B[k]
-}
-
-/** Internal type identifying all _property names_ in a {@link Build} */
-type OverrideProps<B extends Build> = {
-  [ k in keyof B as B[k] extends string ? k : never ]?: string
-}
-
 /** Internal type describing the build invocation function */
 type InvokeBuild = (tasks: string[], props?: Record<string, string | undefined>) => Promise<void>
 
 /** Serially invoke tasks in a {@link Build} optionally overriding properties */
-export function invoke<B extends Build>(
-    build: B,
+export function invoke(
+    build: Build,
     ...args:
-    | [ ...taskNames: [ TaskNames<B>, ...TaskNames<B>[] ] ]
-    | [ ...taskNames: [ TaskNames<B>, ...TaskNames<B>[] ], options: OverrideProps<B> ]
+    | [ ...taskNames: [ string, ...string[] ] ]
+    | [ ...taskNames: [ string, ...string[] ], options: Record<string, string | undefined> ]
 ): Promise<void> {
   const { params: tasks, options: props } = parseOptions(args, {})
 
