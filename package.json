@@ -34,7 +34,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@plugjs/eslint": "file:../eslint/plugjs-eslint-0.1.0.tgz",
-    "@plugjs/eslint-plugin": "^0.0.6",
+    "@plugjs/eslint-plugin": "^0.1.0",
     "@plugjs/plug": "file:../plug/plugjs-plug-0.1.0.tgz",
     "@plugjs/typescript": "file:../typescript/plugjs-typescript-0.1.0.tgz",
     "typescript": "^4.8.4"
@@ -42,7 +42,7 @@
   "dependencies": {
     "@babel/parser": "^7.20.1",
     "@babel/types": "^7.20.0",
-    "@plugjs/cov8-html": "^0.0.6",
+    "@plugjs/cov8-html": "^0.1.0",
     "source-map": "^0.7.4"
   },
   "peerDependencies": {
