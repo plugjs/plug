@@ -102,8 +102,8 @@
   },
   "scripts": {
     "bootstrap": "./bootstrap.sh",
-    "build": "./runme.sh",
-    "dev": "npx nodemon -e .ts -w ./test -w ./src -x ./runme.sh"
+    "build": "./extra/cli.mjs",
+    "dev": "./extra/cli.mjs -w ./src -w ./test"
   },
   "author": "",
   "license": "ISC",

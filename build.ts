@@ -130,10 +130,10 @@ export default build({
   },
 
   /* ======================================================================== *
-   * DEFAULT TASK                                                             *
+   * BUILD EVERYTHING                                                         *
    * ======================================================================== */
 
-  async default() {
+  async build() {
     await this.entrypoints()
     await this.transpile()
     try {
@@ -148,15 +148,18 @@ export default build({
    * ======================================================================== */
 
   async coverage() {
+    await this.find_sources()
+        .plug(new Coverage('.coverage-data', { reportDir: 'coverage' }))
+  },
+
+  async default() {
     try {
-      await exec('./extra/cli.mjs', 'default', {
+      await exec('./extra/cli.mjs', 'build', {
         coverageDir: '.coverage-data',
         fork: true,
       })
     } finally {
-      this.find_sources()
-          .plug(new Coverage('.coverage-data', { reportDir: 'coverage' }))
-          .catch(() => void 0)
+      await this.coverage().catch(() => void 0)
     }
   },
 })
