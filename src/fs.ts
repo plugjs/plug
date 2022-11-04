@@ -30,11 +30,12 @@ const fs = Object.entries(fsp as any).reduce((fs, [ key, val ]) => {
     /* If the value is a function, wrap it! */
     const f = function(...args: any[]): any {
       /* Call the function, and _catch_ any error */
-      return val.apply(fsp, args).catch((error: any) => {
-        /* For any error caught, we fill in the stack trace */
-        Error.captureStackTrace(error)
-        throw error
-      })
+      return val.apply(fsp, args)
+          .catch(/* coverage ignore next*/ (error: any) => {
+            /* For any error caught, we fill in the stack trace */
+            Error.captureStackTrace(error)
+            throw error
+          })
     }
 
     /* Make sure that the functions are called correctly */
