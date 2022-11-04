@@ -70,10 +70,10 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
       this._level = getLevelNumber(process.env.LOG_LEVEL as LogLevelString)
     }
 
-    /* If the `LOG_COLOR` variable is specified, it should be `true` or `false` */
-    if (process.env.LOG_COLOR) {
-      if (process.env.LOG_COLOR.toLowerCase() === 'true') this.colors = true
-      if (process.env.LOG_COLOR.toLowerCase() === 'false') this.colors = false
+    /* If the `LOG_COLORS` variable is specified, it should be `true` or `false` */
+    if (process.env.LOG_COLORS) {
+      if (process.env.LOG_COLORS.toLowerCase() === 'true') this.colors = true
+      if (process.env.LOG_COLORS.toLowerCase() === 'false') this.colors = false
       // Other values don't change the value of `options.colors`
     }
 
