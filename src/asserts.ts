@@ -31,7 +31,7 @@ export class BuildFailure extends Error {
   }
 
   static withMessage(message: string): BuildFailure {
-    return new BuildFailure(message || undefined, [])
+    return new BuildFailure(message, [])
   }
 
   static withErrors(errors: any[]): BuildFailure {
