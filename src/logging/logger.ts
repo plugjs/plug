@@ -74,6 +74,8 @@ export function getLogger(task: string = _defaultTaskName): Logger {
 
 /** Cache of loggers by task-name. */
 const _loggers = new Map<string, Logger>()
+/** Weak set of already logged build failures */
+const _loggedFailures = new WeakSet<BuildFailure>()
 
 /** Default implementation of the {@link Logger} interface. */
 class LoggerImpl implements Logger {
@@ -93,8 +95,8 @@ class LoggerImpl implements Logger {
     const params = args.filter((arg) => {
       if (isBuildFailure(arg)) {
         // Filter out any previously logged build failure and mark
-        if (arg.logged) return false
-        arg.logged = true
+        if (_loggedFailures.has(arg)) return false
+        _loggedFailures.add(arg)
 
         // If the build failure has any root cause, log those
         arg.errors.forEach((error) => this._emit(level, [ error ]))
