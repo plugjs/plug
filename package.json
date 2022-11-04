@@ -114,12 +114,12 @@
     "typescript": "^4.8.4"
   },
   "devDependencies": {
-    "@plugjs/cov8": "file:../cov8/plugjs-cov8-0.1.0.tgz",
-    "@plugjs/eslint": "file:../eslint/plugjs-eslint-0.1.0.tgz",
+    "@plugjs/cov8": "^0.1.0",
+    "@plugjs/eslint": "^0.1.0",
     "@plugjs/eslint-plugin": "^0.1.0",
-    "@plugjs/mocha": "file:../mocha/plugjs-mocha-0.1.0.tgz",
-    "@plugjs/plug": "file:plugjs-plug-0.1.0.tgz",
-    "@plugjs/typescript": "file:../typescript/plugjs-typescript-0.1.0.tgz",
+    "@plugjs/mocha": "^0.1.0",
+    "@plugjs/plug": "^0.1.0",
+    "@plugjs/typescript": "^0.1.0",
     "@types/chai": "^4.3.3",
     "@types/picomatch": "^2.3.0",
     "@types/yargs-parser": "^21.0.0",
