@@ -136,11 +136,7 @@ export default build({
   async build() {
     await this.entrypoints()
     await this.transpile()
-    try {
-      await this.test()
-    } finally {
-      await this.checks()
-    }
+    await this.checks()
   },
 
   /* ======================================================================== *
@@ -153,8 +149,20 @@ export default build({
   },
 
   async default() {
+    await rmrf('.coverage-data')
     try {
-      await exec('./extra/cli.mjs', 'build', {
+      // simply build, sans tests!
+      await exec('./extra/cli.mjs', '--force-esm', 'build', {
+        coverageDir: '.coverage-data',
+        fork: true,
+      })
+      // tests running in ESM mode
+      await exec('./extra/cli.mjs', '--force-esm', 'test', {
+        coverageDir: '.coverage-data',
+        fork: true,
+      })
+      // tests running in CJS mode
+      await exec('./extra/cli.mjs', '--force-cjs', 'test', {
         coverageDir: '.coverage-data',
         fork: true,
       })
