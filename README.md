@@ -1,5 +1,5 @@
-Mocha Plugin for PlugJS Build System
-====================================
+Mocha Plugin for the PlugJS Build System
+========================================
 
 Prototype build system from [Juit GmbH](https://www.juit.com/)
 
