@@ -1,3 +1,7 @@
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { mkdtempSync } from 'node:fs'
+
 import { assert, assertPromises } from './asserts'
 import { requireContext } from './async'
 import { Files } from './files'
@@ -65,6 +69,7 @@ export async function rmrf(directory: string): Promise<void> {
   assert(dir !== context.resolve('@'),
       `Cowardly refusing to wipe build file directory ${$p(dir)}`)
 
+  /* coverage ignore if */
   if (! resolveDirectory(dir)) {
     log.info('Directory', $p(dir), 'not found')
     return
@@ -157,6 +162,17 @@ export function isFile(...paths: [ string, ...string[] ]): AbsolutePath | undefi
 export function isDirectory(...paths: [ string, ...string[] ]): AbsolutePath | undefined {
   const path = requireContext().resolve(...paths)
   return resolveDirectory(path)
+}
+
+/**
+ * Create a temporary directory and return its {@link AbsolutePath}.
+ *
+ * The directory will be rooted in `/tmp` or wherever `os.tmpdir()` decides.
+ */
+export function mkdtemp(): AbsolutePath {
+  const prefix = join(tmpdir(), 'plugjs-')
+  const path = mkdtempSync(prefix)
+  return resolve(path)
 }
 
 /**
