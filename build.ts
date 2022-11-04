@@ -1,5 +1,6 @@
 import '@plugjs/cov8'
 import '@plugjs/eslint'
+import '@plugjs/typescript'
 import {
   build,
   exec,
@@ -23,7 +24,7 @@ const esbuildOptions: ESBuildOptions = {
 }
 
 export default build({
-  find_sources: () => find('**/*.([cm])?ts', { directory: 'src', ignore: '**/*.d.ts' }),
+  find_sources: () => find('**/*.([cm])?ts', { directory: 'src' }),
 
   /* ======================================================================== *
    * TRANSPILATION                                                            *
@@ -36,9 +37,6 @@ export default build({
       format: 'cjs',
       outdir: 'dist',
       outExtension: { '.js': '.cjs' },
-      define: {
-        __fileurl: '__filename',
-      },
     })
   },
 
@@ -49,9 +47,6 @@ export default build({
       format: 'esm',
       outdir: 'dist',
       outExtension: { '.js': '.mjs' },
-      define: {
-        __fileurl: 'import.meta.url',
-      },
     })
   },
 
@@ -100,7 +95,13 @@ export default build({
 
     await this.test_esm()
     await this.test_cjs()
+  },
 
+  /* ======================================================================== *
+   * COVERAGE                                                                 *
+   * ======================================================================== */
+
+  async coverage() {
     await this.find_sources().coverage('.coverage-data', {
       reportDir: 'coverage',
       minimumCoverage: 100,
@@ -116,7 +117,6 @@ export default build({
     await merge([
       find('**/*.([cm])?ts', '**/*.([cm])?js', { directory: 'src' }),
       find('**/*.([cm])?ts', '**/*.([cm])?js', { directory: 'test' }),
-      find('**/*.([cm])?ts', '**/*.([cm])?js', { directory: 'types' }),
     ]).eslint()
   },
 
@@ -125,10 +125,9 @@ export default build({
    * ======================================================================== */
 
   async default() {
-    await Promise.all([
-      this.transpile(),
-      this.lint(),
-      this.test(),
-    ])
+    await this.transpile()
+    await this.lint()
+    await this.test()
+    await this.coverage()
   },
 })
