@@ -14,9 +14,8 @@ export type AbsolutePath = string & { __brand_absolute_path: never }
 
 /** Resolve a path into an {@link AbsolutePath} */
 export function resolveAbsolutePath(directory: AbsolutePath, ...paths: string[]): AbsolutePath {
-  const resolved = resolve(directory, ...paths) as AbsolutePath
-  assert(isAbsolute(resolved), `Path "${join(...paths)}" resolved in "${directory}" is not absolute`)
-  return resolved
+  assertAbsolutePath(directory)
+  return resolve(directory, ...paths) as AbsolutePath
 }
 
 /**
@@ -32,8 +31,6 @@ export function resolveAbsolutePath(directory: AbsolutePath, ...paths: string[])
  * ```
  */
 export function resolveRelativeChildPath(directory: AbsolutePath, ...paths: string[]): string | undefined {
-  assertAbsolutePath(directory)
-
   const abs = resolveAbsolutePath(directory, ...paths)
   const rel = relative(directory, abs)
   return (isAbsolute(rel) || (rel === '..') || rel.startsWith(`..${sep}`)) ? undefined : rel
@@ -43,7 +40,6 @@ export function resolveRelativeChildPath(directory: AbsolutePath, ...paths: stri
  * Asserts that a path is a relative path to the directory specified, failing
  * the build if it's not (see also {@link resolveRelativeChildPath}).
  */
-
 export function assertRelativeChildPath(directory: AbsolutePath, ...paths: string[]): string {
   const relative = resolveRelativeChildPath(directory, ...paths)
   assert(relative, `Path "${join(...paths)}" not relative to "${directory}"`)
@@ -76,6 +72,38 @@ export function getCurrentWorkingDirectory(): AbsolutePath {
   return cwd
 }
 
+/**
+ * Return the _common_ path amongst all specified paths.
+ *
+ * While the first `path` _must_ be an {@link AbsolutePath}, all other `paths`
+ * can be _relative_ and will be resolved against the first `path`.
+ */
+export function commonPath(path: AbsolutePath, ...paths: string[]): AbsolutePath {
+  assertAbsolutePath(path)
+
+  // Here the first path will be split into its components
+  // on win => [ 'C:', 'Windows', 'System32' ]
+  // on unx => [ '', 'usr'
+  const components = normalize(path).split(sep)
+
+  let length = components.length
+  for (const current of paths) {
+    const absolute = resolveAbsolutePath(path, current)
+    const parts = absolute.split(sep)
+    for (let i = 0; i < length; i++) {
+      if (components[i] !== parts[i]) {
+        length = i
+        break
+      }
+    }
+
+    assert(length, 'No common ancestors amongst paths')
+  }
+
+  const common = components.slice(0, length).join(sep)
+  assertAbsolutePath(common)
+  return common
+}
 
 /* ========================================================================== *
  * MODULE RESOLUTION FUNCTIONS                                                *
@@ -130,7 +158,7 @@ export function requireResolve(__fileurl: string, module: string): AbsolutePath 
     // ... then delegate to the standard "require.resolve(...)"
     const url = pathToFileURL(file)
     const ext = extname(file)
-    const checks = ext ? [ `${module}`, `${module}${ext}`, `${module}/index${ext}` ] : [ module ]
+    const checks = [ `${module}`, `${module}${ext}`, `${module}/index${ext}` ]
 
     for (const check of checks) {
       const resolved = fileURLToPath(new URL(check, url)) as AbsolutePath
@@ -145,39 +173,6 @@ export function requireResolve(__fileurl: string, module: string): AbsolutePath 
   const required = require.resolve(module)
   assertAbsolutePath(required)
   return required
-}
-
-/**
- * Return the _common_ path amongst all specified paths.
- *
- * While the first `path` _must_ be an {@link AbsolutePath}, all other `paths`
- * can be _relative_ and will be resolved against the first `path`.
- */
-export function commonPath(path: AbsolutePath, ...paths: string[]): AbsolutePath {
-  assertAbsolutePath(path)
-
-  // Here the first path will be split into its components
-  // on win => [ 'C:', 'Windows', 'System32' ]
-  // on unx => [ '', 'usr'
-  const components = normalize(path).split(sep)
-
-  let length = components.length
-  for (const current of paths) {
-    const absolute = resolveAbsolutePath(path, current)
-    const parts = absolute.split(sep)
-    for (let i = 0; i < length; i++) {
-      if (components[i] !== parts[i]) {
-        length = i
-        break
-      }
-    }
-
-    assert(length, 'No common ancestors amongst paths')
-  }
-
-  const common = components.slice(0, length).join(sep)
-  assertAbsolutePath(common)
-  return common
 }
 
 /* ========================================================================== *
