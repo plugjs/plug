@@ -68,6 +68,12 @@ install('esbuild', class ESBuild implements Plug<Files> {
       watch: false,
     }
 
+    if (options.format === 'cjs') {
+      options.define = Object.assign({ __fileurl: '__filename' }, options.define)
+    } else if (options.format === 'esm') {
+      options.define = Object.assign({ __fileurl: 'import.meta.url' }, options.define)
+    }
+
     /* Sanity check on output file/directory */
     assert(!(options.outdir && options.outfile), 'Options "outfile" and "outdir" can not coexist')
 
