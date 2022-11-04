@@ -100,7 +100,14 @@ class LoggerImpl implements Logger {
         arg.errors.forEach((error) => this._emit(level, [ error ]))
 
         // Log this only if it has a message
-        return !! arg.message
+        if (! arg.message) return false
+
+        // Log the full error (with stack) if the _default_ level is DEBUG
+        if (_level < INFO) return true
+
+        // Log only the message in other cases
+        this._emit(level, [ arg.message ])
+        return false
       } else {
         return true
       }
