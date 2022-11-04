@@ -34,7 +34,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@plugjs/eslint": "file:../eslint/plugjs-eslint-0.1.0.tgz",
-    "@plugjs/eslint-plugin": "^0.0.5",
+    "@plugjs/eslint-plugin": "^0.0.6",
     "@plugjs/plug": "file:../plug/plugjs-plug-0.1.0.tgz",
     "typescript": "^4.8.4"
   },
