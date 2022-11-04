@@ -1,4 +1,5 @@
 import '@plugjs/eslint'
+import '@plugjs/typescript'
 import {
   build,
   exec,
@@ -24,7 +25,7 @@ const esbuildOptions: ESBuildOptions = {
 }
 
 export default build({
-  find_sources: () => find('**/*.([cm])?ts', { directory: 'src', ignore: '**/*.d.ts' }),
+  find_sources: () => find('**/*.([cm])?ts', { directory: 'src' }),
 
   /* ======================================================================== *
    * TRANSPILATION                                                            *
@@ -106,7 +107,7 @@ export default build({
       reportDir: 'coverage',
       minimumCoverage: 100,
       minimumFileCoverage: 100,
-    }) as any)
+    }))
   },
 
   /* ======================================================================== *
