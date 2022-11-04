@@ -1,4 +1,5 @@
 import '@plugjs/cov8'
+import '@plugjs/typescript'
 import {
   build,
   exec,
@@ -25,7 +26,7 @@ const esbuildOptions: ESBuildOptions = {
 }
 
 export default build({
-  find_sources: () => find('**/*.([cm])?ts', { directory: 'src', ignore: '**/*.d.ts' }),
+  find_sources: () => find('**/*.([cm])?ts', { directory: 'src' }),
 
   /* ======================================================================== *
    * TRANSPILATION                                                            *
@@ -38,9 +39,6 @@ export default build({
       format: 'cjs',
       outdir: 'dist',
       outExtension: { '.js': '.cjs' },
-      define: {
-        __fileurl: '__filename',
-      },
     })
   },
 
@@ -51,9 +49,6 @@ export default build({
       format: 'esm',
       outdir: 'dist',
       outExtension: { '.js': '.mjs' },
-      define: {
-        __fileurl: 'import.meta.url',
-      },
     })
   },
 
@@ -64,7 +59,6 @@ export default build({
       declaration: true,
       emitDeclarationOnly: true,
       outDir: 'dist',
-      extraTypesDir: 'types',
     })
   },
 
@@ -102,7 +96,13 @@ export default build({
 
     await this.test_esm()
     await this.test_cjs()
+  },
 
+  /* ======================================================================== *
+   * COVERAGE                                                                 *
+   * ======================================================================== */
+
+  async coverage() {
     await this.find_sources().coverage('.coverage-data', {
       reportDir: 'coverage',
       minimumCoverage: 100,
@@ -118,7 +118,6 @@ export default build({
     await merge([
       find('**/*.([cm])?ts', '**/*.([cm])?js', { directory: 'src' }),
       find('**/*.([cm])?ts', '**/*.([cm])?js', { directory: 'test' }),
-      find('**/*.([cm])?ts', '**/*.([cm])?js', { directory: 'types' }),
     ]).plug(new ESLint())
   },
 
@@ -127,10 +126,9 @@ export default build({
    * ======================================================================== */
 
   async default() {
-    await Promise.all([
-      this.transpile(),
-      this.test(),
-    ])
+    await this.transpile()
+    await this.test()
+    await this.coverage()
     // Run our own linting _after_ tests pass :-)
     await this.lint()
   },
