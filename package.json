@@ -121,9 +121,11 @@
     "@plugjs/plug": "^0.1.0",
     "@plugjs/typescript": "^0.1.0",
     "@types/chai": "^4.3.3",
+    "@types/chai-as-promised": "^7.1.5",
     "@types/picomatch": "^2.3.0",
     "@types/yargs-parser": "^21.0.0",
     "chai": "^4.3.6",
+    "chai-as-promised": "^7.1.1",
     "yargs-parser": "^21.1.1"
   }
 }
