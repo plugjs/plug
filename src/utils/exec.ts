@@ -2,7 +2,7 @@ import path from 'node:path'
 import reaadline from 'node:readline'
 import { fork as forkProcess, spawn as spawnProcess } from 'node:child_process'
 
-import { assert } from '../asserts'
+import { assert, BuildFailure } from '../asserts'
 import { $p, logOptions } from '../logging'
 import { getCurrentWorkingDirectory, resolveDirectory } from '../paths'
 
@@ -43,7 +43,7 @@ export async function execChild(
   assert(resolveDirectory(childCwd), `Current working directory ${$p(childCwd)} does not exist`)
 
   // Check for wrong fork/shell combination
-  assert(fork && shell, 'Options "fork" and "shell" can not coexist')
+  assert(!(fork && shell), 'Options "fork" and "shell" can not coexist')
 
   // Figure out the PATH environment variable
   const childPaths: AbsolutePath[] = []
@@ -77,6 +77,9 @@ export async function execChild(
     shell,
   }
 
+  // Add the 'ipc' channel to stdio options if forking
+  if (fork) childOptions.stdio = [ 'ignore', 'pipe', 'pipe', 'ipc' ]
+
   // Spawn our subprocess and monitor its stdout/stderr
   context.log.info('Executing', [ cmd, ...args ])
   context.log.info('Execution options', childOptions)
@@ -101,9 +104,9 @@ export async function execChild(
     child.on('error', (error) => reject(error))
     child.on('exit', (code, signal) => {
       if (code === 0) return resolve()
-      if (signal) return reject(new Error(`Child process exited with signal ${signal}`))
-      if (code) return reject(new Error(`Child process exited with code ${code}`))
-      reject(new Error('Child process failed for an unknown reason'))
+      if (signal) return reject(BuildFailure.withMessage(`Child process exited with signal ${signal}`))
+      if (code) return reject(BuildFailure.withMessage(`Child process exited with code ${code}`))
+      reject(BuildFailure.withMessage('Child process failed for an unknown reason'))
     })
   })
 }
