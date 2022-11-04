@@ -111,6 +111,7 @@ export function build<
     }
 
     /* Update the logger's own "taskLength" for nice printing */
+    /* coverage ignore if */
     if (len > logOptions.taskLength) logOptions.taskLength = len
   }
 
@@ -134,12 +135,10 @@ export function build<
 
     try {
       /* Run tasks _serially_ */
-      for (const taskName of taskNames) {
-        if (taskName in tasks) {
-          await tasks[taskName]!.invoke(state, taskName)
-        } else {
-          throw logger.fail(`Task ${$t(taskName)} not found in build`)
-        }
+      for (const name of taskNames) {
+        const task = tasks[name]
+        assert(task, `Task ${$t(name)} not found in build yoooo`)
+        await task.invoke(state, name)
       }
       logger.notice(`Build successful ${$ms(Date.now() - now)}`)
     } catch (error) {
@@ -161,7 +160,7 @@ export function build<
 type InvokeBuild = (tasks: string[], props?: Record<string, string | undefined>) => Promise<void>
 
 /** Serially invoke tasks in a {@link Build} optionally overriding properties */
-export function invoke(
+export async function invoke(
     build: Build,
     ...args:
     | [ ...taskNames: [ string, ...string[] ] ]
@@ -172,9 +171,9 @@ export function invoke(
   /* Get the calling function from the sneaked-in property in build */
   const invoke: InvokeBuild = (build as any)[buildMarker]
 
-  /* Triple check that we actually _have_ a function */
+  /* Triple check that we actually _have_ a function (no asserts here, log!) */
   if (typeof invoke !== 'function') log.fail('Unknown build type')
 
   /* Call everyhin that needs to be called */
-  return invoke(tasks, props)
+  return await invoke(tasks, props)
 }
