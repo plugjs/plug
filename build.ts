@@ -128,6 +128,7 @@ export default build({
     await this.transpile()
     await this.lint()
     await this.test()
+    // Run our own coverage _after_ tests pass :-)
     await this.coverage()
   },
 })
