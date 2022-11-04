@@ -134,7 +134,6 @@ const options = parseCommandLine()
 /* If both source maps and typescript are on, run! */
 if (sourceMapsEnabled && typeScriptEnabled) {
   main(options)
-      // .then(() => process.exit(0))
       .catch((error) => {
         if (! isBuildFailure(error)) console.log(error)
         process.exit(1)
