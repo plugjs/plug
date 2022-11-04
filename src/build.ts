@@ -120,7 +120,7 @@ export function build<
       overrideProps: Record<string, string | undefined> = {},
   ): Promise<void> {
     /* Our "root" logger and initial (empty) state */
-    const logger = getLogger('')
+    const logger = getLogger()
     const state = {
       cache: new Map<Task, Promise<Result>>(),
       stack: [] as Task[],
