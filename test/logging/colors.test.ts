@@ -26,6 +26,7 @@ describe('Colors', () => {
       log(colors.$gry('|'), colors.$t('task'))
       log(colors.$gry('|'), colors.$p(rel))
       log(colors.$gry('|'), 'duration', colors.$ms(123456))
+      log(colors.$gry('|'), 'duration with note', colors.$ms(123456, 'hello'))
     } finally {
       logOptions.colors = _colors
     }
@@ -63,6 +64,7 @@ describe('Colors', () => {
         colors.$ms(60000),
         colors.$ms(61000),
         colors.$ms(123456),
+        colors.$ms(123456, 'hello'),
       ]
       expect(strings).to.eql([
         'blue',
@@ -91,6 +93,7 @@ describe('Colors', () => {
         '[1m 0s]',
         '[1m 1s]',
         '[2m 3s]',
+        '[hello 2m 3s]',
       ])
     } finally {
       logOptions.colors = _colors
