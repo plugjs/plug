@@ -140,7 +140,7 @@ describe('Pipes and Context', () => {
           throw new Error('No way, Jose!')
         })
 
-    expect(promise).to.be.rejectedWith(BuildFailure, 'Unable to extend pipe')
+    await expect(promise).to.be.rejectedWith(BuildFailure, 'Unable to extend pipe')
     expect(calls).to.eql([ 'downgrade' ])
   })
 })
