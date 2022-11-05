@@ -9,7 +9,7 @@ import { build, exec, find, fixExtensions, merge, rmrf, type Pipe } from './src/
 export default build({
   find_sources: () => find('**/*.([cm])?ts', { directory: 'src', ignore: '**/*.d.ts' }),
   find_extras: () => find('**/*.([cm])?ts', { directory: 'extra', ignore: '**/*.d.ts' }),
-  find_tests: () => find('**/*.([cm])?ts', { directory: 'test', ignore: '**/*.d.ts' }),
+  find_tests: () => find('**/*.test.([cm])?ts', { directory: 'test', ignore: '**/*.d.ts' }),
 
   /* ======================================================================== *
    * RUN TESTS FROM "./test"                                                  *
