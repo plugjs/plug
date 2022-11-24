@@ -1,8 +1,6 @@
 import assert from 'node:assert'
 import { Writable } from 'node:stream'
 
-import { expect } from 'chai'
-
 import { currentContext } from '../../src/async.js'
 import { $gry } from '../../src/logging/colors.js'
 import { emitColor, emitPlain } from '../../src/logging/emit.js'
@@ -63,7 +61,7 @@ describe('Emit', () => {
       const lines: string = string.replaceAll(zapSpinner, '')
           .replaceAll(/^\s+/gm, '')
           .split('\n')
-      expect(lines).to.eql([
+      expect(lines).toEqual([
         '"test" \u25a1 trace 123 { foo: \'bar\' }',
         '"test" \u25a0 debug 123 { foo: \'bar\' }',
         '"test" \u25a0 info 123 { foo: \'bar\' }',
@@ -116,7 +114,7 @@ describe('Emit', () => {
       const lines: string = string.replaceAll(zapSpinner, '')
           .replaceAll(/^\s+/gm, '')
           .split('\n')
-      expect(lines).to.eql([
+      expect(lines).toEqual([
         'test │  trace │ trace 123 { foo: \'bar\' }',
         'test │  debug │ debug 123 { foo: \'bar\' }',
         'test │   info │ info 123 { foo: \'bar\' }',

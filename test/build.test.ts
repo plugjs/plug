@@ -1,5 +1,3 @@
-import { expect } from 'chai'
-
 import { BuildFailure } from '../src/asserts'
 import { currentContext, requireContext, runningTasks } from '../src/async'
 import { build, invoke } from '../src/build'
@@ -18,7 +16,7 @@ describe('Build Invocation', () => {
 
     log('Starting test build')
     await invoke(tasks, 'myTask')
-    expect(propValue).to.equal('this is the default')
+    expect(propValue).toBe('this is the default')
   })
 
   it('should invoke a build overriding its properties', async () => {
@@ -33,7 +31,7 @@ describe('Build Invocation', () => {
 
     log('Starting test build')
     await invoke(tasks, 'myTask', { myProp: 'this is overridden' })
-    expect(propValue).to.equal('this is overridden')
+    expect(propValue).toBe('this is overridden')
   })
 
   it('should merge two builds', async () => {
@@ -54,7 +52,7 @@ describe('Build Invocation', () => {
 
     log('Starting test build')
     await invoke(tasks2, 'myTask2')
-    expect(calls).to.eql([
+    expect(calls).toEqual([
       'original myTask1', // invoked by overridden task 2
       'overridden myTask2', // calling other build's task 1
     ])
@@ -64,28 +62,28 @@ describe('Build Invocation', () => {
     const tasks = build({ myTask: () => void 0 })
 
     log('Starting test build')
-    await expect(invoke(tasks, 'wrongTask'))
-        .to.be.rejectedWith(BuildFailure, '')
+    await expectAsync(invoke(tasks, 'wrongTask'))
+        .toBeRejectedWithError(BuildFailure as any, '')
   })
 
   it('should fail when a task fails', async () => {
     const tasks = build({ myTask: () => Promise.reject(new Error('Foo!')) })
 
     log('Starting test build')
-    await expect(invoke(tasks, 'myTask'))
-        .to.be.rejectedWith(BuildFailure, '')
+    await expectAsync(invoke(tasks, 'myTask'))
+        .toBeRejectedWithError(BuildFailure as any, '')
   })
 
   it('should fail with an invalid build', async () => {
     log('Starting test build')
-    await expect(invoke({}, 'wrongTask'))
-        .to.be.rejectedWith(BuildFailure, /^$/)
+    await expectAsync(invoke({}, 'wrongTask'))
+        .toBeRejectedWithError(BuildFailure as any, /^$/)
   })
 
   it('should get the current task context', () => {
     const context1 = currentContext()
     const context2 = requireContext()
-    expect(context1).to.equal(context2)
-    expect(runningTasks()).to.include(context2.taskName)
+    expect(context1).toBe(context2)
+    expect(runningTasks()).toContain(context2.taskName)
   })
 })

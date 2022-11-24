@@ -1,5 +1,3 @@
-import { expect } from 'chai'
-
 import { log, logOptions } from '../../src/logging.js'
 import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../../src/paths.js'
 import * as colors from '../../src/logging/colors.js'
@@ -66,7 +64,7 @@ describe('Colors', () => {
         colors.$ms(123456),
         colors.$ms(123456, 'hello'),
       ]
-      expect(strings).to.eql([
+      expect(strings).toEqual([
         'blue',
         'cyan',
         'green',

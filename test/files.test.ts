@@ -1,7 +1,5 @@
 import { inspect } from 'node:util'
 
-import { expect } from 'chai'
-
 import { Files } from '../src/files'
 import { readFile } from '../src/fs'
 import { mkdtemp, rmrf } from '../src/index'
@@ -11,16 +9,16 @@ import type { AbsolutePath } from '../src/paths'
 describe('Files Collection', () => {
   let tempdir: AbsolutePath
 
-  before(() => void (tempdir = mkdtemp()))
-  after(() => rmrf(tempdir))
+  beforeAll(() => void (tempdir = mkdtemp()))
+  afterAll(() => rmrf(tempdir))
 
   it('should create an empty Files instance', () => {
     const files = new Files(tempdir)
-    expect(files.length).to.equal(0)
-    expect(files.directory).to.equal(tempdir)
-    expect([ ...files ]).to.eql([])
-    expect([ ...files.absolutePaths() ]).to.eql([])
-    expect([ ...files.pathMappings() ]).to.eql([])
+    expect(files.length).toBe(0)
+    expect(files.directory).toBe(tempdir)
+    expect([ ...files ]).toEqual([])
+    expect([ ...files.absolutePaths() ]).toEqual([])
+    expect([ ...files.pathMappings() ]).toEqual([])
   })
 
   it('should use a builder to create a Files instance', () => {
@@ -31,20 +29,20 @@ describe('Files Collection', () => {
 
     // remember, alphabetical order
 
-    expect(files1.length).to.equal(2)
-    expect(files1.directory).to.equal(tempdir)
-    expect([ ...files1 ]).to.eql([ 'bar', 'foo' ])
-    expect([ ...files1.absolutePaths() ]).to.eql([
+    expect(files1.length).toBe(2)
+    expect(files1.directory).toBe(tempdir)
+    expect([ ...files1 ]).toEqual([ 'bar', 'foo' ])
+    expect([ ...files1.absolutePaths() ]).toEqual([
       `${tempdir}/bar`,
       `${tempdir}/foo`,
-    ])
-    expect([ ...files1.pathMappings() ]).to.eql([
+    ] as AbsolutePath[])
+    expect([ ...files1.pathMappings() ]).toEqual([
       [ 'bar', `${tempdir}/bar` ],
       [ 'foo', `${tempdir}/foo` ],
-    ])
+    ] as [ string, AbsolutePath ][])
 
     const inspect1 = (<any> files1)[inspect.custom]()
-    expect(inspect1).to.eql({
+    expect(inspect1).toEqual({
       directory: tempdir,
       files: [ 'bar', 'foo' ],
     })
@@ -55,22 +53,22 @@ describe('Files Collection', () => {
     builder2.add('baz')
     const files2 = builder2.build()
 
-    expect(files2.length).to.equal(3)
-    expect(files2.directory).to.equal(tempdir)
-    expect([ ...files2 ]).to.eql([ 'bar', 'baz', 'foo' ])
-    expect([ ...files2.absolutePaths() ]).to.eql([
+    expect(files2.length).toBe(3)
+    expect(files2.directory).toBe(tempdir)
+    expect([ ...files2 ]).toEqual([ 'bar', 'baz', 'foo' ])
+    expect([ ...files2.absolutePaths() ]).toEqual([
       `${tempdir}/bar`,
       `${tempdir}/baz`,
       `${tempdir}/foo`,
-    ])
-    expect([ ...files2.pathMappings() ]).to.eql([
+    ] as AbsolutePath[])
+    expect([ ...files2.pathMappings() ]).toEqual([
       [ 'bar', `${tempdir}/bar` ],
       [ 'baz', `${tempdir}/baz` ],
       [ 'foo', `${tempdir}/foo` ],
-    ])
+    ] as [ string, AbsolutePath ][])
 
     const inspect2 = (<any> files2)[inspect.custom]()
-    expect(inspect2).to.eql({
+    expect(inspect2).toEqual({
       directory: tempdir,
       files: [ 'bar', 'baz', 'foo' ],
     })
@@ -82,19 +80,19 @@ describe('Files Collection', () => {
     await builder1.write('file.txt', 'Hello, world!')
     const files1 = builder1.build()
 
-    expect(files1.length).to.equal(2)
-    expect(files1.directory).to.equal(tempdir)
-    expect([ ...files1 ]).to.eql([ 'file.bin', 'file.txt' ])
-    expect([ ...files1.absolutePaths() ]).to.eql([
+    expect(files1.length).toBe(2)
+    expect(files1.directory).toBe(tempdir)
+    expect([ ...files1 ]).toEqual([ 'file.bin', 'file.txt' ])
+    expect([ ...files1.absolutePaths() ]).toEqual([
       `${tempdir}/file.bin`,
       `${tempdir}/file.txt`,
-    ])
-    expect([ ...files1.pathMappings() ]).to.eql([
+    ] as AbsolutePath[])
+    expect([ ...files1.pathMappings() ]).toEqual([
       [ 'file.bin', `${tempdir}/file.bin` ],
       [ 'file.txt', `${tempdir}/file.txt` ],
-    ])
+    ] as [ string, AbsolutePath ][])
 
-    expect(await readFile(`${tempdir}/file.bin`, 'hex')).to.equal('cafebabe')
-    expect(await readFile(`${tempdir}/file.txt`, 'utf8')).to.equal('Hello, world!')
+    expect(await readFile(`${tempdir}/file.bin`, 'hex')).toBe('cafebabe')
+    expect(await readFile(`${tempdir}/file.txt`, 'utf8')).toBe('Hello, world!')
   })
 })

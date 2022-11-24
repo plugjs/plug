@@ -1,7 +1,7 @@
 // Import PlugJS plugins used by this build without using "install"
 import { Coverage } from '@plugjs/cov8/coverage'
 import { ESLint } from '@plugjs/eslint/eslint'
-import { Mocha } from '@plugjs/mocha/mocha'
+import { Jasmine } from '@plugjs/jasmine/jasmine'
 import { Tsc } from '@plugjs/typescript/typescript'
 
 import { build, exec, find, fixExtensions, merge, rmrf, type Pipe } from './src/index.js'
@@ -16,10 +16,7 @@ export default build({
    * ======================================================================== */
 
   async test() {
-    await this.find_tests()
-        .plug(new Mocha({
-          require: './test/.setup.ts',
-        }))
+    await this.find_tests().plug(new Jasmine())
   },
 
   /* ======================================================================== *
