@@ -37,12 +37,12 @@
     "@plugjs/eslint-plugin": "^0.1.0",
     "@plugjs/plug": "^0.1.0",
     "@plugjs/typescript": "^0.1.0",
-    "@types/node": "<17",
+    "@types/node": "<19",
     "typescript": "^4.9.3"
   },
   "dependencies": {
-    "@babel/parser": "^7.20.3",
-    "@babel/types": "^7.20.2",
+    "@babel/parser": "^7.20.5",
+    "@babel/types": "^7.20.5",
     "@plugjs/cov8-html": "^0.1.0",
     "source-map": "^0.7.4"
   },
