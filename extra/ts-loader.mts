@@ -405,7 +405,7 @@ export const load: LoadHook = (url, context, nextLoad): LoadResult | Promise<Loa
 
   /* Quick and easy bail-outs for non-TS or ".cts" (always `commonjs`) */
   if (! ext) return nextLoad(url, context)
-  if (ext === '.cts') return { format: 'commonjs' }
+  if (ext === '.cts') return { format: 'commonjs', shortCircuit: true }
 
   /* Convert the url into a file name, any error gets ignored */
   const filename = _url.fileURLToPath(url)
@@ -415,7 +415,7 @@ export const load: LoadHook = (url, context, nextLoad): LoadResult | Promise<Loa
     const format = _moduleFormat(_path.dirname(filename))
 
     /* If the _default_ module type is 'commonjs' then load as such! */
-    if (format === CJS) return { format: 'commonjs' }
+    if (format === CJS) return { format: 'commonjs', shortCircuit: true }
   }
 
   /* Transpile with ESBuild */
