@@ -30,8 +30,8 @@ export * as pipe from './pipe'
 export * as utils from './utils'
 
 // Individual utilities
-export { log } from './logging'
-export { assert } from './asserts'
+export { log, $ms, $p, $t, $blu, $cyn, $grn, $gry, $mgt, $red, $und, $wht, $ylw } from './logging'
+export { assert, fail } from './asserts'
 
 // Our minimal exports
 export * from './build'
