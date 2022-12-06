@@ -1,6 +1,6 @@
 import { assert } from './asserts'
 import { runAsync } from './async'
-import { $ms, $t, getLogger, log, logOptions } from './logging'
+import { $ms, $p, $t, getLogger, log, logOptions } from './logging'
 import { Context, ContextPromises, PipeImpl } from './pipe'
 import { findCaller } from './utils/caller'
 import { parseOptions } from './utils/options'
@@ -137,7 +137,7 @@ export function build<
       /* Run tasks _serially_ */
       for (const name of taskNames) {
         const task = tasks[name]
-        assert(task, `Task ${$t(name)} not found in build yoooo`)
+        assert(task, `Task ${$t(name)} not found in build ${$p(buildFile)}`)
         await task.invoke(state, name)
       }
       logger.notice(`Build successful ${$ms(Date.now() - now)}`)
