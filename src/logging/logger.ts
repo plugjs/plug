@@ -27,17 +27,17 @@ logOptions.on('changed', ({ defaultTaskName, colors, level }) => {
 /** The basic interface giving access to log facilities. */
 export interface Log {
   /** Log a `TRACE` message */
-  trace(...args: [ any, ...any ]): this
+  trace(...args: [ any, ...any ]): void
   /** Log a `DEBUG` message */
-  debug(...args: [ any, ...any ]): this
+  debug(...args: [ any, ...any ]): void
   /** Log an `INFO` message */
-  info(...args: [ any, ...any ]): this
+  info(...args: [ any, ...any ]): void
   /** Log a `NOTICE` message */
-  notice(...args: [ any, ...any ]): this
+  notice(...args: [ any, ...any ]): void
   /** Log a `WARNING` message */
-  warn(...args: [ any, ...any ]): this
+  warn(...args: [ any, ...any ]): void
   /** Log an `ERROR` message */
-  error(...args: [ any, ...any ]): this
+  error(...args: [ any, ...any ]): void
   /** Log an `ERROR` message and fail the build */
   fail(...args: [ any, ...any ]): never
 }
@@ -48,13 +48,13 @@ export interface Logger extends Log {
   level: LogLevel,
 
   /** Enter a sub-level of logging, increasing indent */
-  enter(): this
+  enter(): void
   /** Enter a sub-level of logging, increasing indent */
-  enter(evel: LogLevel, message: string): this
+  enter(evel: LogLevel, message: string): void
   /** Leave a sub-level of logging, decreasing indent */
-  leave(): this
+  leave(): void
   /** Leave a sub-level of logging, decreasing indent */
-  leave(level: LogLevel, message: string): this
+  leave(level: LogLevel, message: string): void
   /** Create a {@link Report} associated with this instance */
   report(title: string): Report
 }
@@ -88,8 +88,8 @@ class LoggerImpl implements Logger {
       private readonly _emitter: LogEmitter,
   ) {}
 
-  private _emit(level: LogLevel, args: [ any, ...any ]): this {
-    if (this._level > level) return this
+  private _emit(level: LogLevel, args: [ any, ...any ]): void {
+    if (this._level > level) return
 
     // The `BuildFailure` is a bit special case
     const params = args.filter((arg) => {
@@ -116,7 +116,7 @@ class LoggerImpl implements Logger {
     })
 
     // If there's nothing left to log, then we're done
-    if (params.length === 0) return this
+    if (params.length === 0) return
 
     // Prepare our options for logging
     const options = { level, taskName: this._task, indent: this._indent }
@@ -131,7 +131,6 @@ class LoggerImpl implements Logger {
 
     // Emit our log lines and return
     this._emitter(options, params)
-    return this
   }
 
   get level(): LogLevel {
@@ -142,28 +141,28 @@ class LoggerImpl implements Logger {
     this._level = level
   }
 
-  trace(...args: [ any, ...any ]): this {
-    return this._emit(TRACE, args)
+  trace(...args: [ any, ...any ]): void {
+    this._emit(TRACE, args)
   }
 
-  debug(...args: [ any, ...any ]): this {
-    return this._emit(DEBUG, args)
+  debug(...args: [ any, ...any ]): void {
+    this._emit(DEBUG, args)
   }
 
-  info(...args: [ any, ...any ]): this {
-    return this._emit(INFO, args)
+  info(...args: [ any, ...any ]): void {
+    this._emit(INFO, args)
   }
 
-  notice(...args: [ any, ...any ]): this {
-    return this._emit(NOTICE, args)
+  notice(...args: [ any, ...any ]): void {
+    this._emit(NOTICE, args)
   }
 
-  warn(...args: [ any, ...any ]): this {
-    return this._emit(WARN, args)
+  warn(...args: [ any, ...any ]): void {
+    this._emit(WARN, args)
   }
 
-  error(...args: [ any, ...any ]): this {
-    return this._emit(ERROR, args)
+  error(...args: [ any, ...any ]): void {
+    this._emit(ERROR, args)
   }
 
   fail(...args: [ any, ...any ]): never {
@@ -171,21 +170,20 @@ class LoggerImpl implements Logger {
     throw BuildFailure.fail()
   }
 
-  enter(): this
-  enter(level: LogLevel, message: string): this
-  enter(...args: [] | [ level: LogLevel, message: string ]): this {
+  enter(): void
+  enter(level: LogLevel, message: string): void
+  enter(...args: [] | [ level: LogLevel, message: string ]): void {
     if (args.length) {
       const [ level, message ] = args
       this._stack.push({ level, message, indent: this._indent })
     }
 
     this._indent ++
-    return this
   }
 
-  leave(): this
-  leave(level: LogLevel, message: string): this
-  leave(...args: [] | [ level: LogLevel, message: string ]): this {
+  leave(): void
+  leave(level: LogLevel, message: string): void
+  leave(...args: [] | [ level: LogLevel, message: string ]): void {
     this._stack.pop()
     this._indent --
 
@@ -195,8 +193,6 @@ class LoggerImpl implements Logger {
       const [ level, message ] = args
       this._emit(level, [ message ])
     }
-
-    return this
   }
 
   report(title: string): Report {

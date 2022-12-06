@@ -29,38 +29,32 @@ export const log: LogFunction = ((): LogFunction => {
 
   /* Create a Logger wrapping the current logger */
   const wrapper: Log = {
-    trace(...args: [ any, ...any ]): Log {
+    trace(...args: [ any, ...any ]): void {
       logger().trace(...args)
-      return wrapper
     },
 
-    debug(...args: [ any, ...any ]): Log {
+    debug(...args: [ any, ...any ]): void {
       logger().debug(...args)
-      return wrapper
     },
 
-    info(...args: [ any, ...any ]): Log {
+    info(...args: [ any, ...any ]): void {
       logger().info(...args)
-      return wrapper
     },
 
-    notice(...args: [ any, ...any ]): Log {
+    notice(...args: [ any, ...any ]): void {
       logger().notice(...args)
-      return wrapper
     },
 
-    warn(...args: [ any, ...any ]): Log {
+    warn(...args: [ any, ...any ]): void {
       logger().warn(...args)
-      return wrapper
     },
 
-    error(...args: [ any, ...any ]): Log {
+    error(...args: [ any, ...any ]): void {
       logger().error(...args)
-      return wrapper
     },
 
     fail(...args: [ any, ...any ]): never {
-      throw logger().fail(...args) // fail() returns never but ?!?!?!?!?
+      return logger().fail(...args)
     },
   }
 
