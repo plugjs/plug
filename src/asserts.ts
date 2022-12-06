@@ -66,3 +66,8 @@ export async function assertPromises<T>(promises: (T | Promise<T>)[]): Promise<T
 export function assert(assertion: any, message: string): asserts assertion {
   if (! assertion) throw BuildFailure.withMessage(message)
 }
+
+/** Fail a build with a message */
+export function fail(message: string): never {
+  throw BuildFailure.withMessage(message)
+}
