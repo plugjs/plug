@@ -9,8 +9,8 @@ import type { Context, PipeParameters, Plug } from '../pipe'
 
 /** Options for copying files */
 export interface CopyOptions {
-  /** Whether to allow overwriting or not (default `false`). */
-  overwrite?: boolean,
+  /** Whether to allow overwriting or not (default `fail`). */
+  overwrite?: 'overwrite' | 'fail' | 'skip',
   /** If specified, use this `mode` (octal string) when creating files. */
   mode?: string | number,
   /** If specified, use this `mode` (octal string) when creating directories. */
@@ -51,8 +51,8 @@ install('copy', class Copy implements Plug<Files> {
 
   async pipe(files: Files, context: Context): Promise<Files> {
     /* Destructure our options with some defaults and compute write flags */
-    const { mode, dirMode, overwrite, rename = (s): string => s } = this._options
-    const flags = overwrite ? fsConstants.COPYFILE_EXCL : 0
+    const { mode, dirMode, overwrite = 'fail', rename = (s): string => s } = this._options
+    const flags = overwrite === 'overwrite' ? 0 : fsConstants.COPYFILE_EXCL
     const dmode = parseMode(dirMode)
     const fmode = parseMode(mode)
 
@@ -88,7 +88,15 @@ install('copy', class Copy implements Plug<Files> {
 
       /* Actually _copy_ the file */
       context.log.trace(`Copying "${$p(absolute)}" to "${$p(target)}"`)
-      await copyFile(absolute, target, flags)
+      try {
+        await copyFile(absolute, target, flags)
+      } catch (error: any) {
+        if ((error.code === 'EEXIST') && (overwrite === 'skip')) {
+          context.log.warn(`Not overwriting existing file ${$p(target)}`)
+        } else {
+          throw error
+        }
+      }
 
       /* Set the mode, if we need to */
       if (fmode !== undefined) {
