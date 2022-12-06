@@ -86,26 +86,27 @@ install('copy', class Copy implements Plug<Files> {
         }
       }
 
-      /* Actually _copy_ the file */
       context.log.trace(`Copying "${$p(absolute)}" to "${$p(target)}"`)
       try {
+        /* Actually _copy_ the file */
         await copyFile(absolute, target, flags)
+
+        /* Set the mode, if we need to */
+        if (fmode !== undefined) {
+          context.log.trace(`Setting mode ${stringifyMode(fmode)} for file`, $p(target))
+          await chmod(target, fmode)
+        }
+
+        /* Record this file */
+        builder.add(target)
       } catch (error: any) {
+        /* Just log that we skipped the file if we have to */
         if ((error.code === 'EEXIST') && (overwrite === 'skip')) {
           context.log.warn(`Not overwriting existing file ${$p(target)}`)
         } else {
           throw error
         }
       }
-
-      /* Set the mode, if we need to */
-      if (fmode !== undefined) {
-        context.log.trace(`Setting mode ${stringifyMode(fmode)} for file`, $p(target))
-        await chmod(target, fmode)
-      }
-
-      /* Record this file */
-      builder.add(target)
     }
 
     const result = builder.build()
