@@ -35,8 +35,8 @@
   "devDependencies": {
     "@plugjs/cov8": "^0.1.1",
     "@plugjs/eslint-plugin": "^0.1.1",
-    "@plugjs/plug": "^0.1.0",
-    "@plugjs/typescript": "^0.1.0",
+    "@plugjs/plug": "^0.1.2",
+    "@plugjs/typescript": "^0.1.1",
     "@types/eslint": "^8.4.10",
     "@types/node": "<19",
     "typescript": "^4.9.3"
@@ -45,7 +45,7 @@
     "eslint": "^8.29.0"
   },
   "peerDependencies": {
-    "@plugjs/plug": "^0.1.0"
+    "@plugjs/plug": "^0.1.2"
   },
   "files": [
     "*.md",
