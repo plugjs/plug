@@ -53,7 +53,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
   ) {}
 
   pipe(files: Files, context: Context): Promise<PlugResult> {
-    const message: ForkData = {
+    const request: ForkData = {
       scriptFile: this._scriptFile,
       exportName: this._exportName,
       constructorArgs: this._arguments,
@@ -93,7 +93,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
     /* Return a promise from the child process events */
     let done = false // this will be fixed up in "finally" below
     return new Promise<PlugResult>((resolve, reject) => {
-      let result: ForkResult | undefined = undefined
+      let response: ForkResult | undefined = undefined
 
       child.on('error', (error) => {
         context.log.error('Child process error', error)
@@ -102,7 +102,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
 
       child.on('message', (message: ForkResult) => {
         context.log.debug('Message from child process', message)
-        result = message
+        response = message
       })
 
       child.on('exit', (code, signal) => {
@@ -112,23 +112,23 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
         } else if (code !== 0) {
           context.log.error(`Child process exited with code ${code}`, $gry(`(pid=${child.pid})`))
           return done || reject(BuildFailure.fail())
-        } else if (! result) {
+        } else if (! response) {
           context.log.error('Child process exited with no result', $gry(`(pid=${child.pid})`))
           return done || reject(BuildFailure.fail())
-        } else if (result.failed) {
+        } else if (response.failed) {
           // definitely logged on the child side
           return done || reject(BuildFailure.fail())
         }
 
         /* We definitely have a successful result! */
-        return done || resolve(result.filesDir && result.filesList ?
-            Files.builder(result.filesDir).add(...result.filesList).build() :
+        return done || resolve(response.filesDir && response.filesList ?
+            Files.builder(response.filesDir).add(...response.filesList).build() :
             undefined)
       })
 
       /* After the handlers have been setup, send the message */
       try {
-        const result = child.send(message, (error) => {
+        const result = child.send(request, (error) => {
           if (error) {
             context.log.error('Error sending message to child process (callback failure)', error)
             reject(BuildFailure.fail())
