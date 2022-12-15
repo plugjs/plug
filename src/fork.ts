@@ -121,8 +121,8 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
         }
 
         /* We definitely have a successful result! */
-        return done || resolve(message.filesDir && message.filesList ?
-            Files.builder(message.filesDir).add(...message.filesList).build() :
+        return done || resolve(result.filesDir && result.filesList ?
+            Files.builder(result.filesDir).add(...result.filesList).build() :
             undefined)
       })
 
