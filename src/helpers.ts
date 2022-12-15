@@ -101,7 +101,11 @@ export function merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
     if (pipes.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
 
     // Await for all pipes / files / files promises
-    const results = await assertPromises<Files>(pipes)
+    const awaited = await assertPromises<Files>(pipes)
+    const results = awaited.filter((result) => result.length)
+
+    // No files in anything to be merged? Again send off an empty pipe...
+    if (results.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
 
     // Find the common directory between all the Files instances
     const [ firstDir, ...otherDirs ] = results.map((f) => f.directory)
