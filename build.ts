@@ -100,29 +100,13 @@ export default build({
    * PACKAGE JSON ENTRY POINTS                                                *
    * ======================================================================== */
 
-  async entrypoints(): Promise<Pipe> {
-    const exports = [ '', 'asserts', 'files', 'fork', 'fs', 'logging', 'paths', 'pipe', 'utils' ]
-    const entrypoints = exports.reduce((entrypoints, name) => {
-      const [ key, base ] = name ? [ `./${name}`, `${name}` ] : [ '.', 'index' ]
-      entrypoints[key] = {
-        require: {
-          types: `./dist/${base}.d.ts`,
-          default: `./dist/${base}.cjs`,
-        },
-        import: {
-          types: `./dist/${base}.d.ts`,
-          default: `./dist/${base}.mjs`,
-        },
-      }
-
-      return entrypoints
-    }, {} as Record<string, any>)
-
-    return find('./package.json')
-        .edit((content) => {
-          const data = JSON.parse(content)
-          data.exports = entrypoints
-          return JSON.stringify(data, null, 2).trim() + '\n'
+  entrypoints(): Pipe {
+    return this.transpile()
+        .filter('index.*', 'asserts.*', 'files.*', 'fork.*', 'fs.*',
+            'logging.*', 'paths.*', 'pipe.*', 'utils.*')
+        .exports({
+          cjsExtension: '.cjs',
+          esmExtension: '.mjs',
         })
   },
 
