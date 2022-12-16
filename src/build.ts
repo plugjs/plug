@@ -102,8 +102,10 @@ function makeTask(
     return invoke(state, _name)
   }, { buildFile, tasks, props, invoke })
 
-  /* Assign the task name (nicely) and return it */
-  return Object.defineProperty(task, 'name', { value: _name })
+  /* Assign the task's marker and name and return it */
+  Object.defineProperty(task, taskMarker, { value: true })
+  Object.defineProperty(task, 'name', { value: _name })
+  return task
 }
 
 /* ========================================================================== *
@@ -124,13 +126,13 @@ export function build<
   /* Iterate through all definition extracting properties and tasks */
   for (const [ key, val ] of Object.entries(def)) {
     let len = 0
-    if (typeof val === 'string') {
+    if (isTask(val)) { // this goes first, tasks _are_ functions!
+      tasks[key] = val
+      len = key.length
+    } else if (typeof val === 'string') {
       props[key] = val
     } else if (typeof val === 'function') {
       tasks[key] = makeTask(buildFile, tasks, props, val, key)
-      len = key.length
-    } else if (isTask(val)) {
-      tasks[key] = val
       len = key.length
     }
 
