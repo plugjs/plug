@@ -9,7 +9,7 @@ import type { Pipe } from './index'
 export type Result = Files | undefined
 
 /* ========================================================================== *
- * STATE AND CONTEXT                                                          *
+ * EXECUTION STATE                                                            *
  * ========================================================================== */
 
 /**
@@ -36,14 +36,16 @@ export interface State {
  * The {@link Task} interface normalizes a task definition, associating it with
  * its build file, its sibling {@link Task}s and available _properties_.
  */
-export interface Task<T extends Result = Result> {
+export interface Task<T extends Result = Result, P extends Props = Record<string, string>> {
+  /** Simply invoke this task stand alone */
+  (props?: Partial<P>): Promise<T>
   /** All _properties_ siblings to this {@link Task} */
   readonly props: Props
   /** All {@link Tasks} sibling to this {@link Task} */
   readonly tasks: Tasks
   /** The absolute file name where this {@link Task} was defined */
   readonly buildFile: AbsolutePath,
-  /** Invoke a task from (possibly) a different {@link Context} */
+  /** Invoke a task from in the context of a {@link Build} */
   invoke(state: State, taskName: string): Promise<T>
 }
 
@@ -60,17 +62,17 @@ export type TaskDef<R extends TaskResult = TaskResult> = () => R | Promise<R>
  * TASKS AND PROPERTIES                                                       *
  * ========================================================================== */
 
-/** A type identifying all _properties_ of a {@link Context}. */
+/** A type identifying all _properties_ of a {@link Build}. */
 export type Props<D extends BuildDef = BuildDef> = {
   readonly [ k in string & keyof D as D[k] extends string ? k : never ] : string
 }
 
-/** A type identifying all _tasks_ in a {@link Context} */
+/** A type identifying all _tasks_ in a {@link Build} */
 export type Tasks<D extends BuildDef = BuildDef> = {
   readonly [ k in string & keyof D as D[k] extends TaskDef | Task ? k : never ] :
     D[k] extends TaskDef<infer R> ?
-      R extends void | undefined ? Task<undefined> :
-      R extends Pipe | Files ? Task<Files> :
+      R extends void | undefined ? Task<undefined, Props<D>> :
+      R extends Pipe | Files ? Task<Files, Props<D>> :
       never :
     D[k] extends Task ? D[k] :
     never
