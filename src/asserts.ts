@@ -12,17 +12,20 @@ export function isBuildFailure(arg: any): arg is BuildFailure {
 
 /** A {@link BuildFailure} represents an error _already logged_ in our build. */
 export class BuildFailure extends Error {
-  readonly errors!: readonly any[]
+  readonly errors?: readonly any[] | undefined
 
   /** Construct a {@link BuildFailure} */
-  private constructor(message: string | undefined, errors: any[]) {
+  constructor(message?: string | undefined, errors: any[] = []) {
     super(message || '')
 
-    /* Basic error setup, stack and marker */
+    /* Basic error setup: stack and errors */
     Error.captureStackTrace(this, BuildFailure)
+    if (errors.length) this.errors = Object.freeze([ ...errors ])
+
+    /* Other properties: marker and name */
     Object.defineProperties(this, {
-      'errors': { value: Object.freeze([ ...errors ]) },
       [buildFailure]: { value: buildFailure },
+      'name': { value: 'BuildFailure' },
     })
   }
 
