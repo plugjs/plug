@@ -31,7 +31,7 @@ export * as utils from './utils'
 
 // Individual utilities
 export { log, $ms, $p, $t, $blu, $cyn, $grn, $gry, $mgt, $red, $und, $wht, $ylw } from './logging'
-export { assert, fail } from './asserts'
+export { assert, fail, BuildFailure } from './asserts'
 
 // Our minimal exports
 export * from './build'
