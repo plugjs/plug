@@ -99,7 +99,7 @@ class LoggerImpl implements Logger {
         _loggedFailures.add(arg)
 
         // If the build failure has any root cause, log those
-        arg.errors.forEach((error) => this._emit(level, [ error ]))
+        arg.errors?.forEach((error) => this._emit(level, [ error ]))
 
         // Log this only if it has a message
         if (! arg.message) return false
