@@ -23,30 +23,40 @@ import type {
  * TASK                                                                       *
  * ========================================================================== */
 
-class TaskImpl implements Task {
-  constructor(
-      public readonly buildFile: AbsolutePath,
-      public readonly tasks: Tasks,
-      public readonly props: Props,
-      private readonly _def: TaskDef,
-  ) {}
+/** Symbol indicating that an object is a {@link Task} */
+const taskMarker = Symbol.for('plugjs:isTask')
 
-  invoke(state: State, taskName: string): Promise<Result> {
-    assert(! state.stack.includes(this), `Recursion detected calling ${$t(taskName)}`)
+/** Type guard for {@link Tasks} */
+function isTask(something: any): something is Task {
+  return something[taskMarker] === true
+}
+
+/** Create a new {@link Task} instance */
+function makeTask(
+    buildFile: AbsolutePath,
+    tasks: Tasks,
+    props: Props,
+    _def: TaskDef,
+    _name: string,
+): Task {
+  /* Invoke the task, checking call stack, caches, and merging builds */
+  function invoke(state: State, taskName: string): Promise<Result> {
+    assert(! state.stack.includes(task), `Recursion detected calling ${$t(taskName)}`)
 
     /* Check cache */
-    const cached = state.cache.get(this)
+    const cached = state.cache.get(task)
     if (cached) return cached
 
     /* Create new substate merging sibling tasks/props and adding this to the stack */
-    const props: Record<string, string> = Object.assign({}, this.props, state.props)
-    const tasks: Record<string, Task> = Object.assign({}, this.tasks, state.tasks)
-    const stack = [ ...state.stack, this ]
+    const props: Record<string, string> = Object.assign({}, task.props, state.props)
+    const tasks: Record<string, Task> = Object.assign({}, task.tasks, state.tasks)
+    const stack = [ ...state.stack, task ]
     const cache = state.cache
 
     /* Create run context and build */
-    const context = new Context(this.buildFile, taskName)
+    const context = new Context(task.buildFile, taskName)
 
+    /* The build (the `this` value calling the definition) is a proxy */
     const build = new Proxy({}, {
       get(_: any, name: string): void | string | (() => Pipe) {
         // Tasks first, props might come also from environment
@@ -68,7 +78,7 @@ class TaskImpl implements Task {
 
     /* Run asynchronously in an asynchronous context */
     const promise = runAsync(context, taskName, async () => {
-      return await this._def.call(build) || undefined
+      return await _def.call(build) || undefined
     }).then((result) => {
       context.log.notice(`Success ${$ms(Date.now() - now)}`)
       return result
@@ -77,9 +87,23 @@ class TaskImpl implements Task {
     }).finally(() => ContextPromises.wait(context))
 
     /* Cache the resulting promise and return it */
-    cache.set(this, promise)
+    cache.set(task, promise)
     return promise
   }
+
+  /* Create the new Task. The function will simply create an empty state */
+  const task: Task = Object.assign((overrideProps: Props = {}) => {
+    const state: State = {
+      cache: new Map<Task, Promise<Result>>(),
+      stack: [] as Task[],
+      props: Object.assign({}, props, overrideProps),
+      tasks: tasks,
+    }
+    return invoke(state, _name)
+  }, { buildFile, tasks, props, invoke })
+
+  /* Assign the task name (nicely) and return it */
+  return Object.defineProperty(task, 'name', { value: _name })
 }
 
 /* ========================================================================== *
@@ -103,9 +127,9 @@ export function build<
     if (typeof val === 'string') {
       props[key] = val
     } else if (typeof val === 'function') {
-      tasks[key] = new TaskImpl(buildFile, tasks, props, val)
+      tasks[key] = makeTask(buildFile, tasks, props, val, key)
       len = key.length
-    } else if (val instanceof TaskImpl) {
+    } else if (isTask(val)) {
       tasks[key] = val
       len = key.length
     }
