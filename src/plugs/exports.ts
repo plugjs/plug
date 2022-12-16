@@ -1,3 +1,4 @@
+import { EOL } from 'node:os'
 import { sep } from 'node:path'
 
 import { Files } from '../files'
@@ -152,7 +153,7 @@ install('exports', class Exports implements Plug<Files> {
     const outgoingData = JSON.stringify(packageData, null, 2)
     const outgoingFile = context.resolve(this._outputPackageJson)
     context.log.info(`Writing new ${$p(outgoingFile)}`, outgoingData)
-    await writeFile(outgoingFile, outgoingData, 'utf8')
+    await writeFile(outgoingFile, outgoingData + EOL, 'utf8')
 
     // return a `Files` instance with our `package.json` in there
     return Files.builder(getAbsoluteParent(outgoingFile)).add(outgoingFile).build()
