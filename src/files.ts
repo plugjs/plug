@@ -31,8 +31,8 @@ export interface FilesBuilder {
  * identifying some _files_ rooted in a given _directory_.
  */
 export class Files {
-  readonly _directory: AbsolutePath
-  readonly _files: string[]
+  private readonly _directory: AbsolutePath
+  private readonly _files: string[]
 
   /**
    * Create a new {@link Files} instance rooted in the specified `directory`
