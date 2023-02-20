@@ -1,4 +1,6 @@
+.coverage-data/
 build/
+coverage/
 node_modules/
 workspaces/*/dist
 workspaces/plug/extra/*.mjs
