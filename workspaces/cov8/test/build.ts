@@ -6,7 +6,7 @@ import type { Pipe } from '@plugjs/plug'
 
 
 export default build({
-  coverageDir: '@/../.coverage-test-data',
+  coverageDir: '.coverage-test-data',
 
   find_sources() {
     return find('**/*.([cm])?[tj]s', { directory: '@/sources' })
@@ -23,9 +23,6 @@ export default build({
   },
 
   async generate() {
-    // log('Regenerating sources')
-    // await exec('/bin/bash', './runme.sh', { cwd: '@/sources/sourcemap' })
-
     const files = await this.find_sources().filter('!**/*.([cm])?ts')
 
     for (const file of files.absolutePaths()) {

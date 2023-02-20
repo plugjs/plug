@@ -214,10 +214,7 @@ class CoverageSitemapAnalyser extends CoverageResultAnalyser {
       }
     }
 
-    const bias =
-      this._sourceMapBias === 'greatest_lower_bound' ? SourceMapConsumer.GREATEST_LOWER_BOUND :
-      this._sourceMapBias === 'least_upper_bound' ? SourceMapConsumer.LEAST_UPPER_BOUND :
-      /* coverage ignore next */ undefined
+    const bias = mapBias(this._sourceMapBias)
 
     const generated = this._sourceMap.generatedPositionFor({ source, line, column, bias })
 
@@ -244,6 +241,13 @@ class CoverageSitemapAnalyser extends CoverageResultAnalyser {
 }
 
 /* ========================================================================== */
+
+function mapBias(bias?: 'greatest_lower_bound' | 'least_upper_bound'): number | undefined {
+  if (bias === 'greatest_lower_bound') return SourceMapConsumer.GREATEST_LOWER_BOUND
+  if (bias === 'least_upper_bound') return SourceMapConsumer.LEAST_UPPER_BOUND
+  /* coverage ignore next */
+  return undefined
+}
 
 /** Combine (add) all coverage data from all analysers */
 function combineCoverage(
