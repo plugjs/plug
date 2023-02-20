@@ -20,4 +20,10 @@ module.exports = {
       './workspaces/typescript/test/tsconfig.json',
     ],
   },
+  overrides: [ {
+    files: [ 'workspaces/*/test/**' ],
+    rules: {
+      'import/no-extraneous-dependencies': 'off',
+    },
+  } ],
 }
