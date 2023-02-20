@@ -1,14 +1,15 @@
-import { $p, build, find, fixExtensions, log, merge, resolve } from './workspaces/plug/src/index'
+import { Coverage } from './workspaces/cov8/src/coverage.js'
+import { $p, build, exec, find, fixExtensions, log, merge, resolve, rmrf } from './workspaces/plug/src/index'
+import { Tsc } from './workspaces/typescript/src/typescript'
 
 import type { ESBuildOptions, Files } from './workspaces/plug/src/index'
 
-// console.log('PLUG IS', plug)
 
 const workspaces = [
+  'workspaces/plug',
   'workspaces/cov8',
   'workspaces/eslint',
   'workspaces/jasmine',
-  'workspaces/plug',
   'workspaces/typescript',
 ] as const
 
@@ -22,6 +23,11 @@ const esbuildOptions: ESBuildOptions = {
 }
 
 export default build({
+
+  /* ======================================================================== *
+   * TRANSPILATION                                                            *
+   * ======================================================================== */
+
   /** Transpile to CJS */
   async transpile_cjs(): Promise<Files> {
     return merge(workspaces.map((workspace) => {
@@ -50,14 +56,12 @@ export default build({
     }))
   },
 
-  /** Generate all .d.ts files */
+  /** Generate all Typescript definition files */
   async transpile_dts(): Promise<Files> {
-    const tsc = await import('./workspaces/typescript/src/typescript.js')
-
     return merge(workspaces.map((workspace) => {
-      log.notice(`Transpiling Typescript types from ${$p(resolve(workspace))}`)
+      log.notice(`Transpiling sources to DTS from ${$p(resolve(workspace))}`)
       return find('**/*.([cm])?ts', { directory: `${workspace}/src` })
-          .plug(new tsc.default.Tsc(`${workspace}/tsconfig-base.json`, {
+          .plug(new Tsc(`${workspace}/tsconfig-base.json`, {
             noEmit: false,
             declaration: true,
             emitDeclarationOnly: true,
@@ -66,9 +70,70 @@ export default build({
     }))
   },
 
+  /** Transpile all source code */
+  async transpile(): Promise<void> {
+    await merge([
+      this.transpile_cjs(),
+      this.transpile_esm(),
+      this.transpile_dts(),
+    ])
+  },
+
+  /* ======================================================================== *
+   * TESTING                                                                  *
+   * ======================================================================== */
+
+  /** Run tests in CJS mode */
+  async test_cjs(): Promise<void> {
+    const files = await find('*/test/build.ts', { directory: 'workspaces' })
+
+    const [ node, cli ] = process.argv
+
+    for (const buildFile of files.absolutePaths()) {
+      await exec(node!, ...process.execArgv, cli!, '--force-esm', '-f', buildFile, 'test', {
+        coverageDir: '.coverage-data',
+      })
+    }
+  },
+
+  /** Run tests in ESM mode */
+  async test_esm(): Promise<void> {
+    const files = await find('*/test/build.ts', { directory: 'workspaces' })
+
+    const [ node, cli ] = process.argv
+
+    for (const buildFile of files.absolutePaths()) {
+      await exec(node!, ...process.execArgv, cli!, '--force-cjs', '-f', buildFile, 'test', {
+        coverageDir: '.coverage-data',
+      })
+    }
+  },
+
+  /** Gnerate coverage report */
+  async test_cov(): Promise<void> {
+    await find('*/src/**/*.([cm])?ts', { directory: 'workspaces' })
+        .plug(new Coverage('.coverage-data', {
+          reportDir: 'coverage',
+          minimumCoverage: 100,
+          minimumFileCoverage: 100,
+        }))
+  },
+
+  /** Run tests and generate coverage */
+  async test(): Promise<void> {
+    await rmrf('.coverage-data')
+    await this.test_cjs()
+    await this.test_esm()
+    await this.test_cov()
+  },
+
+  /* ======================================================================== *
+   * DEFAULT                                                                  *
+   * ======================================================================== */
+
+  /* Run all tasks (sequentially) */
   async default(): Promise<void> {
-    await this.transpile_cjs()
-    await this.transpile_esm()
-    await this.transpile_dts()
+    await this.transpile()
+    await this.test()
   },
 })
