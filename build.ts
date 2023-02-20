@@ -98,10 +98,21 @@ export default build({
 
   /** Transpile all source code */
   async transpile(): Promise<void> {
+    await this.clean_coverage()
+
     log.notice(banner('Transpiling'))
-    await this.transpile_cjs()
-    await this.transpile_esm()
-    await this.transpile_dts()
+
+    const [ node, cli ] = process.argv
+
+    const subTasks = [
+      'transpile_cjs',
+      'transpile_esm',
+      'transpile_dts',
+    ]
+
+    await exec(node!, ...process.execArgv, cli!, ...subTasks, {
+      coverageDir: '.coverage-data',
+    })
   },
 
   /* ======================================================================== *
@@ -110,9 +121,11 @@ export default build({
 
   /** Run tests in CJS mode */
   async test(): Promise<void> {
+    await this.clean_coverage()
+
     const [ node, cli ] = process.argv
 
-    const selection = this.workspace ? [ this.workspace ] : workspaces
+    const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
 
     for (const mode of [ 'esm', 'cjs' ] as const) {
       const errors: AbsolutePath[] = []
@@ -141,23 +154,35 @@ export default build({
    * COVERAGE                                                                 *
    * ======================================================================== */
 
+  async clean_coverage(): Promise<void> {
+    await rmrf('.coverage-data')
+    await rmrf('.coverage-test-data')
+  },
+
   find_coverage(): Promise<Files> {
     return find(`${this.workspace}/src/**/*.([cm])?ts`, {
       directory: 'workspaces',
-    }).debug()
+    })
   },
 
   /** Gnerate coverage report */
   async coverage(): Promise<void> {
+    log.notice(banner('Test Coverage'))
+
     const coverage = await import('./workspaces/cov8/src/coverage.js')
     const Coverage = coverage.default.Coverage
 
-    await this.find_coverage()
-        .plug(new Coverage('.coverage-data', {
-          reportDir: 'coverage',
-          minimumCoverage: 100,
-          minimumFileCoverage: 100,
-        }))
+    const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
+
+    const sources = merge(selection.map((workspace) => {
+      return find('src/**/*.([cm])?ts', { directory: workspace })
+    }))
+
+    await sources.plug(new Coverage('.coverage-data', {
+      reportDir: 'coverage',
+      minimumCoverage: 100,
+      minimumFileCoverage: 100,
+    }))
   },
 
   /* ======================================================================== *
@@ -183,7 +208,12 @@ export default build({
 
   /* Run all tasks (sequentially) */
   async default(): Promise<void> {
-    await this.transpile()
-    await this.test()
+    await this.clean_coverage()
+    try {
+      await this.transpile()
+      await this.test()
+    } finally {
+      await this.coverage()
+    }
   },
 })
