@@ -1,4 +1,0 @@
-*.mjs
-./coverage/
-./dist/
-./node_modules/
