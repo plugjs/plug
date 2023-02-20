@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    // Setup our compilation type
+    "lib": [ "es2022" ],
+    "target": "es2022",
+    "module": "es2022",
+    "moduleResolution": "node16",
+    "types": [ "node" ],
+    "esModuleInterop": true,
+
+    // No emit (done with "bootstrap")
+    "noEmit": true,
+
+    // Ultra strict
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true,
+    "importsNotUsedAsValues": "error",
+
+    // Monorepo setup
+    "baseUrl": "./",
+    "paths": {
+      "@plugjs/cov8": [ "workspaces/cov8/src" ],
+      "@plugjs/cov8/*": [ "workspaces/cov8/src/*" ],
+      "@plugjs/eslint": [ "workspaces/eslint/src" ],
+      "@plugjs/eslint/*": [ "workspaces/eslint/src/*" ],
+      "@plugjs/jasmine": [ "workspaces/jasmine/src" ],
+      "@plugjs/jasmine/*": [ "workspaces/jasmine/src/*" ],
+      "@plugjs/plug": [ "workspaces/plug/src" ],
+      "@plugjs/plug/*": [ "workspaces/plug/src/*" ],
+      "@plugjs/typescript": [ "workspaces/typescript/src" ],
+      "@plugjs/typescript/*": [ "workspaces/typescript/src/*" ],
+    },
+  },
+  "include": [
+    "bootstrap.ts",
+    "build.ts",
+  ]
+}

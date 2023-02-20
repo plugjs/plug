@@ -1,0 +1,15 @@
+{
+  "name": "@plugjs/monorepo",
+  "private": true,
+  "version": "0.2.0",
+  "workspaces": [
+    "workspaces/cov8",
+    "workspaces/eslint",
+    "workspaces/jasmine",
+    "workspaces/plug",
+    "workspaces/typescript"
+  ],
+  "devDependencies": {
+    "@plugjs/eslint-plugin": "^0.1.1"
+  }
+}
