@@ -6,6 +6,9 @@
 import type { Files } from './files'
 import type { Plug, PlugFunction } from './pipe'
 
+export type { Files } from './files'
+export type { Plug, PlugFunction } from './pipe'
+
 /**
  * The {@link Pipe} interface defines a processing pipeline where multiple
  * {@link Plug}s can transform lists of {@link Files}.
