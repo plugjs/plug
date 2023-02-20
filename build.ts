@@ -1,15 +1,27 @@
-import { $p, build, exec, find, fixExtensions, log, merge, resolve, rmrf } from './workspaces/plug/src/index'
+import {
+  $gry,
+  $p,
+  $wht, build,
+  exec,
+  find,
+  fixExtensions,
+  log,
+  merge,
+  resolve,
+  rmrf,
+} from './workspaces/plug/src/index'
 
+import type { AbsolutePath } from '@plugjs/plug/paths'
 import type { ESBuildOptions, Files } from './workspaces/plug/src/index'
 
-
+/** All known workspace paths */
 const workspaces = [
   'workspaces/plug',
   'workspaces/cov8',
   'workspaces/eslint',
   'workspaces/jasmine',
   'workspaces/typescript',
-] as const
+]
 
 /** Shared ESBuild options */
 const esbuildOptions: ESBuildOptions = {
@@ -20,8 +32,19 @@ const esbuildOptions: ESBuildOptions = {
   plugins: [ fixExtensions() ],
 }
 
+/** Niceties... */
+function banner(message: string): string {
+  return [
+    '',
+    $gry(`\u2554${''.padStart(60, '\u2550')}\u2557`),
+    `${$gry('\u2551')} ${$wht(message.padEnd(58, ' '))} ${$gry('\u2551')}`,
+    $gry(`\u255A${''.padStart(60, '\u2550')}\u255D`),
+    '',
+  ].join('\n')
+}
+
 export default build({
-  workspace: '*',
+  workspace: '',
 
   /* ======================================================================== *
    * TRANSPILATION                                                            *
@@ -75,6 +98,7 @@ export default build({
 
   /** Transpile all source code */
   async transpile(): Promise<void> {
+    log.notice(banner('Transpiling'))
     await this.transpile_cjs()
     await this.transpile_esm()
     await this.transpile_dts()
@@ -84,43 +108,43 @@ export default build({
    * TESTING                                                                  *
    * ======================================================================== */
 
-  /** Find tests to run */
-  find_test(): Promise<Files> {
-    return find(`${this.workspace}/test/build.ts`, {
-      directory: 'workspaces',
-    }).debug()
+  /** Run tests in CJS mode */
+  async test(): Promise<void> {
+    const [ node, cli ] = process.argv
+
+    const selection = this.workspace ? [ this.workspace ] : workspaces
+
+    for (const mode of [ 'esm', 'cjs' ] as const) {
+      const errors: AbsolutePath[] = []
+      for (const workspace of selection) {
+        const buildFile = resolve(workspace, 'test', 'build.ts')
+        try {
+          log.notice(banner(`${mode.toUpperCase()} Tests (${workspace})`))
+          await exec(node!, ...process.execArgv, cli!, `--force-${mode}`, '-f', buildFile, 'test', {
+            coverageDir: '.coverage-data',
+          })
+        } catch (error: any) {
+          log.error(error)
+          errors.push(buildFile)
+        }
+      }
+
+      if (errors.length === 0) return
+
+      log.error(banner('Tests failed'))
+      log.error(`Found test errors in ${errors.length} subprojects`)
+      errors.forEach((file) => log.error('*', $p(file)))
+    }
   },
+
+  /* ======================================================================== *
+   * COVERAGE                                                                 *
+   * ======================================================================== */
 
   find_coverage(): Promise<Files> {
     return find(`${this.workspace}/src/**/*.([cm])?ts`, {
       directory: 'workspaces',
     }).debug()
-  },
-
-  /** Run tests in CJS mode */
-  async test_cjs(): Promise<void> {
-    const files = await this.find_test()
-
-    const [ node, cli ] = process.argv
-
-    for (const buildFile of files.absolutePaths()) {
-      await exec(node!, ...process.execArgv, cli!, '--force-esm', '-f', buildFile, 'test', {
-        coverageDir: '.coverage-data',
-      })
-    }
-  },
-
-  /** Run tests in ESM mode */
-  async test_esm(): Promise<void> {
-    const files = await this.find_test()
-
-    const [ node, cli ] = process.argv
-
-    for (const buildFile of files.absolutePaths()) {
-      await exec(node!, ...process.execArgv, cli!, '--force-cjs', '-f', buildFile, 'test', {
-        coverageDir: '.coverage-data',
-      })
-    }
   },
 
   /** Gnerate coverage report */
@@ -136,16 +160,20 @@ export default build({
         }))
   },
 
-  /** Run tests and generate coverage */
-  async test(): Promise<void> {
-    await rmrf('.coverage-data')
-    await this.test_cjs()
-    // await this.test_esm()
-    await this.coverage()
+  /* ======================================================================== *
+   * LINTING                                                                  *
+   * ======================================================================== */
+
+  async lint(): Promise<void> {
+    const eslint = await import('./workspaces/eslint/src/eslint.js')
+    const ESLint = eslint.default.ESLint
+
+    await find('*/(src|test)/**/*.([cm])?ts', { directory: 'workspaces' })
+        .plug(new ESLint())
   },
 
   /* ======================================================================== *
-   * DEFAULT                                                                  *
+   * OTHER TASKS                                                              *
    * ======================================================================== */
 
   /* Cleanup generated files */
