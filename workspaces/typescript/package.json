@@ -1,0 +1,43 @@
+{
+  "name": "@plugjs/typescript",
+  "version": "0.2.0",
+  "type": "commonjs",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      }
+    },
+    "./typescript": {
+      "require": {
+        "types": "./dist/typescript.d.ts",
+        "default": "./dist/typescript.cjs"
+      },
+      "import": {
+        "types": "./dist/typescript.d.ts",
+        "default": "./dist/typescript.mjs"
+      }
+    }
+  },
+  "author": "Juit Developers <developers@juit.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "typescript": "^4.9.3"
+  },
+  "peerDependencies": {
+    "@plugjs/plug": "^0.2.0"
+  },
+  "files": [
+    "*.md",
+    "dist/",
+    "src/"
+  ]
+}
