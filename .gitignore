@@ -1,4 +1,5 @@
 .coverage-data/
+.coverage-test-data/
 build/
 coverage/
 node_modules/
