@@ -1,6 +1,0 @@
-*.tgz
-.coverage-data/
-.vscode/
-coverage/
-dist/
-node_modules/
