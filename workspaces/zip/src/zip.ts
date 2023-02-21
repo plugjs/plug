@@ -4,6 +4,7 @@
 import { createWriteStream } from 'node:fs'
 
 import { $p, $ylw, assert, Files } from '@plugjs/plug'
+import { getAbsoluteParent } from '@plugjs/plug/paths'
 import { ZipFile } from 'yazl'
 
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
@@ -40,14 +41,17 @@ export class Zip implements Plug<Files> {
     }
 
     /* All files are added, just compute our return */
-    const output = Files.builder(context.buildDir).add(filename).build()
+    const directory = getAbsoluteParent(filename)
+    const output = Files.builder(directory).add(filename).build()
     zipfile.end()
 
     /* When done, resolve or reject! */
     return new Promise((resolve, reject) => {
-      zipfile.on('error', (error) => reject(error))
-      zipstream.on('error', (error) => reject(error))
       zipstream.on('close', () => resolve(output))
+      /* coverage ignore next */
+      zipfile.on('error', (error) => reject(error))
+      /* coverage ignore next */
+      zipstream.on('error', (error) => reject(error))
     })
   }
 }
