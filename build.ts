@@ -23,13 +23,13 @@ import type {
 
 /** All known workspace paths */
 const workspaces = [
-  'workspaces/plug',
+  'workspaces/plug', // this _must_ be the first
   'workspaces/cov8',
   'workspaces/eslint',
   'workspaces/jasmine',
   'workspaces/mocha',
   'workspaces/typescript',
-]
+] as const
 
 /** Shared ESBuild options */
 const esbuildOptions: ESBuildOptions = {
@@ -88,6 +88,20 @@ export default build({
 
   /** Transpile CLI */
   async transpile_cli(): Promise<Files> {
+    const tsc = await import('./workspaces/typescript/src/typescript.js')
+    const Tsc = tsc.default.Tsc
+
+    // then we *only check* the types for "workspaces/plug/extra"
+    log.notice(`Checking extras types sanity in ${$p(resolve('workspaces/plug/extra'))}`)
+    await find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
+        .plug(new Tsc('workspaces/plug/tsconfig-base.json', {
+          noEmit: true,
+          declaration: false,
+          emitDeclarationOnly: false,
+          rootDir: 'workspaces/plug',
+          extraTypesDir: 'workspaces/plug/types',
+        }))
+
     log.notice(`Transpiling extras for CLI from ${$p(resolve('workspaces/plug/extra'))}`)
     return find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
         .esbuild({
@@ -105,14 +119,18 @@ export default build({
 
   /** Generate all Typescript definition files */
   async transpile_dts(): Promise<void> {
-    const tsc = await import('./workspaces/typescript/src/typescript.js')
-    const Tsc = tsc.default.Tsc
+    const ForkingTsc = class extends fork.ForkingPlug {
+      constructor(...args: any[]) {
+        const scriptFile = paths.requireResolve(__fileurl, './workspaces/typescript/src/typescript')
+        super(scriptFile, args, 'Tsc')
+      }
+    }
 
-    // can not parallelize this: we need the plug.js types **first**
-    for (const workspace of workspaces) {
+    // call tsc, forking out the process (for parallelisation below)
+    const transpile = async (workspace: string): Promise<void> => {
       log.notice(`Transpiling sources to DTS from ${$p(resolve(workspace))}`)
       await find('**/*.([cm])?ts', { directory: `${workspace}/src` })
-          .plug(new Tsc(`${workspace}/tsconfig-base.json`, {
+          .plug(new ForkingTsc(`${workspace}/tsconfig-base.json`, {
             noEmit: false,
             declaration: true,
             emitDeclarationOnly: true,
@@ -120,16 +138,12 @@ export default build({
           }))
     }
 
-    // then we *only check* the types for "workspaces/plug/extra"
-    log.notice(`Checking extras types sanity in ${$p(resolve('workspaces/plug/extra'))}`)
-    await find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
-        .plug(new Tsc('workspaces/plug/tsconfig-base.json', {
-          noEmit: true,
-          declaration: false,
-          emitDeclarationOnly: false,
-          rootDir: 'workspaces/plug',
-          extraTypesDir: 'workspaces/plug/types',
-        }))
+    // we need the types for "plug" first
+    const [ plug, ...plugins ] = workspaces
+
+    // transplile "plug" then parallelize all plugins
+    await transpile(plug)
+    await Promise.all(plugins.map(transpile))
   },
 
   /** Transpile all source code */
