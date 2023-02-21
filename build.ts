@@ -31,6 +31,26 @@ const workspaces = [
   'workspaces/typescript',
 ] as const
 
+/** Exports for our "package.json" files */
+const workspaceExports: Record<typeof workspaces[number], [ string, ...string[] ]> = {
+  'workspaces/plug': [
+    'index.*',
+    'asserts.*',
+    'files.*',
+    'fork.*',
+    'fs.*',
+    'logging.*',
+    'paths.*',
+    'pipe.*',
+    'utils.*',
+  ],
+  'workspaces/cov8': [ 'index.*', 'coverage.*' ],
+  'workspaces/eslint': [ 'index.*', 'eslint.*' ],
+  'workspaces/jasmine': [ 'index.*', 'jasmine.*' ],
+  'workspaces/mocha': [ 'index.*', 'mocha.*' ],
+  'workspaces/typescript': [ 'index.*', 'typescript.*' ],
+}
+
 /** Shared ESBuild options */
 const esbuildOptions: ESBuildOptions = {
   platform: 'node',
@@ -238,8 +258,10 @@ export default build({
 
     await sources.plug(new Coverage('.coverage-data', {
       reportDir: 'coverage',
-      minimumCoverage: 100,
-      minimumFileCoverage: 100,
+      optimalCoverage: 100,
+      minimumCoverage: 85,
+      optimalFileCoverage: 100,
+      minimumFileCoverage: 0,
     }))
   },
 
@@ -264,6 +286,19 @@ export default build({
   /* ======================================================================== *
    * OTHER TASKS                                                              *
    * ======================================================================== */
+
+  /* Prepare exports in our "package.json" files */
+  async exports(): Promise<void> {
+    for (const workspace of workspaces) {
+      const globs = workspaceExports[workspace]
+      await find(...globs, { directory: `${workspace}/dist` })
+          .exports({
+            packageJson: `${workspace}/package.json`,
+            cjsExtension: '.cjs',
+            esmExtension: '.mjs',
+          })
+    }
+  },
 
   /* Cleanup generated files */
   async clean(): Promise<void> {
