@@ -7,10 +7,11 @@ Packages
 --------
 
 * [`@plugjs/plug`](./workspaces/plug/README.md): Our main package
-* [`@plugjs/cov8`](./workspaces/plug/README.md): V8 Coverage Support
-* [`@plugjs/eslint`](./workspaces/plug/README.md): ESLint Support
-* [`@plugjs/jasmine`](./workspaces/plug/README.md): Jasmine Support
-* [`@plugjs/typescript`](./workspaces/plug/README.md): TypeScript Support
+* [`@plugjs/cov8`](./workspaces/cov8/README.md): V8 Coverage Support
+* [`@plugjs/eslint`](./workspaces/eslint/README.md): ESLint Support
+* [`@plugjs/jasmine`](./workspaces/jasmine/README.md): Jasmine Support
+* [`@plugjs/mocha`](./workspaces/mocha/README.md): Mocha Support
+* [`@plugjs/typescript`](./workspaces/typescript/README.md): TypeScript Support
 
 Legal
 --------
