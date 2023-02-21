@@ -1,8 +1,10 @@
 import {
   $gry,
   $p,
-  $wht, build,
+  $wht,
+  build,
   exec,
+  fail,
   find,
   fixExtensions,
   log,
@@ -11,8 +13,12 @@ import {
   rmrf,
 } from './workspaces/plug/src/index'
 
-import type { AbsolutePath } from '@plugjs/plug/paths'
-import type { ESBuildOptions, Files } from './workspaces/plug/src/index'
+// import type { AbsolutePath } from '@plugjs/plug/paths'
+import type {
+  AbsolutePath,
+  ESBuildOptions,
+  Files,
+} from './workspaces/plug/src/index'
 
 /** All known workspace paths */
 const workspaces = [
@@ -147,6 +153,8 @@ export default build({
       log.error(banner('Tests failed'))
       log.error(`Found test errors in ${errors.length} subprojects`)
       errors.forEach((file) => log.error('*', $p(file)))
+      log.error('')
+      fail('')
     }
   },
 
@@ -209,8 +217,8 @@ export default build({
   /* Run all tasks (sequentially) */
   async default(): Promise<void> {
     await this.clean_coverage()
+    await this.transpile()
     try {
-      await this.transpile()
       await this.test()
     } finally {
       await this.coverage()
