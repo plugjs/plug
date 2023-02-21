@@ -200,6 +200,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
         assert(typeof Ctor === 'function', `Script ${$p(scriptFile)} does not export a default constructor`)
       } else {
         Ctor = script[exportName]
+        if ((! Ctor) && (script.default)) Ctor = script.default[exportName]
         assert(typeof Ctor === 'function', `Script ${$p(scriptFile)} does not export "${exportName}"`)
       }
 
