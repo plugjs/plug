@@ -65,7 +65,6 @@ install('esbuild', class ESBuild implements Plug<Files> {
       absWorkingDir,
       entryPoints,
       logLevel: 'silent',
-      watch: false,
     }
 
     if (options.format === 'cjs') {
