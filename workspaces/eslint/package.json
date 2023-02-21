@@ -36,7 +36,7 @@
     "@types/eslint": "^8.21.1"
   },
   "peerDependencies": {
-    "@plugjs/plug": "^0.2.0"
+    "@plugjs/plug": "0.2.0"
   },
   "files": [
     "*.md",
