@@ -23,7 +23,7 @@ module.exports = {
     ],
   },
   overrides: [ {
-    files: [ 'workspaces/*/test/**' ],
+    files: [ 'workspaces/*/test/**', 'workspaces/plug/test/extra' ],
     rules: {
       'import/no-extraneous-dependencies': 'off',
     },
