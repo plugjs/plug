@@ -1,9 +1,9 @@
 import { basename } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+import { BuildFailure } from '../src/asserts'
 import { requireContext } from '../src/async'
 import { assertAbsolutePath, assertRelativeChildPath, commonPath, getAbsoluteParent, getCurrentWorkingDirectory, isAbsolutePath, requireFilename, requireResolve, resolveAbsolutePath, resolveDirectory, resolveFile, resolveRelativeChildPath } from '../src/paths'
-import { BuildFailure } from '../src/asserts'
 
 describe('Paths Utilities', () => {
   const { buildFile, buildDir } = requireContext()
@@ -77,14 +77,14 @@ describe('Paths Utilities', () => {
   })
 
   it('should return the module name to require / import', () => {
-    expect(requireResolve(buildFile, './src/index.ts'))
-        .toBe(resolveAbsolutePath(buildDir, 'src', 'index.ts'))
-    expect(requireResolve(buildFile, './src/index')) // no extension
-        .toBe(resolveAbsolutePath(buildDir, 'src', 'index.ts'))
-    expect(requireResolve(buildFile, './src')) // directory index!
-        .toBe(resolveAbsolutePath(buildDir, 'src', 'index.ts'))
-    expect(requireResolve(buildFile, './src/')) // directory with slash
-        .toBe(resolveAbsolutePath(buildDir, 'src', 'index.ts'))
+    expect(requireResolve(buildFile, '../src/index.ts'))
+        .toBe(resolveAbsolutePath(buildDir, '..', 'src', 'index.ts'))
+    expect(requireResolve(buildFile, '../src/index')) // no extension
+        .toBe(resolveAbsolutePath(buildDir, '..', 'src', 'index.ts'))
+    expect(requireResolve(buildFile, '../src')) // directory index!
+        .toBe(resolveAbsolutePath(buildDir, '..', 'src', 'index.ts'))
+    expect(requireResolve(buildFile, '../src/')) // directory with slash
+        .toBe(resolveAbsolutePath(buildDir, '..', 'src', 'index.ts'))
 
     // straight up modules!
     expect(requireResolve(buildFile, 'typescript')).toEqual(jasmine.any(String))
