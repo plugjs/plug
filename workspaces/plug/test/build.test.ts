@@ -1,7 +1,6 @@
 import { BuildFailure } from '../src/asserts'
 import { currentContext, requireContext, runningTasks } from '../src/async'
 import { build, invoke } from '../src/build'
-import { log } from '../src/index'
 
 describe('Build Invocation', () => {
   it('should invoke a build', async () => {
@@ -14,7 +13,6 @@ describe('Build Invocation', () => {
       },
     })
 
-    log('Starting test build')
     await invoke(tasks, 'myTask')
     expect(propValue).toBe('this is the default')
   })
@@ -29,7 +27,6 @@ describe('Build Invocation', () => {
       },
     })
 
-    log('Starting test build')
     await invoke(tasks, 'myTask', { myProp: 'this is overridden' })
     expect(propValue).toBe('this is overridden')
   })
@@ -50,7 +47,6 @@ describe('Build Invocation', () => {
       },
     })
 
-    log('Starting test build')
     await invoke(tasks2, 'myTask2')
     expect(calls).toEqual([
       'original myTask1', // invoked by overridden task 2
@@ -61,7 +57,6 @@ describe('Build Invocation', () => {
   it('should fail with an invalid task name', async () => {
     const tasks = build({ myTask: () => void 0 })
 
-    log('Starting test build')
     await expectAsync(invoke(tasks, 'wrongTask'))
         .toBeRejectedWithError(BuildFailure as any, '')
   })
@@ -69,13 +64,11 @@ describe('Build Invocation', () => {
   it('should fail when a task fails', async () => {
     const tasks = build({ myTask: () => Promise.reject(new Error('Foo!')) })
 
-    log('Starting test build')
     await expectAsync(invoke(tasks, 'myTask'))
         .toBeRejectedWithError(BuildFailure as any, '')
   })
 
   it('should fail with an invalid build', async () => {
-    log('Starting test build')
     await expectAsync(invoke({}, 'wrongTask'))
         .toBeRejectedWithError(BuildFailure as any, /^$/)
   })
