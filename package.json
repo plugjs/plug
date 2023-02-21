@@ -9,6 +9,10 @@
     "workspaces/plug",
     "workspaces/typescript"
   ],
+  "scripts": {
+    "prepare": "./bootstrap.sh",
+    "build": "node ./build/cli.mjs"
+  },
   "devDependencies": {
     "@plugjs/eslint-plugin": "^0.1.1",
     "@types/node": "<19",
