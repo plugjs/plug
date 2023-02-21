@@ -138,12 +138,17 @@ export default build({
           }))
     }
 
-    // we need the types for "plug" first
-    const [ plug, ...plugins ] = workspaces
+    // all other workspaces need "plug"
+    await transpile('workspaces/plug')
 
-    // transplile "plug" then parallelize all plugins
-    await transpile(plug)
-    await Promise.all(plugins.map(transpile))
+    // build the types only for our selected workspace or all plugins
+    if (this.workspace) {
+      if (this.workspace !== 'plug') {
+        await transpile(`workspaces/${this.workspace}`)
+      }
+    } else {
+      await Promise.all(workspaces.slice(1))
+    }
   },
 
   /** Transpile all source code */
