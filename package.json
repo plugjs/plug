@@ -23,5 +23,6 @@
     "@plugjs/eslint-plugin": "^0.1.1",
     "@types/node": "<19",
     "typescript": "^4.9.5"
-  }
+  },
+  "files": []
 }
