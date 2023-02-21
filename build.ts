@@ -1,154 +1,342 @@
-// Import PlugJS plugins used by this build without using "install"
-import { Coverage } from '@plugjs/cov8/coverage'
-import { ESLint } from '@plugjs/eslint/eslint'
-import { Jasmine } from '@plugjs/jasmine/jasmine'
-import { Tsc } from '@plugjs/typescript/typescript'
+import {
+  $gry,
+  $p,
+  $wht,
+  build,
+  exec,
+  fail,
+  find,
+  fixExtensions,
+  fork,
+  fs,
+  log,
+  merge,
+  paths,
+  resolve,
+  rmrf,
+} from './workspaces/plug/src/index'
 
-import { build, exec, find, fixExtensions, merge, rmrf, type Pipe } from './src/index.js'
+import type {
+  AbsolutePath,
+  ESBuildOptions,
+  Files,
+} from './workspaces/plug/src/index'
+
+/** All known workspace paths */
+const workspaces = [
+  'workspaces/plug', // this _must_ be the first
+  'workspaces/cov8',
+  'workspaces/eslint',
+  'workspaces/jasmine',
+  'workspaces/mocha',
+  'workspaces/typescript',
+] as const
+
+/** Exports for our "package.json" files */
+const workspaceExports: Record<typeof workspaces[number], [ string, ...string[] ]> = {
+  'workspaces/plug': [
+    'index.*',
+    'asserts.*',
+    'files.*',
+    'fork.*',
+    'fs.*',
+    'logging.*',
+    'paths.*',
+    'pipe.*',
+    'utils.*',
+  ],
+  'workspaces/cov8': [ 'index.*', 'coverage.*' ],
+  'workspaces/eslint': [ 'index.*', 'eslint.*' ],
+  'workspaces/jasmine': [ 'index.*', 'jasmine.*' ],
+  'workspaces/mocha': [ 'index.*', 'mocha.*' ],
+  'workspaces/typescript': [ 'index.*', 'typescript.*' ],
+}
+
+/** Shared ESBuild options */
+const esbuildOptions: ESBuildOptions = {
+  platform: 'node',
+  target: 'node18',
+  sourcemap: 'linked',
+  sourcesContent: false,
+  plugins: [ fixExtensions() ],
+}
+
+/** Niceties... */
+function banner(message: string): string {
+  return [
+    '',
+    $gry(`\u2554${''.padStart(60, '\u2550')}\u2557`),
+    `${$gry('\u2551')} ${$wht(message.padEnd(58, ' '))} ${$gry('\u2551')}`,
+    $gry(`\u255A${''.padStart(60, '\u2550')}\u255D`),
+    '',
+  ].join('\n')
+}
 
 export default build({
-  find_sources: () => find('**/*.([cm])?ts', { directory: 'src', ignore: '**/*.d.ts' }),
-  find_extras: () => find('**/*.([cm])?ts', { directory: 'extra', ignore: '**/*.d.ts' }),
-  find_tests: () => find('**/*.test.([cm])?ts', { directory: 'test', ignore: '**/*.d.ts' }),
+  workspace: '',
 
   /* ======================================================================== *
-   * RUN TESTS FROM "./test"                                                  *
+   * TRANSPILATION                                                            *
    * ======================================================================== */
 
-  async test() {
-    await this.find_tests().plug(new Jasmine())
+  /** Transpile to CJS */
+  async transpile_cjs(): Promise<Files> {
+    return merge(workspaces.map((workspace) => {
+      log.notice(`Transpiling sources to CJS from ${$p(resolve(workspace))}`)
+      return find('**/*.([cm])?ts', { directory: `${workspace}/src` })
+          .esbuild({
+            ...esbuildOptions,
+            format: 'cjs',
+            outdir: `${workspace}/dist`,
+            outExtension: { '.js': '.cjs' },
+          })
+    }))
   },
 
-  /* ======================================================================== *
-   * EXTRA CHECKS (dependencies, linting)                                     *
-   * ======================================================================== */
+  /** Transpile to ESM */
+  async transpile_esm(): Promise<Files> {
+    return merge(workspaces.map((workspace) => {
+      log.notice(`Transpiling sources to ESM from ${$p(resolve(workspace))}`)
+      return find('**/*.([cm])?ts', { directory: `${workspace}/src` })
+          .esbuild({
+            ...esbuildOptions,
+            format: 'esm',
+            outdir: `${workspace}/dist`,
+            outExtension: { '.js': '.mjs' },
+          })
+    }))
+  },
 
-  async check_extras() {
-    await this.find_extras()
-        .plug(new Tsc('tsconfig.json', {
-          extraTypesDir: 'types',
-          rootDir: '.',
+  /** Transpile CLI */
+  async transpile_cli(): Promise<Files> {
+    const tsc = await import('./workspaces/typescript/src/typescript.js')
+    const Tsc = tsc.default.Tsc
+
+    // then we *only check* the types for "workspaces/plug/extra"
+    log.notice(`Checking extras types sanity in ${$p(resolve('workspaces/plug/extra'))}`)
+    await find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
+        .plug(new Tsc('workspaces/plug/tsconfig-base.json', {
+          noEmit: true,
+          declaration: false,
+          emitDeclarationOnly: false,
+          rootDir: 'workspaces/plug',
+          extraTypesDir: 'workspaces/plug/types',
         }))
-  },
 
-  async eslint() {
-    await merge([
-      this.find_sources(),
-      this.find_extras(),
-      this.find_tests(),
-    ]).plug(new ESLint())
-  },
-
-  async checks() {
-    await Promise.all([
-      this.check_extras(),
-      this.eslint(),
-    ])
-  },
-
-  /* ======================================================================== *
-   * TRANSPILE TYPES AND SOURCES IN "./dist" (dts, esm and cjs)               *
-   * ======================================================================== */
-
-  transpile_cjs(): Pipe {
-    return this.find_sources()
+    log.notice(`Transpiling extras for CLI from ${$p(resolve('workspaces/plug/extra'))}`)
+    return find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
         .esbuild({
-          outdir: 'dist',
-          format: 'cjs',
-          outExtension: { '.js': '.cjs' },
-          sourcemap: 'linked',
-          sourcesContent: false,
-          plugins: [ fixExtensions() ],
-        })
-  },
-
-  transpile_mjs(): Pipe {
-    return this.find_sources()
-        .esbuild({
-          outdir: 'dist',
+          bundle: true,
           format: 'esm',
-          outExtension: { '.js': '.mjs' },
-          sourcemap: 'linked',
+          target: 'node18',
+          platform: 'node',
+          sourcemap: 'inline',
           sourcesContent: false,
-          plugins: [ fixExtensions() ],
+          external: [ 'esbuild' ],
+          outExtension: { '.js': '.mjs' },
+          outdir: 'workspaces/plug/extra',
         })
   },
 
-  transpile_types(): Pipe {
-    return this.find_sources()
-        .plug(new Tsc('tsconfig.json', {
-          rootDir: 'src',
-          noEmit: false,
-          declaration: true,
-          emitDeclarationOnly: true,
-          outDir: './dist',
-          extraTypesDir: 'types',
-        }))
+  /** Generate all Typescript definition files */
+  async transpile_dts(): Promise<void> {
+    const ForkingTsc = class extends fork.ForkingPlug {
+      constructor(...args: any[]) {
+        const scriptFile = paths.requireResolve(__fileurl, './workspaces/typescript/src/typescript')
+        super(scriptFile, args, 'Tsc')
+      }
+    }
+
+    // call tsc, forking out the process (for parallelisation below)
+    const transpile = async (workspace: string): Promise<void> => {
+      log.notice(`Transpiling sources to DTS from ${$p(resolve(workspace))}`)
+      await find('**/*.([cm])?ts', { directory: `${workspace}/src` })
+          .plug(new ForkingTsc(`${workspace}/tsconfig-base.json`, {
+            noEmit: false,
+            declaration: true,
+            emitDeclarationOnly: true,
+            outDir: `${workspace}/dist`,
+          }))
+    }
+
+    // all other workspaces need "plug"
+    await transpile('workspaces/plug')
+
+    // build the types only for our selected workspace or all plugins
+    if (this.workspace) {
+      if (this.workspace !== 'plug') {
+        await transpile(`workspaces/${this.workspace}`)
+      }
+    } else {
+      await Promise.all(workspaces.slice(1))
+    }
   },
 
-  async transpile(): Promise<Pipe> {
-    await rmrf('dist')
+  /** Transpile all source code */
+  async transpile(): Promise<void> {
+    log.notice(banner('Transpiling'))
 
-    return merge([
-      await this.transpile_cjs(),
-      await this.transpile_mjs(),
-      await this.transpile_types(),
-    ])
+    await this.transpile_cjs()
+    await this.transpile_esm()
+    await this.transpile_cli()
+    await this.transpile_dts()
   },
 
   /* ======================================================================== *
-   * PACKAGE JSON ENTRY POINTS                                                *
+   * TESTING                                                                  *
    * ======================================================================== */
 
-  entrypoints(): Pipe {
-    return this.transpile()
-        .filter('index.*', 'asserts.*', 'files.*', 'fork.*', 'fs.*',
-            'logging.*', 'paths.*', 'pipe.*', 'utils.*')
-        .exports({
-          cjsExtension: '.cjs',
-          esmExtension: '.mjs',
-        })
+  /** Run tests in CJS mode */
+  async test(): Promise<void> {
+    const [ node, cli ] = process.argv
+
+    const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
+
+    for (const mode of [ 'esm', 'cjs' ] as const) {
+      const errors: AbsolutePath[] = []
+      for (const workspace of selection) {
+        const buildFile = resolve(workspace, 'test', 'build.ts')
+        try {
+          log.notice(banner(`${mode.toUpperCase()} Tests (${workspace})`))
+          await exec(node!, ...process.execArgv, cli!, `--force-${mode}`, '-f', buildFile, 'test', {
+            coverageDir: '.coverage-data',
+          })
+        } catch (error: any) {
+          log.error(error)
+          errors.push(buildFile)
+        }
+      }
+
+      if (errors.length === 0) return
+
+      log.error(banner('Tests failed'))
+      log.error(`Found test errors in ${errors.length} subprojects`)
+      errors.forEach((file) => log.error('*', $p(file)))
+      log.error('')
+      fail('')
+    }
   },
 
   /* ======================================================================== *
-   * BUILD EVERYTHING                                                         *
+   * COVERAGE                                                                 *
    * ======================================================================== */
 
-  async build() {
-    await this.entrypoints()
-    await this.transpile()
-    await this.checks()
-  },
-
-  /* ======================================================================== *
-   * SELF COVERAGE                                                            *
-   * ======================================================================== */
-
-  async coverage() {
-    await this.find_sources()
-        .plug(new Coverage('.coverage-data', { reportDir: 'coverage' }))
-  },
-
-  async default() {
+  async clean_coverage(): Promise<void> {
     await rmrf('.coverage-data')
+    await rmrf('.coverage-test-data')
+  },
+
+  find_coverage(): Promise<Files> {
+    return find(`${this.workspace}/src/**/*.([cm])?ts`, {
+      directory: 'workspaces',
+    })
+  },
+
+  /** Gnerate coverage report */
+  async coverage(): Promise<void> {
+    log.notice(banner('Test Coverage'))
+
+    const coverage = await import('./workspaces/cov8/src/coverage.js')
+    const Coverage = coverage.default.Coverage
+
+    const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
+
+    const sources = merge(selection.map((workspace) => {
+      return find('src/**/*.([cm])?ts', { directory: workspace })
+    }))
+
+    await sources.plug(new Coverage('.coverage-data', {
+      reportDir: 'coverage',
+      optimalCoverage: 100,
+      minimumCoverage: 80,
+      optimalFileCoverage: 100,
+      minimumFileCoverage: 0,
+    }))
+  },
+
+  /* ======================================================================== *
+   * LINTING                                                                  *
+   * ======================================================================== */
+
+  async lint(): Promise<void> {
+    log.notice(banner('Linting Sources'))
+
+    const ForkingESLint = class extends fork.ForkingPlug {
+      constructor(...args: any[]) {
+        const scriptFile = paths.requireResolve(__fileurl, './workspaces/eslint/src/eslint')
+        super(scriptFile, args, 'ESLint')
+      }
+    }
+
+    await find('*/(src|extra|test|types)/**/*.([cm])?ts', { directory: 'workspaces' })
+        .plug(new ForkingESLint())
+  },
+
+  /* ======================================================================== *
+   * OTHER TASKS                                                              *
+   * ======================================================================== */
+
+  /* Prepare exports in our "package.json" files */
+  async package_data(): Promise<void> {
+    const data = await fs.readFile(resolve('package.json'), 'utf-8')
+    const version = JSON.parse(data).version
+
+    log.notice(banner(`Updating package.json files (version=${version})`))
+
+    for (const workspace of workspaces) {
+      const globs = workspaceExports[workspace]
+      await find(...globs, { directory: `${workspace}/dist` })
+          .exports({
+            packageJson: `${workspace}/package.json`,
+            cjsExtension: '.cjs',
+            esmExtension: '.mjs',
+          })
+          .edit((contents, filename) => {
+            const packageData = JSON.parse(contents)
+            log.notice($gry('* Updating'), packageData.name, $gry('in'), $p(filename))
+            packageData.version = version
+            if (workspace !== 'workspaces/plug') {
+              packageData.peerDependencies['@plugjs/plug'] = version
+            }
+            return JSON.stringify(packageData, null, 2) + '\n'
+          })
+    }
+  },
+
+  /* Cleanup generated files */
+  async clean(): Promise<void> {
+    await Promise.all( workspaces.map((workspace) => rmrf(`${workspace}/dist`)))
+  },
+
+  /* Only transpile and coverage (no linting) */
+  async dev(): Promise<void> {
+    await this.clean_coverage()
+    await this.transpile()
     try {
-      // simply build, sans tests!
-      await exec('./extra/cli.mjs', '--force-esm', 'build', {
+      await this.test()
+    } finally {
+      await this.coverage()
+    }
+  },
+
+  /* Build everything (forked from "default" to collect coverage) */
+  async build(): Promise<void> {
+    await this.transpile()
+    await this.lint()
+    await this.test()
+  },
+
+  /* Run all tasks (sequentially) */
+  async default(): Promise<void> {
+    const [ node, cli ] = process.argv
+
+    try {
+      log.notice('Forking to collect self coverage')
+      await exec(node!, ...process.execArgv, cli!, 'build', {
         coverageDir: '.coverage-data',
-        fork: true,
-      })
-      // tests running in ESM mode
-      await exec('./extra/cli.mjs', '--force-esm', 'test', {
-        coverageDir: '.coverage-data',
-        fork: true,
-      })
-      // tests running in CJS mode
-      await exec('./extra/cli.mjs', '--force-cjs', 'test', {
-        coverageDir: '.coverage-data',
-        fork: true,
       })
     } finally {
-      await this.coverage().catch(() => void 0)
+      await this.coverage()
     }
   },
 })

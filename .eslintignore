@@ -1,4 +1,1 @@
-*.mjs
-./coverage/
-./dist/
-./node_modules/
+workspaces/*/dist

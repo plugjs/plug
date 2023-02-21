@@ -1,0 +1,48 @@
+{
+  "name": "@plugjs/mocha",
+  "version": "0.2.0",
+  "type": "commonjs",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      }
+    },
+    "./mocha": {
+      "require": {
+        "types": "./dist/mocha.d.ts",
+        "default": "./dist/mocha.cjs"
+      },
+      "import": {
+        "types": "./dist/mocha.d.ts",
+        "default": "./dist/mocha.mjs"
+      }
+    }
+  },
+  "author": "Juit Developers <developers@juit.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@types/mocha": "^10.0.1",
+    "diff": "^5.1.0",
+    "mocha": "^10.2.0"
+  },
+  "devDependencies": {
+    "@types/diff": "^5.0.2"
+  },
+  "peerDependencies": {
+    "@plugjs/plug": "0.2.0"
+  },
+  "files": [
+    "*.md",
+    "dist/",
+    "src/"
+  ]
+}

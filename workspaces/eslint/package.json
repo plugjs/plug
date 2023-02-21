@@ -1,0 +1,46 @@
+{
+  "name": "@plugjs/eslint",
+  "version": "0.2.0",
+  "type": "commonjs",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      }
+    },
+    "./eslint": {
+      "require": {
+        "types": "./dist/eslint.d.ts",
+        "default": "./dist/eslint.cjs"
+      },
+      "import": {
+        "types": "./dist/eslint.d.ts",
+        "default": "./dist/eslint.mjs"
+      }
+    }
+  },
+  "author": "Juit Developers <developers@juit.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "eslint": "^8.34.0"
+  },
+  "devDependencies": {
+    "@types/eslint": "^8.21.1"
+  },
+  "peerDependencies": {
+    "@plugjs/plug": "0.2.0"
+  },
+  "files": [
+    "*.md",
+    "dist/",
+    "src/"
+  ]
+}

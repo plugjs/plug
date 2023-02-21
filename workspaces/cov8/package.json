@@ -1,0 +1,46 @@
+{
+  "name": "@plugjs/cov8",
+  "version": "0.2.0",
+  "type": "commonjs",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      }
+    },
+    "./coverage": {
+      "require": {
+        "types": "./dist/coverage.d.ts",
+        "default": "./dist/coverage.cjs"
+      },
+      "import": {
+        "types": "./dist/coverage.d.ts",
+        "default": "./dist/coverage.mjs"
+      }
+    }
+  },
+  "author": "Juit Developers <developers@juit.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@babel/parser": "^7.21.1",
+    "@babel/types": "^7.21.0",
+    "@plugjs/cov8-html": "^0.1.1",
+    "source-map": "^0.7.4"
+  },
+  "peerDependencies": {
+    "@plugjs/plug": "0.2.0"
+  },
+  "files": [
+    "*.md",
+    "dist/",
+    "src/"
+  ]
+}

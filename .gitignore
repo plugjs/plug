@@ -1,10 +1,8 @@
 *.tgz
 .coverage-data/
-.vscode/
+.coverage-test-data/
+build/
 coverage/
-dist/
-extra/cli.mjs
-extra/cli.mjs.map
-extra/ts-loader.mjs
-extra/ts-loader.mjs.map
 node_modules/
+workspaces/*/dist
+workspaces/plug/extra/*.mjs
