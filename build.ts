@@ -7,13 +7,14 @@ import {
   fail,
   find,
   fixExtensions,
+  fork,
   log,
   merge,
+  paths,
   resolve,
   rmrf,
 } from './workspaces/plug/src/index'
 
-// import type { AbsolutePath } from '@plugjs/plug/paths'
 import type {
   AbsolutePath,
   ESBuildOptions,
@@ -85,6 +86,23 @@ export default build({
     }))
   },
 
+  /** Transpile CLI */
+  async transpile_cli(): Promise<Files> {
+    log.notice(`Transpiling extras for CLI from ${$p(resolve('workspaces/plug/extra'))}`)
+    return find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
+        .esbuild({
+          bundle: true,
+          format: 'esm',
+          target: 'node18',
+          platform: 'node',
+          sourcemap: 'inline',
+          sourcesContent: false,
+          external: [ 'esbuild' ],
+          outExtension: { '.js': '.mjs' },
+          outdir: 'workspaces/plug/extra',
+        })
+  },
+
   /** Generate all Typescript definition files */
   async transpile_dts(): Promise<void> {
     const tsc = await import('./workspaces/typescript/src/typescript.js')
@@ -125,6 +143,7 @@ export default build({
     const subTasks = [
       'transpile_cjs',
       'transpile_esm',
+      'transpile_cli',
       'transpile_dts',
     ]
 
@@ -210,11 +229,17 @@ export default build({
    * ======================================================================== */
 
   async lint(): Promise<void> {
-    const eslint = await import('./workspaces/eslint/src/eslint.js')
-    const ESLint = eslint.default.ESLint
+    log.notice(banner('Linting Sources'))
+
+    const ForkingESLint = class extends fork.ForkingPlug {
+      constructor(...args: any[]) {
+        const scriptFile = paths.requireResolve(__fileurl, './workspaces/eslint/src/eslint')
+        super(scriptFile, args, 'ESLint')
+      }
+    }
 
     await find('*/(src|extra|test|types)/**/*.([cm])?ts', { directory: 'workspaces' })
-        .plug(new ESLint())
+        .plug(new ForkingESLint())
   },
 
   /* ======================================================================== *
@@ -230,6 +255,7 @@ export default build({
   async default(): Promise<void> {
     await this.clean_coverage()
     await this.transpile()
+    await this.lint()
     try {
       await this.test()
     } finally {
