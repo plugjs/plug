@@ -8,6 +8,7 @@ import {
   find,
   fixExtensions,
   fork,
+  fs,
   log,
   merge,
   paths,
@@ -288,7 +289,12 @@ export default build({
    * ======================================================================== */
 
   /* Prepare exports in our "package.json" files */
-  async exports(): Promise<void> {
+  async package_data(): Promise<void> {
+    const data = await fs.readFile(resolve('package.json'), 'utf-8')
+    const version = JSON.parse(data).version
+
+    log.notice(banner(`Updating package.json files (version=${version})`))
+
     for (const workspace of workspaces) {
       const globs = workspaceExports[workspace]
       await find(...globs, { directory: `${workspace}/dist` })
@@ -296,6 +302,15 @@ export default build({
             packageJson: `${workspace}/package.json`,
             cjsExtension: '.cjs',
             esmExtension: '.mjs',
+          })
+          .edit((contents, filename) => {
+            const packageData = JSON.parse(contents)
+            log.notice($gry('* Updating'), packageData.name, $gry('in'), $p(filename))
+            packageData.version = version
+            if (workspace !== 'workspaces/plug') {
+              packageData.peerDependencies['@plugjs/plug'] = version
+            }
+            return JSON.stringify(packageData, null, 2) + '\n'
           })
     }
   },
