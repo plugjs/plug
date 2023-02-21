@@ -101,6 +101,17 @@ export default build({
             outDir: `${workspace}/dist`,
           }))
     }
+
+    // then we *only check* the types for "workspaces/plug/extra"
+    log.notice(`Checking extras types sanity in ${$p(resolve('workspaces/plug/extra'))}`)
+    await find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
+        .plug(new Tsc('workspaces/plug/tsconfig-base.json', {
+          noEmit: true,
+          declaration: false,
+          emitDeclarationOnly: false,
+          rootDir: 'workspaces/plug',
+          extraTypesDir: 'workspaces/plug/types',
+        }))
   },
 
   /** Transpile all source code */
@@ -202,7 +213,7 @@ export default build({
     const eslint = await import('./workspaces/eslint/src/eslint.js')
     const ESLint = eslint.default.ESLint
 
-    await find('*/(src|test)/**/*.([cm])?ts', { directory: 'workspaces' })
+    await find('*/(src|extra|test|types)/**/*.([cm])?ts', { directory: 'workspaces' })
         .plug(new ESLint())
   },
 
