@@ -7,6 +7,7 @@ import type { Files } from './files'
 import type { Plug, PlugFunction } from './pipe'
 
 export type { Files } from './files'
+export type { AbsolutePath } from './paths'
 export type { Plug, PlugFunction } from './pipe'
 
 /**
