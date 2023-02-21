@@ -1,14 +1,19 @@
-import '@plugjs/jasmine'
-
-import { build, find } from '@plugjs/plug'
+import { ForkingPlug } from '../src/fork'
+import { build, find } from '../src/index'
+import { requireResolve } from '../src/paths'
 
 export default build({
   find_tests: () => find('**/*.test.([cm])?ts', { directory: '@', ignore: '**/*.d.ts' }).debug(),
 
   async test() {
-    // const jasmine = import('../../jasmine/src/jasmine.js')
-    // const Jasmine = (await jasmine).default.Jasmine
+    const jasmineScript = requireResolve(__fileurl, '../../jasmine/src/jasmine')
 
-    await this.find_tests().jasmine() // .plug(new Jasmine())
+    const ForkingJasmine = class extends ForkingPlug {
+      constructor(...args: any[]) {
+        super(jasmineScript, args, 'Jasmine')
+      }
+    }
+
+    await this.find_tests().plug(new ForkingJasmine())
   },
 })
