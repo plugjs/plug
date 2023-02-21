@@ -1,7 +1,9 @@
 import assert from 'node:assert'
 import { Writable } from 'node:stream'
 
+
 import { currentContext } from '../../src/async.js'
+import { log } from '../../src/logging.js'
 import { $gry } from '../../src/logging/colors.js'
 import { emitColor, emitPlain } from '../../src/logging/emit.js'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from '../../src/logging/levels.js'
@@ -17,12 +19,19 @@ describe('Emit', () => {
     run.log.level = TRACE
 
     try {
-      run.log.trace($gry('|'), 'trace ', 123, { foo: 'bar' })
-      run.log.debug($gry('|'), 'debug ', 123, { foo: 'bar' })
-      run.log.info($gry('|'), 'info  ', 123, { foo: 'bar' })
-      run.log.notice($gry('|'), 'notice', 123, { foo: 'bar' })
-      run.log.warn($gry('|'), 'warn  ', 123, { foo: 'bar' })
-      run.log.error($gry('|'), 'error ', 123, { foo: 'bar' })
+      run.log.trace($gry('| context'), 'trace ', 123, { foo: 'bar' })
+      run.log.debug($gry('| context'), 'debug ', 123, { foo: 'bar' })
+      run.log.info($gry('| context'), 'info  ', 123, { foo: 'bar' })
+      run.log.notice($gry('| context'), 'notice', 123, { foo: 'bar' })
+      run.log.warn($gry('| context'), 'warn  ', 123, { foo: 'bar' })
+      run.log.error($gry('| context'), 'error ', 123, { foo: 'bar' })
+      // shared log
+      log.trace($gry('| shared '), 'trace ', 123, { foo: 'bar' })
+      log.debug($gry('| shared '), 'debug ', 123, { foo: 'bar' })
+      log.info($gry('| shared '), 'info  ', 123, { foo: 'bar' })
+      log.notice($gry('| shared '), 'notice', 123, { foo: 'bar' })
+      log.warn($gry('| shared '), 'warn  ', 123, { foo: 'bar' })
+      log.error($gry('| shared '), 'error ', 123, { foo: 'bar' })
     } finally {
       run.log.level = _level
     }
@@ -57,8 +66,7 @@ describe('Emit', () => {
       emitColor({ level: ERROR, taskName, indent: 4 }, [ 'indented' ])
       emitColor({ level: ERROR, taskName, prefix: '{prefix}' }, [ 'prefixed' ])
 
-      // @ts-ignore // why isn't replaceAll picked up by lib "esnext"?
-      const lines: string = string.replaceAll(zapSpinner, '')
+      const lines: string[] = string.replaceAll(zapSpinner, '')
           .replaceAll(/^\s+/gm, '')
           .split('\n')
       expect(lines).toEqual([
@@ -110,10 +118,10 @@ describe('Emit', () => {
       emitPlain({ level: ERROR, taskName, indent: 4 }, [ 'indented' ])
       emitPlain({ level: ERROR, taskName, prefix: '{prefix}' }, [ 'prefixed' ])
 
-      // @ts-ignore // why isn't replaceAll picked up by lib "esnext"?
-      const lines: string = string.replaceAll(zapSpinner, '')
+      const lines: string[] = string.replaceAll(zapSpinner, '')
           .replaceAll(/^\s+/gm, '')
           .split('\n')
+
       expect(lines).toEqual([
         'test │  trace │ trace 123 { foo: \'bar\' }',
         'test │  debug │ debug 123 { foo: \'bar\' }',

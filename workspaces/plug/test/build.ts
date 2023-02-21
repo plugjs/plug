@@ -3,7 +3,7 @@ import { build, find } from '../src/index'
 import { requireResolve } from '../src/paths'
 
 export default build({
-  find_tests: () => find('**/*.test.([cm])?ts', { directory: '@', ignore: '**/*.d.ts' }).debug(),
+  find_tests: () => find('**/*.test.([cm])?ts', { directory: '@', ignore: '**/*.d.ts' }),
 
   async test() {
     const jasmineScript = requireResolve(__fileurl, '../../jasmine/src/jasmine')

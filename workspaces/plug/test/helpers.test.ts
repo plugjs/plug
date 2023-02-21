@@ -1,5 +1,6 @@
-import { exec, isDirectory, isFile, merge, noop, resolve } from '../src/helpers'
 import { requireContext } from '../src/async'
+import { Files } from '../src/files'
+import { exec, find, isDirectory, isFile, merge, noop, resolve } from '../src/helpers'
 
 // only the ones we don't normally use in our build
 describe('Helpers Test', () => {
@@ -17,6 +18,12 @@ describe('Helpers Test', () => {
     expect(isDirectory(buildFile)).toBe(undefined) // wrong type!
   })
 
+  it('should find files in the current directory', async () => {
+    const files = await find('--nope--')
+    expect(files.length).toEqual(0)
+    expect(files.directory).toEqual(process.cwd())
+  })
+
   it('should create an empty pipe', async () => {
     const pipe1 = noop()
     expect(pipe1.plug).toEqual(jasmine.any(Function))
@@ -29,6 +36,13 @@ describe('Helpers Test', () => {
     const files2 = await pipe2
     expect(files2.length).toBe(0)
     expect(files2.directory).toBe(resolve('.'))
+
+    const pipe3 = merge([ new Files(resolve('@')) ])
+    expect(pipe3.plug).toEqual(jasmine.any(Function))
+    const files3 = await pipe2
+    expect(files3.length).toBe(0)
+    expect(files3.directory).toBe(resolve('.'))
+    expect(files3.directory).not.toBe(resolve('@'))
   })
 
   it('should execute a process', async () => {

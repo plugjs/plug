@@ -15,6 +15,11 @@ describe('Build Invocation', () => {
 
     await invoke(tasks, 'myTask')
     expect(propValue).toBe('this is the default')
+
+    // task as a function
+    propValue = 'wrong'
+    await tasks.myTask()
+    expect(propValue).toBe('this is the default')
   })
 
   it('should invoke a build overriding its properties', async () => {
@@ -29,6 +34,43 @@ describe('Build Invocation', () => {
 
     await invoke(tasks, 'myTask', { myProp: 'this is overridden' })
     expect(propValue).toBe('this is overridden')
+
+    // task as a function
+    propValue = 'wrong'
+    await tasks.myTask({ myProp: 'this is overridden' })
+    expect(propValue).toBe('this is overridden')
+  })
+
+  it('should cache the output of a task', async () => {
+    let cachedCalls = 0
+    let firstCalls = 0
+    let secondCalls = 0
+    let defaultCalls = 0
+
+    const tasks = build({
+      cached() {
+        cachedCalls ++
+      },
+      async first() {
+        await this.cached()
+        firstCalls ++
+      },
+      async second() {
+        await this.cached()
+        secondCalls ++
+      },
+      async default() {
+        await this.first()
+        await this.second()
+        defaultCalls ++
+      },
+    })
+
+    await invoke(tasks, 'default')
+    expect(cachedCalls).toEqual(1)
+    expect(firstCalls).toEqual(1)
+    expect(secondCalls).toEqual(1)
+    expect(defaultCalls).toEqual(1)
   })
 
   it('should merge two builds', async () => {

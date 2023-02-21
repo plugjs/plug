@@ -1,4 +1,4 @@
-import { assert, assertPromises, BuildFailure, isBuildFailure } from '../src/asserts'
+import { assert, assertPromises, BuildFailure, fail, isBuildFailure } from '../src/asserts'
 
 describe('Assertions', () => {
   it('should create a build failure', () => {
@@ -28,7 +28,12 @@ describe('Assertions', () => {
   it('should assert a build failure', () => {
     expect(() => assert(true, 'True assertion')).not.toThrow()
     expect(() => assert(false, 'False assertion'))
-        .toThrowError(BuildFailure as any, 'False assertion')
+        .toThrowError(BuildFailure, 'False assertion')
+  })
+
+  it('should fail when told to do so', () => {
+    expect(() => fail('Hello, world!'))
+        .toThrowError(BuildFailure, 'Hello, world!')
   })
 
   it('should assert some promises', async () => {
