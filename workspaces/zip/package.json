@@ -1,0 +1,46 @@
+{
+  "name": "@plugjs/zip",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      }
+    },
+    "./zip": {
+      "require": {
+        "types": "./dist/zip.d.ts",
+        "default": "./dist/zip.cjs"
+      },
+      "import": {
+        "types": "./dist/zip.d.ts",
+        "default": "./dist/zip.mjs"
+      }
+    }
+  },
+  "author": "Juit Developers <developers@juit.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "yazl": "^2.5.1"
+  },
+  "devDependencies": {
+    "@types/yazl": "^2.4.2"
+  },
+  "peerDependencies": {
+    "@plugjs/plug": "^0.1.0"
+  },
+  "files": [
+    "*.md",
+    "dist/",
+    "src/"
+  ]
+}

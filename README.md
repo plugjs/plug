@@ -12,6 +12,7 @@ Packages
 * [`@plugjs/jasmine`](./workspaces/jasmine/README.md): Jasmine Support
 * [`@plugjs/mocha`](./workspaces/mocha/README.md): Mocha Support
 * [`@plugjs/typescript`](./workspaces/typescript/README.md): TypeScript Support
+* [`@plugjs/zip`](./workspaces/zip/README.md): Zip Files Support
 
 Legal
 -----

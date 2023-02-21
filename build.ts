@@ -30,6 +30,7 @@ const workspaces = [
   'workspaces/jasmine',
   'workspaces/mocha',
   'workspaces/typescript',
+  'workspaces/zip',
 ] as const
 
 /** Exports for our "package.json" files */
@@ -50,6 +51,7 @@ const workspaceExports: Record<typeof workspaces[number], [ string, ...string[] 
   'workspaces/jasmine': [ 'index.*', 'jasmine.*' ],
   'workspaces/mocha': [ 'index.*', 'mocha.*' ],
   'workspaces/typescript': [ 'index.*', 'typescript.*' ],
+  'workspaces/zip': [ 'index.*', 'zip.*' ],
 }
 
 /** Shared ESBuild options */

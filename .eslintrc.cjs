@@ -20,6 +20,8 @@ module.exports = {
       './workspaces/plug/test/tsconfig.json',
       './workspaces/typescript/tsconfig.json',
       './workspaces/typescript/test/tsconfig.json',
+      './workspaces/zip/tsconfig.json',
+      './workspaces/zip/test/tsconfig.json',
     ],
   },
   overrides: [ {

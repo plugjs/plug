@@ -8,7 +8,8 @@
     "workspaces/jasmine",
     "workspaces/mocha",
     "workspaces/plug",
-    "workspaces/typescript"
+    "workspaces/typescript",
+    "workspaces/zip"
   ],
   "scripts": {
     "prepare": "./bootstrap.sh",

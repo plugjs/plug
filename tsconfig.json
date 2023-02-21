@@ -17,6 +17,8 @@
       "@plugjs/plug/*": [ "workspaces/plug/src/*" ],
       "@plugjs/typescript": [ "workspaces/typescript/src" ],
       "@plugjs/typescript/*": [ "workspaces/typescript/src/*" ],
+      "@plugjs/zip": [ "workspaces/zip/src" ],
+      "@plugjs/zip/*": [ "workspaces/zip/src/*" ],
     },
   },
   "include": [
