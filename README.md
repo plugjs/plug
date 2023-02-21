@@ -14,7 +14,7 @@ Packages
 * [`@plugjs/typescript`](./workspaces/typescript/README.md): TypeScript Support
 
 Legal
---------
+-----
 
 * [Copyright Notice](NOTICE.md)
 * [License](LICENSE.md)
