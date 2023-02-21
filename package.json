@@ -6,6 +6,7 @@
     "workspaces/cov8",
     "workspaces/eslint",
     "workspaces/jasmine",
+    "workspaces/mocha",
     "workspaces/plug",
     "workspaces/typescript"
   ],

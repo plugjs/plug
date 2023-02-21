@@ -11,6 +11,8 @@
       "@plugjs/eslint/*": [ "workspaces/eslint/src/*" ],
       "@plugjs/jasmine": [ "workspaces/jasmine/src" ],
       "@plugjs/jasmine/*": [ "workspaces/jasmine/src/*" ],
+      "@plugjs/mocha": [ "workspaces/mocha/src" ],
+      "@plugjs/mocha/*": [ "workspaces/mocha/src/*" ],
       "@plugjs/plug": [ "workspaces/plug/src" ],
       "@plugjs/plug/*": [ "workspaces/plug/src/*" ],
       "@plugjs/typescript": [ "workspaces/typescript/src" ],

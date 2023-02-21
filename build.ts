@@ -26,6 +26,7 @@ const workspaces = [
   'workspaces/cov8',
   'workspaces/eslint',
   'workspaces/jasmine',
+  'workspaces/mocha',
   'workspaces/typescript',
 ]
 
