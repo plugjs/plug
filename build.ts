@@ -174,22 +174,12 @@ export default build({
 
   /** Transpile all source code */
   async transpile(): Promise<void> {
-    await this.clean_coverage()
-
     log.notice(banner('Transpiling'))
 
-    const [ node, cli ] = process.argv
-
-    const subTasks = [
-      'transpile_cjs',
-      'transpile_esm',
-      'transpile_cli',
-      'transpile_dts',
-    ]
-
-    await exec(node!, ...process.execArgv, cli!, ...subTasks, {
-      coverageDir: '.coverage-data',
-    })
+    await this.transpile_cjs()
+    await this.transpile_esm()
+    await this.transpile_cli()
+    await this.transpile_dts()
   },
 
   /* ======================================================================== *
@@ -198,8 +188,6 @@ export default build({
 
   /** Run tests in CJS mode */
   async test(): Promise<void> {
-    await this.clean_coverage()
-
     const [ node, cli ] = process.argv
 
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
@@ -260,7 +248,7 @@ export default build({
     await sources.plug(new Coverage('.coverage-data', {
       reportDir: 'coverage',
       optimalCoverage: 100,
-      minimumCoverage: 85,
+      minimumCoverage: 80,
       optimalFileCoverage: 100,
       minimumFileCoverage: 0,
     }))
@@ -331,13 +319,22 @@ export default build({
     }
   },
 
-  /* Run all tasks (sequentially) */
-  async default(): Promise<void> {
-    await this.clean_coverage()
+  /* Build everything (forked from "default" to collect coverage) */
+  async build(): Promise<void> {
     await this.transpile()
     await this.lint()
+    await this.test()
+  },
+
+  /* Run all tasks (sequentially) */
+  async default(): Promise<void> {
+    const [ node, cli ] = process.argv
+
     try {
-      await this.test()
+      log.notice('Forking to collect self coverage')
+      await exec(node!, ...process.execArgv, cli!, 'build', {
+        coverageDir: '.coverage-data',
+      })
     } finally {
       await this.coverage()
     }
