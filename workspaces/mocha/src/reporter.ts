@@ -1,6 +1,7 @@
-import RealMocha from 'mocha' // Mocha types pollute the global scope!
+import { assert } from '@plugjs/plug'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import { diffJson } from 'diff'
-import { NOTICE, $wht, $gry, $red, $blu, $grn, WARN, $ylw, $ms, ERROR } from '@plugjs/plug/logging'
+import RealMocha from 'mocha' // Mocha types pollute the global scope!
 
 import type { Logger } from '@plugjs/plug/logging'
 import type { AssertionError } from 'node:assert'
@@ -90,6 +91,7 @@ export class PlugReporter extends RealMocha.reporters.Base {
         for (let i = 0; i < failures.length; i ++) {
           log.notice('')
           const failure = failures[i]
+          assert(failure, 'Failure was undefined')
 
           // The titles (from the suite, up to the test)
           const titles = [ failure.title ]

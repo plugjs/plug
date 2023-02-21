@@ -34,6 +34,9 @@
     "diff": "^5.1.0",
     "mocha": "^10.2.0"
   },
+  "devDependencies": {
+    "@types/diff": "^5.0.2"
+  },
   "peerDependencies": {
     "@plugjs/plug": "^0.2.0"
   },
