@@ -3,14 +3,14 @@
 
 import { createWriteStream } from 'node:fs'
 
+import { $p, $ylw, assert, Files } from '@plugjs/plug'
 import { ZipFile } from 'yazl'
-import { $p, $ylw } from '@plugjs/plug/logging'
-import { Files } from '@plugjs/plug/files'
 
-import type EventEmitter from 'node:events'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
+import type EventEmitter from 'node:events'
 
 
+// The "yazl" types don't define "ZipFile" as an "EventEmitter"
 declare module 'yazl' {
   interface ZipFile extends EventEmitter {
     on(event: 'error', listener: (err: Error) => void): this;
@@ -20,7 +20,9 @@ declare module 'yazl' {
 /** Writes some info about the current {@link Files} being passed around. */
 export class Zip implements Plug<Files> {
   constructor(...args: PipeParameters<'zip'>)
-  constructor(private readonly _filename: string) {}
+  constructor(private readonly _filename: string) {
+    assert(_filename, 'No filename specified for ZIP file')
+  }
 
   pipe(files: Files, context: Context): Promise<Files> {
     const filename = context.resolve(this._filename)
