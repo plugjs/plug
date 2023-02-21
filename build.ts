@@ -170,7 +170,7 @@ export default build({
         await transpile(`workspaces/${this.workspace}`)
       }
     } else {
-      await Promise.all(workspaces.slice(1))
+      await Promise.all(workspaces.slice(1).map(transpile))
     }
   },
 
@@ -279,7 +279,7 @@ export default build({
    * ======================================================================== */
 
   /* Prepare exports in our "package.json" files */
-  async package_data(): Promise<void> {
+  async update_packages(): Promise<void> {
     const data = await fs.readFile(resolve('package.json'), 'utf-8')
     const version = JSON.parse(data).version
 
