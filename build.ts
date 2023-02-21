@@ -251,6 +251,17 @@ export default build({
     await Promise.all( workspaces.map((workspace) => rmrf(`${workspace}/dist`)))
   },
 
+  /* Only transpile and coverage (no linting) */
+  async dev(): Promise<void> {
+    await this.clean_coverage()
+    await this.transpile()
+    try {
+      await this.test()
+    } finally {
+      await this.coverage()
+    }
+  },
+
   /* Run all tasks (sequentially) */
   async default(): Promise<void> {
     await this.clean_coverage()
