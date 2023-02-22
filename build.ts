@@ -279,7 +279,7 @@ export default build({
    * ======================================================================== */
 
   /* Prepare exports in our "package.json" files */
-  async update_packages(): Promise<void> {
+  async exports(): Promise<void> {
     const data = await fs.readFile(resolve('package.json'), 'utf-8')
     const version = JSON.parse(data).version
 
