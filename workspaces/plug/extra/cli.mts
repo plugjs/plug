@@ -4,12 +4,13 @@ import _childProcess from 'node:child_process'
 import _fs from 'node:fs'
 import _path from 'node:path'
 import _url from 'node:url'
+import _util from 'node:util'
 
 import _yargs from 'yargs-parser'
 
-import type { Type } from './ts-loader.mjs'
-import type { Build } from '../src/index.js'
 import type { BuildFailure } from '../src/asserts.js'
+import type { Build } from '../src/index.js'
+import type { Type } from './ts-loader.mjs'
 
 // Colors...
 const $rst = process.stdout.isTTY ? '\u001b[0m' : '' // reset all colors to default
@@ -18,6 +19,9 @@ const $gry = process.stdout.isTTY ? '\u001b[38;5;240m' : '' // somewhat gray
 const $blu = process.stdout.isTTY ? '\u001b[38;5;69m' : '' // brighter blue
 const $wht = process.stdout.isTTY ? '\u001b[1;38;5;255m' : '' // full-bright white
 const $tsk = process.stdout.isTTY ? '\u001b[38;5;141m' : '' // the color for tasks (purple)
+
+// Debugging
+const debug = _util.debuglog('plug:cli')
 
 /* ========================================================================== *
  * ========================================================================== *
@@ -121,12 +125,9 @@ const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
 const typeScriptEnabled = (globalThis as any)[tsLoaderMarker] === tsLoaderMarker
 
 /* Some debugging if needed */
-if (process.env.DEBUG_CLI === 'true') {
-  console.log('SourceMaps enabled =', sourceMapsEnabled)
-  console.log('TypeScript enabled =', typeScriptEnabled)
-  console.log('         Arguments =', process.argv.join(' '))
-  console.log('               PID =', process.pid)
-}
+debug('SourceMaps enabled =', sourceMapsEnabled)
+debug('TypeScript enabled =', typeScriptEnabled)
+debug('         Arguments =', process.argv.join(' '))
 
 /* Parse command line options */
 const options = parseCommandLine()
@@ -139,7 +140,6 @@ if (sourceMapsEnabled && typeScriptEnabled) {
         process.exit(1)
       })
 } else {
-  // @ts-ignore: https://github.com/microsoft/TypeScript/issues/49842
   const script = _url.fileURLToPath(import.meta.url)
 
   /* Fork out ourselves with new options */
@@ -253,7 +253,7 @@ export function version(): string {
     const packageData = _fs.readFileSync(packageFile, 'utf-8')
     return _version = JSON.parse(packageData).version || '(unknown)'
   } catch (error) {
-    if (process.env.DEBUG_CLI === 'true') console.log(error)
+    debug('Error parsing version:', error)
     return _version = '(error)'
   }
 }
