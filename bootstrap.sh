@@ -3,12 +3,15 @@
 # Relative to our build
 pushd "$(dirname $0)" > /dev/null
 
+# Remove whatever was bootstrapped
+rm -rf ./bootstrap
+
 # Compile our "ts-loader" loader and CLI
 exec ./node_modules/.bin/esbuild \
 	--platform=node \
 	--format=esm \
 	--target=node18 \
-	--outdir=./build \
+	--outdir=./bootstrap \
 	--sourcemap=inline \
 	--sources-content=false \
 	--out-extension:.js=.mjs \

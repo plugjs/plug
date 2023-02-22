@@ -1,7 +1,7 @@
 *.tgz
 .coverage-data/
 .coverage-test-data/
-build/
+bootstrap/
 coverage/
 node_modules/
 workspaces/*/dist

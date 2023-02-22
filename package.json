@@ -13,11 +13,11 @@
   ],
   "scripts": {
     "prepare": "./bootstrap.sh",
-    "dev": "ls -1d workspaces/*/src workspaces/*/test | sed 's|^|-w |g' | xargs ./build/cli.mjs dev",
-    "build": "./build/cli.mjs",
-    "lint": "./build/cli.mjs lint",
-    "test": "./build/cli.mjs transpile test",
-    "transpile": "./build/cli.mjs transpile",
+    "dev": "ls -1d workspaces/*/src workspaces/*/test | sed 's|^|-w |g' | xargs ./bootstrap/cli.mjs dev",
+    "build": "./bootstrap/cli.mjs",
+    "lint": "./bootstrap/cli.mjs lint",
+    "test": "./bootstrap/cli.mjs transpile test",
+    "transpile": "./bootstrap/cli.mjs transpile",
     "updates": "check-updates package.json workspaces/*/package.json"
   },
   "devDependencies": {
