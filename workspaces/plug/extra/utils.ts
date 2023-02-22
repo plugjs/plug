@@ -1,19 +1,20 @@
 /* eslint-disable no-console */
 import _childProcess from 'node:child_process'
+import _fs from 'node:fs'
 import _path from 'node:path'
 import _url from 'node:url'
 import _util from 'node:util'
 
-// Debugging
-const debug = _util.debuglog('plug:main')
 
 /* ========================================================================== *
  * TS LOADER FORCE TYPE                                                       *
  * ========================================================================== */
 
-const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
-
 function forceType(type: 'commonjs' | 'module'): void {
+  const debug = _util.debuglog('plug:main')
+
+  const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
+
   if (!(tsLoaderMarker in globalThis)) {
     throw new Error('TypeScript Loader not available')
   }
@@ -21,10 +22,36 @@ function forceType(type: 'commonjs' | 'module'): void {
   ;(globalThis as any)[tsLoaderMarker] = type
 }
 
+
+/* ========================================================================== *
+ * FILES UTILITIES                                                            *
+ * ========================================================================== */
+
+/* Returns a boolean indicating whether the specified file exists or not */
+export function isFile(path: string): boolean {
+  try {
+    return _fs.statSync(path).isFile()
+  } catch (error) {
+    return false
+  }
+}
+
+/* Returns a boolean indicating whether the specified directory exists or not */
+export function isDirectory(path: string): boolean {
+  try {
+    return _fs.statSync(path).isDirectory()
+  } catch (error) {
+    return false
+  }
+}
+
+
 /* ========================================================================== *
  * MAIN ENTRY POINT                                                           *
  * ========================================================================== */
 export function main(callback: (args: string[]) => void): void {
+  const debug = _util.debuglog('plug:main')
+
   /* Check for source maps and typescript support */
   const sourceMapsEnabled = process.execArgv.indexOf('--enable-source-maps') >= 0
 
