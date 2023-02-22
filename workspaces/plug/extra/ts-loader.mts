@@ -28,6 +28,8 @@ import _util from 'node:util'
 // ESBuild is the only external dependency
 import _esbuild from 'esbuild'
 
+// Local imports
+import { isDirectory, isFile } from './utils.js'
 
 /* ========================================================================== *
  * DEBUGGING AND ERRORS                                                       *
@@ -136,28 +138,6 @@ Object.defineProperty(globalThis, tsLoaderMarker, {
   },
 })
 
-
-/* ========================================================================== *
- * FILE HELPERS                                                               *
- * ========================================================================== */
-
-/* Returns a boolean indicating whether the specified file exists or not */
-function _isFile(path: string): boolean {
-  try {
-    return _fs.statSync(path).isFile()
-  } catch (error) {
-    return false
-  }
-}
-
-/* Returns a boolean indicating whether the specified file exists or not */
-function _isDirectory(path: string): boolean {
-  try {
-    return _fs.statSync(path).isDirectory()
-  } catch (error) {
-    return false
-  }
-}
 
 /* ========================================================================== *
  * ESBUILD HELPERS                                                            *
@@ -357,7 +337,7 @@ export const resolve: ResolveHook = (specifier, context, nextResolve): ResolveRe
    *
    * We start with the easiest case: is this a real file on the disk?
    */
-  if (_isFile(path)) {
+  if (isFile(path)) {
     _log(ESM, `Positive match for "${specifier}" as "${path}" (1)`)
     return nextResolve(specifier, context) // straight on
   }
@@ -375,22 +355,22 @@ export const resolve: ResolveHook = (specifier, context, nextResolve): ResolveRe
     const tsurl = new URL(tsspecifier, parentURL).href
     const tspath = _url.fileURLToPath(tsurl)
 
-    if (_isFile(tspath)) {
+    if (isFile(tspath)) {
       _log(ESM, `Positive match for "${specifier}" as "${tspath}" (2)`)
       return nextResolve(tsspecifier, context) // straight on
     }
   }
 
   /* Check if the import is actually a file with a ".ts" extension */
-  if (_isFile(`${path}.ts`)) {
+  if (isFile(`${path}.ts`)) {
     _log(ESM, `Positive match for "${specifier}.ts" as "${path}.ts" (3)`)
     return nextResolve(`${specifier}.ts`, context)
   }
 
   /* If the file is a directory, then see if we have an "index.ts" in there */
-  if (_isDirectory(path)) {
+  if (isDirectory(path)) {
     const file = _path.resolve(path, 'index.ts') // resolve, as path is absolute
-    if (_isFile(file)) {
+    if (isFile(file)) {
       _log(ESM, `Positive match for "${specifier}" as "${file}"  (4)`)
       const spec = _url.pathToFileURL(file).pathname
       return nextResolve(spec, context)
