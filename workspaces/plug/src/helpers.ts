@@ -1,6 +1,6 @@
+import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { mkdtempSync } from 'node:fs'
 
 import { assert, assertPromises } from './asserts'
 import { requireContext } from './async'
