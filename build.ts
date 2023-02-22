@@ -126,7 +126,7 @@ export default build({
         }))
 
     log.notice(`Transpiling extras for CLI from ${$p(resolve('workspaces/plug/extra'))}`)
-    return find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
+    return find('**/*.mts', { directory: 'workspaces/plug/extra' })
         .esbuild({
           bundle: true,
           format: 'esm',
@@ -136,7 +136,7 @@ export default build({
           sourcesContent: false,
           external: [ 'esbuild' ],
           outExtension: { '.js': '.mjs' },
-          outdir: 'workspaces/plug/extra',
+          outdir: 'workspaces/plug/cli',
         })
   },
 
@@ -307,6 +307,9 @@ export default build({
 
   /* Cleanup generated files */
   async clean(): Promise<void> {
+    await rmrf('.coverage-data')
+    await rmrf('.coverage-test-data')
+    await rmrf('workspaces/plug/cli')
     await Promise.all( workspaces.map((workspace) => rmrf(`${workspace}/dist`)))
   },
 

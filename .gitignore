@@ -5,4 +5,4 @@ bootstrap/
 coverage/
 node_modules/
 workspaces/*/dist
-workspaces/plug/extra/*.mjs
+workspaces/plug/cli

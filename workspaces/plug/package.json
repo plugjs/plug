@@ -98,7 +98,7 @@
     }
   },
   "bin": {
-    "plug": "./extra/cli.mjs"
+    "plug": "./cli/plug.mjs"
   },
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
