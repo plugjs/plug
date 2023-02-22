@@ -98,7 +98,8 @@
     }
   },
   "bin": {
-    "plug": "./cli/plug.mjs"
+    "plug": "./cli/plug.mjs",
+    "tsrun": "./cli/tsrun.mjs"
   },
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
