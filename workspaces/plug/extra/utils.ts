@@ -11,7 +11,7 @@ import _util from 'node:util'
  * ========================================================================== */
 
 function forceType(type: 'commonjs' | 'module'): void {
-  const debug = _util.debuglog('plug:main')
+  const debug = _util.debuglog('plug:utils')
 
   const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
 
@@ -50,7 +50,7 @@ export function isDirectory(path: string): boolean {
  * MAIN ENTRY POINT                                                           *
  * ========================================================================== */
 export function main(callback: (args: string[]) => void): void {
-  const debug = _util.debuglog('plug:main')
+  const debug = _util.debuglog('plug:utils')
 
   /* Check for source maps and typescript support */
   const sourceMapsEnabled = process.execArgv.indexOf('--enable-source-maps') >= 0
@@ -65,11 +65,11 @@ export function main(callback: (args: string[]) => void): void {
 
   /* If both source maps and typescript are on, run! */
   if (sourceMapsEnabled && typeScriptEnabled) {
-    const args = process.argv.slice(2).filter((arg: string) => {
+    const args = process.argv.slice(2).filter((arg: string): string | void => {
       if (arg === '--force-esm') {
-        forceType('module')
+        return forceType('module')
       } else if (arg === '--force-cjs') {
-        forceType('commonjs')
+        return forceType('commonjs')
       } else {
         return arg
       }
