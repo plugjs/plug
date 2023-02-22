@@ -23,6 +23,7 @@ import _fs from 'node:fs'
 import _module from 'node:module'
 import _path from 'node:path'
 import _url from 'node:url'
+import _util from 'node:util'
 
 // ESBuild is the only external dependency
 import _esbuild from 'esbuild'
@@ -38,18 +39,16 @@ const CJS = 'commonjs'
 /** Constant identifying an ESM `module` */
 const ESM = 'module'
 
-/** Flag indicating whether to debug or not (checks `DEBUG_TS_LOADER`) */
-const _debug = process.env.DEBUG_TS_LOADER === 'true'
+/** Setup debugging */
+const _debugLog = _util.debuglog('plug:ts-loader')
+const _debug = _debugLog.enabled
 
 /** Emit some logs if `DEBUG_TS_LOADER` is set to `true` */
 function _log(type: Type | null, arg: string, ...args: any []): void {
   if (! _debug) return
 
   const t = type === 'module' ? 'esm' : type === 'commonjs' ? 'cjs' : '---'
-  const prefix = `[ts-loader|${t}|pid=${process.pid}]`
-
-  // eslint-disable-next-line no-console
-  console.log(prefix, arg, ...args)
+  _debugLog(`[${t}] ${arg}`, ...args)
 }
 
 /** Fail miserably */
@@ -200,7 +199,11 @@ function _esbTranpile(filename: string, type: Type): string {
 
   /* Emit a line on the console when loading in debug mode */
   if (_debug) {
-    options.banner = `console.log(\`[ts-loader|${format}]: Loaded "\${${__fileurl}}"\`);`
+    if (format === 'esm') {
+      options.banner = `;(await import('node:util')).debuglog('plug:ts-loader')('[esm] Loaded "%s"', ${__fileurl});`
+    } else if (format === 'cjs') {
+      options.banner = `;require('node:util').debuglog('plug:ts-loader')('[cjs] Loaded "%s"', ${__fileurl});`
+    }
   }
 
   /* Transpile our TypeScript file into some JavaScript stuff */
@@ -483,7 +486,7 @@ const loader: ExtensionHandler = (module, filename): void => {
     module._compile(source, filename)
   } catch (cause) {
     // eslint-disable-next-line no-console
-    console.log(`Error compiling module "${filename}"`, cause)
+    console.error(`Error compiling module "${filename}"`, cause)
   }
 }
 
