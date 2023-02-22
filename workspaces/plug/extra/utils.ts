@@ -5,6 +5,35 @@ import _path from 'node:path'
 import _url from 'node:url'
 import _util from 'node:util'
 
+/* ========================================================================== *
+ * PRETTY COLORS                                                              *
+ * ========================================================================== */
+
+export const $rst = process.stdout.isTTY ? '\u001b[0m' : '' // reset all colors to default
+export const $und = process.stdout.isTTY ? '\u001b[4m' : '' // underline on
+export const $gry = process.stdout.isTTY ? '\u001b[38;5;240m' : '' // somewhat gray
+export const $blu = process.stdout.isTTY ? '\u001b[38;5;69m' : '' // brighter blue
+export const $wht = process.stdout.isTTY ? '\u001b[1;38;5;255m' : '' // full-bright white
+export const $tsk = process.stdout.isTTY ? '\u001b[38;5;141m' : '' // the color for tasks (purple)
+
+
+/* ========================================================================== *
+ * PACKAGE VERSION                                                            *
+ * ========================================================================== */
+
+export function version(): string {
+  const debug = _util.debuglog('plug:utils')
+
+  try {
+    const thisFile = _url.fileURLToPath(import.meta.url)
+    const packageFile = _path.resolve(thisFile, '..', '..', 'package.json')
+    const packageData = _fs.readFileSync(packageFile, 'utf-8')
+    return JSON.parse(packageData).version || '(unknown)'
+  } catch (error) {
+    debug('Error parsing version:', error)
+    return '(error)'
+  }
+}
 
 /* ========================================================================== *
  * TS LOADER FORCE TYPE                                                       *

@@ -2,26 +2,13 @@
 
 import _fs from 'node:fs'
 import _path from 'node:path'
-import _url from 'node:url'
-import _util from 'node:util'
 
 import _yargs from 'yargs-parser'
 
-import { isDirectory, isFile, main } from './utils.js'
+import { $blu, $gry, $rst, $tsk, $und, $wht, isDirectory, isFile, main, version } from './utils.js'
 
 import type { BuildFailure } from '../src/asserts.js'
 import type { Build } from '../src/index.js'
-
-// Colors...
-const $rst = process.stdout.isTTY ? '\u001b[0m' : '' // reset all colors to default
-const $und = process.stdout.isTTY ? '\u001b[4m' : '' // underline on
-const $gry = process.stdout.isTTY ? '\u001b[38;5;240m' : '' // somewhat gray
-const $blu = process.stdout.isTTY ? '\u001b[38;5;69m' : '' // brighter blue
-const $wht = process.stdout.isTTY ? '\u001b[1;38;5;255m' : '' // full-bright white
-const $tsk = process.stdout.isTTY ? '\u001b[38;5;141m' : '' // the color for tasks (purple)
-
-/** Debug log */
-const debug = _util.debuglog('plug:cli')
 
 /* ========================================================================== *
  * ========================================================================== *
@@ -175,21 +162,6 @@ interface CommandLineOptions {
   tasks: string[],
   props: Record<string, string>
   listOnly: boolean,
-}
-
-/** Read the current version from "package.json" */
-let _version: string | undefined
-export function version(): string {
-  if (_version) return _version
-  try {
-    const thisFile = _url.fileURLToPath(import.meta.url)
-    const packageFile = _path.resolve(thisFile, '..', '..', 'package.json')
-    const packageData = _fs.readFileSync(packageFile, 'utf-8')
-    return _version = JSON.parse(packageData).version || '(unknown)'
-  } catch (error) {
-    debug('Error parsing version:', error)
-    return _version = '(error)'
-  }
 }
 
 /** Parse `perocess.argv` and return our normalised command line options */
