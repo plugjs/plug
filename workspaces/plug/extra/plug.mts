@@ -12,120 +12,6 @@ import type { Build } from '../src/index.js'
 
 /* ========================================================================== *
  * ========================================================================== *
- * PROCESS SETUP                                                              *
- * ========================================================================== *
- * ========================================================================== */
-
-/* eslint-disable no-console */
-
-/* We have everyhing we need to start our asynchronous main! */
-async function cli(args: string[]): Promise<void> {
-  // Parse and destructure command line
-  const {
-    buildFile,
-    watchDirs,
-    tasks,
-    props,
-    listOnly,
-  } = parseCommandLine(args)
-
-  // Default task if none specified
-  if (tasks.length === 0) tasks.push('default')
-
-  // Import and check build file
-  let maybeBuild = await import(buildFile)
-  while (maybeBuild) {
-    if (isBuild(maybeBuild)) break
-    maybeBuild = maybeBuild.default
-  }
-
-  // We _need_ a build
-  if (! isBuild(maybeBuild)) {
-    console.log('Build file did not export a proper build')
-    console.log()
-    console.log('- If using CommonJS export your build as "module.exports"')
-    console.log('  e.g.: module.exports = build({ ... })')
-    console.log()
-    console.log('- If using ESM modules export your build as "default"')
-    console.log('  e.g.: export default build({ ... })')
-    console.log()
-    process.exit(1)
-  }
-
-  const build = maybeBuild
-
-  // List tasks
-  if (listOnly) {
-    const taskNames: string[] = []
-    const propNames: string[] = []
-
-    for (const [ key, value ] of Object.entries(build)) {
-      (typeof value === 'string' ? propNames : taskNames).push(key)
-    }
-
-    const buildFileName = _path.relative(process.cwd(), buildFile)
-
-    console.log(`\n${$gry}Outline of ${$wht}${buildFileName}${$rst}`)
-
-    console.log('\nKnown tasks:\n')
-    for (const taskName of taskNames.sort()) {
-      console.log(` ${$gry}\u25a0${$tsk} ${taskName}${$rst}`)
-    }
-
-    console.log('\nKnown properties:\n')
-    for (const propName of propNames.sort()) {
-      const value = build[propName] ?
-        ` ${$gry}(default "${$rst}${$und}${build[propName]}${$gry})` : ''
-      console.log(` ${$gry}\u25a1${$blu} ${propName}${value}${$rst}`)
-    }
-
-    console.log()
-    return
-  }
-
-  // Watch directories
-  if (watchDirs.length) {
-    let timeout: NodeJS.Timeout | undefined = undefined
-
-    const runme = (): void => {
-      build[buildMarker](tasks, props)
-          .then(() => {
-            console.log(`\n${$gry}Watching for files change...${$rst}\n`)
-          }, (error) => {
-            if (isBuildFailure(error)) {
-              console.log(`\n${$gry}Watching for files change...${$rst}\n`)
-            } else {
-              console.log(error)
-              watchers.forEach((watcher) => watcher.close())
-            }
-          })
-          .finally(() => {
-            timeout = undefined
-          })
-    }
-
-    const watchers = watchDirs.map((watchDir) => {
-      return _fs.watch(watchDir, { recursive: true }, () => {
-        if (! timeout) timeout = setTimeout(runme, 250)
-      })
-    })
-
-    runme()
-    return
-  }
-
-  // Normal build (no list, no watchers)
-  try {
-    await build[buildMarker](tasks, props)
-  } catch (error) {
-    if (! isBuildFailure(error)) console.log(error)
-    process.exit(1)
-  }
-}
-
-
-/* ========================================================================== *
- * ========================================================================== *
  * BUILD INSPECTION                                                           *
  * ========================================================================== *
  * ========================================================================== */
@@ -372,4 +258,115 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
  * ========================================================================== *
  * ========================================================================== */
 
-main(cli)
+/* ========================================================================== *
+ * ========================================================================== *
+ * PROCESS SETUP                                                              *
+ * ========================================================================== *
+ * ========================================================================== */
+
+/* eslint-disable no-console */
+
+/* We have everyhing we need to start our asynchronous main! */
+main(async (args: string[]): Promise<void> => {
+  // Parse and destructure command line
+  const {
+    buildFile,
+    watchDirs,
+    tasks,
+    props,
+    listOnly,
+  } = parseCommandLine(args)
+
+  // Default task if none specified
+  if (tasks.length === 0) tasks.push('default')
+
+  // Import and check build file
+  let maybeBuild = await import(buildFile)
+  while (maybeBuild) {
+    if (isBuild(maybeBuild)) break
+    maybeBuild = maybeBuild.default
+  }
+
+  // We _need_ a build
+  if (! isBuild(maybeBuild)) {
+    console.log('Build file did not export a proper build')
+    console.log()
+    console.log('- If using CommonJS export your build as "module.exports"')
+    console.log('  e.g.: module.exports = build({ ... })')
+    console.log()
+    console.log('- If using ESM modules export your build as "default"')
+    console.log('  e.g.: export default build({ ... })')
+    console.log()
+    process.exit(1)
+  }
+
+  const build = maybeBuild
+
+  // List tasks
+  if (listOnly) {
+    const taskNames: string[] = []
+    const propNames: string[] = []
+
+    for (const [ key, value ] of Object.entries(build)) {
+      (typeof value === 'string' ? propNames : taskNames).push(key)
+    }
+
+    const buildFileName = _path.relative(process.cwd(), buildFile)
+
+    console.log(`\n${$gry}Outline of ${$wht}${buildFileName}${$rst}`)
+
+    console.log('\nKnown tasks:\n')
+    for (const taskName of taskNames.sort()) {
+      console.log(` ${$gry}\u25a0${$tsk} ${taskName}${$rst}`)
+    }
+
+    console.log('\nKnown properties:\n')
+    for (const propName of propNames.sort()) {
+      const value = build[propName] ?
+        ` ${$gry}(default "${$rst}${$und}${build[propName]}${$gry})` : ''
+      console.log(` ${$gry}\u25a1${$blu} ${propName}${value}${$rst}`)
+    }
+
+    console.log()
+    return
+  }
+
+  // Watch directories
+  if (watchDirs.length) {
+    let timeout: NodeJS.Timeout | undefined = undefined
+
+    const runme = (): void => {
+      build[buildMarker](tasks, props)
+          .then(() => {
+            console.log(`\n${$gry}Watching for files change...${$rst}\n`)
+          }, (error) => {
+            if (isBuildFailure(error)) {
+              console.log(`\n${$gry}Watching for files change...${$rst}\n`)
+            } else {
+              console.log(error)
+              watchers.forEach((watcher) => watcher.close())
+            }
+          })
+          .finally(() => {
+            timeout = undefined
+          })
+    }
+
+    const watchers = watchDirs.map((watchDir) => {
+      return _fs.watch(watchDir, { recursive: true }, () => {
+        if (! timeout) timeout = setTimeout(runme, 250)
+      })
+    })
+
+    runme()
+    return
+  }
+
+  // Normal build (no list, no watchers)
+  try {
+    await build[buildMarker](tasks, props)
+  } catch (error) {
+    if (! isBuildFailure(error)) console.log(error)
+    process.exit(1)
+  }
+})
