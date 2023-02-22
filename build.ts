@@ -209,7 +209,7 @@ export default build({
         }
       }
 
-      if (errors.length === 0) return
+      if (errors.length === 0) continue
 
       log.error(banner('Tests failed'))
       log.error(`Found test errors in ${errors.length} subprojects`)
