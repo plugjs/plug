@@ -128,6 +128,15 @@ install('exports', class Exports implements Plug<Files> {
       }
     }
 
+    // if we have a "." export, inject the "main", "module" and "types" fields
+    if ('.' in exports) {
+      const rootExport = exports['.']
+      packageData['main'] = rootExport?.require?.default
+      packageData['module'] = rootExport?.import?.default
+      packageData['types'] = packageData['type'] === 'module' ?
+        rootExport?.import?.types : rootExport?.require?.types
+    }
+
     // correctly order the exports record (e.g. types comes before default)
     packageData['exports'] = Object.keys(exports).sort().reduce((obj, name) => {
       const current = exports[name]
