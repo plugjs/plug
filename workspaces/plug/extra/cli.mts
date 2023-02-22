@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import _childProcess from 'node:child_process'
 import _fs from 'node:fs'
 import _path from 'node:path'
 import _url from 'node:url'
@@ -8,9 +7,10 @@ import _util from 'node:util'
 
 import _yargs from 'yargs-parser'
 
+import { main } from './main.js'
+
 import type { BuildFailure } from '../src/asserts.js'
 import type { Build } from '../src/index.js'
-import type { Type } from './ts-loader.mjs'
 
 // Colors...
 const $rst = process.stdout.isTTY ? '\u001b[0m' : '' // reset all colors to default
@@ -20,7 +20,7 @@ const $blu = process.stdout.isTTY ? '\u001b[38;5;69m' : '' // brighter blue
 const $wht = process.stdout.isTTY ? '\u001b[1;38;5;255m' : '' // full-bright white
 const $tsk = process.stdout.isTTY ? '\u001b[38;5;141m' : '' // the color for tasks (purple)
 
-// Debugging
+/** Debug log */
 const debug = _util.debuglog('plug:cli')
 
 /* ========================================================================== *
@@ -32,16 +32,27 @@ const debug = _util.debuglog('plug:cli')
 /* eslint-disable no-console */
 
 /* We have everyhing we need to start our asynchronous main! */
-async function main(options: CommandLineOptions): Promise<void> {
-  const { buildFile, watchDirs, tasks, props, listOnly } = options
+async function cli(args: string[]): Promise<void> {
+  // Parse and destructure command line
+  const {
+    buildFile,
+    watchDirs,
+    tasks,
+    props,
+    listOnly,
+  } = parseCommandLine(args)
+
+  // Default task if none specified
   if (tasks.length === 0) tasks.push('default')
 
+  // Import and check build file
   let maybeBuild = await import(buildFile)
   while (maybeBuild) {
     if (isBuild(maybeBuild)) break
     maybeBuild = maybeBuild.default
   }
 
+  // We _need_ a build
   if (! isBuild(maybeBuild)) {
     console.log('Build file did not export a proper build')
     console.log()
@@ -56,6 +67,7 @@ async function main(options: CommandLineOptions): Promise<void> {
 
   const build = maybeBuild
 
+  // List tasks
   if (listOnly) {
     const taskNames: string[] = []
     const propNames: string[] = []
@@ -81,7 +93,11 @@ async function main(options: CommandLineOptions): Promise<void> {
     }
 
     console.log()
-  } else if (watchDirs.length) {
+    return
+  }
+
+  // Watch directories
+  if (watchDirs.length) {
     let timeout: NodeJS.Timeout | undefined = undefined
 
     const runme = (): void => {
@@ -108,100 +124,18 @@ async function main(options: CommandLineOptions): Promise<void> {
     })
 
     runme()
-  } else {
+    return
+  }
+
+  // Normal build (no list, no watchers)
+  try {
     await build[buildMarker](tasks, props)
-  }
-}
-
-/* ========================================================================== *
- * MAIN ENTRY POINT                                                           *
- * ========================================================================== */
-
-/* Check for source maps and typescript support */
-const sourceMapsEnabled = process.execArgv.indexOf('--enable-source-maps') >= 0
-
-/* Check if our `ts-loader` loader is enabled */
-const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
-const typeScriptEnabled = (globalThis as any)[tsLoaderMarker] === tsLoaderMarker
-
-/* Some debugging if needed */
-debug('SourceMaps enabled =', sourceMapsEnabled)
-debug('TypeScript enabled =', typeScriptEnabled)
-debug('         Arguments =', process.argv.join(' '))
-
-/* Parse command line options */
-const options = parseCommandLine()
-
-/* If both source maps and typescript are on, run! */
-if (sourceMapsEnabled && typeScriptEnabled) {
-  main(options)
-      .catch((error) => {
-        if (! isBuildFailure(error)) console.log(error)
-        process.exit(1)
-      })
-} else {
-  const script = _url.fileURLToPath(import.meta.url)
-
-  /* Fork out ourselves with new options */
-  const execArgv = [ ...process.execArgv ]
-
-  /* Enable source maps if not done already */
-  if (! sourceMapsEnabled) execArgv.push('--enable-source-maps')
-
-  /* Enable our ESM TypeScript loader if not done already */
-  if (! typeScriptEnabled) {
-    const directory = _path.dirname(script)
-    const extension = _path.extname(script) // .mts or .mjs
-    const loader = _path.resolve(directory, `ts-loader${extension}`)
-    execArgv.push(`--experimental-loader=${loader}`, '--no-warnings')
-  }
-
-  /*
-   * It seems that setting "type" as "module" in "package.json" creates some
-   * problems when the module is being imported from a "commonjs" one.
-   *
-   * TypeScript _incorrectly_ says (regardless of how we set up our conditional
-   * exports) that we must use dynamic imports:
-   *
-   *     Module '@plugjs/plug' cannot be imported using this construct. The
-   *     specifier only resolves to an ES module, which cannot be imported
-   *     synchronously. Use dynamic import instead.
-   *     TS(1471)
-   *
-   * So for now our only option is to leave "type" as "commonjs", and for those
-   * brave souls willing to force ESM irregardless of what's in "package.json",
-   * we allow the "--force-esm" option, and instruct `ts-loader` that the
-   * current directory (and subdirs) will transpile as ESM always.
-   */
-  const env = options.force ?
-    { __TS_LOADER_FORCE_TYPE: options.force, ...process.env } :
-    process.env
-
-  /* Fork ourselves! */
-  const child = _childProcess.fork(script, [ ...process.argv.slice(2) ], {
-    stdio: [ 'inherit', 'inherit', 'inherit', 'ipc' ],
-    execArgv,
-    env,
-  })
-
-  /* Monitor child process... */
-  child.on('error', (error) => {
-    console.log('Error respawning CLI', error)
+  } catch (error) {
+    if (! isBuildFailure(error)) console.log(error)
     process.exit(1)
-  })
-
-  child.on('exit', (code, signal) => {
-    if (signal) {
-      console.log(`CLI process exited with signal ${signal}`)
-      process.exit(1)
-    } else if (typeof code !== 'number') {
-      console.log('CLI process failed for an unknown reason')
-      process.exit(1)
-    } else {
-      process.exit(code)
-    }
-  })
+  }
 }
+
 
 /* ========================================================================== *
  * ========================================================================== *
@@ -227,6 +161,7 @@ function isBuildFailure(arg: any): arg is BuildFailure {
   return arg && arg[buildFailure] === buildFailure
 }
 
+
 /* ========================================================================== *
  * ========================================================================== *
  * PARSE COMMAND LINE ARGUMENTS                                               *
@@ -240,7 +175,6 @@ interface CommandLineOptions {
   tasks: string[],
   props: Record<string, string>
   listOnly: boolean,
-  force?: Type | undefined,
 }
 
 /** Read the current version from "package.json" */
@@ -259,9 +193,9 @@ export function version(): string {
 }
 
 /** Parse `perocess.argv` and return our normalised command line options */
-export function parseCommandLine(): CommandLineOptions {
+export function parseCommandLine(args: string[]): CommandLineOptions {
   /* Yargs-parse our arguments */
-  const parsed = _yargs(process.argv.slice(2), {
+  const parsed = _yargs(args, {
     configuration: {
       'camel-case-expansion': false,
       'strip-aliased': true,
@@ -294,8 +228,6 @@ export function parseCommandLine(): CommandLineOptions {
   let verbosity = 0 // yargs always returns 0 for count (quiet/verbose)
   let colors: boolean | undefined = undefined
   let file: string | undefined = undefined
-  let forceEsm = false
-  let forceCjs = false
   let listOnly = false
   let help = false
 
@@ -321,12 +253,6 @@ export function parseCommandLine(): CommandLineOptions {
       case 'watch': // watch directory
         if (Array.isArray(value)) watchDirs.push(...value)
         else if (value) watchDirs.push(value)
-        break
-      case 'force-esm':
-        forceEsm = !! value
-        break
-      case 'force-cjs':
-        forceCjs = !! value
         break
       case 'colors':
         colors = !! value
@@ -462,21 +388,10 @@ export function parseCommandLine(): CommandLineOptions {
   })
 
   /* ======================================================================== *
-   * FORCE MODULE TYPE                                                        *
-   * ======================================================================== */
-
-  if (forceEsm && forceCjs) {
-    console.log('The "--force-cjs" and "--force-esm" flags can not coexist')
-    process.exit(1)
-  }
-
-  const force = forceEsm ? 'module' : forceCjs ? 'commonjs' : undefined
-
-  /* ======================================================================== *
    * ALL DONE                                                                 *
    * ======================================================================== */
 
-  return { buildFile, watchDirs, tasks, props, listOnly, force }
+  return { buildFile, watchDirs, tasks, props, listOnly }
 }
 
 /* ========================================================================== */
@@ -498,3 +413,11 @@ function isDir(path: string): boolean {
     return false
   }
 }
+
+/* ========================================================================== *
+ * ========================================================================== *
+ * MAIN ENTRY POINT                                                           *
+ * ========================================================================== *
+ * ========================================================================== */
+
+main(cli)
