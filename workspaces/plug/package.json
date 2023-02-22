@@ -116,8 +116,9 @@
   },
   "files": [
     "*.md",
+    "cli/",
     "dist/",
-    "extra/*.mjs",
+    "extra/",
     "src/",
     "types/"
   ]
