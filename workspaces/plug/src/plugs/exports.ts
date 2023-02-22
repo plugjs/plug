@@ -63,9 +63,12 @@ install('exports', class Exports implements Plug<Files> {
   async pipe(files: Files, context: Context): Promise<Files> {
     // read up our package.json, we need it to figure out the default `type`
     const incomingFile = context.resolve(this._packageJson)
-    const incomingDirectory = getAbsoluteParent(incomingFile)
     const incomingData = await readFile(incomingFile, 'utf8')
     const packageData = JSON.parse(incomingData)
+
+    // exports must be relative to the _output_ package.json
+    const outgoingFile = context.resolve(this._outputPackageJson)
+    const outgoingDirectory = getAbsoluteParent(outgoingFile)
 
     // type here determines the extension of commonjs or ecmascript modules
     const type =
@@ -102,7 +105,7 @@ install('exports', class Exports implements Plug<Files> {
 
     // look up all the files we were piped in
     for (const [ name, absolute ] of files.pathMappings()) {
-      const relative = assertRelativeChildPath(incomingDirectory, absolute)
+      const relative = assertRelativeChildPath(outgoingDirectory, absolute)
 
       for (const ext of exts) {
         if (! relative.endsWith(ext)) continue
@@ -163,7 +166,6 @@ install('exports', class Exports implements Plug<Files> {
 
     // convert back our package data into a json and write it
     const outgoingData = JSON.stringify(packageData, null, 2)
-    const outgoingFile = context.resolve(this._outputPackageJson)
     context.log.info(`Writing new ${$p(outgoingFile)}`, outgoingData)
     await writeFile(outgoingFile, outgoingData + EOL, 'utf8')
 
