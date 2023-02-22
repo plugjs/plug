@@ -80,7 +80,8 @@ function makeTask(
     const promise = runAsync(context, taskName, async () => {
       return await _def.call(build) || undefined
     }).then((result) => {
-      context.log.notice(`Success ${$ms(Date.now() - now)}`)
+      const level = taskName.startsWith('_') ? 'info' : 'notice'
+      context.log[level](`Success ${$ms(Date.now() - now)}`)
       return result
     }).catch((error) => {
       throw context.log.fail(`Failure ${$ms(Date.now() - now)}`, error)

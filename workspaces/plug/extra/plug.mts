@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
 
 import _fs from 'node:fs'
 import _path from 'node:path'
