@@ -28,6 +28,7 @@ import _util from 'node:util'
 // ESBuild is the only external dependency
 import _esbuild from 'esbuild'
 
+
 /* ========================================================================== *
  * DEBUGGING AND ERRORS                                                       *
  * ========================================================================== */
@@ -47,7 +48,7 @@ const _debug = _debugLog.enabled
 function _log(type: Type | null, arg: string, ...args: any []): void {
   if (! _debug) return
 
-  const t = type === 'module' ? 'esm' : type === 'commonjs' ? 'cjs' : '---'
+  const t = type === ESM ? 'esm' : type === CJS ? 'cjs' : '---'
   _debugLog(`[${t}] ${arg}`, ...args)
 }
 
@@ -57,7 +58,7 @@ function _throw(
     message: string,
     options: { start?: Function, code?: string, cause?: any } = {},
 ): never {
-  const t = type === 'module' ? 'esm' : type === 'commonjs' ? 'cjs' : '---'
+  const t = type === ESM ? 'esm' : type === CJS ? 'cjs' : '---'
   const prefix = `[ts-loader|${t}|pid=${process.pid}]`
 
   const { start = _throw, ...extra } = options
@@ -70,71 +71,75 @@ function _throw(
 
 
 /* ========================================================================== *
- * FILES AND DISCOVERY                                                        *
+ * MODULE TYPES AND FORCING TYPE                                              *
  * ========================================================================== */
 
-/** Cache for directory to module format as discovered in "package.json" */
-const _moduleFormatCache = new Map<string, Type>()
-
-/** Force ESM loading? */
-if (process.env.__TS_LOADER_FORCE_TYPE) {
-  const type = process.env.__TS_LOADER_FORCE_TYPE as Type
-  const dir = process.cwd()
-  _log(null, `Forcing ".ts" files from "${dir}" to be interpreted as "${type}"`)
-  _moduleFormatCache.set(dir, type)
+function _checkType(type: string): Type {
+  if (type === CJS) return CJS
+  if (type === ESM) return ESM
+  _throw(null, `Invalid type "${process.env.__TS_LOADER_FORCE_TYPE}"`)
 }
 
-/* Dump our cache on exit if debugging */
-if (_debug) process.on('exit', () => _log(null, 'Format cache', _moduleFormatCache))
+let _type: Type = ((): Type => {
+  if (process.env.__TS_LOADER_FORCE_TYPE) {
+    const type = process.env.__TS_LOADER_FORCE_TYPE
+    _log(null, `Forcing type to "${type}" from environment`)
+    return _checkType(type)
+  }
 
-/**
- * Figures out the _default_ module type for a directory, looking into the
- * `package.json`'s `type` field (either `commonjs` or `module`)
- */
-function _moduleFormat(directory: string): Type {
-  /* Before doing anything else, check our cache */
-  const type = _moduleFormatCache.get(directory)
-  if (type) return type
+  const findType = (directory: string): Type => {
+    const packageFile = _path.join(directory, 'package.json')
+    try {
+      const packageData = _fs.readFileSync(packageFile, 'utf-8')
+      const packageJson = JSON.parse(packageData)
+      const packageType = packageJson.type
+      switch (packageType) {
+        case undefined:
+          _log(null, `File "${packageFile}" does not declare a default type`)
+          return CJS
 
-  /* Try to read the "package.json" file from this directory */
-  const file = _path.resolve(directory, 'package.json')
+        case CJS:
+        case ESM:
+          _log(null, `File "${packageFile}" declares type as "${CJS}"`)
+          return packageType
 
-  try {
-    const json = _fs.readFileSync(file, 'utf-8')
-    const data = JSON.parse(json)
-
-    /* Be liberal in what you accept? Default to CommonJS if none found */
-    const type = data.type === 'module' ? ESM : CJS
-    _log(null, `File "${file}" defines module type as "${data.type}" (${type})`)
-    _moduleFormatCache.set(directory, type)
-    return type
-  } catch (cause: any) {
-    /* We _accept_ a couple of errors, file not found, or file is directory */
-    if ((cause.code !== 'ENOENT') && (cause.code !== 'EISDIR')) {
-      _throw(null, `Unable to read or parse "${file}"`, { cause, start: _moduleFormat })
+        default:
+          _log(null, `File "${packageFile}" specifies unknown type "${packageType}"`)
+          return CJS
+      }
+    } catch (cause: any) {
+      if ((cause.code !== 'ENOENT') && (cause.code !== 'EISDIR')) {
+        _throw(null, `Unable to read or parse "${packageFile}"`, { cause, start: findType })
+      }
     }
-  }
 
-  /*
-   * We couldn't find "package.json" in this directory, go up if we can!
-   *
-   * That said, if we are at a directory called "node_modules" we stop here,
-   * as we don't want to inherit the default type from an _importing_ package,
-   * into the _imported_ one...
-   */
-  const name = _path.basename(directory)
-  const parent = _path.dirname(directory)
+    const parent = _path.dirname(directory)
+    if (directory !== parent) return findType(directory)
 
-  if ((name === 'node_modules') || (parent === directory)) {
-    _moduleFormatCache.set(directory, CJS) // default
+    _log(null, `Type defaulted to "${CJS}"`)
     return CJS
-  } else {
-    /* We also cache back, on the way up */
-    const type = _moduleFormat(parent)
-    _moduleFormatCache.set(directory, type)
-    return type
   }
-}
+
+  return findType(process.cwd())
+})()
+
+/* The `tsLoaderMarker` (symbol in global) will be a setter/getter for type */
+const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
+
+Object.defineProperty(globalThis, tsLoaderMarker, {
+  set(type: string): void {
+    _log(null, `Setting type to "${type}"`)
+    process.env.__TS_LOADER_FORCE_TYPE = _type = _checkType(type)
+  },
+  get(): Type {
+    return _type
+  },
+})
+
+
+/* ========================================================================== *
+ * FILE HELPERS                                                               *
+ * ========================================================================== */
 
 /* Returns a boolean indicating whether the specified file exists or not */
 function _isFile(path: string): boolean {
@@ -408,24 +413,36 @@ export const load: LoadHook = (url, context, nextLoad): LoadResult | Promise<Loa
 
   /* Quick and easy bail-outs for non-TS or ".cts" (always `commonjs`) */
   if (! ext) return nextLoad(url, context)
-  if (ext === '.cts') return { format: 'commonjs', shortCircuit: true }
+
+  if (ext === '.cts') {
+    if (_debug) {
+      _log(null, `Switching type from "module" to "commonjs" for "${url}"`)
+      _log(null, 'Please note that named import WILL NOT WORK in this case, as Node.js performs a')
+      _log(null, 'static analisys on the CommonJS source code, and this file is transpiled from.')
+      _log(null, 'TypeScript to CommonJS dynamically.')
+    }
+    return { format: CJS, shortCircuit: true }
+  }
 
   /* Convert the url into a file name, any error gets ignored */
   const filename = _url.fileURLToPath(url)
 
   /* If the file is a ".ts", we need to figure out the default type */
   if (ext === '.ts') {
-    const format = _moduleFormat(_path.dirname(filename))
-
-    /* If the _default_ module type is 'commonjs' then load as such! */
-    if (format === CJS) return { format: 'commonjs', shortCircuit: true }
+    if (_type === CJS) {
+      if (_debug) {
+        _log(null, `Switching type from "module" to "commonjs" for "${url}"`)
+        _log(null, 'Please note that named import WILL NOT WORK in this case, as Node.js performs a')
+        _log(null, 'static analisys on the CommonJS source code, and this file is transpiled from.')
+        _log(null, 'TypeScript to CommonJS dynamically.')
+      }
+      return { format: CJS, shortCircuit: true }
+    }
   }
 
-  /* Transpile with ESBuild */
+  /* Transpile with ESBuild and return our source code */
   const source = _esbTranpile(filename, ESM)
-
-  /* Done, return our transpiled code */
-  return { source, format: 'module', shortCircuit: true }
+  return { source, format: ESM, shortCircuit: true }
 }
 
 
@@ -462,17 +479,15 @@ declare module 'node:module' {
 /* ========================================================================== */
 
 const loader: ExtensionHandler = (module, filename): void => {
-  _log(ESM, `Attempting to load "${filename}"`)
+  _log(CJS, `Attempting to load "${filename}"`)
 
   /* Figure our the extension (".ts" or ".cts")... */
   const ext = _path.extname(filename)
 
   /* If the file is a ".ts", we need to figure out the default type */
   if (ext === '.ts') {
-    const format = _moduleFormat(_path.dirname(filename))
-
-    /* If the _default_ module type is 'commonjs' then load as such! */
-    if (format === ESM) {
+    /* If the _default_ module type is CJS then load as such! */
+    if (_type === ESM) {
       _throw(CJS, `Must use import to load ES Module: ${filename}`, { code: 'ERR_REQUIRE_ESM' })
     }
   } else if (ext !== '.cts') {
@@ -537,7 +552,7 @@ _module._resolveFilename = function(
       const tsrequest = name + ext!.replace('js', 'ts')
       try {
         const result = _oldResolveFilename.call(this, tsrequest, parent, ...args)
-        _log('commonjs', `Resolution for "${request}" intercepted as "${tsrequest}`)
+        _log(CJS, `Resolution for "${request}" intercepted as "${tsrequest}`)
         return result
       } catch (discard) {
         throw error // throw the _original_ error in this case
@@ -548,13 +563,3 @@ _module._resolveFilename = function(
     throw error
   }
 }
-
-/* ========================================================================== *
- * FIN...                                                                     *
- * ========================================================================== */
-
-/* Mark our `globalThis` as having our `tsLoaderMarker` symbol */
-const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
-;(globalThis as any)[tsLoaderMarker] = tsLoaderMarker
-
-_log(null, `Installing loader from "${import.meta.url}"`)
