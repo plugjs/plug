@@ -4,7 +4,7 @@ import { sep } from 'node:path'
 import { Files } from '../files'
 import { readFile, writeFile } from '../fs'
 import { $p } from '../logging'
-import { getAbsoluteParent } from '../paths'
+import { assertRelativeChildPath, getAbsoluteParent } from '../paths'
 import { install } from '../pipe'
 
 import type { Context, PipeParameters, Plug } from '../pipe'
@@ -63,6 +63,7 @@ install('exports', class Exports implements Plug<Files> {
   async pipe(files: Files, context: Context): Promise<Files> {
     // read up our package.json, we need it to figure out the default `type`
     const incomingFile = context.resolve(this._packageJson)
+    const incomingDirectory = getAbsoluteParent(incomingFile)
     const incomingData = await readFile(incomingFile, 'utf8')
     const packageData = JSON.parse(incomingData)
 
@@ -100,29 +101,31 @@ install('exports', class Exports implements Plug<Files> {
     const exts = [ '.d.mts', '.d.cts', '.d.ts', cjsExtension, esmExtension ]
 
     // look up all the files we were piped in
-    for (const file of files) {
-      for (const ext of exts) {
-        if (! file.endsWith(ext)) continue
+    for (const [ name, absolute ] of files.pathMappings()) {
+      const relative = assertRelativeChildPath(incomingDirectory, absolute)
 
-        const base = `.${sep}${file.slice(0, -ext.length)}`
-        const name = base.endsWith(`${sep}index`) ? base.slice(0, -6) : base
+      for (const ext of exts) {
+        if (! relative.endsWith(ext)) continue
+
+        const base = `.${sep}${name.slice(0, -ext.length)}`
+        const exp = base.endsWith(`${sep}index`) ? base.slice(0, -6) : base
 
         switch (ext) {
           case cjsExtension:
-            addExport(name, 'require', 'default', `.${sep}dist${sep}${file}`)
+            addExport(exp, 'require', 'default', `.${sep}${relative}`)
             break
           case esmExtension:
-            addExport(name, 'import', 'default', `.${sep}dist${sep}${file}`)
+            addExport(exp, 'import', 'default', `.${sep}${relative}`)
             break
           case '.d.cts':
-            addExport(name, 'require', 'types', `.${sep}dist${sep}${file}`)
+            addExport(exp, 'require', 'types', `.${sep}${relative}`)
             break
           case '.d.mts':
-            addExport(name, 'import', 'types', `.${sep}dist${sep}${file}`)
+            addExport(exp, 'import', 'types', `.${sep}${relative}`)
             break
           case '.d.ts':
-            addExport(name, 'require', 'types', `.${sep}dist${sep}${file}`)
-            addExport(name, 'import', 'types', `.${sep}dist${sep}${file}`)
+            addExport(exp, 'require', 'types', `.${sep}${relative}`)
+            addExport(exp, 'import', 'types', `.${sep}${relative}`)
             break
         }
       }
