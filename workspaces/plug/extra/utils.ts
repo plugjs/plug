@@ -22,7 +22,7 @@ export const $tsk = process.stdout.isTTY ? '\u001b[38;5;141m' : '' // the color 
  * ========================================================================== */
 
 export function version(): string {
-  const debug = _util.debuglog('plug:utils')
+  const debug = _util.debuglog('plug:cli')
 
   try {
     const thisFile = _url.fileURLToPath(import.meta.url)
@@ -40,7 +40,7 @@ export function version(): string {
  * ========================================================================== */
 
 function forceType(type: 'commonjs' | 'module'): void {
-  const debug = _util.debuglog('plug:utils')
+  const debug = _util.debuglog('plug:cli')
 
   const tsLoaderMarker = Symbol.for('plugjs:tsLoader')
 
@@ -78,8 +78,8 @@ export function isDirectory(path: string): boolean {
 /* ========================================================================== *
  * MAIN ENTRY POINT                                                           *
  * ========================================================================== */
-export function main(callback: (args: string[]) => void): void {
-  const debug = _util.debuglog('plug:utils')
+export function main(callback: (args: string[]) => void | Promise<void>): void {
+  const debug = _util.debuglog('plug:cli')
 
   /* Check for source maps and typescript support */
   const sourceMapsEnabled = process.execArgv.indexOf('--enable-source-maps') >= 0
@@ -105,7 +105,7 @@ export function main(callback: (args: string[]) => void): void {
     })
 
 
-    return callback(args)
+    Promise.resolve().then(() => callback(args)).catch(console.error)
   } else {
     const script = _url.fileURLToPath(import.meta.url)
 
