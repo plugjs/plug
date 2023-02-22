@@ -7,7 +7,7 @@ import _util from 'node:util'
 
 import _yargs from 'yargs-parser'
 
-import { main } from './main.js'
+import { isDirectory, isFile, main } from './utils.js'
 
 import type { BuildFailure } from '../src/asserts.js'
 import type { Build } from '../src/index.js'
@@ -379,7 +379,7 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
 
   watchDirs.forEach((watchDir) => {
     const absolute = _path.resolve(watchDir)
-    if (! isDir(absolute)) {
+    if (! isDirectory(absolute)) {
       console.log(`Specified watch directory "${watchDir}" was not found`)
       process.exit(1)
     } else {
@@ -392,26 +392,6 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
    * ======================================================================== */
 
   return { buildFile, watchDirs, tasks, props, listOnly }
-}
-
-/* ========================================================================== */
-
-/* Returns a boolean indicating whether the specified file exists or not */
-function isFile(path: string): boolean {
-  try {
-    return _fs.statSync(path).isFile()
-  } catch (error) {
-    return false
-  }
-}
-
-/* Returns a boolean indicating whether the specified directory exists or not */
-function isDir(path: string): boolean {
-  try {
-    return _fs.statSync(path).isDirectory()
-  } catch (error) {
-    return false
-  }
 }
 
 /* ========================================================================== *
