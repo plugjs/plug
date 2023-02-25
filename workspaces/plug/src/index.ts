@@ -13,6 +13,9 @@ export type { Plug, PlugFunction } from './pipe'
 /**
  * The {@link Pipe} interface defines a processing pipeline where multiple
  * {@link Plug}s can transform lists of {@link Files}.
+ *
+ * This is exported _here_, in the main module export file so that plugs can
+ * add definitions by simply referring the module.
  */
 export interface Pipe extends Promise<Files> {
   plug(plug: Plug<Files>): Pipe
