@@ -196,7 +196,7 @@ export default build({
 
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
 
-    for (const mode of [ 'esm', 'cjs' ] as const) {
+    for (const mode of [ 'cjs', 'esm' ] as const) {
       const errors: AbsolutePath[] = []
       for (const workspace of selection) {
         const buildFile = resolve(workspace, 'test', 'build.ts')
