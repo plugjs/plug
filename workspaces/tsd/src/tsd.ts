@@ -1,13 +1,19 @@
 // Reference ourselves, so that the constructor's parameters are correct
 /// <reference path="./index.ts" />
 
-import { resolve, Files } from '@plugjs/plug'
-import { assertRelativeChildPath, getCurrentWorkingDirectory, resolveAbsolutePath } from '@plugjs/plug/paths'
-import tsd from 'tsd'
+import { Files, resolve } from '@plugjs/plug'
 import { ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
+import { assertRelativeChildPath, getCurrentWorkingDirectory, resolveAbsolutePath } from '@plugjs/plug/paths'
+import * as tsdLib from 'tsd'
 
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
 import type { TsdOptions } from './index'
+
+// I _hate_ default exports!
+const tsd: typeof tsdLib.default =
+  (<any> tsdLib).default.default ?
+    (<any> tsdLib).default.default :
+    tsdLib.default
 
 
 /** Writes some info about the current {@link Files} being passed around. */
@@ -19,7 +25,7 @@ export class Tsd implements Plug<void> {
     const { cwd: _cwd, typingsFile: _typingsFile } = this._options
 
     // Resolve the absolute directory, and optionally the typings file relative to it
-    const cwd = _cwd ? resolve(_cwd) : getCurrentWorkingDirectory()
+    const cwd = _cwd ? resolve(_cwd) : /* coverage ignore next */ getCurrentWorkingDirectory()
     const typingsFile = _typingsFile && assertRelativeChildPath(cwd, resolve(_typingsFile))
 
     // Convert incoming files, relativizing them to the `cwd` specified in options
