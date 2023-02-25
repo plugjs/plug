@@ -1,6 +1,7 @@
+import type { buildMarker, InvokeBuild } from './build'
 import type { Files } from './files'
-import type { AbsolutePath } from './paths'
 import type { Pipe } from './index'
+import type { AbsolutePath } from './paths'
 
 /**
  * A type describing the ultimate result of a {@link Plug}, {@link Pipe} or
@@ -115,4 +116,6 @@ export type ThisBuild<D extends BuildDef> = {
  * The {@link Build} type represents the collection of {@link Task}s
  * and _properties_ compiled from a {@link BuildDef | build definition}.
  */
-export type Build<D extends BuildDef = BuildDef> = Tasks<D> & Props<D>
+export type Build<D extends BuildDef = BuildDef> = Tasks<D> & Props<D> & {
+  [buildMarker]: InvokeBuild<D>
+}
