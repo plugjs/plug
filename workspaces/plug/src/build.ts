@@ -1,9 +1,8 @@
 import { assert } from './asserts'
 import { runAsync } from './async'
-import { $ms, $p, $t, getLogger, log, logOptions } from './logging'
+import { $ms, $p, $t, getLogger, logOptions } from './logging'
 import { Context, ContextPromises, PipeImpl } from './pipe'
 import { findCaller } from './utils/caller'
-import { parseOptions } from './utils/options'
 
 import type { Pipe } from './index'
 import type { AbsolutePath } from './paths'
@@ -113,8 +112,19 @@ function makeTask(
  * BUILD COMPILER                                                             *
  * ========================================================================== */
 
-/** Symbol indicating that an object is a {@link Build} */
-const buildMarker = Symbol.for('plugjs:isBuild')
+/** Internal type describing the build invocation function */
+export type InvokeBuild<D extends BuildDef = BuildDef> = (
+  tasks: (keyof Tasks<D>)[],
+  props?: Record<keyof Props<D>, string | undefined>,
+) => Promise<void>
+
+/**
+ * Symbol indicating that an object is a {@link Build}.
+ *
+ * In a compiled {@link Build} this symbol will be associated with a
+ * {@link InvokeBuild} function which can be used to invoke tasks in a build.
+ */
+export const buildMarker = Symbol.for('plugjs:isBuild')
 
 /** Compile a {@link BuildDef | build definition} into a {@link Build} */
 export function build<
@@ -181,26 +191,4 @@ export function build<
 
   /* All done! */
   return compiled
-}
-
-/** Internal type describing the build invocation function */
-type InvokeBuild = (tasks: string[], props?: Record<string, string | undefined>) => Promise<void>
-
-/** Serially invoke tasks in a {@link Build} optionally overriding properties */
-export async function invoke(
-    build: Build,
-    ...args:
-    | [ ...taskNames: [ string, ...string[] ] ]
-    | [ ...taskNames: [ string, ...string[] ], options: Record<string, string | undefined> ]
-): Promise<void> {
-  const { params: tasks, options: props } = parseOptions(args, {})
-
-  /* Get the calling function from the sneaked-in property in build */
-  const invoke: InvokeBuild = (build as any)[buildMarker]
-
-  /* Triple check that we actually _have_ a function (no asserts here, log!) */
-  if (typeof invoke !== 'function') log.fail('Unknown build type')
-
-  /* Call everyhin that needs to be called */
-  return await invoke(tasks, props)
 }
