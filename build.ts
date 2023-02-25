@@ -230,12 +230,6 @@ export default build({
     await rmrf('.coverage-test-data')
   },
 
-  find_coverage(): Promise<Files> {
-    return find(`${this.workspace}/src/**/*.([cm])?ts`, {
-      directory: 'workspaces',
-    })
-  },
-
   /** Gnerate coverage report */
   async coverage(): Promise<void> {
     log.notice(banner('Test Coverage'))
