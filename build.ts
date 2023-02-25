@@ -29,6 +29,7 @@ const workspaces = [
   'workspaces/eslint',
   'workspaces/jasmine',
   'workspaces/mocha',
+  'workspaces/tsd',
   'workspaces/typescript',
   'workspaces/zip',
 ] as const
@@ -50,6 +51,7 @@ const workspaceExports: Record<typeof workspaces[number], [ string, ...string[] 
   'workspaces/eslint': [ 'index.*', 'eslint.*' ],
   'workspaces/jasmine': [ 'index.*', 'jasmine.*' ],
   'workspaces/mocha': [ 'index.*', 'mocha.*' ],
+  'workspaces/tsd': [ 'index.*', 'tsd.*' ],
   'workspaces/typescript': [ 'index.*', 'typescript.*' ],
   'workspaces/zip': [ 'index.*', 'zip.*' ],
 }
@@ -270,8 +272,11 @@ export default build({
       }
     }
 
-    await find('*/(src|extra|test|types)/**/*.([cm])?ts', { directory: 'workspaces' })
-        .plug(new ForkingESLint())
+    const pipe = this.workspace ?
+      find('(src|extra|test|types)/**/*.([cm])?ts', { directory: `workspaces/${this.workspace}` }) :
+      find('*/(src|extra|test|types)/**/*.([cm])?ts', { directory: 'workspaces' })
+
+    await pipe.plug(new ForkingESLint())
   },
 
   /* ======================================================================== *
@@ -337,7 +342,8 @@ export default build({
 
     try {
       log.notice('Forking to collect self coverage')
-      await exec(node!, ...process.execArgv, cli!, 'build', {
+      const extra = this.workspace ? [ `workspace=${this.workspace}` ] : []
+      await exec(node!, ...process.execArgv, cli!, 'build', ...extra, {
         coverageDir: '.coverage-data',
       })
     } finally {
