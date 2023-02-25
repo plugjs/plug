@@ -3,8 +3,13 @@ import { requireResolve } from '@plugjs/plug/paths'
 
 import type { CompilerOptions } from 'typescript'
 
+/** Remove the mapped `[option: string]: ...` from `CompilerOptions`. */
+type KnownCompilerOptions = {
+  [ k in keyof CompilerOptions as string extends k ? never : k ]: CompilerOptions[k]
+}
+
 /** TypeScript Compiler options with some additional properties */
-export interface ExtendedCompilerOptions extends CompilerOptions {
+export interface ExtendedCompilerOptions extends KnownCompilerOptions {
   /**
    * An additional directory containing a set of `.d.ts` files which will
    * be part of the compilation input, but not of the output.
