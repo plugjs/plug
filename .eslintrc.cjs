@@ -18,6 +18,8 @@ module.exports = {
       './workspaces/mocha/test/tsconfig.json',
       './workspaces/plug/tsconfig.json',
       './workspaces/plug/test/tsconfig.json',
+      './workspaces/tsd/tsconfig.json',
+      './workspaces/tsd/test/tsconfig.json',
       './workspaces/typescript/tsconfig.json',
       './workspaces/typescript/test/tsconfig.json',
       './workspaces/zip/tsconfig.json',

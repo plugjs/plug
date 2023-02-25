@@ -8,11 +8,13 @@
     "workspaces/jasmine",
     "workspaces/mocha",
     "workspaces/plug",
+    "workspaces/tsd",
     "workspaces/typescript",
     "workspaces/zip"
   ],
   "scripts": {
     "prepare": "./bootstrap.sh",
+    "clean": "./bootstrap/plug.mjs clean",
     "dev": "ls -1d workspaces/*/src workspaces/*/test | sed 's|^|-w |g' | xargs ./bootstrap/plug.mjs dev",
     "build": "./bootstrap/plug.mjs",
     "lint": "./bootstrap/plug.mjs lint",
