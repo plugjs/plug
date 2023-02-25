@@ -13,9 +13,9 @@ describe('TypeScript Compiler Options', () => {
     ;({ options, errors } = await getCompilerOptions(resolve('@/foobar.json')))
     expect(options).toEqual({})
     expect(errors.length).toBe(1)
-    expect(errors[0].code).toBe(5083)
-    expect(errors[0].messageText).toMatch(/foobar\.json/)
-    expect(errors[0].category).toBe(ts.DiagnosticCategory.Error)
+    expect(errors[0]!.code).toBe(5083)
+    expect(errors[0]!.messageText).toMatch(/foobar\.json/)
+    expect(errors[0]!.category).toBe(ts.DiagnosticCategory.Error)
   })
 
   it('should read a basic configuration file', async () => {
@@ -32,9 +32,9 @@ describe('TypeScript Compiler Options', () => {
     ;({ options, errors } = await getCompilerOptions(wrong))
     expect(options).toEqual({})
     expect(errors.length).toBe(1)
-    expect(errors[0].code).toBe(6046)
-    expect(errors[0].messageText).toMatch(/module/)
-    expect(errors[0].category).toBe(ts.DiagnosticCategory.Error)
+    expect(errors[0]!.code).toBe(6046)
+    expect(errors[0]!.messageText).toMatch(/module/)
+    expect(errors[0]!.category).toBe(ts.DiagnosticCategory.Error)
   })
 
   it('should read an extended configuration file', async () => {
@@ -97,8 +97,8 @@ describe('TypeScript Compiler Options', () => {
     const { options, errors } = await getCompilerOptions(base)
     expect(options).toEqual({})
     expect(errors.length).toEqual(1)
-    expect(errors[0].code).toBe(18000)
-    expect(errors[0].category).toBe(ts.DiagnosticCategory.Error)
-    expect(errors[0].messageText).toBe(`Circularity detected extending from "${base}"`)
+    expect(errors[0]!.code).toBe(18000)
+    expect(errors[0]!.category).toBe(ts.DiagnosticCategory.Error)
+    expect(errors[0]!.messageText).toBe(`Circularity detected extending from "${base}"`)
   })
 })
