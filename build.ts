@@ -247,7 +247,7 @@ export default build({
 
     const sources = merge(selection.map((workspace) => {
       return find('src/**/*.([cm])?ts', { directory: workspace })
-    }))
+    })).filter('**/*.*', { directory: '.' })
 
     await sources.plug(new Coverage('.coverage-data', {
       reportDir: 'coverage',
