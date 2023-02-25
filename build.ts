@@ -21,6 +21,12 @@ import type {
   ESBuildOptions,
   Files,
 } from './workspaces/plug/src/index'
+import type { Tsc } from './workspaces/typescript/src/typescript'
+import type { ESLint } from './workspaces/eslint/src/eslint'
+
+/* ========================================================================== *
+ * OUR WORKSPACES                                                             *
+ * ========================================================================== */
 
 /** All known workspace paths */
 const workspaces = [
@@ -56,6 +62,10 @@ const workspaceExports: Record<typeof workspaces[number], [ string, ...string[] 
   'workspaces/zip': [ 'index.*', 'zip.*' ],
 }
 
+/* ========================================================================== *
+ * SHARED CONSTANTS (DEFAULTS) AND FUNCTIONS                                  *
+ * ========================================================================== */
+
 /** Shared ESBuild options */
 const esbuildOptions: ESBuildOptions = {
   platform: 'node',
@@ -66,15 +76,44 @@ const esbuildOptions: ESBuildOptions = {
 }
 
 /** Niceties... */
-function banner(message: string): string {
-  return [
+function banner(message: string): void {
+  log.notice([
     '',
     $gry(`\u2554${''.padStart(60, '\u2550')}\u2557`),
     `${$gry('\u2551')} ${$wht(message.padEnd(58, ' '))} ${$gry('\u2551')}`,
     $gry(`\u255A${''.padStart(60, '\u2550')}\u255D`),
     '',
-  ].join('\n')
+  ].join('\n'))
 }
+
+/* ========================================================================== *
+ * PLUGS DEFINITIONS                                                          *
+ * -------------------------------------------------------------------------- *
+ * We define `tsc` and `eslint` here as we don't want to import them _before_ *
+ * `transpile` has had a chance to compile the sources they need to run (iow, *
+ * they all need `plug`)... By keeping them forking, their source files will  *
+ * only be read and executed once the plug is instantiated!                   *
+ * ========================================================================== */
+
+const ForkingTsc = class extends fork.ForkingPlug {
+  constructor(...args: ConstructorParameters<typeof Tsc>) {
+    const scriptFile = paths.requireResolve(__fileurl, './workspaces/typescript/src/typescript')
+    super(scriptFile, args, 'Tsc')
+  }
+}
+
+const ForkingESLint = class extends fork.ForkingPlug {
+  constructor(...args: ConstructorParameters<typeof ESLint>) {
+    const scriptFile = paths.requireResolve(__fileurl, './workspaces/eslint/src/eslint')
+    super(scriptFile, args, 'ESLint')
+  }
+}
+
+/* ========================================================================== *
+ * ========================================================================== *
+ * BUILD DEFINITION                                                           *
+ * ========================================================================== *
+ * ========================================================================== */
 
 export default build({
   workspace: '',
@@ -113,13 +152,10 @@ export default build({
 
   /** Transpile CLI */
   async transpile_cli(): Promise<Files> {
-    const tsc = await import('./workspaces/typescript/src/typescript.js')
-    const Tsc = tsc.default.Tsc
-
     // then we *only check* the types for "workspaces/plug/extra"
     log.notice(`Checking extras types sanity in ${$p(resolve('workspaces/plug/extra'))}`)
     await find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
-        .plug(new Tsc('workspaces/plug/tsconfig-base.json', {
+        .plug(new ForkingTsc('workspaces/plug/tsconfig-base.json', {
           noEmit: true,
           declaration: false,
           emitDeclarationOnly: false,
@@ -144,13 +180,6 @@ export default build({
 
   /** Generate all Typescript definition files */
   async transpile_dts(): Promise<void> {
-    const ForkingTsc = class extends fork.ForkingPlug {
-      constructor(...args: any[]) {
-        const scriptFile = paths.requireResolve(__fileurl, './workspaces/typescript/src/typescript')
-        super(scriptFile, args, 'Tsc')
-      }
-    }
-
     // call tsc, forking out the process (for parallelisation below)
     const transpile = async (workspace: string): Promise<void> => {
       log.notice(`Transpiling sources to DTS from ${$p(resolve(workspace))}`)
@@ -178,7 +207,7 @@ export default build({
 
   /** Transpile all source code */
   async transpile(): Promise<void> {
-    log.notice(banner('Transpiling'))
+    banner('Transpiling')
 
     await this.transpile_cjs()
     await this.transpile_esm()
@@ -189,6 +218,23 @@ export default build({
   /* ======================================================================== *
    * TESTING                                                                  *
    * ======================================================================== */
+
+  /** Check types of tests */
+  async check(): Promise<void> {
+    banner('Cheking TypeScript for Tests')
+    const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
+
+    await Promise.all(selection.map((workspace) => {
+      log.notice(`Checking test types in ${$p(resolve(workspace))}`)
+      return find('**/*.test.([cm])?ts', { directory: `${workspace}/test` })
+          .plug(new ForkingTsc(`${workspace}/test/tsconfig.json`, {
+            rootDir: '.',
+            noEmit: true,
+            declaration: false,
+            emitDeclarationOnly: false,
+          }))
+    }))
+  },
 
   /** Run tests in CJS mode */
   async test(): Promise<void> {
@@ -201,7 +247,7 @@ export default build({
       for (const workspace of selection) {
         const buildFile = resolve(workspace, 'test', 'build.ts')
         try {
-          log.notice(banner(`${mode.toUpperCase()} Tests (${workspace})`))
+          banner(`${mode.toUpperCase()} Tests (${workspace})`)
           await exec(node!, ...process.execArgv, cli!, `--force-${mode}`, '-f', buildFile, 'test', {
             coverageDir: '.coverage-data',
           })
@@ -213,7 +259,7 @@ export default build({
 
       if (errors.length === 0) continue
 
-      log.error(banner('Tests failed'))
+      banner('Tests failed')
       log.error(`Found test errors in ${errors.length} subprojects`)
       errors.forEach((file) => log.error('*', $p(file)))
       log.error('')
@@ -232,7 +278,7 @@ export default build({
 
   /** Gnerate coverage report */
   async coverage(): Promise<void> {
-    log.notice(banner('Test Coverage'))
+    banner('Test Coverage')
 
     const coverage = await import('./workspaces/cov8/src/coverage.js')
     const Coverage = coverage.default.Coverage
@@ -257,14 +303,7 @@ export default build({
    * ======================================================================== */
 
   async lint(): Promise<void> {
-    log.notice(banner('Linting Sources'))
-
-    const ForkingESLint = class extends fork.ForkingPlug {
-      constructor(...args: any[]) {
-        const scriptFile = paths.requireResolve(__fileurl, './workspaces/eslint/src/eslint')
-        super(scriptFile, args, 'ESLint')
-      }
-    }
+    banner('Linting Sources')
 
     const pipe = this.workspace ?
       find('(src|extra|test|types)/**/*.([cm])?ts', { directory: `workspaces/${this.workspace}` }) :
@@ -282,7 +321,7 @@ export default build({
     const data = await fs.readFile(resolve('package.json'), 'utf-8')
     const version = JSON.parse(data).version
 
-    log.notice(banner(`Updating package.json files (version=${version})`))
+    banner(`Updating package.json files (version=${version})`)
 
     for (const workspace of workspaces) {
       const globs = workspaceExports[workspace]
@@ -316,6 +355,7 @@ export default build({
   async dev(): Promise<void> {
     await this.clean_coverage()
     await this.transpile()
+    await this.check()
     try {
       await this.test()
     } finally {
@@ -325,9 +365,11 @@ export default build({
 
   /* Build everything (forked from "default" to collect coverage) */
   async build(): Promise<void> {
+    await this.clean_coverage()
     await this.transpile()
-    await this.lint()
+    await this.check()
     await this.test()
+    await this.lint()
   },
 
   /* Run all tasks (sequentially) */
