@@ -3,6 +3,7 @@ import { inspect } from 'node:util'
 import { Files } from '../src/files'
 import { readFile } from '../src/fs'
 import { mkdtemp, rmrf } from '../src/index'
+import { resolveAbsolutePath } from '../src/paths'
 
 import type { AbsolutePath } from '../src/paths'
 
@@ -73,6 +74,27 @@ describe('Files Collection', () => {
       files: [ 'bar', 'baz', 'foo' ],
     })
   })
+
+  it('should merge two separate Files instance', () => {
+    const builder1 = Files.builder(resolveAbsolutePath(tempdir, 'baz'))
+    builder1.add('foo')
+    builder1.add('bar')
+    const files1 = builder1.build()
+
+    const builder2 = Files.builder(tempdir)
+    builder2.add('hello')
+    builder2.add('world')
+    builder2.merge(files1)
+    const files2 = builder2.build()
+
+    expect([ ...files2.pathMappings() ]).toEqual([
+      [ 'baz/bar', `${tempdir}/baz/bar` ],
+      [ 'baz/foo', `${tempdir}/baz/foo` ],
+      [ 'hello', `${tempdir}/hello` ],
+      [ 'world', `${tempdir}/world` ],
+    ] as [ string, AbsolutePath ][])
+  })
+
 
   it('should write a file while building', async () => {
     const builder1 = Files.builder(tempdir)

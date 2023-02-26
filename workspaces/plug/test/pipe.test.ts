@@ -1,8 +1,9 @@
 import { join } from 'node:path'
 
+import { build, noop } from '../src/index'
 import { requireContext } from '../src/async'
 import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../src/paths'
-import { Context, PipeImpl } from '../src/pipe'
+import { Context, install, PipeImpl } from '../src/pipe'
 import { Files } from '../src/files'
 import { BuildFailure } from '../src/asserts'
 
@@ -95,7 +96,7 @@ describe('Pipes and Context', () => {
     expect(calls).toEqual([ 'then no', 'catch', 'finally' ])
   })
 
-  it('should install plugs and functions', async () => {
+  it('should use plugs and functions', async () => {
     const files = new Files(getCurrentWorkingDirectory())
     const pipe = new PipeImpl(requireContext(), Promise.resolve(files))
 
@@ -119,6 +120,40 @@ describe('Pipes and Context', () => {
 
     expect(result).toBe(files)
     expect(calls).toEqual([ 'function', 'class' ])
+  })
+
+  it('should install a plug', async () => {
+    let options: any[] | undefined = undefined
+
+    class MyPlug implements Plug<void> {
+      private _options: any[]
+      constructor(...options: any[]) {
+        this._options = options
+      }
+      pipe(files: Files, context: Context): void {
+        void files, context
+        options = this._options
+      }
+    }
+
+    const tasks = build({
+      async _test1() {
+        const pipe1 = noop()
+        expect((<any> pipe1).__my_plug__).toBeUndefined()
+      },
+
+      async _test2() {
+        const pipe2 = noop()
+        expect((<any> pipe2).__my_plug__).toBeInstanceOf(Function)
+
+        await (<any> pipe2).__my_plug__('foo', 123, { a: true })
+      },
+    })
+
+    await tasks._test1()
+    install('__my_plug__' as any, MyPlug as any)
+    await tasks._test2()
+    expect(options).toEqual([ 'foo', 123, { a: true } ] as any)
   })
 
   it('should not extend a pipe when returning undefined', async () => {

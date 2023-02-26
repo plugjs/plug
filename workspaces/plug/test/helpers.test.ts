@@ -45,6 +45,30 @@ describe('Helpers Test', () => {
     expect(files3.directory).not.toBe(resolve('@'))
   })
 
+  it('should merge two pipes', async () => {
+    const pipe1 = find('**/*.*', { directory: '@/../src' })
+    const pipe2 = find('**/*.*', { directory: '@/../test' })
+    const pipe = merge([ pipe1, pipe2 ])
+
+    const files1 = await pipe1
+    const files2 = await pipe2
+    expect(files1.length).toBeGreaterThan(0)
+    expect(files2.length).toBeGreaterThan(0)
+    expect(files1.length).not.toEqual(files2.length)
+    expect(files2.directory).not.toEqual(files1.directory)
+
+    const files = await pipe
+    expect(files.length).toEqual(files1.length + files2.length)
+    expect(files.directory).not.toEqual(files1.directory)
+    expect(files.directory).not.toEqual(files2.directory)
+    expect(files.directory).toEqual(resolve('@/..'))
+
+    expect([ ...files.absolutePaths() ]).toEqual(jasmine.arrayWithExactContents([
+      ...files1.absolutePaths(),
+      ...files2.absolutePaths(),
+    ]))
+  })
+
   it('should execute a process', async () => {
     await expectAsync(exec('true')).toBeResolved()
     await expectAsync(exec('false')).toBeRejected()
