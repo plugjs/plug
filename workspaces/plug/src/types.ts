@@ -1,4 +1,3 @@
-import type { buildMarker, InvokeBuild } from './build'
 import type { Files } from './files'
 import type { Pipe } from './index'
 import type { AbsolutePath } from './paths'
@@ -48,6 +47,10 @@ export interface Task<T extends Result = Result, P extends Props = Record<string
   readonly buildFile: AbsolutePath,
   /** Invoke a task from in the context of a {@link Build} */
   invoke(state: State, taskName: string): Promise<T>
+  /** Other {@link Task}s hooked _before_ this one */
+  readonly before: Task[]
+  /** Other {@link Task}s hooked _after_ this one */
+  readonly after: Task[]
 }
 
 /**
@@ -116,6 +119,4 @@ export type ThisBuild<D extends BuildDef> = {
  * The {@link Build} type represents the collection of {@link Task}s
  * and _properties_ compiled from a {@link BuildDef | build definition}.
  */
-export type Build<D extends BuildDef = BuildDef> = Tasks<D> & Props<D> & {
-  [buildMarker]: InvokeBuild<D>
-}
+export type Build<D extends BuildDef = BuildDef> = Tasks<D> & Props<D>

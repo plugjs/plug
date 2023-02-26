@@ -39,7 +39,7 @@ function makeTask(
     _name: string,
 ): Task {
   /* Invoke the task, checking call stack, caches, and merging builds */
-  function invoke(state: State, taskName: string): Promise<Result> {
+  async function invoke(state: State, taskName: string): Promise<Result> {
     assert(! state.stack.includes(task), `Recursion detected calling ${$t(taskName)}`)
 
     /* Check cache */
@@ -51,6 +51,7 @@ function makeTask(
     const tasks: Record<string, Task> = Object.assign({}, task.tasks, state.tasks)
     const stack = [ ...state.stack, task ]
     const cache = state.cache
+    state = { stack, cache, tasks, props }
 
     /* Create run context and build */
     const context = new Context(task.buildFile, taskName)
@@ -61,7 +62,6 @@ function makeTask(
         // Tasks first, props might come also from environment
         if (name in tasks) {
           return (): Pipe => {
-            const state = { stack, cache, tasks, props }
             const promise = tasks[name]!.invoke(state, name)
             return new PipeImpl(context, promise)
           }
@@ -71,6 +71,9 @@ function makeTask(
       },
     })
 
+    /* Run all tasks hooked _before_ this one */
+    for (const before of task.before) await before.invoke(state, before.name)
+
     /* Some logging */
     context.log.info('Running...')
     const now = Date.now()
@@ -78,13 +81,18 @@ function makeTask(
     /* Run asynchronously in an asynchronous context */
     const promise = runAsync(context, taskName, async () => {
       return await _def.call(build) || undefined
-    }).then((result) => {
+    }).then(async (result) => {
       const level = taskName.startsWith('_') ? 'info' : 'notice'
       context.log[level](`Success ${$ms(Date.now() - now)}`)
       return result
     }).catch((error) => {
       throw context.log.fail(`Failure ${$ms(Date.now() - now)}`, error)
-    }).finally(() => ContextPromises.wait(context))
+    }).finally(async () => {
+      await ContextPromises.wait(context)
+    }).then(async (result) => {
+      for (const after of task.after) await after.invoke(state, after.name)
+      return result
+    })
 
     /* Cache the resulting promise and return it */
     cache.set(task, promise)
@@ -100,7 +108,7 @@ function makeTask(
       tasks: tasks,
     }
     return invoke(state, _name)
-  }, { buildFile, tasks, props, invoke })
+  }, { buildFile, tasks, props, invoke, before: [], after: [] })
 
   /* Assign the task's marker and name and return it */
   Object.defineProperty(task, taskMarker, { value: true })
@@ -112,19 +120,13 @@ function makeTask(
  * BUILD COMPILER                                                             *
  * ========================================================================== */
 
-/** Internal type describing the build invocation function */
-export type InvokeBuild<D extends BuildDef = BuildDef> = (
-  tasks: (keyof Tasks<D>)[],
-  props?: Record<keyof Props<D>, string | undefined>,
-) => Promise<void>
-
 /**
  * Symbol indicating that an object is a {@link Build}.
  *
- * In a compiled {@link Build} this symbol will be associated with a
- * {@link InvokeBuild} function which can be used to invoke tasks in a build.
+ * In a compiled {@link Build} this symbol will be associated with a function
+ * taking an array of strings (task names) and record of props to override
  */
-export const buildMarker = Symbol.for('plugjs:isBuild')
+const buildMarker = Symbol.for('plugjs:isBuild')
 
 /** Compile a {@link BuildDef | build definition} into a {@link Build} */
 export function build<
@@ -153,7 +155,7 @@ export function build<
   }
 
   /* Create the "call" function for this build */
-  const invoke: InvokeBuild = async function invoke(
+  const invoke = async function invoke(
       taskNames: string[],
       overrideProps: Record<string, string | undefined> = {},
   ): Promise<void> {
@@ -191,4 +193,44 @@ export function build<
 
   /* All done! */
   return compiled
+}
+
+/* ========================================================================== *
+ * HOOKS                                                                      *
+ * ========================================================================== */
+
+type TaskNames<B extends Build> = keyof {
+  [ name in keyof B as B[name] extends Task ? name : never ] : any
+}
+
+export function hookBefore<B extends Build, T extends keyof B>(
+    build: B,
+    taskName: string & T & TaskNames<B>,
+    hooks: (string & Exclude<TaskNames<B>, T>)[],
+): void {
+  const task = build[taskName]
+  assert(isTask(task), `Task "${$t(taskName)}" not found in build`)
+
+  for (const hook of hooks) {
+    const beforeHook = build[hook]
+    assert(isTask(beforeHook), `Task "${$t(hook)}" to hook before "${$t(taskName)}" not found in build`)
+    if (task.before.includes(beforeHook)) continue
+    task.before.push(beforeHook)
+  }
+}
+
+export function hookAfter<B extends Build, T extends keyof B>(
+    build: B,
+    taskName: string & T & TaskNames<B>,
+    hooks: (string & Exclude<TaskNames<B>, T>)[],
+): void {
+  const task = build[taskName]
+  assert(isTask(task), `Task "${$t(taskName)}" not found in build`)
+
+  for (const hook of hooks) {
+    const afterHook = build[hook]
+    assert(isTask(afterHook), `Task "${$t(hook)}" to hook after "${$t(taskName)}" not found in build`)
+    if (task.after.includes(afterHook)) continue
+    task.after.push(afterHook)
+  }
 }
