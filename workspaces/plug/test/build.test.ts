@@ -145,7 +145,6 @@ describe('Build Invocation', () => {
       '_after2',
       '_after3',
     ]))
-    console.log('CALLS', calls)
   })
 
   it('should fail with an invalid task name', async () => {
