@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/tsd",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "commonjs",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -15,6 +15,16 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/index.mjs"
       }
+    },
+    "./tsd": {
+      "require": {
+        "types": "./dist/tsd.d.ts",
+        "default": "./dist/tsd.cjs"
+      },
+      "import": {
+        "types": "./dist/tsd.d.ts",
+        "default": "./dist/tsd.mjs"
+      }
     }
   },
   "author": "Juit Developers <developers@juit.com>",
@@ -23,7 +33,7 @@
     "tsd": "^0.25.0"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.2.0"
+    "@plugjs/plug": "0.2.1"
   },
   "files": [
     "*.md",
