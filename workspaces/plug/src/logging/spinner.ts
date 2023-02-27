@@ -1,3 +1,5 @@
+/* coverage ignore file */
+
 import { runningTasks } from '../async'
 import { $cyn, $gry, $t } from './colors'
 import { logOptions } from './options'
