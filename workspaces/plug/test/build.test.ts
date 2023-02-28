@@ -221,7 +221,7 @@ describe('Build Invocation', () => {
       _task3: () => void 0,
     })
 
-    hookBefore(tasks, '_task1', [ '_task2' ])
+    hookBefore(tasks, '_task1', [ '_task2', '_task2', '_task2' ])
     hookBefore(tasks, '_task2', [ '_task3' ])
     hookBefore(tasks, '_task3', [ '_task1' ])
 
@@ -236,7 +236,7 @@ describe('Build Invocation', () => {
       _task3: () => void 0,
     })
 
-    hookAfter(tasks, '_task1', [ '_task2' ])
+    hookAfter(tasks, '_task1', [ '_task2', '_task2', '_task2' ])
     hookAfter(tasks, '_task2', [ '_task3' ])
     hookAfter(tasks, '_task3', [ '_task1' ])
 
