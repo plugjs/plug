@@ -42,8 +42,8 @@ export interface LogOptions {
   /** Remove an event listener for the specified event. */
   off(eventName: 'changed', listener: (logOptions: this) => void): this;
 
-  /** Convert for serialization, optionally overriding the default task name. */
-  fork(taskName?: string): Partial<LogOptions>
+  /** Return a record of environment variables for forking. */
+  forkEnv(taskName?: string): Record<string, string>
 }
 
 /* ========================================================================== *
@@ -91,14 +91,16 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
     super.emit('changed', this)
   }
 
-  fork(taskName?: string): Partial<LogOptions> {
+  forkEnv(taskName?: string): Record<string, string> {
     return {
-      level: this._level,
-      colors: this._colors,
-      lineLength: this._lineLength,
-      taskLength: this._taskLength,
-      defaultTaskName: taskName || this._defaultTaskName,
-      spinner: false, // forked spinner is always false
+      __LOG_OPTIONS: JSON.stringify({
+        level: this._level,
+        colors: this._colors,
+        lineLength: this._lineLength,
+        taskLength: this._taskLength,
+        defaultTaskName: taskName || this._defaultTaskName,
+        spinner: false, // forked spinner is always false
+      }),
     }
   }
 
