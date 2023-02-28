@@ -88,10 +88,10 @@ export interface CoverageReport {
  * ========================================================================== */
 
 /** Tokens for `coverage ignore xxx`, this should be self-explanatory */
-type IgnoreCoverage = 'test' | 'if' | 'else' | 'try' | 'catch' | 'finally' | 'next' | 'file'
+type IgnoreCoverage = 'test' | 'if' | 'else' | 'try' | 'catch' | 'finally' | 'next' | 'prev' | 'file'
 
 /** Regular expression matching strings like `coverage ignore xxx` */
-const ignoreRegexp = /^\s+(coverage|istanbul)\s+ignore\s+(test|if|else|try|catch|finally|next|file)(\s|$)/g
+const ignoreRegexp = /^\s+(coverage|istanbul)\s+ignore\s+(test|if|else|try|catch|finally|next|prev|file)(\s|$)/g
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *
@@ -240,12 +240,18 @@ export async function coverageReport(
       const ignores: IgnoreCoverage[] = []
       for (const comment of node.leadingComments || []) {
         for (const match of comment.value.matchAll(ignoreRegexp)) {
-          ignores.push(match[2] as IgnoreCoverage)
+          if (match[2] !== 'prev') ignores.push(match[2] as IgnoreCoverage)
+        }
+      }
+      for (const comment of node.trailingComments || []) {
+        for (const match of comment.value.matchAll(ignoreRegexp)) {
+          if (match[2] === 'prev') ignores.push(match[2] as IgnoreCoverage)
         }
       }
 
       /* Skip this node if we have a "coverage ignore next" comment */
       if (ignores.includes('next')) return setCodeCoverage(node, COVERAGE_IGNORED, true)
+      if (ignores.includes('prev')) return setCodeCoverage(node, COVERAGE_IGNORED, true)
 
       /* Typescript nodes are skipped, but children aren't in some cases */
       if (isTypeScript(node)) {
