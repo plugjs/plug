@@ -20,6 +20,15 @@ try {
   parseInt('123')
 }
 
+try {
+  throw new Error('Foo')
+} catch (error) {
+  void error
+} finally {
+  parseInt('123')
+}
+/* coverage ignore prev */
+
 /* this is covered */
 try {
   throw new Error('Foo')
