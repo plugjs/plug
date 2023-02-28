@@ -17,12 +17,12 @@ export function runAsync<T>(
     taskName: string,
     callback: () => Promise<T>,
 ): Promise<T> {
-  return getStorage().run(context, async () => {
+  return storage.run(context, async () => {
     try {
-      getTasks().add(taskName)
+      tasks.add(taskName)
       return await callback()
     } finally {
-      getTasks().delete(taskName)
+      tasks.delete(taskName)
     }
   })
 }
@@ -32,7 +32,7 @@ export function runAsync<T>(
  * invocation context or `undefined`.
  */
 export function currentContext(): Context | undefined {
-  return getStorage().getStore()
+  return storage.getStore()
 }
 
 /**
@@ -40,7 +40,7 @@ export function currentContext(): Context | undefined {
  * invocation context and fail if none was found.
  */
 export function requireContext(): Context {
-  const context = getStorage().getStore()
+  const context = storage.getStore()
   assert(context, 'Unable to retrieve current context')
   return context
 }
@@ -49,7 +49,7 @@ export function requireContext(): Context {
  * Return an array of all _task names_ currently running
  */
 export function runningTasks(): string[] {
-  return [ ...getTasks() ].sort()
+  return [ ...tasks ].sort()
 }
 
 /* ========================================================================== *
@@ -83,3 +83,6 @@ function getTasks(): Set<string> {
   }
   return tasks
 }
+
+const storage = getStorage()
+const tasks = getTasks()

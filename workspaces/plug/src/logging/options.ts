@@ -207,7 +207,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 const optionsKey = Symbol.for('plugjs.plug.logging.logOptions')
 
 /** Get the shared _per process_ instance of our {@link LogOptions}. */
-export function getLogOptions(): LogOptions {
+function getLogOptions(): LogOptions {
   let options: LogOptions = (<any> globalThis)[optionsKey]
   if (! options) {
     options = new LogOptionsImpl()
@@ -215,3 +215,6 @@ export function getLogOptions(): LogOptions {
   }
   return options
 }
+
+/** Shared instance of our {@link LogOptions}. */
+export const logOptions = getLogOptions()
