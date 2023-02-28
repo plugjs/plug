@@ -4,7 +4,6 @@ import { assert } from './asserts'
 
 import type { Context } from './pipe'
 
-
 /* ========================================================================== *
  * EXPORTED                                                                   *
  * ========================================================================== */
@@ -18,12 +17,12 @@ export function runAsync<T>(
     taskName: string,
     callback: () => Promise<T>,
 ): Promise<T> {
-  return storage.run(context, async () => {
+  return getStorage().run(context, async () => {
     try {
-      tasks.add(taskName)
+      getTasks().add(taskName)
       return await callback()
     } finally {
-      tasks.delete(taskName)
+      getTasks().delete(taskName)
     }
   })
 }
@@ -33,7 +32,7 @@ export function runAsync<T>(
  * invocation context or `undefined`.
  */
 export function currentContext(): Context | undefined {
-  return storage.getStore()
+  return getStorage().getStore()
 }
 
 /**
@@ -41,7 +40,7 @@ export function currentContext(): Context | undefined {
  * invocation context and fail if none was found.
  */
 export function requireContext(): Context {
-  const context = storage.getStore()
+  const context = getStorage().getStore()
   assert(context, 'Unable to retrieve current context')
   return context
 }
@@ -50,12 +49,37 @@ export function requireContext(): Context {
  * Return an array of all _task names_ currently running
  */
 export function runningTasks(): string[] {
-  return [ ...tasks ].sort()
+  return [ ...getTasks() ].sort()
 }
 
 /* ========================================================================== *
  * INTERNALS                                                                  *
  * ========================================================================== */
 
-const storage = new AsyncLocalStorage<Context>()
-const tasks = new Set<string>
+/*
+ * Storage and task names must be unique _per process_. We might get called
+ * from two (or three) different versions of this file: the .cjs transpiled one,
+ * the .mjs transpiled one (or the .ts dynamically transpiled by ts-loader).
+ * In all these cases, we must return the _same_ object, so we store those as
+ * a global variables associated with a couple of global symbols
+ */
+const storageKey = Symbol.for('plugjs.plug.async.storage')
+const tasksKey = Symbol.for('plugjs.plug.async.tasks')
+
+function getStorage(): AsyncLocalStorage<Context> {
+  let storage: AsyncLocalStorage<Context> = (<any> globalThis)[storageKey]
+  if (! storage) {
+    storage = new AsyncLocalStorage<Context>()
+    ;(<any> globalThis)[storageKey] = storage
+  }
+  return storage
+}
+
+function getTasks(): Set<string> {
+  let tasks: Set<string> = (<any> globalThis)[tasksKey]
+  if (! tasks) {
+    tasks = new Set<string>
+    ;(<any> globalThis)[tasksKey] = tasks
+  }
+  return tasks
+}
