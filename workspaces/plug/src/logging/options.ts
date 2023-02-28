@@ -8,7 +8,6 @@ import type { LogLevel, LogLevelString } from './levels'
 
 /* ========================================================================== */
 
-
 /** Options for our {@link Logger} instances */
 export interface LogOptions {
   /** The current output. */
@@ -204,5 +203,15 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   }
 }
 
-/** Shared instance of our {@link LogOptions}. */
-export const logOptions: LogOptions = new LogOptionsImpl()
+/* Unique symbol to share `LogOptions` per process */
+const optionsKey = Symbol.for('plugjs.plug.logging.logOptions')
+
+/** Get the shared _per process_ instance of our {@link LogOptions}. */
+export function getLogOptions(): LogOptions {
+  let options: LogOptions = (<any> globalThis)[optionsKey]
+  if (! options) {
+    options = new LogOptionsImpl()
+    ;(<any> globalThis)[optionsKey] = options
+  }
+  return options
+}
