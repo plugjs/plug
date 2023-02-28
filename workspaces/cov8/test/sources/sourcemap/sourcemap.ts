@@ -11,7 +11,8 @@ declare module '@plugjs/plug' {
   // nothing to declare
 }
 
-export const p = process.env.PATH ? true : /* coverage ignore next */ false
+export const p1 = process.env.PATH ? true : /* coverage ignore next */ false
+export const p2 = process.env.PATH ? true : false // coverage ignore prev
 
 export const n = parseInt('100')
 

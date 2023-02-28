@@ -1,6 +1,7 @@
 #!/bin/bash
 
-ESBUILD_OPTS="--platform=node --sourcemap=inline --sources-content=false --minify-whitespace=true"
+ESBUILD="../../../../../node_modules/.bin/esbuild"
+ESBUILD_OPTS="--platform=node --sourcemap=inline --sources-content=false"
 
-esbuild $ESBUILD_OPTS --format=cjs ./sourcemap.ts > sourcemap.cjs
-esbuild $ESBUILD_OPTS --format=esm ./sourcemap.ts > sourcemap.mjs
+${ESBUILD} $ESBUILD_OPTS --format=cjs ./sourcemap.ts > sourcemap.cjs
+${ESBUILD} $ESBUILD_OPTS --format=esm ./sourcemap.ts > sourcemap.mjs
