@@ -62,8 +62,8 @@ export async function execChild(
 
   // Build our environment variables record
   const PATH = childPaths.join(path.delimiter)
-  const __LOG_OPTIONS = JSON.stringify(logOptions.fork(context.taskName))
-  const childEnv: Record<string, string> = { ...process.env, ...env, PATH, __LOG_OPTIONS }
+  const logForkEnv = logOptions.forkEnv(context.taskName)
+  const childEnv: Record<string, string> = { ...process.env, ...env, ...logForkEnv, PATH }
 
   // Instrument coverage directory if needed
   if (coverageDir) childEnv.NODE_V8_COVERAGE = context.resolve(coverageDir)

@@ -7,7 +7,6 @@ import { $gry, $p, logOptions } from './logging'
 import { requireFilename, resolveFile } from './paths'
 import { Context, install } from './pipe'
 
-import type { LogOptions } from './logging'
 import type { AbsolutePath } from './paths'
 import type { Plug, PlugName, PlugResult } from './pipe'
 
@@ -27,8 +26,6 @@ export interface ForkData {
   filesDir: AbsolutePath,
   /** All files to pipe */
   filesList: AbsolutePath[],
-  /** Options for our logger in the child process */
-  logOpts: Partial<LogOptions>,
 }
 
 /** Fork result, from child to parent process */
@@ -61,7 +58,6 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
       buildFile: context.buildFile,
       filesDir: files.directory,
       filesList: [ ...files.absolutePaths() ],
-      logOpts: logOptions.fork(context.taskName),
     }
 
     /* Get _this_ filename to spawn */
@@ -69,7 +65,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
     context.log.debug('About to fork plug from', $p(script))
 
     /* Environment variables */
-    const env = { ...process.env }
+    const env = { ...process.env, ...logOptions.forkEnv(context.taskName) }
 
     /* Check our args (reversed) to see if the last specifies `coverageDir` */
     for (let i = this._arguments.length - 1; i >= 0; i --) {
@@ -176,11 +172,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
       buildFile,
       filesDir,
       filesList,
-      logOpts,
     } = message
-
-    /* Restore logging options first */
-    Object.assign(logOptions, logOpts)
 
     /* First of all, our plug context */
     const context = new Context(buildFile, taskName)
