@@ -177,6 +177,7 @@ function _esbTranpile(filename: string, type: Type): string {
     sourcemap: 'inline', // always inline source maps
     sourcesContent: false, // do not include sources content in sourcemap
     platform: 'node', // d'oh! :-)
+    minifyWhitespace: true, // https://github.com/evanw/esbuild/releases/tag/v0.16.14
     logLevel: 'silent', // catching those in our _esbReport below
     target: `node${process.versions['node']}`, // target _this_ version
     define: { __fileurl }, // from "globals.d.ts"

@@ -11,6 +11,8 @@ declare module '@plugjs/plug' {
   // nothing to declare
 }
 
+export const p = process.env.PATH ? true : /* coverage ignore next */ false
+
 export const n = parseInt('100')
 
 // Here Promise is a TSTypeReference
