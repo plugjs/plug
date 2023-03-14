@@ -21,7 +21,7 @@ export class Jasmine implements Plug<void> {
     const jasmine = boot()
 
     // Destructure our options and ignore `coverageDir`
-    const { setup, ...options } = this._options
+    const { setup, showDiff = true, showStack = true, ...options } = this._options
     delete options.coverageDir
 
     // Configure the Jasmine environment
@@ -34,7 +34,7 @@ export class Jasmine implements Plug<void> {
     }, options))
 
     // Setup our reporter
-    env.addReporter(new Reporter(context.log))
+    env.addReporter(new Reporter(context.log, showDiff, showStack))
 
     // See if we require a setup script...
     if (setup) {
