@@ -1,8 +1,11 @@
 import { fail } from 'node:assert'
-import { isDeepStrictEqual } from 'node:util'
+import { inspect, isDeepStrictEqual } from 'node:util'
 
 import { assert } from '../asserts'
 import { $grn, $red, logOptions } from '../logging'
+import { getTypeOf } from './types'
+
+import type { InspectOptions } from 'node:util'
 
 /* ========================================================================== *
  * EXPORTED INTERFACES                                                        *
@@ -266,6 +269,19 @@ class Coder<T, I extends Iterable<T> = Iterable<T>> {
   }
 }
 
+/** Shared constant for inspect options */
+const inspectOptions: InspectOptions = {
+  showHidden: false,
+  depth: 10,
+  colors: false,
+  maxArrayLength: 100,
+  maxStringLength: 250,
+  breakLength: Infinity,
+  compact: false,
+  sorted: true,
+  getters: true,
+}
+
 /* ========================================================================== *
  * EXPORTED FUNCTIONS                                                         *
  * ========================================================================== */
@@ -293,7 +309,7 @@ export function diff<T, I extends Iterable<T> = Iterable<T>>(
   return compareLongestCommonSubsequence(lhsCtx, rhsCtx)
 }
 
-/** Produce a textual diff between two values using their JSON representation. */
+/** Produce a textual diff between two values. */
 export function textDiff(
     lhs: any,
     rhs: any,
@@ -306,37 +322,38 @@ export function textDiff(
   const _del = del || (logOptions.colors ? $red : (s: string): string => `- ${s}`)
   const _not = not || (logOptions.colors ? (s: string): string => s : (s: string): string => `  ${s}`)
 
-  // Replacer for JSON.stringify sorting object keys
-  function replacer(_key: string, value: any): any {
-    // Only hashes (no "null", arrays or primitives)
-    if (value && (typeof value === 'object') && (! Array.isArray(value))) {
-      return Object.keys(value).sort().reduce((sorted, key) => {
-        sorted[key] = value[key]
-        return sorted
-      }, {} as Record<string, any>)
-    } else {
-      return value
-    }
+  // We'll need two array of string lines to compare...
+  let lhsLines: string[]
+  let rhsLines: string[]
+
+  // Get the _real_ types of both arguments
+  const lhsType = getTypeOf(lhs)
+  const rhsType = getTypeOf(rhs)
+
+  // If _both_ arguments are strings, then just split and compare, otherwise
+  // we nuse NodeJS' inspect to prep their string version
+  if ((lhsType === 'string') && (rhsType === 'string')) {
+    lhsLines = lhs.split('\n')
+    rhsLines = rhs.split('\n')
+  } else {
+    lhsLines = inspect(lhs, inspectOptions).split('\n')
+    rhsLines = inspect(rhs, inspectOptions).split('\n')
   }
 
-  // Convert both object to JSON with sorted keys and split by lines
-  const ls = lhs === undefined ? [] : JSON.stringify(lhs, replacer, 2).split('\n')
-  const rs = rhs === undefined ? [] : JSON.stringify(rhs, replacer, 2).split('\n')
-
   // Calculate the difference between the two arrays of strings
-  const changes = diff(ls, rs)
+  const changes = diff(lhsLines, rhsLines)
   if (changes.length === 0) return ''
 
   // Go through changes and highlight
   let offset = 0
   const result: string[] = []
   changes.forEach(({ lhsPos, lhsDel, rhsPos, rhsAdd }) => {
-    if (offset != lhsPos) result.push(_not(ls.slice(offset, lhsPos).join('\n')))
-    if (lhsDel) result.push(_del(ls.slice(lhsPos, lhsPos + lhsDel).join('\n')))
-    if (rhsAdd) result.push(_add(rs.slice(rhsPos, rhsPos + rhsAdd).join('\n')))
+    if (offset != lhsPos) result.push(...lhsLines.slice(offset, lhsPos).map(_not))
+    if (lhsDel) result.push(...lhsLines.slice(lhsPos, lhsPos + lhsDel).map(_del))
+    if (rhsAdd) result.push(...rhsLines.slice(rhsPos, rhsPos + rhsAdd).map(_add))
     offset = lhsPos + lhsDel
   })
-  if (offset < ls.length) result.push(_not(ls.slice(offset).join('\n')))
+  if (offset < lhsLines.length) result.push(...lhsLines.slice(offset).map(_not))
 
   // Join our results and return
   return result.join('\n')

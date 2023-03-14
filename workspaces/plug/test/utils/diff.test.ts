@@ -357,8 +357,8 @@ describe('textual diff', () => {
       expect(textDiff([ 'hello' ], [ 'world' ]))
           .toBe([
             '[',
-            $red('  "hello"'),
-            $grn('  "world"'),
+            $red('  \'hello\''),
+            $grn('  \'world\''),
             ']',
           ].join('\n'))
     } finally {
@@ -373,8 +373,8 @@ describe('textual diff', () => {
       expect(textDiff([ 'hello' ], [ 'world' ]))
           .toBe([
             '  [',
-            '-   "hello"',
-            '+   "world"',
+            '-   \'hello\'',
+            '+   \'world\'',
             '  ]',
           ].join('\n'))
     } finally {
@@ -390,12 +390,28 @@ describe('textual diff', () => {
     expect(textDiff({ a: 1, b: 2, c: 3 }, { c: 1, b: 2, a: 3 }, add, del, not))
         .toBe([
           '={',
-          '-  "a": 1,',
-          '+  "a": 3,',
-          '=  "b": 2,',
-          '-  "c": 3',
-          '+  "c": 1',
+          '-  a: 1,',
+          '+  a: 3,',
+          '=  b: 2,',
+          '-  c: 3',
+          '+  c: 1',
           '=}',
+        ].join('\n'))
+  })
+
+  it('should work with strings', () => {
+    const add = (s: string): string => `+${s}`
+    const del = (s: string): string => `-${s}`
+    const not = (s: string): string => `=${s}`
+
+    expect(textDiff('foo1\nfoo2\nbar\nbaz', 'baz\nbar\nfoo1\nfoo2', add, del, not))
+        .toBe([
+          '+baz',
+          '+bar',
+          '=foo1',
+          '=foo2',
+          '-bar',
+          '-baz',
         ].join('\n'))
   })
 
@@ -404,11 +420,13 @@ describe('textual diff', () => {
     const del = (s: string): string => `-${s}`
     const not = (s: string): string => `=${s}`
 
-    expect(textDiff('foo', undefined, add, del, not)).toBe('-"foo"')
-    expect(textDiff(undefined, 'foo', add, del, not)).toBe('+"foo"')
+    expect(textDiff('foo', undefined, add, del, not)).toBe('-\'foo\'\n+undefined')
+    expect(textDiff(undefined, 'foo', add, del, not)).toBe('-undefined\n+\'foo\'')
   })
 
   it('should return an empty string when there are no differences', () => {
     expect(textDiff('foo', 'foo')).toBe('')
+    expect(textDiff([ 123 ], [ 123 ])).toBe('')
+    expect(textDiff({ foo: 'bar' }, { foo: 'bar' })).toBe('')
   })
 })
