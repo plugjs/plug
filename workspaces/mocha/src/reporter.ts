@@ -127,7 +127,7 @@ export class PlugReporter extends RealMocha.reporters.Base {
             log.error($red(message))
 
             // Should we diff?
-            if (showDiff && ('actual' in failure.err) && ('expected' in failure.err)) {
+            if (showDiff && (('actual' in failure.err) || ('expected' in failure.err))) {
               const err = failure.err as AssertionError
 
               log.enter(ERROR, `${$gry('diff')} ${$red('actual')} ${$gry('/')} ${$grn('expected')}`)
