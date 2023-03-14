@@ -33,9 +33,9 @@ export default build({
 
   async test(): Promise<void> {
     await this.test_expectations().then(() => assert(false, 'Should not pass'), () => void 0)
-    // await this.test_reporter().then(() => assert(false, 'Should not pass'), () => void 0)
-    // await this.test_nospecs().then(() => assert(false, 'Should not pass'), () => void 0)
-    // await this.test_setup()
-    // await this.test_install()
+    await this.test_reporter().then(() => assert(false, 'Should not pass'), () => void 0)
+    await this.test_nospecs().then(() => assert(false, 'Should not pass'), () => void 0)
+    await this.test_setup()
+    await this.test_install()
   },
 })
