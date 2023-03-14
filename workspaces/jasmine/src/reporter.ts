@@ -79,21 +79,23 @@ export class Reporter implements jasmine.CustomReporter {
       this._logger.enter()
       this._logger.error($red(`${expectation.message}`), $gry(`(${expectation.matcherName})`))
 
-      if (this._showStack && stack.length) {
-        this._logger.enter()
-        stack.forEach((line) => this._logger.error($gry(line)))
-        this._logger.leave()
-      }
-
+      let hasDiff = false
       if (this._showDiff) {
         const difference = textDiff(expectation.actual, expectation.expected)
         if (difference) {
-          this._logger.enter()
-          this._logger.enter()
+          hasDiff = true
+          this._logger.enter(ERROR, `${$gry('diff')} ${$red('actual')} ${$gry('/')} ${$grn('expected')}`)
           this._logger.error(difference)
           this._logger.leave()
-          this._logger.leave()
         }
+      }
+
+      if (this._showStack && stack.length) {
+        if (hasDiff) this._logger.enter() // one more indent if diffs were shown
+        this._logger.enter()
+        stack.forEach((line) => this._logger.error($gry(line)))
+        if (hasDiff) this._logger.leave() // one less indent if diffs were shown
+        this._logger.leave()
       }
 
       this._logger.leave()
