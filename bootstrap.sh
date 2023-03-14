@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Relative to our build
-pushd "$(dirname $0)" > /dev/null
+cd "$(dirname $0)"
 
 # Remove whatever was bootstrapped
 rm -rf ./bootstrap
