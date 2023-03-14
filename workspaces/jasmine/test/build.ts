@@ -7,6 +7,10 @@ export default build({
     await find('reporter.test.ts', { directory: '@' }).plug(new Jasmine())
   },
 
+  async test_expectations() {
+    await find('expectations.test.ts', { directory: '@' }).plug(new Jasmine())
+  },
+
   async test_setup() {
     await find('setup.test.ts', { directory: '@' }).plug(new Jasmine({
       setup: '@/setup.ts',
@@ -28,6 +32,7 @@ export default build({
   },
 
   async test(): Promise<void> {
+    await this.test_expectations().then(() => assert(false, 'Should not pass'), () => void 0)
     await this.test_reporter().then(() => assert(false, 'Should not pass'), () => void 0)
     await this.test_nospecs().then(() => assert(false, 'Should not pass'), () => void 0)
     await this.test_setup()
