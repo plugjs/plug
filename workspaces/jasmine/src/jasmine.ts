@@ -20,6 +20,15 @@ export class Jasmine implements Plug<void> {
   async pipe(files: Files, context: Context): Promise<void> {
     const jasmine = boot()
 
+    // HACK: capture calls to "buildExpectationResult" to inject the original
+    // error into the expectation result that will be given to our reporter...
+    const buildExpectationResult = (<any> jasmine).buildExpectationResult
+    ;(<any> jasmine).buildExpectationResult = function(...args: any): any {
+      const ret = buildExpectationResult.apply(this, args)
+      if (ret && (args[0].error instanceof Error)) ret['originalError'] = args[0].error
+      return ret
+    }
+
     // Destructure our options and ignore `coverageDir`
     const { setup, showDiff = true, showStack = true, ...options } = this._options
     delete options.coverageDir
