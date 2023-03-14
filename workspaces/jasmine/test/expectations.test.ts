@@ -12,4 +12,9 @@ describe('Expectations tests', () => {
     expect('The brown fox jumped over the lazy dog')
         .toEqual('The quick fox jumped over the sleeping dog')
   })
+
+  it('should highligt the different types when they differ', () => {
+    expect({ foo: 'bar', hello: 'world' } as any)
+        .toEqual([ 'foo bar', 'hello world' ] as any)
+  })
 })

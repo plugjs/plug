@@ -1,5 +1,5 @@
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
-import { textDiff } from '@plugjs/plug/utils'
+import { getTypeOf, textDiff } from '@plugjs/plug/utils'
 
 import type { Logger } from '@plugjs/plug/logging'
 
@@ -81,10 +81,25 @@ export class Reporter implements jasmine.CustomReporter {
 
       let hasDiff = false
       if (this._showDiff) {
-        const difference = textDiff(expectation.actual, expectation.expected)
+        const { actual, expected } = expectation
+        const difference = textDiff(actual, expected)
         if (difference) {
           hasDiff = true
-          this._logger.enter(ERROR, `${$gry('diff')} ${$red('actual')} ${$gry('/')} ${$grn('expected')}`)
+
+          const actualType = getTypeOf(actual)
+          const expectedType = getTypeOf(expected)
+
+          if (actualType === expectedType) {
+            this._logger.enter(ERROR, `${$gry('diff')} ${$red('actual')} ${$gry('/')} ${$grn('expected')}`)
+          } else {
+            this._logger.enter(ERROR, [
+              $gry('diff'),
+              $red('actual'), $gry(`(${actualType})`),
+              '/',
+              $grn('expected'), $gry(`(${expectedType})`),
+            ].join(' '))
+          }
+
           this._logger.error(difference)
           this._logger.leave()
         }
