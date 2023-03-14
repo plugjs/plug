@@ -302,9 +302,9 @@ export function textDiff(
     not?: (s: string) => string,
 ): string {
   // Defaults for our "add" "del" and "not" functions (depending on colorization)
-  const _add = add || logOptions.colors ? $grn : (s: string): string => `+ ${s}`
-  const _del = del || logOptions.colors ? $red : (s: string): string => `- ${s}`
-  const _not = not || logOptions.colors ? (s: string): string => s : (s: string): string => `  ${s}`
+  const _add = add || (logOptions.colors ? $grn : (s: string): string => `+ ${s}`)
+  const _del = del || (logOptions.colors ? $red : (s: string): string => `- ${s}`)
+  const _not = not || (logOptions.colors ? (s: string): string => s : (s: string): string => `  ${s}`)
 
   // Replacer for JSON.stringify sorting object keys
   function replacer(_key: string, value: any): any {
