@@ -40,7 +40,7 @@ jobs:
             --target "${{ github.sha }}" \
             --verify-tag
 
-          npm publish
+          npm publish --workspaces
         env:
           NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
           GH_TOKEN: ${{ secrets.repo_token }}
