@@ -2,7 +2,7 @@ name: Automatic Updates
 
 on:
   schedule:
-    - cron: "30 2 * * 5"
+    - cron: "30 3 * * 5"
   workflow_dispatch:
 
 jobs:
@@ -25,13 +25,17 @@ jobs:
       - name: Check and apply dependencies updates
         run: |
           # Check for updates, and exit script on error / no updates found
-          npx '@juit/check-updates' --quick --bump || exit $(( $? == 255 ? 0 : $? ))
+          npx '@juit/check-updates' --quick \
+            package.json workspaces/*/package.json \
+            || exit $(( $? == 255 ? 0 : $? ))
 
-          # If still here, just run a full package update and install dependencies
+          # If still here, bump the version and reinstall dependencies
+          npm version patch --no-git-tag
           rm -rf node-modules package-lock.json
           npm install
 
-          # Build our package
+          # Align workspaces versions and build our package
+          npm run build exports
           npm run build
 
           # Commit all changes and push them back to the repo
