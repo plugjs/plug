@@ -25,7 +25,7 @@ jobs:
       - name: Check and apply dependencies updates
         run: |
           # Check for updates, and exit script on error / no updates found
-          npx '@juit/check-updates' --quick \
+          npx '@juit/check-updates' \
             package.json workspaces/*/package.json \
             || exit $(( $? == 255 ? 0 : $? ))
 
@@ -33,6 +33,7 @@ jobs:
           npm version patch --no-git-tag
           rm -rf node-modules package-lock.json
           npm install
+          npm install --workspaces
 
           # Align workspaces versions and build our package
           npm run build exports

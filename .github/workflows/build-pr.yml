@@ -21,4 +21,5 @@ jobs:
       - name: Build Package
         run: |
           npm clean-install
+          npm clean-install --workspaces
           npm run build
