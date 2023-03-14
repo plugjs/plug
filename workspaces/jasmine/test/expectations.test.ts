@@ -24,7 +24,7 @@ describe('Expectations tests', () => {
     })
   })
 
-  xdescribe('Jasmine expectations with contexts', () => {
+  describe('Jasmine expectations with contexts', () => {
     it('should produce some nice differences for objects', () => {
       expect({ foo: 'bar', hello: 'world', zap: true })
           .withContext('A simple context')
