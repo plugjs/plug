@@ -44,10 +44,10 @@ class FailedExpectationLogger {
     void assertionError, originalError
 
     const message = (
-      assertionError ? 'Assertion Error: ' + assertionError.message.split('\n')[0]!.trim() :
+      assertionError ? 'Assertion Error: ' + assertionError.message.split('\n')[0]?.trim() :
       originalError ? originalError.toString() :
       expectation.message
-    ) || expectation.message
+    ) || /* coverage ignore next */ expectation.message
 
     const matcherName =
       originalError?.operator ? ` (operator: "${originalError.operator}")` :
