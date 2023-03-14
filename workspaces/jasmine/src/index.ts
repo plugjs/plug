@@ -6,16 +6,22 @@ export interface JasmineOptions {
   /** Specify the directory where coverage data will be saved */
   coverageDir?: string,
 
+  /** Show differences for unmatched expectations (defaults to `true`). */
+  showDiff?: boolean | undefined,
+
+  /** Show stack trace for failed expectations (defaults to `true`). */
+  showStack?: boolean | undefined,
+
   /**
    * Whether to randomize spec execution order or not (defaults to `false`).
    */
-  random?: boolean | undefined;
+  random?: boolean | undefined,
 
   /**
    * Whether to stop execution of the suite after the first spec failure or not
    * (defaults to `false`).
    */
-  stopOnSpecFailure?: boolean | undefined;
+  stopOnSpecFailure?: boolean | undefined,
 
   /**
    * Whether to fail the spec if it ran no expectations.
@@ -23,13 +29,13 @@ export interface JasmineOptions {
    * By default a spec that ran no expectations is reported as passed. Setting
    * this to true will report such spec as a failure.
    */
-  failSpecWithNoExpectations?: boolean | undefined;
+  failSpecWithNoExpectations?: boolean | undefined,
 
   /**
    * Whether to cause specs to only have one expectation failure or allow
    * multiple (defaults to `false`).
    */
-  stopSpecOnExpectationFailure?: boolean | undefined;
+  stopSpecOnExpectationFailure?: boolean | undefined,
 
   /**
    * Setup script to load before running the Jasmine specs.

@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/mocha",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "type": "commonjs",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -31,14 +31,10 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@types/mocha": "^10.0.1",
-    "diff": "^5.1.0",
     "mocha": "^10.2.0"
   },
-  "devDependencies": {
-    "@types/diff": "^5.0.2"
-  },
   "peerDependencies": {
-    "@plugjs/plug": "0.2.4"
+    "@plugjs/plug": "0.2.5"
   },
   "files": [
     "*.md",

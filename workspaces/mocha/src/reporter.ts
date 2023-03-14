@@ -1,7 +1,7 @@
 import { assert } from '@plugjs/plug'
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
-import { diffJson } from 'diff'
 import RealMocha from 'mocha' // Mocha types pollute the global scope!
+import { textDiff } from '@plugjs/plug/utils'
 
 import type { Logger } from '@plugjs/plug/logging'
 import type { AssertionError } from 'node:assert'
@@ -127,28 +127,11 @@ export class PlugReporter extends RealMocha.reporters.Base {
             log.error($red(message))
 
             // Should we diff?
-            if (showDiff && ('actual' in failure.err) && ('expected' in failure.err)) {
+            if (showDiff && (('actual' in failure.err) || ('expected' in failure.err))) {
               const err = failure.err as AssertionError
-              const actual =
-                err.actual === undefined ? '[undefined]\n' :
-                err.actual === null ? '[null]\n' :
-                err.actual
-
-              const expected =
-                err.expected === undefined ? '\n[undefined]' :
-                err.expected === null ? '\n[null]' :
-                err.expected
-
-              const changes = diffJson(actual as any, expected as any)
-
-              const diff = changes.map((change): string => {
-                if (change.removed) return $red(change.value)
-                if (change.added) return $grn(change.value)
-                return $gry(change.value)
-              }).join('')
 
               log.enter(ERROR, `${$gry('diff')} ${$red('actual')} ${$gry('/')} ${$grn('expected')}`)
-              log.error(diff)
+              log.error(textDiff(err.actual, err.expected))
               log.leave()
             }
 

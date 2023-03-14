@@ -1,4 +1,5 @@
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
+import { getTypeOf, textDiff } from '@plugjs/plug/utils'
 
 import type { Logger } from '@plugjs/plug/logging'
 
@@ -12,7 +13,11 @@ export class Reporter implements jasmine.CustomReporter {
   private _stack: string[] = []
   private _newline = true
 
-  constructor(private _logger: Logger) {}
+  constructor(
+      private _logger: Logger,
+      private _showDiff: boolean,
+      private _showStack: boolean,
+  ) {}
 
   jasmineStarted(suiteInfo: jasmine.JasmineStartedInfo): void {
     this._logger.enter(NOTICE, `Jasmine running ${$ylw(suiteInfo.totalSpecsDefined)} specs`)
@@ -69,9 +74,46 @@ export class Reporter implements jasmine.CustomReporter {
       const stack = expectation.stack.split('\n')
           .filter((line) => line.indexOf('<Jasmine>') < 0)
           .filter((line) => !! line.match(/\S/))
-          .join('\n')
-      this._logger.error($red(`  ${expectation.message}`))
-      if (stack) this._logger.error(stack)
+          .map((line) => line.trim())
+
+      this._logger.enter()
+      this._logger.error($red(`${expectation.message}`), $gry(`(${expectation.matcherName})`))
+
+      let hasDiff = false
+      if (this._showDiff) {
+        const { actual, expected } = expectation
+        const difference = textDiff(actual, expected)
+        if (difference) {
+          hasDiff = true
+
+          const actualType = getTypeOf(actual)
+          const expectedType = getTypeOf(expected)
+
+          if (actualType === expectedType) {
+            this._logger.enter(ERROR, `${$gry('diff')} ${$red('actual')} ${$gry('/')} ${$grn('expected')}`)
+          } else {
+            this._logger.enter(ERROR, [
+              $gry('diff'),
+              $red('actual'), $gry(`(${actualType})`),
+              '/',
+              $grn('expected'), $gry(`(${expectedType})`),
+            ].join(' '))
+          }
+
+          this._logger.error(difference)
+          this._logger.leave()
+        }
+      }
+
+      if (this._showStack && stack.length) {
+        if (hasDiff) this._logger.enter() // one more indent if diffs were shown
+        this._logger.enter()
+        stack.forEach((line) => this._logger.error($gry(line)))
+        if (hasDiff) this._logger.leave() // one less indent if diffs were shown
+        this._logger.leave()
+      }
+
+      this._logger.leave()
     }
 
     this._failures.forEach((result, i) => {
