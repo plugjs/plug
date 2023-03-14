@@ -1,3 +1,4 @@
+export * from './utils/diff'
 export * from './utils/exec'
 export * from './utils/match'
 export * from './utils/options'
