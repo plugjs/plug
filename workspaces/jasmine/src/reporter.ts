@@ -1,4 +1,5 @@
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
+import { textDiff } from '@plugjs/plug/utils'
 
 import type { Logger } from '@plugjs/plug/logging'
 
@@ -12,7 +13,11 @@ export class Reporter implements jasmine.CustomReporter {
   private _stack: string[] = []
   private _newline = true
 
-  constructor(private _logger: Logger) {}
+  constructor(
+      private _logger: Logger,
+      private _showDiff: boolean,
+      private _showStack: boolean,
+  ) {}
 
   jasmineStarted(suiteInfo: jasmine.JasmineStartedInfo): void {
     this._logger.enter(NOTICE, `Jasmine running ${$ylw(suiteInfo.totalSpecsDefined)} specs`)
@@ -69,9 +74,29 @@ export class Reporter implements jasmine.CustomReporter {
       const stack = expectation.stack.split('\n')
           .filter((line) => line.indexOf('<Jasmine>') < 0)
           .filter((line) => !! line.match(/\S/))
-          .join('\n')
-      this._logger.error($red(`  ${expectation.message}`))
-      if (stack) this._logger.error(stack)
+          .map((line) => line.trim())
+
+      this._logger.enter()
+      this._logger.error($red(`${expectation.message}`), $gry(`(${expectation.matcherName})`))
+
+      if (this._showStack && stack.length) {
+        this._logger.enter()
+        stack.forEach((line) => this._logger.error($gry(line)))
+        this._logger.leave()
+      }
+
+      if (this._showDiff) {
+        const difference = textDiff(expectation.actual, expectation.expected)
+        if (difference) {
+          this._logger.enter()
+          this._logger.enter()
+          this._logger.error(difference)
+          this._logger.leave()
+          this._logger.leave()
+        }
+      }
+
+      this._logger.leave()
     }
 
     this._failures.forEach((result, i) => {
