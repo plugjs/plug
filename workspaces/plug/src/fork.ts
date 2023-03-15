@@ -65,7 +65,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
     context.log.debug('About to fork plug from', $p(script))
 
     /* Environment variables */
-    const env = { ...process.env, ...logOptions.forkEnv(context.taskName) }
+    const env = { ...process.env, ...logOptions.forkEnv(context.taskName, 4) }
 
     /* Check our args (reversed) to see if the last specifies `coverageDir` */
     for (let i = this._arguments.length - 1; i >= 0; i --) {
@@ -80,9 +80,14 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
 
     /* Run our script in a _separate_ process */
     const child = fork(script, {
-      stdio: [ 'ignore', 'inherit', 'inherit', 'ipc' ],
+      stdio: [ 'ignore', 'inherit', 'inherit', 'ipc', 'pipe' ],
       env,
     })
+
+    /* Pipe child logs directly to the writer */
+    if (child.stdio[4]) {
+      child.stdio[4].on('data', (data) => logOptions.output.write(data))
+    }
 
     context.log.info('Running', $p(script), $gry(`(pid=${child.pid})`))
 
