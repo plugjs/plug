@@ -111,6 +111,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
         colors: this._colors,
         lineLength: this._lineLength,
         taskLength: this._taskLength,
+        githubAnnotations: this.githubAnnotations,
         defaultTaskName: taskName || this._defaultTaskName,
         spinner: false, // forked spinner is always false
         fd, // file descriptor for logs
