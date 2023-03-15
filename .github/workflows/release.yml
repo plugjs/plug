@@ -30,7 +30,7 @@ jobs:
         run: |
           VERSION="$(node -p 'require("./package.json").version')"
 
-          test -z "$(git ls-remote --tags origin v0.2.123)" || {
+          test -z "$(git ls-remote --tags origin "v${VERSION}")" || {
             echo "Release ${VERSION} already tagged, exiting..."
             echo "::notice::Release ${VERSION} already tagged"
             exit 0
