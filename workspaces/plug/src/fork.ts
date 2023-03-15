@@ -62,7 +62,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
 
     /* Get _this_ filename to spawn */
     const script = requireFilename(__fileurl)
-    context.log.debug('About to fork plug from', $p(script))
+    context.log.debug('About to fork plug from', $p(this._scriptFile))
 
     /* Environment variables */
     const env = { ...process.env, ...logOptions.forkEnv(context.taskName, 4) }
@@ -102,7 +102,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
       })
 
       child.on('message', (message: ForkResult) => {
-        context.log.debug('Message from child process', message)
+        context.log.debug('Message from child process with PID', child.pid, message)
         response = message
       })
 
@@ -181,7 +181,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
 
     /* First of all, our plug context */
     const context = new Context(buildFile, taskName)
-    context.log.debug('Message from parent process', message)
+    context.log.debug('Message from parent process for PID', process.pid, message)
 
     /* Contextualize this run, and go! */
     const result = runAsync(context, taskName, async () => {
