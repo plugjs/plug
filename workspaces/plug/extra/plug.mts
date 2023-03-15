@@ -6,10 +6,13 @@ import _path from 'node:path'
 
 import _yargs from 'yargs-parser'
 
-import { $blu, $gry, $rst, $tsk, $und, $wht, isDirectory, isFile, main, version } from './utils.js'
+import { $blu, $gry, $rst, $tsk, $und, $wht, isDirectory, isFile, main } from './utils.js'
 
 import type { BuildFailure } from '../src/asserts.js'
 import type { Build } from '../src/index.js'
+
+/** Version injected by esbuild */
+declare const __version: string
 
 /* ========================================================================== *
  * ========================================================================== *
@@ -123,7 +126,7 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
         help = !! value
         break
       case 'version':
-        console.log(`v${version()}`)
+        console.log(`v${__version}`)
         process.exit(0)
         break
       default:
@@ -151,7 +154,7 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
         ${$wht}-c --colors${$rst}     Force colorful output (use "--no-colors" to force plain text)
         ${$wht}-l --list${$rst}       Only list the tasks defined by the build, nothing more!
         ${$wht}-h --help${$rst}       Help! You're reading it now!
-        ${$wht}   --version${$rst}    Version! This one: ${version()}!
+        ${$wht}   --version${$rst}    Version! This one: ${__version}!
 
     ${$blu}${$und}Properties:${$rst}
 
