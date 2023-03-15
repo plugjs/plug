@@ -453,6 +453,7 @@ export class ReportImpl implements Report {
 
           if (! type) continue
 
+          const title = `${this._title} (task "${this._task}")`
           const col = report.column || undefined
           const line = report.line || undefined
           const endColumn =
@@ -462,7 +463,7 @@ export class ReportImpl implements Report {
             undefined
           const message = report.messages.join('\n')
 
-          githubAnnotation({ type, file, col, line, endColumn }, message)
+          githubAnnotation({ type, title, file, col, line, endColumn }, message)
         }
       }
     }
