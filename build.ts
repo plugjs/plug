@@ -9,9 +9,10 @@ import {
   fixExtensions,
   fork,
   log,
+  logging,
   merge,
-  paths,
   parseJson,
+  paths,
   resolve,
   rmrf,
 } from './workspaces/plug/src/index'
@@ -23,6 +24,8 @@ import type {
 } from './workspaces/plug/src/index'
 import type { Tsc } from './workspaces/typescript/src/typescript'
 import type { ESLint } from './workspaces/eslint/src/eslint'
+
+logging.logOptions.githubAnnotations = false
 
 /* ========================================================================== *
  * OUR WORKSPACES                                                             *
