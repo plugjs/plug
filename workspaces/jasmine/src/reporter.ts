@@ -1,8 +1,11 @@
 import { AssertionError } from 'node:assert'
 
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
+import {
+  $blu, $grn, $gry, $ms, $red, $wht, $ylw,
+  ERROR, NOTICE, WARN,
+  githubAnnotation,
+} from '@plugjs/plug/logging'
 import { getTypeOf, textDiff } from '@plugjs/plug/utils'
-import { githubAnnotation } from '@plugjs/plug/logging/github'
 
 import type { Logger } from '@plugjs/plug/logging'
 

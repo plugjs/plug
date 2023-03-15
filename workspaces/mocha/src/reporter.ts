@@ -1,8 +1,11 @@
-import { assert } from '@plugjs/plug'
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import RealMocha from 'mocha' // Mocha types pollute the global scope!
+import { assert } from '@plugjs/plug'
 import { textDiff } from '@plugjs/plug/utils'
-import { githubAnnotation } from '@plugjs/plug/logging/github'
+import {
+  $blu, $grn, $gry, $ms, $red, $wht, $ylw,
+  ERROR, NOTICE, WARN,
+  githubAnnotation,
+} from '@plugjs/plug/logging'
 
 import type { Logger } from '@plugjs/plug/logging'
 import type { AssertionError } from 'node:assert'
