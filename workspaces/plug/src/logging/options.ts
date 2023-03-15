@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events'
+import { createWriteStream } from 'node:fs'
 
 import { getLevelNumber, NOTICE } from './levels'
 
@@ -41,8 +42,13 @@ export interface LogOptions {
   /** Remove an event listener for the specified event. */
   off(eventName: 'changed', listener: (logOptions: this) => void): this;
 
-  /** Return a record of environment variables for forking. */
-  forkEnv(taskName?: string): Record<string, string>
+  /**
+   * Return a record of environment variables for forking.
+   *
+   * @param taskName The default task name of the forked process
+   * @param logFd A file descriptor where logs should be sinked to
+   */
+  forkEnv(taskName?: string, logFd?: number): Record<string, string>
 }
 
 /* ========================================================================== *
@@ -83,14 +89,16 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
      * and it's processed _last_ as it's normally only created by fork below
      * and consumed by the `Exec` plug (which has no other way of communicating)
      */
-    Object.assign(this, JSON.parse(process.env.__LOG_OPTIONS || '{}'))
+    const { fd, ...options } = JSON.parse(process.env.__LOG_OPTIONS || '{}')
+    if (fd) this.output = createWriteStream('', { fd })
+    Object.assign(this, options)
   }
 
   private _notifyListeners(): void {
     super.emit('changed', this)
   }
 
-  forkEnv(taskName?: string): Record<string, string> {
+  forkEnv(taskName?: string, fd?: number): Record<string, string> {
     return {
       __LOG_OPTIONS: JSON.stringify({
         level: this._level,
@@ -99,6 +107,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
         taskLength: this._taskLength,
         defaultTaskName: taskName || this._defaultTaskName,
         spinner: false, // forked spinner is always false
+        fd, // file descriptor for logs
       }),
     }
   }
