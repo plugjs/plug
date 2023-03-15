@@ -2,8 +2,15 @@
 /* eslint-disable no-console */
 
 import _path from 'node:path'
+import _repl from 'node:repl'
+import _module from 'node:module'
 
-import { $blu, $gry, $rst, $und, $wht, main, version } from './utils.js'
+import _yargs from 'yargs-parser'
+
+import { $blu, $gry, $rst, $und, $wht, main } from './utils.js'
+
+/** Version injected by esbuild */
+declare const __version: string
 
 /** Our minimalistic help */
 function help(): never {
@@ -13,8 +20,10 @@ function help(): never {
 
   ${$blu}${$und}Options:${$rst}
 
-      ${$wht}-h --help${$rst}       Help! You're reading it now!
-      ${$wht}-v --version${$rst}    Version! This one: ${version()}!
+      ${$wht}-h --help     ${$rst}  Help! You're reading it now!
+      ${$wht}-v --version  ${$rst}  Version! This one: ${__version}!
+      ${$wht}-e --eval     ${$rst}  Evaluate the script
+      ${$wht}-p --print    ${$rst}  Evaluate the script and print the result
       ${$wht}   --force-esm${$rst}  Force transpilation of ".ts" files to EcmaScript modules
       ${$wht}   --force-cjs${$rst}  Force transpilation of ".ts" files to CommonJS modules
 
@@ -31,34 +40,88 @@ function help(): never {
 
 /** Process the command line */
 main((args: string[]): void => {
-  let script: string | undefined
-  let scriptArgs: string[] = []
+  let _script: string | undefined
+  let _scriptArgs: string[] = []
+  let _print: boolean = false
+  let _eval: boolean = false
+
+  /* Yargs-parse our arguments */
+  const parsed = _yargs(args, {
+    configuration: {
+      'camel-case-expansion': false,
+      'strip-aliased': true,
+      'strip-dashed': true,
+    },
+
+    alias: {
+      'version': [ 'v' ],
+      'help': [ 'h' ],
+      'eval': [ 'e' ],
+      'print': [ 'p' ],
+    },
+
+    boolean: [ 'help', 'eval', 'print', 'force-esm', 'version', 'force-cjs' ],
+  })
 
   // Parse options, leaving script and scriptArgs with our code to run
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i]
-
-    if ((arg === '-h') || (arg === '--help')) help()
-    if ((arg === '-v') || (arg === '--version')) {
-      console.log(`v${version()}`)
-      process.exit(1)
+  for (const [ key, value ] of Object.entries(parsed)) {
+    switch (key) {
+      case '_': // extra arguments
+        [ _script, ..._scriptArgs ] = value
+        break
+      case 'help': // help screen
+        help()
+        break
+      case 'version': // version dump
+        console.log(`v${__version}`)
+        process.exit(0)
+        break
+      case 'eval': // eval script
+        _eval = value
+        break
+      case 'print': // eval script and print return value
+        _print = true
+        _eval = true
+        break
     }
-
-    if (arg!.startsWith('-')) {
-      console.log(`${$wht}tsrun${$rst}: Uknown option "${$wht}${arg}${$rst}"`)
-      process.exit(1)
-    }
-
-    ([ script, ...scriptArgs ] = args.slice(i))
-    break
   }
 
-  // No script? Then help
-  if (! script) help()
+  // Start the repl or run the script?
+  if (! _script) {
+    // No script? Then repl
+    console.log(`Welcome to Node.js ${process.version} (tsrun v${__version}).`)
+    console.log('Type ".help" for more information.')
+    _repl.start()
+  } else if (_eval) {
+    // If we are evaluating a script, we need to use some node internals to do
+    // all the tricks to run this... We a fake script running the code to
+    // evaluate, instrumenting "globalThis" with all required vars and modules
+    const script = `
+      globalThis.module = module;
+      globalThis.require = require;
+      globalThis.exports = exports;
+      globalThis.__dirname = __dirname;
+      globalThis.__filename = __filename;
 
-  // Resolve the _full_ path of the script, and tweak our process.argv
-  // arguments, them simply import the script and let Node do its thing...
-  script = _path.resolve(process.cwd(), script)
-  process.argv = [ process.argv0, script, ...scriptArgs ]
-  import(script)
+      for (const module of require('repl').builtinModules) {
+        if (module.indexOf('/') >= 0) continue;
+        if (Object.hasOwn(globalThis, module)) continue;
+        Object.defineProperty(globalThis, module, { get: () => require(module) });
+      }
+
+      return require('node:vm').runInThisContext(${JSON.stringify(_script)}, '[eval]')
+    `
+
+    // Use the Node internal "Module._compile" to compile and run our script
+    const result = (new _module('[eval]') as any)._compile(script, '[eval]')
+
+    // If we need to print, then let's do it!
+    if (_print) console.log(result)
+  } else {
+    // Resolve the _full_ path of the script, and tweak our process.argv
+    // arguments, them simply import the script and let Node do its thing...
+    _script = _path.resolve(process.cwd(), _script)
+    process.argv = [ process.argv0, _script, ..._scriptArgs ]
+    import(_script)
+  }
 })
