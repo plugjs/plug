@@ -77,10 +77,7 @@ export const emitColor: LogEmitter = (options: LogEmitterOptions, args: any[]): 
 
   /* Write each individual line out */
   for (const line of message.split('\n')) {
-    _output.write(zapSpinner)
-    _output.write(linePrefix)
-    _output.write(line)
-    _output.write('\n')
+    _output.write(`${zapSpinner}${linePrefix}${line}\n`)
   }
 }
 
@@ -120,8 +117,6 @@ export const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): 
 
   /* Write each individual line out */
   for (const line of message.split('\n')) {
-    _output.write(linePrefix)
-    _output.write(line)
-    _output.write('\n')
+    _output.write(`${linePrefix}${line}\n`)
   }
 }
