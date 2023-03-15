@@ -2,6 +2,7 @@ import { assert } from '@plugjs/plug'
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import RealMocha from 'mocha' // Mocha types pollute the global scope!
 import { textDiff } from '@plugjs/plug/utils'
+import { githubAnnotation } from '@plugjs/plug/logging/github'
 
 import type { Logger } from '@plugjs/plug/logging'
 import type { AssertionError } from 'node:assert'
@@ -74,9 +75,11 @@ export class PlugReporter extends RealMocha.reporters.Base {
           slow ++
         }
       } else if (test.isPending()) {
+        githubAnnotation({ type: 'warning', title: 'Mocha test pending' }, test.title)
         const tag = $gry('[') + $ylw('skipped') + $gry(']')
         log.leave(WARN, `${$ylw(_pending)} ${test.title} ${tag}`)
       } else if (test.isFailed()) {
+        githubAnnotation({ type: 'warning', title: 'Mocha test failed' }, test.title)
         const number = failures.push(test)
         const tag = $gry('[') + $red('failed') + $gry('] [') + $red(number) + $gry(']')
         log.leave(ERROR, `${$red(_failure)} ${test.title} ${tag}`)
