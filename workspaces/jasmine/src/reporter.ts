@@ -2,6 +2,7 @@ import { AssertionError } from 'node:assert'
 
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import { getTypeOf, textDiff } from '@plugjs/plug/utils'
+import { githubAnnotation } from '@plugjs/plug/logging/github'
 
 import type { Logger } from '@plugjs/plug/logging'
 
@@ -161,6 +162,7 @@ export class Reporter implements jasmine.CustomReporter {
         break
 
       case 'failed':
+        githubAnnotation({ type: 'error', title: `Jasmine spec ${status}` }, description)
         number = this._failures.push(Object.assign(result, { suiteStack: [ ...this._stack ] }))
         this._logger.leave(ERROR,
             `${$red(_failure)} ${description} ${ms} ` +
@@ -168,6 +170,7 @@ export class Reporter implements jasmine.CustomReporter {
         break
 
       default: // 'pending', 'excluded', ... maybe others?
+        githubAnnotation({ type: 'warning', title: `Jasmine spec ${status}` }, description)
         this._logger.leave(WARN, `${$ylw(_pending)} ${description} ${$gry('[')}${$ylw(status)}${$gry(']')}`)
     }
   }
