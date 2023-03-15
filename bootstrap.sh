@@ -6,6 +6,9 @@ cd "$(dirname $0)"
 # Remove whatever was bootstrapped
 rm -rf ./bootstrap
 
+# Get the version for the command line
+VERSION="$(node -p 'require("./workspaces/plug/package.json").version')"
+
 # Compile our "ts-loader" loader and CLI
 exec ./node_modules/.bin/esbuild \
 	--platform=node \
@@ -16,6 +19,7 @@ exec ./node_modules/.bin/esbuild \
 	--sources-content=false \
 	--out-extension:.js=.mjs \
 	--external:esbuild \
+	--define:__version="'${VERSION}'" \
 	--bundle \
 		./workspaces/plug/extra/*.mts
 
