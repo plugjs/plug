@@ -355,13 +355,19 @@ export default build({
 
   /* Only transpile and coverage (no linting) */
   async dev(): Promise<void> {
+    let error: any = undefined
+
     await this.clean_coverage()
     await this.transpile()
     await this.check()
     try {
       await this.test()
+    } catch (err) {
+      error = err
     } finally {
-      await this.coverage()
+      await this.coverage().catch((err) => {
+        throw error || err
+      })
     }
   },
 
@@ -376,6 +382,7 @@ export default build({
 
   /* Run all tasks (sequentially) */
   async default(): Promise<void> {
+    let error: any = undefined
     try {
       log.notice('Forking to collect self coverage')
       const args = [ 'build' ]
@@ -384,8 +391,12 @@ export default build({
         coverageDir: '.coverage-data',
         fork: true,
       })
+    } catch (err) {
+      error = err
     } finally {
-      await this.coverage()
+      await this.coverage().catch((err) => {
+        throw error || err
+      })
     }
   },
 })
