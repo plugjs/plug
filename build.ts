@@ -8,10 +8,10 @@ import {
   find,
   fixExtensions,
   fork,
-  fs,
   log,
   merge,
   paths,
+  parseJson,
   resolve,
   rmrf,
 } from './workspaces/plug/src/index'
@@ -152,6 +152,8 @@ export default build({
 
   /** Transpile CLI */
   async transpile_cli(): Promise<Files> {
+    const version = parseJson('package.json').version
+
     // then we *only check* the types for "workspaces/plug/extra"
     log.notice(`Checking extras types sanity in ${$p(resolve('workspaces/plug/extra'))}`)
     await find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
@@ -174,6 +176,7 @@ export default build({
           sourcesContent: false,
           external: [ 'esbuild' ],
           outExtension: { '.js': '.mjs' },
+          define: { '__version': JSON.stringify(version) },
           outdir: 'workspaces/plug/cli',
         })
   },
@@ -318,8 +321,7 @@ export default build({
 
   /* Prepare exports in our "package.json" files */
   async exports(): Promise<void> {
-    const data = await fs.readFile(resolve('package.json'), 'utf-8')
-    const version = JSON.parse(data).version
+    const version = parseJson('package.json').version
 
     banner(`Updating package.json files (version=${version})`)
 
