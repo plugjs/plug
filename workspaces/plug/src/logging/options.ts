@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import { createWriteStream } from 'node:fs'
+import { Socket } from 'node:net'
 
 import { getLevelNumber, NOTICE } from './levels'
 
@@ -96,7 +96,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
      * and consumed by the `Exec` plug (which has no other way of communicating)
      */
     const { fd, ...options } = JSON.parse(process.env.__LOG_OPTIONS || '{}')
-    if (fd) this.output = createWriteStream('', { fd })
+    if (fd) this.output = new Socket({ fd })
     Object.assign(this, options)
   }
 
