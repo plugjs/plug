@@ -1,4 +1,4 @@
-import { mkdtempSync } from 'node:fs'
+import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -206,4 +206,27 @@ export function exec(
 ): Promise<void> {
   const { params, options } = parseOptions(args)
   return execChild(cmd, params, options, requireContext())
+}
+
+/**
+ * Read and parse a JSON file, throwing an error if not found.
+ *
+ * @params file The JSON file to parse
+ */
+export function parseJson(file: string): any {
+  const jsonFile = requireContext().resolve(file)
+  let jsonText: string
+  try {
+    jsonText = readFileSync(jsonFile, 'utf-8')
+  } catch (error: any) {
+    if (error.code === 'ENOENT') log.fail(`File ${$p(jsonFile)} not found`)
+    if (error.code === 'EACCES') log.fail(`File ${$p(jsonFile)} can not be accessed`)
+    log.fail(`Error reading ${$p(jsonFile)}`, error)
+  }
+
+  try {
+    return JSON.parse(jsonText)
+  } catch (error) {
+    log.fail(`Error parsing ${$p(jsonFile)}`, error)
+  }
 }

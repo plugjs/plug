@@ -90,13 +90,13 @@ export async function execChild(
   // Standard output to "notice"
   if (child.stdout) {
     const out = reaadline.createInterface(child.stdout)
-    out.on('line', (line) => line ? context.log.notice(line) : context.log.notice('\u00a0'))
+    out.on('line', (line) => context.log.notice(line || '\u00a0'))
   }
 
   // Standard error to "warning"
   if (child.stderr) {
     const err = reaadline.createInterface(child.stderr)
-    err.on('line', (line) => line ? context.log.warn(line) : context.log.warn('\u00a0'))
+    err.on('line', (line) => context.log.warn(line ||'\u00a0'))
   }
 
   // Return our promise from the spawn events

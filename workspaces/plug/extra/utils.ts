@@ -18,24 +18,6 @@ export const $tsk = process.stdout.isTTY ? '\u001b[38;5;141m' : '' // the color 
 
 
 /* ========================================================================== *
- * PACKAGE VERSION                                                            *
- * ========================================================================== */
-
-export function version(): string {
-  const debug = _util.debuglog('plug:cli')
-
-  try {
-    const thisFile = _url.fileURLToPath(import.meta.url)
-    const packageFile = _path.resolve(thisFile, '..', '..', 'package.json')
-    const packageData = _fs.readFileSync(packageFile, 'utf-8')
-    return JSON.parse(packageData).version || '(unknown)'
-  } catch (error) {
-    debug('Error parsing version:', error)
-    return '(error)'
-  }
-}
-
-/* ========================================================================== *
  * TS LOADER FORCE TYPE                                                       *
  * ========================================================================== */
 
