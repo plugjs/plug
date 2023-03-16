@@ -9,9 +9,10 @@ import {
   fixExtensions,
   fork,
   log,
+  logging,
   merge,
-  paths,
   parseJson,
+  paths,
   resolve,
   rmrf,
 } from './workspaces/plug/src/index'
@@ -23,6 +24,8 @@ import type {
 } from './workspaces/plug/src/index'
 import type { Tsc } from './workspaces/typescript/src/typescript'
 import type { ESLint } from './workspaces/eslint/src/eslint'
+
+logging.logOptions.githubAnnotations = false
 
 /* ========================================================================== *
  * OUR WORKSPACES                                                             *
@@ -241,8 +244,6 @@ export default build({
 
   /** Run tests in CJS mode */
   async test(): Promise<void> {
-    const [ node, cli ] = process.argv
-
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
 
     for (const mode of [ 'cjs', 'esm' ] as const) {
@@ -251,8 +252,10 @@ export default build({
         const buildFile = resolve(workspace, 'test', 'build.ts')
         try {
           banner(`${mode.toUpperCase()} Tests (${workspace})`)
-          await exec(node!, ...process.execArgv, cli!, `--force-${mode}`, '-f', buildFile, 'test', {
+
+          await exec(resolve('@/bootstrap/plug.mjs'), `--force-${mode}`, '-f', buildFile, 'test', {
             coverageDir: '.coverage-data',
+            fork: true,
           })
         } catch (error: any) {
           log.error(error)
@@ -355,13 +358,19 @@ export default build({
 
   /* Only transpile and coverage (no linting) */
   async dev(): Promise<void> {
+    let error: any = undefined
+
     await this.clean_coverage()
     await this.transpile()
     await this.check()
     try {
       await this.test()
+    } catch (err) {
+      error = err
     } finally {
-      await this.coverage()
+      await this.coverage().catch((err) => {
+        throw error || err
+      })
     }
   },
 
@@ -376,16 +385,21 @@ export default build({
 
   /* Run all tasks (sequentially) */
   async default(): Promise<void> {
-    const [ node, cli ] = process.argv
-
+    let error: any = undefined
     try {
       log.notice('Forking to collect self coverage')
-      const extra = this.workspace ? [ `workspace=${this.workspace}` ] : []
-      await exec(node!, ...process.execArgv, cli!, 'build', ...extra, {
+      const args = [ 'build' ]
+      if (this.workspace) args.push(`workspace=${this.workspace}`)
+      await exec(resolve('@/bootstrap/plug.mjs'), ...args, {
         coverageDir: '.coverage-data',
+        fork: true,
       })
+    } catch (err) {
+      error = err
     } finally {
-      await this.coverage()
+      await this.coverage().catch((err) => {
+        throw error || err
+      })
     }
   },
 })

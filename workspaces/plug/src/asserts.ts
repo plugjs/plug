@@ -2,6 +2,8 @@
  * BUILD FAILURES                                                             *
  * ========================================================================== */
 
+import { githubAnnotation } from './logging/github'
+
 /** A symbol marking {@link BuildFailure} instances */
 const buildFailure = Symbol.for('plugjs:buildFailure')
 
@@ -17,6 +19,11 @@ export class BuildFailure extends Error {
   /** Construct a {@link BuildFailure} */
   constructor(message?: string | undefined, errors: any[] = []) {
     super(message || '')
+
+    // Annotate this build failure in GitHub
+    if (message) {
+      githubAnnotation({ type: 'error', title: 'Build Failure' }, message)
+    }
 
     /* Basic error setup: stack and errors */
     Error.captureStackTrace(this, BuildFailure)

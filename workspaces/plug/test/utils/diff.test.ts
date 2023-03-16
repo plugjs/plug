@@ -1,8 +1,8 @@
 import { $grn, $red, logOptions } from '../../src/logging'
 import { diff, textDiff } from '../../src/utils/diff'
 
-describe('myers diff algorithm', function() {
-  describe('primitives (strings)', () => {
+describe('Myers Diff Algorithm', function() {
+  describe('Primitives (strings)', () => {
     it('should compare strings (change at the end)', function() {
       const changes = diff(
           'the quick red fox jumped',
@@ -228,7 +228,7 @@ describe('myers diff algorithm', function() {
     })
   })
 
-  describe('array of objects', () => {
+  describe('Array of objects', () => {
     it('should compare arrays of objects (delete all)', function() {
       const changes = diff(
           [ { foo: 'bar' }, { baz: 12345 }, { hello: 'world' } ],
@@ -349,7 +349,7 @@ describe('myers diff algorithm', function() {
   })
 })
 
-describe('textual diff', () => {
+describe('Textual diff', () => {
   it('should produce some colorized diff', () => {
     const colors = logOptions.colors
     try {

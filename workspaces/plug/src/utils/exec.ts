@@ -1,5 +1,5 @@
 import path from 'node:path'
-import reaadline from 'node:readline'
+import readline from 'node:readline'
 import { fork as forkProcess, spawn as spawnProcess } from 'node:child_process'
 
 import { assert, BuildFailure } from '../asserts'
@@ -62,7 +62,7 @@ export async function execChild(
 
   // Build our environment variables record
   const PATH = childPaths.join(path.delimiter)
-  const logForkEnv = logOptions.forkEnv(context.taskName)
+  const logForkEnv = logOptions.forkEnv(context.taskName, 4)
   const childEnv: Record<string, string> = { ...process.env, ...env, ...logForkEnv, PATH }
 
   // Instrument coverage directory if needed
@@ -71,32 +71,43 @@ export async function execChild(
   // Prepare the options for calling `spawn`
   const childOptions: SpawnOptions = {
     ...extraOptions,
-    stdio: [ 'ignore', 'pipe', 'pipe' ],
+    stdio: [ 'ignore', 'pipe', 'pipe', 'ipc', 'pipe' ],
     cwd: childCwd,
     env: childEnv,
     shell,
   }
 
-  // Add the 'ipc' channel to stdio options if forking
-  if (fork) childOptions.stdio = [ 'ignore', 'pipe', 'pipe', 'ipc' ]
-
   // Spawn our subprocess and monitor its stdout/stderr
-  context.log.info('Executing', [ cmd, ...args ])
-  context.log.info('Execution options', childOptions)
+  context.log.info(fork ? 'Forking' : 'Executing', [ cmd, ...args ])
+  context.log.debug('Child process options', childOptions)
+
   const child = fork ?
     forkProcess(cmd, args, childOptions) :
     spawnProcess(cmd, args, childOptions)
 
-  // Standard output to "notice"
-  if (child.stdout) {
-    const out = reaadline.createInterface(child.stdout)
-    out.on('line', (line) => context.log.notice(line || '\u00a0'))
-  }
+  try {
+    context.log.info('Child process PID', child.pid)
 
-  // Standard error to "warning"
-  if (child.stderr) {
-    const err = reaadline.createInterface(child.stderr)
-    err.on('line', (line) => context.log.warn(line ||'\u00a0'))
+    // Standard output to "notice"
+    if (child.stdout) {
+      const out = readline.createInterface(child.stdout)
+      out.on('line', (line) => context.log.notice(line || '\u00a0'))
+    }
+
+    // Standard error to "warning"
+    if (child.stderr) {
+      const err = readline.createInterface(child.stderr)
+      err.on('line', (line) => context.log.warn(line ||'\u00a0'))
+    }
+
+    // Log output bypass
+    if (child.stdio[4]) {
+      child.stdio[4].on('data', (data) => logOptions.output.write(data))
+    }
+  } catch (error) {
+    // If something happens before returning our promise, kill the child...
+    child.kill()
+    throw error
   }
 
   // Return our promise from the spawn events

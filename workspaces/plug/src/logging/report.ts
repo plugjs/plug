@@ -1,12 +1,21 @@
 import { BuildFailure } from '../asserts'
 import { readFile } from '../fs'
 import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
-import { ERROR, NOTICE, WARN } from './levels'
+import { ERROR, logLevels, NOTICE, WARN } from './levels'
 import { logOptions } from './options'
+import { githubAnnotation } from './github'
 
 import type { AbsolutePath } from '../paths'
 import type { LogEmitter } from './emit'
 import type { LogLevels } from './levels'
+
+let _showSources = logOptions.showSources
+let _githubAnnotations = logOptions.githubAnnotations
+logOptions.on('changed', (options) => {
+  _showSources = options.showSources
+  _githubAnnotations = options.githubAnnotations
+})
+
 
 /* ========================================================================== */
 
@@ -267,12 +276,12 @@ export class ReportImpl implements Report {
 
 
   done(showSources?: boolean | undefined): void {
-    if (showSources == null) showSources = logOptions.showSources
+    if (showSources == null) showSources = _showSources
     if (! this.empty) this._emit(showSources)
     if (this.errors) throw BuildFailure.fail()
   }
 
-  private _emit(showSources: boolean): this {
+  private _emit(showSources: boolean): void {
     /* Counters for all we need to print nicely */
     let fPad = 0
     let aPad = 0
@@ -281,7 +290,7 @@ export class ReportImpl implements Report {
     let cPad = 0
 
     /* Skip report all together if empty! */
-    if ((this._annotations.size === 0) && (this._records.size === 0)) return this
+    if ((this._annotations.size === 0) && (this._records.size === 0)) return
 
     /* This is GIANT: sort and convert our data for easy reporting */
     const entries = [ ...this._annotations.keys(), ...this._records.keys() ]
@@ -431,7 +440,32 @@ export class ReportImpl implements Report {
       this._emitter(options, [ '' ])
     }
 
-    /* Done! */
-    return this
+    /* Annotate in GitHub */
+    if (_githubAnnotations) {
+      for (const entry of entries) {
+        const file = entry.file === nul ? undefined : entry.file
+
+        for (const report of entry.records) {
+          const type: 'error' | 'warning' | null =
+            report.level === logLevels.ERROR ? 'error' :
+            report.level === logLevels.WARN ? 'warning' :
+            null
+
+          if (! type) continue
+
+          const title = `${this._title} (task "${this._task}")`
+          const col = report.column || undefined
+          const line = report.line || undefined
+          const endColumn =
+            report.column ?
+              report.length >= Number.MAX_SAFE_INTEGER ? undefined :
+              ((report.column + report.length) || undefined) :
+            undefined
+          const message = report.messages.join('\n')
+
+          githubAnnotation({ type, title, file, col, line, endColumn }, message)
+        }
+      }
+    }
   }
 }

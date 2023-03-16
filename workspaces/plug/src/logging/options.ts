@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events'
+import { Socket } from 'node:net'
 
 import { getLevelNumber, NOTICE } from './levels'
 
@@ -28,6 +29,8 @@ export interface LogOptions {
   showSources: boolean,
   /** The task name to be used by default if a task is not contextualized. */
   defaultTaskName: string,
+  /** Whether GitHub annotations are enabled or not. */
+  githubAnnotations: boolean,
   /** The options used by NodeJS for object inspection. */
   readonly inspectOptions: InspectOptions,
 
@@ -41,8 +44,13 @@ export interface LogOptions {
   /** Remove an event listener for the specified event. */
   off(eventName: 'changed', listener: (logOptions: this) => void): this;
 
-  /** Return a record of environment variables for forking. */
-  forkEnv(taskName?: string): Record<string, string>
+  /**
+   * Return a record of environment variables for forking.
+   *
+   * @param taskName The default task name of the forked process
+   * @param logFd A file descriptor where logs should be sinked to
+   */
+  forkEnv(taskName?: string, logFd?: number): Record<string, string>
 }
 
 /* ========================================================================== *
@@ -58,6 +66,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   private _lineLength = (<NodeJS.WriteStream> this._output).columns || 80
   private _lineLengthSet = false // has line length been set manually?
   private _showSources = true // by default, always show source snippets
+  private _githubAnnotations = false // ultimately set by the constructor
   private _inspectOptions: InspectOptions = {}
   private _defaultTaskName = ''
   private _taskLength = 0
@@ -78,27 +87,34 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
       // Other values don't change the value of `options.colors`
     }
 
+    /* If the `GITHUB_ACTIONS` is `true` then enable annotations */
+    this._githubAnnotations = process.env.GITHUB_ACTIONS === 'true'
+
     /*
      * The `__LOG_OPTIONS` variable is a JSON-serialized `LogOptions` object
      * and it's processed _last_ as it's normally only created by fork below
      * and consumed by the `Exec` plug (which has no other way of communicating)
      */
-    Object.assign(this, JSON.parse(process.env.__LOG_OPTIONS || '{}'))
+    const { fd, ...options } = JSON.parse(process.env.__LOG_OPTIONS || '{}')
+    if (fd) this.output = new Socket({ fd }).unref()
+    Object.assign(this, options)
   }
 
   private _notifyListeners(): void {
     super.emit('changed', this)
   }
 
-  forkEnv(taskName?: string): Record<string, string> {
+  forkEnv(taskName?: string, fd?: number): Record<string, string> {
     return {
       __LOG_OPTIONS: JSON.stringify({
         level: this._level,
         colors: this._colors,
         lineLength: this._lineLength,
         taskLength: this._taskLength,
+        githubAnnotations: this.githubAnnotations,
         defaultTaskName: taskName || this._defaultTaskName,
         spinner: false, // forked spinner is always false
+        fd, // file descriptor for logs
       }),
     }
   }
@@ -186,6 +202,15 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
   set defaultTaskName(defaultTaskName: string) {
     this._defaultTaskName = defaultTaskName
+    this._notifyListeners()
+  }
+
+  get githubAnnotations(): boolean {
+    return this._githubAnnotations
+  }
+
+  set githubAnnotations(githubAnnotations: boolean) {
+    this._githubAnnotations = githubAnnotations
     this._notifyListeners()
   }
 
