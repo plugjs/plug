@@ -286,8 +286,8 @@ export default build({
   async coverage(): Promise<void> {
     banner('Test Coverage')
 
-    const coverage = await import('./workspaces/cov8/src/coverage.js')
-    const Coverage = coverage.default.Coverage
+    const coverage = await import('./workspaces/cov8/src/coverage')
+    const Coverage = coverage.Coverage
 
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
 
@@ -295,6 +295,7 @@ export default build({
       return find('src/**/*.([cm])?ts', { directory: workspace })
     })).filter('**/*.*', { directory: '.' })
 
+    // @ts-ignore
     await sources.plug(new Coverage('.coverage-data', {
       reportDir: 'coverage',
       optimalCoverage: 100,
