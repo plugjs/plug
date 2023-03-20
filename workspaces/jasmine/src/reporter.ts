@@ -98,7 +98,7 @@ class FailedExpectationLogger {
     }
 
     // If we want stack traces, log them out
-    if (this._showStack) {
+    if (expectation.stack && this._showStack) {
       // The _stack_ of the call gets pruned to contain _only_ stack traces
       const stack = expectation.stack.split('\n')
           .map((line) => line.trim())
