@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
     // Setup our compilation type
-    "lib": [ "es2022" ],
-    "target": "es2022",
-    "module": "es2022",
-    "moduleResolution": "node16",
+    "lib": [ "esnext" ],
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "types": [ "node" ],
     "esModuleInterop": true,
 
@@ -17,6 +17,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noUncheckedIndexedAccess": true,
-    "importsNotUsedAsValues": "error",
+    "verbatimModuleSyntax": true,
   }
 }
