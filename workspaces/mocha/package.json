@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/mocha",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -34,7 +34,7 @@
     "mocha": "^10.2.0"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.3.0"
+    "@plugjs/plug": "0.3.1"
   },
   "files": [
     "*.md",
