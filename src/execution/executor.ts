@@ -3,12 +3,11 @@ import { EventEmitter } from 'node:events'
 
 import { Spec, Suite, Hook } from './executable'
 
-import type { Done } from './executable'
+import type { Executor } from './executable'
 
 /* ========================================================================== */
 
 export interface ExecutionFailure {
-  id: number,
   error: Error,
 }
 
@@ -26,20 +25,19 @@ export interface HookExecutionFailure extends ExecutionFailure {
 
 export interface ExecutionEvents {
   'suite:start': (suite: Suite) => void
-  'suite:skip': (suite: Suite) => void
-  'suite:pass': (suite: Suite, time: number) => void
-  'suite:fail': (suite: Suite, failure: SuiteExecutionFailure) => void
+  'suite:done': (suite: Suite, time: number) => void
 
   'spec:start': (spec: Spec) => void
   'spec:error': (spec: Spec, failure: SpecExecutionFailure) => void
-  'spec:skip': (spec: Spec) => void
+  'spec:skip': (spec: Spec, time: number) => void
   'spec:pass': (spec: Spec, time: number) => void
-  'spec:fail': (spec: Spec, failure: SpecExecutionFailure) => void
+  'spec:fail': (spec: Spec, time: number, failure: SpecExecutionFailure) => void
 
   'hook:start': (hook: Hook) => void
   'hook:error': (hook: Hook, failure: HookExecutionFailure) => void
+  'hook:skip': (hook: Hook, time: number) => void
   'hook:pass': (hook: Hook, time: number) => void
-  'hook:fail': (hook: Hook, failure: HookExecutionFailure) => void
+  'hook:fail': (hook: Hook, time: number, failure: HookExecutionFailure) => void
 }
 
 export interface Execution {
@@ -95,44 +93,54 @@ export function runSuite(suite: Suite): Execution {
     },
   }
 
-  const start = (executable: Suite | Spec | Hook): Done => {
+  const start = (executable: Suite | Spec | Hook): ReturnType<Executor['start']> => {
     const type =
       executable instanceof Suite ? 'suite' :
       executable instanceof Spec ? 'spec' :
       executable instanceof Hook ? 'hook' :
-      /* coverage ignore next */ undefined
-    assert(type, `Unable to start ${Object.getPrototypeOf(executable)?.constructor?.name}`)
+      /* coverage ignore next */
+      assert.fail(`Unable to start ${Object.getPrototypeOf(executable)?.constructor?.name}`)
 
     const now = Date.now()
     _emitter.emit(`${type}:start`, executable)
     if (type === 'spec') result.specs ++
 
-    const done: Done = <E extends Error | undefined>(error?: E): E => {
-      if (! error) {
-        _emitter.emit(`${type}:pass`, executable, Date.now() - now)
-        if (type === 'spec') result.passed ++
-        return undefined as E
-      } else {
-        const failure = { id: 0, error, [type]: executable }
-        failure.id = result.failures.push(failure)
-        _emitter.emit(`${type}:fail`, executable, failure)
-        if (type === 'spec') result.failed ++
-        return failure.error as E
-      }
-    }
+    const failures: ExecutionFailure[] = []
+    let done = false
 
-    done.skipped = (): void => {
-      _emitter.emit(`${type}:skip`, executable)
-      if (type === 'spec') result.skipped ++
-    }
+    return {
+      done(skipped: boolean = false): void {
+        const time = Date.now() - now
+        done = true
 
-    done.notify = (error: Error): void => {
-      const failure = { id: 0, error, [type]: executable }
-      failure.id = result.failures.push(failure)
-      _emitter.emit(`${type}:error`, executable, failure)
-    }
+        if (type === 'suite') {
+          _emitter.emit(`${type}:done`, executable, time)
+          return
+        }
 
-    return done
+        if (failures.length) {
+          _emitter.emit(`${type}:fail`, executable, time, failures)
+          if (type === 'spec') result.failed ++
+        } else if (skipped) {
+          _emitter.emit(`${type}:skip`, executable, time)
+          if (type === 'spec') result.skipped ++
+        } else {
+          _emitter.emit(`${type}:pass`, executable, time)
+          if (type === 'spec') result.passed ++
+        }
+      },
+      notify(error: Error): void {
+        const failure = { error, [type]: executable }
+        result.failures.push(failure)
+
+        // notify error after done, or include in failure?
+        if (done) {
+          _emitter.emit(`${type}:error`, executable, failure)
+        } else {
+          failures.push(failure)
+        }
+      },
+    }
   }
 
   setImmediate(() => Promise.resolve().then(async () => {
@@ -146,14 +154,4 @@ export function runSuite(suite: Suite): Execution {
   }).catch((error) => reject(error)))
 
   return execution
-}
-
-/* ========================================================================== */
-
-export function runFiles(...files: string[]): Execution {
-  const suite = new Suite(undefined, '', async () => {
-    for (const file of files) await import(file)
-  })
-
-  return runSuite(suite)
 }
