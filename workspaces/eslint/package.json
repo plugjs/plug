@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/eslint",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -30,13 +30,13 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "eslint": "^8.36.0"
+    "eslint": "^8.37.0"
   },
   "devDependencies": {
-    "@types/eslint": "^8.21.3"
+    "@types/eslint": "^8.37.0"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.3.1"
+    "@plugjs/plug": "0.3.2"
   },
   "files": [
     "*.md",
