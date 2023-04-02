@@ -1,5 +1,3 @@
-import assert from 'node:assert'
-
 import { Suite, skip } from '../src/execution/executable'
 import { runSuite, type Execution } from '../src/execution/executor'
 import * as setup from '../src/execution/setup'
@@ -50,7 +48,7 @@ describe('Executor', () => {
     setupListeners(execution, calls)
 
     // no calls on suite/execution creation
-    assert.deepStrictEqual(calls, [])
+    expect(calls).toEqual([])
 
     // only 'setup' on suite setup
     await suite.setup()
@@ -327,15 +325,7 @@ describe('Executor', () => {
     })
 
     const execution = runSuite(suite)
-
     setupListeners(execution, calls)
-
-    // no calls on suite/execution creation
-    assert.deepStrictEqual(calls, [])
-
-    // only 'setup' on suite setup
-    await suite.setup()
-    expect(calls as any).toEqual([ [ 'suite:exec', 'suite 0' ] ])
 
     // all calls 'setup' on suite execution (setup is run only once!)
     const result = await execution.result
