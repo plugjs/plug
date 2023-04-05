@@ -1,6 +1,6 @@
 import { inspect } from 'node:util'
 
-import type { ExpectationContext } from './expect'
+import type { Expectations } from './expect'
 
 /** A type identifying any constructor */
 export type Constructor<T = any> = new (...args: any[]) => T
@@ -13,6 +13,11 @@ export type NonArrayObject<T = any> = {
   [a: string]: T
   [b: symbol]: T
   [c: number]: never
+}
+
+/** A type identifying the parameter of `string.match(...)` */
+export type StringMatcher = string | RegExp | {
+  [Symbol.match](string: string): RegExpMatchArray | null
 }
 
 /** Mappings for our _expanded_ {@link typeOf} implementation */
@@ -29,6 +34,7 @@ export type TypeMappings = {
   array: readonly any [],
   buffer: Buffer,
   map: Map<any, any>,
+  promise: PromiseLike<any>,
   regexp: RegExp,
   set: Set<any>,
   // object: anything not mapped above, not null, and not an array
@@ -40,26 +46,9 @@ export type TypeMappings = {
 /** Values returned by our own _expanded_ `{@link typeOf}` */
 export type TypeName = keyof TypeMappings
 
-/** Determines if the specified `value` is of the specified _expanded_ `type` */
-export function isType<T extends keyof TypeMappings>(
-    context: ExpectationContext,
-    type: T,
-): context is ExpectationContext<TypeMappings[T]> {
-  return typeOf(context.value) === type
-}
-
-/** Asserts that the specified `value` is of the specified _expanded_ `type` */
-export function assertType<T extends keyof TypeMappings>(
-    context: ExpectationContext,
-    type: T,
-): asserts context is ExpectationContext<TypeMappings[T]> {
-  const { value } = context
-
-  if (typeOf(value) === type) return
-
-  context = { ...context, negative: false }
-  throw new ExpectationError(context, `be ${prefixType(type)}`)
-}
+/* ========================================================================== *
+ * TYPE INSPECTION, GUARD, AND ASSERTION                                      *
+ * ========================================================================== */
 
 /** Expanded `typeof` implementation returning some extra types */
 export function typeOf(value: unknown): TypeName {
@@ -82,6 +71,9 @@ export function typeOf(value: unknown): TypeName {
   if (Array.isArray(value)) return 'array'
   if (Buffer.isBuffer(value)) return 'buffer'
 
+  if (value instanceof Promise) return 'promise'
+  if (typeof (value as any)['then'] === 'function') return 'promise'
+
   if (value instanceof RegExp) return 'regexp'
   if (value instanceof Map) return 'map'
   if (value instanceof Set) return 'set'
@@ -90,6 +82,31 @@ export function typeOf(value: unknown): TypeName {
   return 'object'
 }
 
+/** Determines if the specified `value` is of the specified _expanded_ `type` */
+export function isType<T extends keyof TypeMappings>(
+    context: Expectations,
+    type: T,
+): context is Expectations<TypeMappings[T]> {
+  return typeOf(context.value) === type
+}
+
+/** Asserts that the specified `value` is of the specified _expanded_ `type` */
+export function assertType<T extends keyof TypeMappings>(
+    context: Expectations,
+    type: T,
+): asserts context is Expectations<TypeMappings[T]> {
+  const { value } = context
+
+  if (typeOf(value) === type) return
+
+  throw new ExpectationError(context, false, `to be ${prefixType(type)}`)
+}
+
+/* ========================================================================== *
+ * PRETTY PRINTING FOR MESSAGES AND DIFFS                                     *
+ * ========================================================================== */
+
+/** A simple utility class for pretty-printing in messages and inspections */
 export class TypeFormat {
   constructor(private _format: string) {}
 
@@ -103,7 +120,7 @@ export class TypeFormat {
 }
 
 /** Return the type of the value or (if an object) its constructor name */
-export function typeFormat(value: unknown): TypeFormat { // TypeName | `[${string}]` {
+export function typeFormat(value: unknown): TypeFormat {
   const type = typeOf(value)
   if (type !== 'object') return new TypeFormat(`<${type}>`)
 
@@ -135,6 +152,8 @@ export function stringifyValue(value: unknown): string {
       return String(value)
     case 'bigint':
       return `${value}n`
+    case 'regexp':
+      return String(value)
     default:
       return typeFormat(value).toString()
   }
@@ -169,19 +188,33 @@ export function prefixType(type: TypeName): string {
 }
 
 export class ExpectationError extends Error {
-  readonly expectation: string
-
   constructor(
-      context: ExpectationContext,
+      context: Expectations,
+      negative: boolean,
       details: string,
-      cause?: Error,
   ) {
-    const { value, negative, expectation, from } = context
+    const { value } = context
     const not = negative ? ' not' : ''
 
-    super(`Expected ${stringifyValue(value)}${not} to ${details}`, { cause })
-    this.expectation = `${negative ? '!' : ''}${expectation}`
+    // if we're not root...
+    let preamble: string = stringifyValue(value)
+    if (context.parent) {
+      const properties: any[] = []
 
-    Error.captureStackTrace(this, from)
+      while (context.parent) {
+        const prop = context.parent.prop
+        properties.push(
+          typeof prop === 'string' ?
+            `[${JSON.stringify(prop)}]` :
+            `[${String(prop)}]`,
+        )
+        context = context.parent.context
+      }
+
+      preamble = properties.reverse().join('')
+      preamble = `property ${preamble} of ${stringifyValue(context.value)} (${stringifyValue(value)})`
+    }
+
+    super(`Expected ${preamble}${not} ${details}`)
   }
 }

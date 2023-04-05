@@ -1016,25 +1016,11 @@ describe('Executor', () => {
   })
 })
 
-// expect('').toBe
 // expect('').toBeCloseTo
-// expect('').toBeDefined
-// expect('').toBeFalse
-// expect('').toBeFalsy
 // expect('').toBeGreaterThan
 // expect('').toBeGreaterThanOrEqual
-// expect('').toBeInstanceOf
 // expect('').toBeLessThan
 // expect('').toBeLessThanOrEqual
-// expect('').toBeNaN
-// expect('').toBeNegativeInfinity
-// expect('').toBeNull
-// expect('').toBePositiveInfinity
-// expect('').toBeTrue
-// expect('').toBeTruthy
-// expect('').toBeUndefined
+
 // expect('').toContain // arrays
 // expect('').toEqual
-// expect('').toHaveSize // length
-// expect('').toMatch
-// expect('').toThrow
