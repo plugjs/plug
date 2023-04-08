@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/plug",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -105,7 +105,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@types/node": "<19",
-    "esbuild": "^0.17.14",
+    "esbuild": "^0.17.15",
     "picomatch": "^2.3.1"
   },
   "devDependencies": {
