@@ -102,14 +102,14 @@ describe('Asynchronous Expectations', () => {
 
     await assert.rejects(expect(Promise.reject(error)).toBeRejectedWithError(TypeError), (reason) => {
       assert(reason instanceof ExpectationError)
-      assert.strictEqual(reason.message, 'Expected [SyntaxError] to be an instance of TypeError')
+      assert.strictEqual(reason.message, 'Expected [SyntaxError] to be an instance of [TypeError]')
       return true
     })
 
     // eslint-disable-next-line prefer-promise-reject-errors
     await assert.rejects(expect(Promise.reject('foo')).toBeRejectedWithError(), (reason) => {
       assert(reason instanceof ExpectationError)
-      assert.strictEqual(reason.message, 'Expected "foo" to be an instance of Error')
+      assert.strictEqual(reason.message, 'Expected "foo" to be an instance of [Error]')
       return true
     })
   })
