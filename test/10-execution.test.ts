@@ -1,5 +1,6 @@
 import { Suite, skip } from '../src/execution/executable'
 import { runSuite, type Execution } from '../src/execution/executor'
+import { expect } from '../src/expectation/expect'
 import * as setup from '../src/execution/setup'
 
 import type { Spec, Hook } from '../src/execution/executable'
@@ -61,33 +62,33 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 1' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', jasmine.any(Number) ],
-      [ 'spec:pass', 'spec 1', jasmine.any(Number) ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', jasmine.any(Number) ],
-      [ 'spec:pass', 'spec 2', jasmine.any(Number) ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
-      [ 'hook:pass', 'afterAll', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'hook:pass', 'afterAll', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 2,
       passed: 2,
       failed: 0,
@@ -116,7 +117,7 @@ describe('Executor', () => {
       setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const hook = jasmine.objectContaining({
+    const hook = expect.toInclude({
       parent: suite,
       name: 'beforeAll',
     })
@@ -129,16 +130,16 @@ describe('Executor', () => {
       [ 'suite:exec', 'suite 0' ],
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
-      [ 'hook:fail', 'beforeAll', jasmine.any(Number), [ { hook, error } ] ],
+      [ 'hook:fail', 'beforeAll', expect.toBeA('number'), { hook, error } ],
       [ 'spec:start', 'spec 1' ],
-      [ 'spec:skip', 'spec 1', jasmine.any(Number) ],
+      [ 'spec:skip', 'spec 1', expect.toBeA('number') ],
       [ 'spec:start', 'spec 2' ],
-      [ 'spec:skip', 'spec 2', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'spec:skip', 'spec 2', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result as any).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 2,
       passed: 0,
       failed: 0,
@@ -167,7 +168,7 @@ describe('Executor', () => {
       setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const hook = jasmine.objectContaining({
+    const hook = expect.toInclude({
       parent: suite,
       name: 'afterAll',
     })
@@ -181,32 +182,32 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 1' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', jasmine.any(Number) ],
-      [ 'spec:pass', 'spec 1', jasmine.any(Number) ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', jasmine.any(Number) ],
-      [ 'spec:pass', 'spec 2', jasmine.any(Number) ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
-      [ 'hook:fail', 'afterAll', jasmine.any(Number), [ { hook, error } ] ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'hook:fail', 'afterAll', expect.toBeA('number'), { hook, error } ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result as any).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 2,
       passed: 2,
       failed: 0,
@@ -235,17 +236,17 @@ describe('Executor', () => {
       setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const hook1 = jasmine.objectContaining({
+    const hook1 = expect.toInclude({
       name: 'beforeEach',
-      parent: jasmine.objectContaining({
+      parent: expect.toInclude({
         name: 'spec 1',
         parent: suite,
       }),
     })
 
-    const hook2 = jasmine.objectContaining({
+    const hook2 = expect.toInclude({
       name: 'beforeEach',
-      parent: jasmine.objectContaining({
+      parent: expect.toInclude({
         name: 'spec 2',
         parent: suite,
       }),
@@ -260,23 +261,23 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
-      [ 'hook:fail', 'beforeEach', jasmine.any(Number), [ { hook: hook1, error } ] ],
-      [ 'spec:skip', 'spec 1', jasmine.any(Number) ],
+      [ 'hook:fail', 'beforeEach', expect.toBeA('number'), { hook: hook1, error } ],
+      [ 'spec:skip', 'spec 1', expect.toBeA('number') ],
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
-      [ 'hook:fail', 'beforeEach', jasmine.any(Number), [ { hook: hook2, error } ] ],
-      [ 'spec:skip', 'spec 2', jasmine.any(Number) ],
+      [ 'hook:fail', 'beforeEach', expect.toBeA('number'), { hook: hook2, error } ],
+      [ 'spec:skip', 'spec 2', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
-      [ 'hook:pass', 'afterAll', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'hook:pass', 'afterAll', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result as any).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 2,
       passed: 0,
       failed: 0,
@@ -308,17 +309,17 @@ describe('Executor', () => {
       setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const hook1 = jasmine.objectContaining({
+    const hook1 = expect.toInclude({
       name: 'afterEach',
-      parent: jasmine.objectContaining({
+      parent: expect.toInclude({
         name: 'spec 1',
         parent: suite,
       }),
     })
 
-    const hook2 = jasmine.objectContaining({
+    const hook2 = expect.toInclude({
       name: 'afterEach',
-      parent: jasmine.objectContaining({
+      parent: expect.toInclude({
         name: 'spec 2',
         parent: suite,
       }),
@@ -334,31 +335,31 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 1' ],
       [ 'hook:start', 'afterEach' ],
-      [ 'hook:fail', 'afterEach', jasmine.any(Number), [ { hook: hook1, error } ] ],
-      [ 'spec:pass', 'spec 1', jasmine.any(Number) ],
+      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { hook: hook1, error } ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
-      [ 'hook:fail', 'afterEach', jasmine.any(Number), [ { hook: hook2, error } ] ],
-      [ 'spec:pass', 'spec 2', jasmine.any(Number) ],
+      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { hook: hook2, error } ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
-      [ 'hook:pass', 'afterAll', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'hook:pass', 'afterAll', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result as any).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 2,
       passed: 2,
       failed: 0,
@@ -390,7 +391,7 @@ describe('Executor', () => {
       setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const spec = jasmine.objectContaining({
+    const spec = expect.toInclude({
       name: 'spec 1',
       parent: suite,
     })
@@ -404,32 +405,32 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', jasmine.any(Number) ],
-      [ 'spec:fail', 'spec 1', jasmine.any(Number), [ { spec, error } ] ], // reported _after_ hooks
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'spec:fail', 'spec 1', expect.toBeA('number'), { spec, error } ], // reported _after_ hooks
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', jasmine.any(Number) ],
-      [ 'spec:pass', 'spec 2', jasmine.any(Number) ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
-      [ 'hook:pass', 'afterAll', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'hook:pass', 'afterAll', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result as any).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 2,
       passed: 1,
       failed: 1,
@@ -463,27 +464,27 @@ describe('Executor', () => {
       setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const spec = jasmine.objectContaining({
+    const spec = expect.toInclude({
       name: 'spec 1',
       parent: suite,
     })
 
-    const hook = jasmine.objectContaining({
+    const hook = expect.toInclude({
       name: 'afterAll',
       parent: suite,
     })
 
-    const hook1 = jasmine.objectContaining({
+    const hook1 = expect.toInclude({
       name: 'afterEach',
-      parent: jasmine.objectContaining({
+      parent: expect.toInclude({
         name: 'spec 1',
         parent: suite,
       }),
     })
 
-    const hook2 = jasmine.objectContaining({
+    const hook2 = expect.toInclude({
       name: 'afterEach',
-      parent: jasmine.objectContaining({
+      parent: expect.toInclude({
         name: 'spec 2',
         parent: suite,
       }),
@@ -498,29 +499,29 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'hook:start', 'afterEach' ],
-      [ 'hook:fail', 'afterEach', jasmine.any(Number), [ { hook: hook1, error: errorAfterEach } ] ],
-      [ 'spec:fail', 'spec 1', jasmine.any(Number), [ { spec, error: errorSpec } ] ],
+      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { hook: hook1, error: errorAfterEach } ],
+      [ 'spec:fail', 'spec 1', expect.toBeA('number'), { spec, error: errorSpec } ],
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
-      [ 'hook:fail', 'afterEach', jasmine.any(Number), [ { hook: hook2, error: errorAfterEach } ] ],
-      [ 'spec:pass', 'spec 2', jasmine.any(Number) ],
+      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { hook: hook2, error: errorAfterEach } ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
-      [ 'hook:fail', 'afterAll', jasmine.any(Number), [ { hook, error: errorAfterAll } ] ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'hook:fail', 'afterAll', expect.toBeA('number'), { hook, error: errorAfterAll } ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result as any).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 2,
       passed: 1,
       failed: 1,
@@ -578,32 +579,32 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', jasmine.any(Number) ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 1' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', jasmine.any(Number) ],
-      [ 'spec:pass', 'spec 1', jasmine.any(Number) ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
       [ 'spec:start', 'spec 2' ],
-      [ 'spec:skip', 'spec 2', jasmine.any(Number) ],
+      [ 'spec:skip', 'spec 2', expect.toBeA('number') ],
       [ 'spec:start', 'spec 3' ],
-      [ 'spec:skip', 'spec 3', jasmine.any(Number) ],
+      [ 'spec:skip', 'spec 3', expect.toBeA('number') ],
       [ 'suite:start', 'suite 1' ],
       [ 'spec:start', 'spec 4' ],
-      [ 'spec:skip', 'spec 4', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 1', jasmine.any(Number) ],
+      [ 'spec:skip', 'spec 4', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 1', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
-      [ 'hook:pass', 'afterAll', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'hook:pass', 'afterAll', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 4,
       passed: 1,
       failed: 0,
@@ -629,11 +630,11 @@ describe('Executor', () => {
     expect(calls).toEqual([
       [ 'suite:exec', 'suite 0' ],
       [ 'suite:start', 'suite 0' ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 0,
       passed: 0,
       failed: 0,
@@ -664,18 +665,18 @@ describe('Executor', () => {
       [ 'suite:exec', 'suite 0' ],
       [ 'suite:start', 'suite 0' ],
       [ 'spec:start', 'spec 1' ],
-      [ 'spec:skip', 'spec 1', jasmine.any(Number) ],
+      [ 'spec:skip', 'spec 1', expect.toBeA('number') ],
       [ 'suite:start', 'suite 1' ],
       [ 'spec:start', 'spec 2' ],
-      [ 'spec:skip', 'spec 2', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 1', jasmine.any(Number) ],
+      [ 'spec:skip', 'spec 2', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 1', expect.toBeA('number') ],
       [ 'spec:start', 'spec 3' ],
-      [ 'spec:skip', 'spec 3', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'spec:skip', 'spec 3', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 3,
       passed: 0,
       failed: 0,
@@ -725,54 +726,54 @@ describe('Executor', () => {
 
       [ 'spec:start', 'spec 1' ],
       [ 'spec:exec', 'fit spec 1' ],
-      [ 'spec:pass', 'spec 1', jasmine.any(Number) ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
 
       [ 'spec:start', 'spec 2' ],
       [ 'spec:exec', 'only spec 2' ],
-      [ 'spec:pass', 'spec 2', jasmine.any(Number) ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
 
       [ 'spec:start', 'spec 3' ],
-      [ 'spec:skip', 'spec 3', jasmine.any(Number) ],
+      [ 'spec:skip', 'spec 3', expect.toBeA('number') ],
 
       [ 'suite:start', 'suite 1' ],
       /* */ [ 'spec:start', 'spec 4' ],
-      /* */ [ 'spec:skip', 'spec 4', jasmine.any(Number) ],
+      /* */ [ 'spec:skip', 'spec 4', expect.toBeA('number') ],
       /* */ [ 'spec:start', 'spec 5' ],
-      /* */ [ 'spec:skip', 'spec 5', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 1', jasmine.any(Number) ],
+      /* */ [ 'spec:skip', 'spec 5', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 1', expect.toBeA('number') ],
 
       [ 'suite:start', 'suite 2' ],
       /* */ [ 'spec:start', 'spec 6' ],
       /* */ [ 'spec:exec', 'it spec 6' ],
-      /* */ [ 'spec:pass', 'spec 6', jasmine.any(Number) ],
+      /* */ [ 'spec:pass', 'spec 6', expect.toBeA('number') ],
       /* */ [ 'spec:start', 'spec 7' ],
-      /* */ [ 'spec:skip', 'spec 7', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 2', jasmine.any(Number) ],
+      /* */ [ 'spec:skip', 'spec 7', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 2', expect.toBeA('number') ],
 
       [ 'suite:start', 'suite 3' ],
       /* */ [ 'spec:start', 'spec 8' ],
       /* */ [ 'spec:exec', 'it spec 8' ],
-      /* */ [ 'spec:pass', 'spec 8', jasmine.any(Number) ],
+      /* */ [ 'spec:pass', 'spec 8', expect.toBeA('number') ],
       /* */ [ 'spec:start', 'spec 9' ],
-      /* */ [ 'spec:skip', 'spec 9', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 3', jasmine.any(Number) ],
+      /* */ [ 'spec:skip', 'spec 9', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 3', expect.toBeA('number') ],
 
       [ 'suite:start', 'suite 4' ],
       /* */ [ 'spec:start', 'spec 10' ],
-      /* */ [ 'spec:skip', 'spec 10', jasmine.any(Number) ],
+      /* */ [ 'spec:skip', 'spec 10', expect.toBeA('number') ],
       /* */ [ 'spec:start', 'spec 11' ],
       /* */ [ 'spec:exec', 'only spec 11' ],
-      /* */ [ 'spec:pass', 'spec 11', jasmine.any(Number) ],
+      /* */ [ 'spec:pass', 'spec 11', expect.toBeA('number') ],
       /* */ [ 'spec:start', 'spec 12' ],
       /* */ [ 'spec:exec', 'fit spec 12' ],
-      /* */ [ 'spec:pass', 'spec 12', jasmine.any(Number) ],
-      [ 'suite:done', 'suite 4', jasmine.any(Number) ],
+      /* */ [ 'spec:pass', 'spec 12', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 4', expect.toBeA('number') ],
 
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 12,
       passed: 6,
       failed: 0,
@@ -800,30 +801,30 @@ describe('Executor', () => {
     expect(calls as any).toEqual([
       [ 'suite:start', 'suite 0' ],
       [ 'spec:start', 'should fail' ],
-      [ 'spec:fail', 'should fail', jasmine.any(Number), [ {
-        spec: jasmine.objectContaining({
+      [ 'spec:fail', 'should fail', expect.toBeA('number'), {
+        spec: expect.toInclude({
           name: 'should fail',
           parent: suite,
         }),
-        error: jasmine.objectContaining({
+        error: expect.toInclude({
           message: 'fail with a string!',
         }),
-      } ] ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      } ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result as any).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 1,
       passed: 0,
       failed: 1,
       skipped: 0,
       failures: [ {
-        spec: jasmine.objectContaining({
+        spec: expect.toInclude({
           name: 'should fail',
           parent: suite,
         }),
-        error: jasmine.objectContaining({
+        error: expect.toInclude({
           message: 'fail with a string!',
         }),
       } ],
@@ -853,52 +854,52 @@ describe('Executor', () => {
     expect(calls as any).toEqual([
       [ 'suite:start', 'suite 0' ],
       [ 'spec:start', 'should timeout 1' ],
-      [ 'spec:fail', 'should timeout 1', jasmine.any(Number), [ {
-        spec: jasmine.objectContaining({ name: 'should timeout 1', parent: suite }),
-        error: jasmine.objectContaining({ message: 'Timeout of 5 ms reached' } ),
-      } ] ],
+      [ 'spec:fail', 'should timeout 1', expect.toBeA('number'), {
+        spec: expect.toInclude({ name: 'should timeout 1', parent: suite }),
+        error: expect.toInclude({ message: 'Timeout of 5 ms reached' } ),
+      } ],
       [ 'spec:start', 'should timeout 2' ],
-      [ 'spec:fail', 'should timeout 2', jasmine.any(Number), [ {
-        spec: jasmine.objectContaining({ name: 'should timeout 2', parent: suite }),
-        error: jasmine.objectContaining({ message: 'Timeout of 5 ms reached' } ),
-      } ] ],
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'spec:fail', 'should timeout 2', expect.toBeA('number'), {
+        spec: expect.toInclude({ name: 'should timeout 2', parent: suite }),
+        error: expect.toInclude({ message: 'Timeout of 5 ms reached' } ),
+      } ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
 
       // failure raised *after* timeout!
       [ 'spec:error', 'should timeout 2', {
-        spec: jasmine.objectContaining({ name: 'should timeout 2', parent: suite }),
-        error: jasmine.objectContaining({ message: 'Whatever...' } ),
+        spec: expect.toInclude({ name: 'should timeout 2', parent: suite }),
+        error: expect.toInclude({ message: 'Whatever...' } ),
       } ],
     ])
 
     expect(result as any).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 2,
       passed: 0,
       failed: 2,
       skipped: 0,
       failures: [ {
-        spec: jasmine.objectContaining({
+        spec: expect.toInclude({
           name: 'should timeout 1',
           parent: suite,
         }),
-        error: jasmine.objectContaining({
+        error: expect.toInclude({
           message: 'Timeout of 5 ms reached',
         }),
       }, {
-        spec: jasmine.objectContaining({
+        spec: expect.toInclude({
           name: 'should timeout 2',
           parent: suite,
         }),
-        error: jasmine.objectContaining({
+        error: expect.toInclude({
           message: 'Timeout of 5 ms reached',
         }),
       }, {
-        spec: jasmine.objectContaining({
+        spec: expect.toInclude({
           name: 'should timeout 2',
           parent: suite,
         }),
-        error: jasmine.objectContaining({
+        error: expect.toInclude({
           message: 'Whatever...',
         }),
       } ],
@@ -912,7 +913,7 @@ describe('Executor', () => {
       throw new Error('Hello, world!')
     })
 
-    await expectAsync(runSuite(suite).result)
+    await expect(runSuite(suite).result)
         .toBeRejectedWithError(Error, 'Hello, world!')
   })
 
@@ -925,7 +926,7 @@ describe('Executor', () => {
       await sleep(10)
     }, 5)
 
-    await expectAsync(runSuite(suite).result)
+    await expect(runSuite(suite).result)
         .toBeRejectedWithError(Error, 'Timeout of 5 ms reached')
   })
 
@@ -955,37 +956,37 @@ describe('Executor', () => {
 
       [ 'spec:start', 'should skip this' ],
       [ 'hook:start', 'beforeEach' ],
-      [ 'hook:skip', 'beforeEach', jasmine.any(Number) ],
-      [ 'spec:skip', 'should skip this', jasmine.any(Number) ],
+      [ 'hook:skip', 'beforeEach', expect.toBeA('number') ],
+      [ 'spec:skip', 'should skip this', expect.toBeA('number') ],
 
       [ 'spec:start', 'should fail this' ],
       [ 'hook:start', 'beforeEach' ],
-      [ 'hook:skip', 'beforeEach', jasmine.any(Number) ],
-      [ 'spec:fail', 'should fail this', jasmine.any(Number), [ {
-        spec: jasmine.objectContaining({
+      [ 'hook:skip', 'beforeEach', expect.toBeA('number') ],
+      [ 'spec:fail', 'should fail this', expect.toBeA('number'), {
+        spec: expect.toInclude({
           name: 'should fail this',
           parent: suite,
         }),
-        error: jasmine.objectContaining({
+        error: expect.toInclude({
           message: 'Whatever...',
         }),
-      } ] ],
+      } ],
 
-      [ 'suite:done', 'suite 0', jasmine.any(Number) ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result as any).toEqual({
-      time: jasmine.any(Number),
+      time: expect.toBeA('number'),
       specs: 2,
       passed: 0,
       failed: 1,
       skipped: 1,
       failures: [ {
-        spec: jasmine.objectContaining({
+        spec: expect.toInclude({
           name: 'should fail this',
           parent: suite,
         }),
-        error: jasmine.objectContaining({
+        error: expect.toInclude({
           message: 'Whatever...',
         }),
       } ],
