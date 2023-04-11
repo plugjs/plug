@@ -121,6 +121,13 @@ export class ToEqual implements Expectation {
   }
 }
 
+export class ToInclude implements Expectation {
+  expect(context: Expectations, negative: boolean, expected: any): void {
+    void context, negative, expected
+    // TODO
+  }
+}
+
 export class ToHaveLength implements Expectation {
   expect(context: Expectations, negative: boolean, length: number): void {
     context.toHaveProperty('length', (context) => {
