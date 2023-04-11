@@ -1,7 +1,6 @@
 import { Suite, skip } from '../src/execution/executable'
 import { runSuite, type Execution } from '../src/execution/executor'
-import { expect } from '../src/expectation/expect'
-import * as setup from '../src/execution/setup'
+// import * as setup from '../src/execution/setup'
 
 import type { Spec, Hook } from '../src/execution/executable'
 
@@ -35,13 +34,13 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      setup.beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      setup.beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      setup.afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
-      setup.afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
+      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
 
-      setup.it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
+      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const execution = runSuite(suite)
@@ -106,15 +105,15 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      setup.beforeAll(() => {
+      beforeAll(() => {
         throw error
       })
-      setup.beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      setup.afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
-      setup.afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
+      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
 
-      setup.it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
+      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const hook = expect.toInclude({
@@ -157,15 +156,15 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      setup.beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      setup.beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      setup.afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
-      setup.afterAll(() => {
+      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
+      afterAll(() => {
         throw error
       })
 
-      setup.it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
+      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const hook = expect.toInclude({
@@ -225,15 +224,15 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      setup.beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      setup.beforeEach(() => {
+      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => {
         throw error
       })
-      setup.afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
-      setup.afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
+      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
 
-      setup.it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
+      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const hook1 = expect.toInclude({
@@ -298,15 +297,15 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      setup.beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      setup.beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      setup.afterEach(() => {
+      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => {
         throw error
       })
-      setup.afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
 
-      setup.it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
+      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const hook1 = expect.toInclude({
@@ -380,15 +379,15 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      setup.beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      setup.beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      setup.afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
-      setup.afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
+      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
 
-      setup.it('spec 1', () => {
+      it('spec 1', () => {
         throw error
       })
-      setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const spec = expect.toInclude({
@@ -450,18 +449,18 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      setup.beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      setup.beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      setup.afterEach(() => {
+      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => {
         throw errorAfterEach
       })
-      setup.afterAll(() => {
+      afterAll(() => {
         throw errorAfterAll
       })
-      setup.it('spec 1', () => {
+      it('spec 1', () => {
         throw errorSpec
       })
-      setup.it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const spec = expect.toInclude({
@@ -543,29 +542,29 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      setup.beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      setup.beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      setup.afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
-      setup.afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
+      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
 
-      setup.beforeAll.skip(() => void calls.push([ 'hook:exec', 'skip.beforeAll' ]))
-      setup.beforeEach.skip(() => void calls.push([ 'hook:exec', 'skip.beforeEach' ]))
-      setup.afterEach.skip(() => void calls.push([ 'hook:exec', 'skip.afterEach' ]))
-      setup.afterAll.skip(() => void calls.push([ 'hook:exec', 'skip.afterAll' ]))
+      beforeAll.skip(() => void calls.push([ 'hook:exec', 'skip.beforeAll' ]))
+      beforeEach.skip(() => void calls.push([ 'hook:exec', 'skip.beforeEach' ]))
+      afterEach.skip(() => void calls.push([ 'hook:exec', 'skip.afterEach' ]))
+      afterAll.skip(() => void calls.push([ 'hook:exec', 'skip.afterAll' ]))
 
-      setup.xbeforeAll(() => void calls.push([ 'hook:exec', 'xbeforeAll' ]))
-      setup.xbeforeEach(() => void calls.push([ 'hook:exec', 'xbeforeEach' ]))
-      setup.xafterEach(() => void calls.push([ 'hook:exec', 'xafterEach' ]))
-      setup.xafterAll(() => void calls.push([ 'hook:exec', 'xafterAll' ]))
+      xbeforeAll(() => void calls.push([ 'hook:exec', 'xbeforeAll' ]))
+      xbeforeEach(() => void calls.push([ 'hook:exec', 'xbeforeEach' ]))
+      xafterEach(() => void calls.push([ 'hook:exec', 'xafterEach' ]))
+      xafterAll(() => void calls.push([ 'hook:exec', 'xafterAll' ]))
 
-      setup.it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      setup.it.skip('spec 2', () => void calls.push([ 'spec:exec', 'skip spec 2' ]))
-      setup.xit('spec 3', () => void calls.push([ 'spec:exec', 'xit spec 2' ]))
+      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
+      it.skip('spec 2', () => void calls.push([ 'spec:exec', 'skip spec 2' ]))
+      xit('spec 3', () => void calls.push([ 'spec:exec', 'xit spec 2' ]))
 
-      setup.xdescribe('suite 1', () => {
+      xdescribe('suite 1', () => {
         calls.push([ 'suite:exec', 'suite 1' ])
 
-        setup.it('spec 4', () => void calls.push([ 'spec:exec', 'spec 4' ]))
+        it('spec 4', () => void calls.push([ 'spec:exec', 'spec 4' ]))
       })
     })
 
@@ -620,7 +619,7 @@ describe('Executor', () => {
 
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
-      // setup.xit('spec 1', () => void calls.push([ 'spec:exec', 'xit spec 1' ]))
+      // xit('spec 1', () => void calls.push([ 'spec:exec', 'xit spec 1' ]))
     })
 
     const execution = runSuite(suite)
@@ -650,11 +649,11 @@ describe('Executor', () => {
 
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
-      setup.xit('spec 1', () => void calls.push([ 'spec:exec', 'xit spec 1' ]))
-      setup.describe('suite 1', () => {
-        setup.xit('spec 2', () => void calls.push([ 'spec:exec', 'xit spec 2' ]))
+      xit('spec 1', () => void calls.push([ 'spec:exec', 'xit spec 1' ]))
+      describe('suite 1', () => {
+        xit('spec 2', () => void calls.push([ 'spec:exec', 'xit spec 2' ]))
       })
-      setup.xit('spec 3', () => void calls.push([ 'spec:exec', 'xit spec 3' ]))
+      xit('spec 3', () => void calls.push([ 'spec:exec', 'xit spec 3' ]))
     })
 
     const execution = runSuite(suite)
@@ -691,29 +690,29 @@ describe('Executor', () => {
     const calls: any[][] = []
 
     const suite = new Suite(undefined, 'suite 0', () => {
-      setup.fit('spec 1', () => void calls.push([ 'spec:exec', 'fit spec 1' ]))
-      setup.it.only('spec 2', () => void calls.push([ 'spec:exec', 'only spec 2' ]))
-      setup.it('spec 3', () => void calls.push([ 'spec:exec', 'it spec 3' ]))
+      fit('spec 1', () => void calls.push([ 'spec:exec', 'fit spec 1' ]))
+      it.only('spec 2', () => void calls.push([ 'spec:exec', 'only spec 2' ]))
+      it('spec 3', () => void calls.push([ 'spec:exec', 'it spec 3' ]))
 
-      setup.describe('suite 1', () => {
-        setup.it('spec 4', () => void calls.push([ 'spec:exec', 'it spec 4' ]))
-        setup.it('spec 5', () => void calls.push([ 'spec:exec', 'it spec 5' ]))
+      describe('suite 1', () => {
+        it('spec 4', () => void calls.push([ 'spec:exec', 'it spec 4' ]))
+        it('spec 5', () => void calls.push([ 'spec:exec', 'it spec 5' ]))
       })
 
-      setup.fdescribe('suite 2', () => {
-        setup.it('spec 6', () => void calls.push([ 'spec:exec', 'it spec 6' ]))
-        setup.xit('spec 7', () => void calls.push([ 'spec:exec', 'xit spec 7' ]))
+      fdescribe('suite 2', () => {
+        it('spec 6', () => void calls.push([ 'spec:exec', 'it spec 6' ]))
+        xit('spec 7', () => void calls.push([ 'spec:exec', 'xit spec 7' ]))
       })
 
-      setup.describe.only('suite 3', () => {
-        setup.it('spec 8', () => void calls.push([ 'spec:exec', 'it spec 8' ]))
-        setup.it.skip('spec 9', () => void calls.push([ 'spec:exec', 'skip spec 9' ]))
+      describe.only('suite 3', () => {
+        it('spec 8', () => void calls.push([ 'spec:exec', 'it spec 8' ]))
+        it.skip('spec 9', () => void calls.push([ 'spec:exec', 'skip spec 9' ]))
       })
 
-      setup.describe('suite 4', () => {
-        setup.it('spec 10', () => void calls.push([ 'spec:exec', 'it spec 10' ]))
-        setup.it.only('spec 11', () => void calls.push([ 'spec:exec', 'only spec 11' ]))
-        setup.fit('spec 12', () => void calls.push([ 'spec:exec', 'fit spec 12' ]))
+      describe('suite 4', () => {
+        it('spec 10', () => void calls.push([ 'spec:exec', 'it spec 10' ]))
+        it.only('spec 11', () => void calls.push([ 'spec:exec', 'only spec 11' ]))
+        fit('spec 12', () => void calls.push([ 'spec:exec', 'fit spec 12' ]))
       })
     })
 
@@ -788,7 +787,7 @@ describe('Executor', () => {
     const calls: any[][] = []
 
     const suite = new Suite(undefined, 'suite 0', () => {
-      setup.it('should fail', () => {
+      it('should fail', () => {
         // eslint-disable-next-line no-throw-literal
         throw 'fail with a string!'
       })
@@ -838,8 +837,8 @@ describe('Executor', () => {
     const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
     const suite = new Suite(undefined, 'suite 0', () => {
-      setup.it('should timeout 1', () => sleep(10), 5)
-      setup.it('should timeout 2', async () => {
+      it('should timeout 1', () => sleep(10), 5)
+      it('should timeout 2', async () => {
         await sleep(10)
         throw new Error('Whatever...') // post
       }, 5)
@@ -937,9 +936,9 @@ describe('Executor', () => {
     const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
     const suite = new Suite(undefined, 'suite 0', async () => {
-      setup.beforeEach(() => skip())
-      setup.it('should skip this', () => skip())
-      setup.it('should fail this', () => {
+      beforeEach(() => skip())
+      it('should skip this', () => skip())
+      it('should fail this', () => {
         skip()
         throw new Error('Whatever...')
       })
@@ -1002,9 +1001,9 @@ describe('Executor', () => {
     const listener2 = (spec: Spec): void => void calls.push(`L2:${spec.name}`)
 
     const suite = new Suite(undefined, 'suite 0', async () => {
-      setup.it('one', () => {})
-      setup.it('two', () => void execution.off('spec:start', listener2))
-      setup.it('three', () => skip())
+      it('one', () => {})
+      it('two', () => void execution.off('spec:start', listener2))
+      it('three', () => skip())
     })
 
     const execution = runSuite(suite)
