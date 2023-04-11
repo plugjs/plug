@@ -1,5 +1,5 @@
 import type { Diff } from './diff'
-import type { Expectations } from './expect'
+import type { Expectations, ExpectationsMatcher } from './expect'
 
 /** A type identifying any constructor */
 export type Constructor<T = any> = new (...args: any[]) => T
@@ -140,6 +140,7 @@ export function stringifyValue(value: unknown): string {
   }
 
   // specific object types
+  if (isMatcher(value)) return '<matcher>'
   if (value instanceof RegExp) return String(value)
   if (value instanceof Date) return `[Date: ${value.toISOString()}]`
   if (value instanceof Boolean) return `[Boolean: ${value.valueOf()}]`
@@ -179,6 +180,16 @@ export function prefixType(type: TypeName): string {
     default:
       return `of unknown type <${type}>`
   }
+}
+
+/* ========================================================================== *
+ * EXPECTATIONS MATCHERS MARKER                                               *
+ * ========================================================================== */
+
+export const matcherMarker = Symbol.for('expect5.matcher')
+
+export function isMatcher(what: any): what is ExpectationsMatcher {
+  return what && what[matcherMarker] === matcherMarker
 }
 
 /* ========================================================================== *

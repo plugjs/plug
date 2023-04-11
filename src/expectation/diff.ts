@@ -1,5 +1,5 @@
 /* eslint-disable no-fallthrough */
-import { stringifyConstructor, stringifyValue } from './types'
+import { ExpectationError, isMatcher, stringifyConstructor, stringifyValue } from './types'
 
 import type { Constructor } from './types'
 
@@ -296,6 +296,24 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
     }
   }
 
+  // matchers!
+  if (isMatcher(expected)) {
+    try {
+      expected.expect(actual)
+      return { diff: false, actual: stringifyValue(actual) }
+    } catch (error) {
+      if (error instanceof ExpectationError) {
+        return error.diff ? error.diff : {
+          diff: true,
+          error: error.message,
+          actual: stringifyValue(actual),
+        }
+      } else {
+        throw error
+      }
+    }
+  }
+
   // inspect types of what to compare
   const actualType = typeof actual
   const expectedType = typeof expected
@@ -330,8 +348,6 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
       }
     // everything else is an object and must be checked
   }
-
-  // TODO: matchers!!!
 
   // check that actual is _assignable_ from expected
   const prototype = Object.getPrototypeOf(expected)
