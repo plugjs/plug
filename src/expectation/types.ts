@@ -1,3 +1,4 @@
+import type { Diff } from './diff'
 import type { Expectations } from './expect'
 
 /** A type identifying any constructor */
@@ -185,10 +186,13 @@ export function prefixType(type: TypeName): string {
  * ========================================================================== */
 
 export class ExpectationError extends Error {
+  diff?: Diff | undefined
+
   constructor(
       context: Expectations,
       negative: boolean,
       details: string,
+      diff?: Diff,
   ) {
     const { value } = context
     const not = negative ? ' not' : ''
@@ -208,5 +212,7 @@ export class ExpectationError extends Error {
     }
 
     super(`Expected ${preamble}${not} ${details}`)
+
+    if (diff) this.diff = diff
   }
 }

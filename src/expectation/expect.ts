@@ -9,6 +9,7 @@ import {
   ToBeLessThan,
   ToBeLessThanOrEqual,
   ToBeWithinRange,
+  ToEqual,
   ToHaveLength,
   ToHaveProperty,
   ToHaveSize,
@@ -48,6 +49,7 @@ const expectations = {
   toBeLessThan: new ToBeLessThan(),
   toBeLessThanOrEqual: new ToBeLessThanOrEqual(),
   toBeWithinRange: new ToBeWithinRange(),
+  toEqual: new ToEqual(),
   toHaveLength: new ToHaveLength(),
   toHaveProperty: new ToHaveProperty(),
   toHaveSize: new ToHaveSize(),
@@ -286,7 +288,11 @@ class ExpectationsImpl<T = unknown> implements Expectations<T> {
  * EXPECT FUNCTION                                                            *
  * ========================================================================== */
 
+export type ExpectFunction = <T = unknown>(value: T) => Expectations<T>
+
 /** Return an {@link Expectation} chain for the specified value */
-export function expect<T = unknown>(value: T): Expectations<T> {
+const expect: ExpectFunction = <T = unknown>(value: T): Expectations<T> => {
   return new ExpectationsImpl(value)
 }
+
+export { expect }

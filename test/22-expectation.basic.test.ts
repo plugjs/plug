@@ -168,6 +168,42 @@ describe('Basic Expectations', () => {
     expectFail(() => expect(3).toBeWithinRange(3n, 3n), 'Expected 3 to be a <bigint>')
   })
 
+  it('should expect "toEqual(...)"', () => {
+    expectPass(() => expect('foo').toEqual('foo'))
+    expectPass(() => expect({ foo: 'bar' }).toEqual({ foo: 'bar' }))
+    expectPass(() => expect([ 'foo', 'bar' ]).toEqual([ 'foo', 'bar' ]))
+
+    expectPass(() => expect('foo').not.toEqual('bar'))
+    expectPass(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'baz' }))
+    expectPass(() => expect([ 'foo', 'bar' ]).not.toEqual([ 'foo', 'baz' ]))
+
+    expectFail(() => expect('foo').not.toEqual('foo'), 'Expected "foo" not to loosely equal "foo"')
+    expectFail(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'bar' }), 'Expected <object> not to loosely equal <object>')
+    expectFail(() => expect([ 'foo', 'bar' ]).not.toEqual([ 'foo', 'bar' ]), 'Expected <array> not to loosely equal <array>')
+
+    expectFail(() => expect('foo').toEqual('bar'), 'Expected "foo" to loosely equal "bar"')
+    expectFail(() => expect({ foo: 'bar' }).toEqual({ foo: 'baz' }), 'Expected <object> to loosely equal <object>')
+    expectFail(() => expect([ 'foo', 'bar' ]).toEqual([ 'foo', 'baz' ]), 'Expected <array> to loosely equal <array>')
+
+    // differences on positive match
+    assert.throws(() => expect({ foo: 'bar' }).toEqual({ foo: 'baz' }), (thrown: any) => {
+      assert.strictEqual(thrown.message, 'Expected <object> to loosely equal <object>')
+      assert.deepEqual(thrown.diff, {
+        diff: true,
+        actual: '<object>',
+        props: { foo: { diff: true, actual: '"bar"', expected: '"baz"' } },
+      })
+      return true
+    })
+
+    // no differences on negative match
+    assert.throws(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'bar' }), (thrown: any) => {
+      assert.strictEqual(thrown.message, 'Expected <object> not to loosely equal <object>')
+      assert.strictEqual(thrown.diff, undefined)
+      return true
+    })
+  })
+
   it('should expect "toHaveProperty(...)"', () => {
     const s = Symbol()
     const s2 = Symbol()

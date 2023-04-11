@@ -1,4 +1,5 @@
 import { assertType, ExpectationError, isType, stringifyValue, prefixType, stringifyConstructor } from './types'
+import { diff } from './diff'
 
 import type { Constructor, TypeName, StringMatcher } from './types'
 import type { Expectation, Expectations } from './expect'
@@ -108,6 +109,15 @@ export class ToBeWithinRange implements Expectation {
     assertType(context, typeof min as 'number' | 'bigint')
     if (((context.value >= min) && (context.value <= max)) !== negative) return
     throw new ExpectationError(context, negative, `to be within ${stringifyValue(min)}...${stringifyValue(max)}`)
+  }
+}
+
+export class ToEqual implements Expectation {
+  expect(context: Expectations, negative: boolean, expected: any): void {
+    const result = diff(context.value, expected)
+    if (result.diff === negative) return
+    const differences = negative ? undefined : result // differences only on _positive_ matches
+    throw new ExpectationError(context, negative, `to loosely equal ${stringifyValue(expected)}`, differences)
   }
 }
 
