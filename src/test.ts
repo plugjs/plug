@@ -1,7 +1,7 @@
 // Reference ourselves, so that the constructor's parameters are correct
 /// <reference path="./index.ts"/>
 
-import { $blu, $grn, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 
 import { runSuite } from './execution/executor'
 import { Suite, skip } from './execution/executable'
@@ -15,6 +15,7 @@ import type { TestOptions } from './index'
 const _pending = '\u22EF' // middle ellipsis
 const _success = '\u2714' // heavy check mark
 const _failure = '\u2718' // heavy ballot x
+const _details = '\u2192' // rightwards arrow
 
 /** Writes some info about the current {@link Files} being passed around. */
 export class Test implements Plug<void> {
@@ -50,11 +51,22 @@ export class Test implements Plug<void> {
     })
 
     // Run our suite and setup listeners
+    await suite.setup()
     const execution = runSuite(suite)
 
-    execution.on('suite:start', (suite) => {
-      context.log.notice('')
-      context.log.enter(NOTICE, $wht(suite.name))
+    execution.on('suite:start', (current) => {
+      if (current.parent === suite) {
+        context.log.notice('')
+        context.log.enter(NOTICE, `${$wht(current.name)}`)
+      } else if (current.parent) {
+        context.log.enter(NOTICE, `${$blu(_details)} ${$wht(current.name)}`)
+      } else {
+        const snum = current.specs
+        const fnum = files.length
+        const smsg = snum > 1 ? 'specs' : 'spec'
+        const fmsg = fnum > 1 ? 'files' : 'file'
+        context.log.enter(NOTICE, `Running ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}`)
+      }
     })
 
     execution.on('suite:done', () => {
