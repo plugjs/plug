@@ -1,5 +1,3 @@
-import { inspect } from 'node:util'
-
 import type { Expectations } from './expect'
 
 /** A type identifying any constructor */
@@ -106,80 +104,51 @@ export function assertType<T extends keyof TypeMappings>(
  * PRETTY PRINTING FOR MESSAGES AND DIFFS                                     *
  * ========================================================================== */
 
-/** A simple utility class for pretty-printing in messages and inspections */
-export interface FormattedString { readonly string: string }
-
-function formatString(string: string): FormattedString {
-  return Object.defineProperties(Object.create(null), {
-    [Symbol.toPrimitive]: { value: () => string },
-    [inspect.custom]: { value: () => string },
-    'toString': { value: () => string },
-    // let this "enumerable" for assert.deepEqual
-    'string': { value: string, enumerable: true },
-  })
-}
-
-/** Return the type of the value or (if an object) its constructor name */
-function stringifyType(
-    value: unknown,
-    prop?: string,
-    propValue?: any,
-    // ...[ prop, propValue ]: [] | [ prop: string, propValue: any ]
-): FormattedString {
-  const highlight = prop ? ` { ${prop}: ${stringifyValue(propValue)} }` : ''
-
-  const type = typeOf(value)
-  if (type !== 'object') return formatString(`<${type}>${highlight}`)
-
-  const proto = Object.getPrototypeOf(value)
-  if (! proto) return formatString(`[Object: null prototype]${highlight}`)
-  const formatted = stringifyConstructor(proto.constructor)
-  return formatString(`${formatted.string}${highlight}`)
-}
-
 /** Stringify a constructor */
-export function stringifyConstructor(ctor: Constructor): FormattedString {
-  if (ctor === Object) return formatString('<object>')
-  if (! ctor) return formatString('[Object: no constructor]')
-  if (! ctor.name) return formatString('[Object: anonymous]')
-  return formatString(`[${ctor.name}]`)
+export function stringifyConstructor(ctor: Constructor): string {
+  if (ctor === Object) return '<object>'
+  if (ctor === Array) return '<array>'
+  if (! ctor) return '[Object: no constructor]'
+  if (! ctor.name) return '[Object: anonymous]'
+  return `[${ctor.name}]`
 }
 
 /** Pretty print the value (strings, numbers, booleans) or return the type */
-export function stringifyValue(
-    value: unknown,
-    ...[ prop, propValue ]: [] | [ prop: string, propValue: any ]
-): FormattedString {
-  // const type =
+export function stringifyValue(value: unknown): string {
+  // null, undefined, ...
+  if (value === null) return '<null>'
+  if (value === undefined) return '<undefined>'
+
+  // basic types
   switch (typeof value) {
     case 'string':
-      if ((value as string).length > 40) {
-        value = (value as string).substring(0, 39) + '\u2026'
-      } //
-      return formatString(JSON.stringify(value))
+      if (value.length > 40) value = value.substring(0, 39) + `\u2026, length=${value.length}`
+      return JSON.stringify(value)
     case 'number':
-      if (isNaN(value as number)) return formatString('<number:NaN>')
-      if (value === Number.POSITIVE_INFINITY) return formatString('<number:+Infinity>')
-      if (value === Number.NEGATIVE_INFINITY) return formatString('<number:-Infinity>')
-      return formatString(String(value))
+      if (value === Number.POSITIVE_INFINITY) return '+Infinity'
+      if (value === Number.NEGATIVE_INFINITY) return '-Infinity'
+      return String(value)
     case 'boolean':
-      return formatString(String(value))
+      return String(value)
     case 'bigint':
-      return formatString(`${value}n`)
+      return `${value}n`
     case 'function':
-      return formatString(value.name ? `<function ${value.name}>` : '<function>')
+      return value.name ? `<function ${value.name}>` : '<function>'
     case 'symbol':
-      return formatString(value.description ? `<symbol ${value.description}>`: '<symbol>')
+      return value.description ? `<symbol ${value.description}>`: '<symbol>'
   }
 
-  // null, undefined, ...
-  if (! value) return stringifyType(value, prop, propValue)
-
   // specific object types
-  if (value instanceof RegExp) return formatString(String(value))
+  if (value instanceof RegExp) return String(value)
+  if (value instanceof Date) return `[Date: ${value.toISOString()}]`
+  if (value instanceof Boolean) return `[Boolean: ${value.valueOf()}]`
+  if (value instanceof Number) return `[Number: ${stringifyValue(value.valueOf())}]`
+  if (value instanceof String) return `[String: ${stringifyValue(value.valueOf())}]`
 
   // default: stringify type...
-  return stringifyType(value, prop, propValue)
+  const proto = Object.getPrototypeOf(value)
+  if (! proto) return '[Object: null prototype]'
+  return stringifyConstructor(proto.constructor)
 }
 
 /** Add the `a`/`an`/... prefix to the type name */
@@ -187,26 +156,27 @@ export function prefixType(type: TypeName): string {
   switch (type) {
     case 'bigint':
     case 'boolean':
-    case 'function':
-    case 'number':
-    case 'string':
-    case 'symbol':
     case 'buffer':
+    case 'function':
     case 'map':
+    case 'number':
+    case 'promise':
     case 'regexp':
     case 'set':
+    case 'string':
+    case 'symbol':
       return `a <${type}>`
 
-    case 'object':
     case 'array':
+    case 'object':
       return `an <${type}>`
 
-    case 'undefined':
     case 'null':
+    case 'undefined':
       return `<${type}>`
 
     default:
-      return `of type <${type}>`
+      return `of unknown type <${type}>`
   }
 }
 
@@ -224,17 +194,12 @@ export class ExpectationError extends Error {
     const not = negative ? ' not' : ''
 
     // if we're not root...
-    let preamble = stringifyValue(value).string
+    let preamble = stringifyValue(value)
     if (context.parent) {
       const properties: any[] = []
 
       while (context.parent) {
-        const prop = context.parent.prop
-        properties.push(
-          typeof prop === 'string' ?
-            `[${JSON.stringify(prop)}]` :
-            `[${String(prop)}]`,
-        )
+        properties.push(`[${stringifyValue(context.parent.prop)}]`)
         context = context.parent.context
       }
 
