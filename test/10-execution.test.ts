@@ -1015,12 +1015,3 @@ describe('Executor', () => {
     expect(calls).toEqual([ 'L1:one', 'L2:one', 'L2:two' ])
   })
 })
-
-// expect('').toBeCloseTo
-// expect('').toBeGreaterThan
-// expect('').toBeGreaterThanOrEqual
-// expect('').toBeLessThan
-// expect('').toBeLessThanOrEqual
-
-// expect('').toContain // arrays
-// expect('').toEqual
