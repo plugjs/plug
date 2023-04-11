@@ -1,4 +1,4 @@
-import { assertType, ExpectationError, isType, stringifyValue, prefixType } from './types'
+import { assertType, ExpectationError, isType, stringifyValue, prefixType, stringifyConstructor } from './types'
 
 import type { Constructor, TypeName, StringMatcher } from './types'
 import type { Expectation, Expectations } from './expect'
@@ -71,7 +71,7 @@ export class ToBeInstanceOf implements Expectation {
   expect(context: Expectations, negative: boolean, value: Constructor): void {
     const match = context.value instanceof value
     if (match !== negative) return
-    throw new ExpectationError(context, negative, `to be an instance of ${value.name}`)
+    throw new ExpectationError(context, negative, `to be an instance of ${stringifyConstructor(value)}`)
   }
 }
 
