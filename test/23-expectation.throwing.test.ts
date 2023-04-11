@@ -38,14 +38,14 @@ describe('Throwing Expectations', () => {
     expectPass(() => expect(throwing).toThrowError(SyntaxError, 'Whatever'))
     expectPass(() => expect(throwing).toThrowError(SyntaxError, /Whatever/))
 
-    expectFail(() => expect(throwing).toThrowError(TypeError), 'Expected [SyntaxError] to be an instance of TypeError')
+    expectFail(() => expect(throwing).toThrowError(TypeError), 'Expected [SyntaxError] to be an instance of [TypeError]')
     expectFail(() => expect(throwing).toThrowError('hateve'), 'Expected property ["message"] of [SyntaxError] ("Whatever") to strictly equal "hateve"')
     expectFail(() => expect(throwing).toThrowError(/nope/), 'Expected property ["message"] of [SyntaxError] ("Whatever") to match /nope/')
 
     expectFail(() => expect(() => {
       // eslint-disable-next-line no-throw-literal
       throw 'not-an-error'
-    }).toThrowError(), 'Expected "not-an-error" to be an instance of Error')
+    }).toThrowError(), 'Expected "not-an-error" to be an instance of [Error]')
   })
 
   it('should expect "not.toThrow(...)"', () => {
@@ -55,7 +55,7 @@ describe('Throwing Expectations', () => {
     }
 
     expectPass(() => expect(() => {}).not.toThrow())
-    expectFail(() => expect(throwing).not.toThrow(), 'Expected <function> not to throw')
+    expectFail(() => expect(throwing).not.toThrow(), 'Expected <function throwing> not to throw')
 
     let asserted: boolean = false
     expectPass(() => expect(() => {}).not.toThrow(() => void (asserted = true)))
@@ -70,7 +70,7 @@ describe('Throwing Expectations', () => {
 
     expectPass(() => expect(() => {}).not.toThrowError())
     expectPass(() => expect(() => {}).not.toThrowError())
-    expectFail(() => expect(throwing).not.toThrowError(), 'Expected <function> not to throw')
+    expectFail(() => expect(throwing).not.toThrowError(), 'Expected <function throwing> not to throw')
 
     let asserted: any = undefined
     expectPass(() => expect(() => {}).not.toThrow((e) => asserted = e.value))
