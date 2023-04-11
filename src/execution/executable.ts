@@ -99,6 +99,10 @@ export class Suite {
       public flag: Flag = undefined,
   ) {}
 
+  get specs(): number {
+    return this._suites.reduce((n, s) => n + s.specs, 0) + this._specs.length
+  }
+
   /** Add a child {@link Suite} to this */
   addSuite(suite: Suite): void {
     assert.strictEqual(suite.parent, this, 'Suite is not a child of this')
