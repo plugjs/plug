@@ -69,11 +69,11 @@ export function typeOf(value: unknown): TypeName {
 
   // extended types
   if (Array.isArray(value)) return 'array'
-  if (Buffer.isBuffer(value)) return 'buffer'
 
   if (value instanceof Promise) return 'promise'
   if (typeof (value as any)['then'] === 'function') return 'promise'
 
+  if (value instanceof Buffer) return 'buffer'
   if (value instanceof RegExp) return 'regexp'
   if (value instanceof Map) return 'map'
   if (value instanceof Set) return 'set'
@@ -107,56 +107,79 @@ export function assertType<T extends keyof TypeMappings>(
  * ========================================================================== */
 
 /** A simple utility class for pretty-printing in messages and inspections */
-export class TypeFormat {
-  constructor(private _format: string) {}
+export interface FormattedString { readonly string: string }
 
-  toString(): string {
-    return this._format
-  }
-
-  [inspect.custom](): string {
-    return this._format
-  }
+function formatString(string: string): FormattedString {
+  return Object.defineProperties(Object.create(null), {
+    [Symbol.toPrimitive]: { value: () => string },
+    [inspect.custom]: { value: () => string },
+    'toString': { value: () => string },
+    // let this "enumerable" for assert.deepEqual
+    'string': { value: string, enumerable: true },
+  })
 }
 
 /** Return the type of the value or (if an object) its constructor name */
-export function typeFormat(value: unknown): TypeFormat {
+function stringifyType(
+    value: unknown,
+    prop?: string,
+    propValue?: any,
+    // ...[ prop, propValue ]: [] | [ prop: string, propValue: any ]
+): FormattedString {
+  const highlight = prop ? ` { ${prop}: ${stringifyValue(propValue)} }` : ''
+
   const type = typeOf(value)
-  if (type !== 'object') return new TypeFormat(`<${type}>`)
+  if (type !== 'object') return formatString(`<${type}>${highlight}`)
 
   const proto = Object.getPrototypeOf(value)
-  if (! proto) return new TypeFormat('[Object: null prototype]')
+  if (! proto) return formatString(`[Object: null prototype]${highlight}`)
+  const formatted = stringifyConstructor(proto.constructor)
+  return formatString(`${formatted.string}${highlight}`)
+}
 
-  const ctor = proto.constructor?.name
-  if (! ctor) return new TypeFormat('[Object: null constructor]')
-
-  if (ctor === 'Object') return new TypeFormat('<object>')
-  return new TypeFormat(`[${ctor}]`)
+/** Stringify a constructor */
+export function stringifyConstructor(ctor: Constructor): FormattedString {
+  if (ctor === Object) return formatString('<object>')
+  if (! ctor) return formatString('[Object: no constructor]')
+  if (! ctor.name) return formatString('[Object: anonymous]')
+  return formatString(`[${ctor.name}]`)
 }
 
 /** Pretty print the value (strings, numbers, booleans) or return the type */
-export function stringifyValue(value: unknown): string {
-  const type = typeOf(value)
-  switch (type) {
+export function stringifyValue(
+    value: unknown,
+    ...[ prop, propValue ]: [] | [ prop: string, propValue: any ]
+): FormattedString {
+  // const type =
+  switch (typeof value) {
     case 'string':
       if ((value as string).length > 40) {
         value = (value as string).substring(0, 39) + '\u2026'
       } //
-      return JSON.stringify(value)
+      return formatString(JSON.stringify(value))
     case 'number':
-      if (isNaN(value as number)) return '<number:NaN>'
-      if (value === Number.POSITIVE_INFINITY) return '<number:+Infinity>'
-      if (value === Number.NEGATIVE_INFINITY) return '<number:-Infinity>'
-      return String(value)
+      if (isNaN(value as number)) return formatString('<number:NaN>')
+      if (value === Number.POSITIVE_INFINITY) return formatString('<number:+Infinity>')
+      if (value === Number.NEGATIVE_INFINITY) return formatString('<number:-Infinity>')
+      return formatString(String(value))
     case 'boolean':
-      return String(value)
+      return formatString(String(value))
     case 'bigint':
-      return `${value}n`
-    case 'regexp':
-      return String(value)
-    default:
-      return typeFormat(value).toString()
+      return formatString(`${value}n`)
+    case 'function':
+      return formatString(value.name ? `<function ${value.name}>` : '<function>')
+    case 'symbol':
+      return formatString(value.description ? `<symbol ${value.description}>`: '<symbol>')
   }
+
+  // null, undefined, ...
+  if (! value) return stringifyType(value, prop, propValue)
+
+  // specific object types
+  if (value instanceof RegExp) return formatString(String(value))
+
+  // default: stringify type...
+  return stringifyType(value, prop, propValue)
 }
 
 /** Add the `a`/`an`/... prefix to the type name */
@@ -187,6 +210,10 @@ export function prefixType(type: TypeName): string {
   }
 }
 
+/* ========================================================================== *
+ * EXPECTATION ERRORS                                                         *
+ * ========================================================================== */
+
 export class ExpectationError extends Error {
   constructor(
       context: Expectations,
@@ -197,7 +224,7 @@ export class ExpectationError extends Error {
     const not = negative ? ' not' : ''
 
     // if we're not root...
-    let preamble: string = stringifyValue(value)
+    let preamble = stringifyValue(value).string
     if (context.parent) {
       const properties: any[] = []
 
