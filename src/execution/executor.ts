@@ -105,8 +105,8 @@ export function runSuite(suite: Suite): Execution {
     _emitter.emit(`${type}:start`, executable)
     if (type === 'spec') result.specs ++
 
-    const failures: ExecutionFailure[] = []
     let done = false
+    let failure: ExecutionFailure | undefined
 
     return {
       done(skipped: boolean = false): void {
@@ -118,8 +118,8 @@ export function runSuite(suite: Suite): Execution {
           return
         }
 
-        if (failures.length) {
-          _emitter.emit(`${type}:fail`, executable, time, failures)
+        if (failure) {
+          _emitter.emit(`${type}:fail`, executable, time, failure)
           if (type === 'spec') result.failed ++
         } else if (skipped) {
           _emitter.emit(`${type}:skip`, executable, time)
@@ -130,14 +130,14 @@ export function runSuite(suite: Suite): Execution {
         }
       },
       notify(error: Error): void {
-        const failure = { error, [type]: executable }
-        result.failures.push(failure)
+        const fail = { error, [type]: executable }
+        result.failures.push(fail)
 
         // notify error after done, or include in failure?
-        if (done) {
-          _emitter.emit(`${type}:error`, executable, failure)
+        if (failure || done) {
+          _emitter.emit(`${type}:error`, executable, fail)
         } else {
-          failures.push(failure)
+          failure = fail
         }
       },
     }
