@@ -19,16 +19,16 @@ describe('Void Expectations', () => {
       [ undefined, 'Expected <undefined> not to be falsy' ],
     ],
     toBeNaN: [
-      [ NaN, 'Expected <number:NaN> not to be <number:NaN>' ],
+      [ NaN, 'Expected NaN not to be NaN' ],
     ],
     toBeNegativeInfinity: [
-      [ Number.NEGATIVE_INFINITY, 'Expected <number:-Infinity> not to equal <number:-Infinity>' ],
+      [ Number.NEGATIVE_INFINITY, 'Expected -Infinity not to equal -Infinity' ],
     ],
     toBeNull: [
       [ null, 'Expected <null> not to be <null>' ],
     ],
     toBePositiveInfinity: [
-      [ Number.POSITIVE_INFINITY, 'Expected <number:+Infinity> not to equal <number:+Infinity>' ],
+      [ Number.POSITIVE_INFINITY, 'Expected +Infinity not to equal +Infinity' ],
     ],
     toBeTrue: [
       [ true, 'Expected true not to be true' ],
@@ -80,20 +80,20 @@ describe('Void Expectations', () => {
       [ Symbol(), 'Expected <symbol> to be falsy' ],
     ],
     toBeNaN: [
-      [ 123, 'Expected 123 to be <number:NaN>' ],
-      [ 'x', 'Expected "x" to be <number:NaN>' ],
+      [ 123, 'Expected 123 to be NaN' ],
+      [ 'x', 'Expected "x" to be NaN' ],
     ],
     toBeNegativeInfinity: [
-      [ 123, 'Expected 123 to equal <number:-Infinity>' ],
-      [ 'x', 'Expected "x" to equal <number:-Infinity>' ],
+      [ 123, 'Expected 123 to equal -Infinity' ],
+      [ 'x', 'Expected "x" to equal -Infinity' ],
     ],
     toBeNull: [
       [ 'foo bar', 'Expected "foo bar" to be <null>' ],
       [ undefined, 'Expected <undefined> to be <null>' ],
     ],
     toBePositiveInfinity: [
-      [ 123, 'Expected 123 to equal <number:+Infinity>' ],
-      [ 'x', 'Expected "x" to equal <number:+Infinity>' ],
+      [ 123, 'Expected 123 to equal +Infinity' ],
+      [ 'x', 'Expected "x" to equal +Infinity' ],
     ],
     toBeTrue: [
       [ false, 'Expected false to be true' ],

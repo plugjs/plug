@@ -235,12 +235,12 @@ describe('Basic Expectations', () => {
     expectPass(() => expect(new Map([ [ 'foo', 'bar' ] ])).toHaveSize(1))
     expectPass(() => expect({ size: 123 }).toHaveSize(123))
 
-    expectFail(() => expect(new Set([ 'foo' ])).toHaveSize(9), 'Expected property ["size"] of <set> (1) to strictly equal 9')
-    expectFail(() => expect(new Map([ [ 'foo', 'bar' ] ])).toHaveSize(9), 'Expected property ["size"] of <map> (1) to strictly equal 9')
+    expectFail(() => expect(new Set([ 'foo' ])).toHaveSize(9), 'Expected property ["size"] of [Set] (1) to strictly equal 9')
+    expectFail(() => expect(new Map([ [ 'foo', 'bar' ] ])).toHaveSize(9), 'Expected property ["size"] of [Map] (1) to strictly equal 9')
     expectFail(() => expect({ size: 123 }).toHaveSize(9), 'Expected property ["size"] of <object> (123) to strictly equal 9')
 
-    expectFail(() => expect(new Set([ 'foo' ])).not.toHaveSize(1), 'Expected property ["size"] of <set> (1) not to strictly equal 1')
-    expectFail(() => expect(new Map([ [ 'foo', 'bar' ] ])).not.toHaveSize(1), 'Expected property ["size"] of <map> (1) not to strictly equal 1')
+    expectFail(() => expect(new Set([ 'foo' ])).not.toHaveSize(1), 'Expected property ["size"] of [Set] (1) not to strictly equal 1')
+    expectFail(() => expect(new Map([ [ 'foo', 'bar' ] ])).not.toHaveSize(1), 'Expected property ["size"] of [Map] (1) not to strictly equal 1')
     expectFail(() => expect({ size: 123 }).not.toHaveSize(123), 'Expected property ["size"] of <object> (123) not to strictly equal 123')
 
     expectPass(() => expect(new Set([ 'foo' ])).not.toHaveSize(9))

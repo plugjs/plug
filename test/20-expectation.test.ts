@@ -50,7 +50,7 @@ describe('Asynchronous Expectations', () => {
     // rejections
     await assert.rejects(expect(Promise.reject(new Error('foo'))).toBeResolved(), (reason) => {
       assert(reason instanceof ExpectationError)
-      assert.strictEqual(reason.message, 'Expected <promise> to be resolved')
+      assert.strictEqual(reason.message, 'Expected [Promise] to be resolved')
       return true
     })
   })
@@ -72,7 +72,7 @@ describe('Asynchronous Expectations', () => {
     // rejections
     await assert.rejects(expect(Promise.resolve('foo')).toBeRejected(), (reason) => {
       assert(reason instanceof ExpectationError)
-      assert.strictEqual(reason.message, 'Expected <promise> to be rejected')
+      assert.strictEqual(reason.message, 'Expected [Promise] to be rejected')
       return true
     })
   })
@@ -96,7 +96,7 @@ describe('Asynchronous Expectations', () => {
     // rejections
     await assert.rejects(expect(Promise.resolve('foo')).toBeRejectedWithError(), (reason) => {
       assert(reason instanceof ExpectationError)
-      assert.strictEqual(reason.message, 'Expected <promise> to be rejected')
+      assert.strictEqual(reason.message, 'Expected [Promise] to be rejected')
       return true
     })
 
@@ -119,7 +119,7 @@ describe('Asynchronous Expectations', () => {
 
     await assert.rejects(expect(Promise.resolve('foo')).not.toBeResolved(), (reason) => {
       assert(reason instanceof ExpectationError)
-      assert.strictEqual(reason.message, 'Expected <promise> not to be resolved')
+      assert.strictEqual(reason.message, 'Expected [Promise] not to be resolved')
       return true
     })
   })
@@ -129,7 +129,7 @@ describe('Asynchronous Expectations', () => {
 
     await assert.rejects(expect(Promise.reject(new Error('foo'))).not.toBeRejected(), (reason) => {
       assert(reason instanceof ExpectationError)
-      assert.strictEqual(reason.message, 'Expected <promise> not to be rejected')
+      assert.strictEqual(reason.message, 'Expected [Promise] not to be rejected')
       return true
     })
   })
@@ -139,7 +139,7 @@ describe('Asynchronous Expectations', () => {
 
     await assert.rejects(expect(Promise.reject(new Error('foo'))).not.toBeRejectedWithError(), (reason) => {
       assert(reason instanceof ExpectationError)
-      assert.strictEqual(reason.message, 'Expected <promise> not to be rejected')
+      assert.strictEqual(reason.message, 'Expected [Promise] not to be rejected')
       return true
     })
   })
