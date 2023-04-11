@@ -40,7 +40,7 @@ function execute(
       resolve(error)
       notify?.(error)
       resolved = true
-    }).unref()
+    }, timeout).unref()
 
     /* Use a secondary promise to wrap the (possibly async) call */
     void Promise.resolve().then(async () => {
