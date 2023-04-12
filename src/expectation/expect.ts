@@ -10,13 +10,15 @@ import {
   ToBeLessThanOrEqual,
   ToBeWithinRange,
   ToEqual,
-  ToInclude,
   ToHaveLength,
   ToHaveProperty,
   ToHaveSize,
   ToMatch,
   ToStrictlyEqual,
 } from './basic'
+import {
+  ToInclude,
+} from './include'
 import {
   ToThrow,
   ToThrowError,
@@ -53,12 +55,16 @@ const expectations = {
   toBeLessThanOrEqual: new ToBeLessThanOrEqual(),
   toBeWithinRange: new ToBeWithinRange(),
   toEqual: new ToEqual(),
-  toInclude: new ToInclude(),
   toHaveLength: new ToHaveLength(),
   toHaveProperty: new ToHaveProperty(),
   toHaveSize: new ToHaveSize(),
   toMatch: new ToMatch(),
   toStrictlyEqual: new ToStrictlyEqual(),
+
+  // include
+  toInclude: new ToInclude(),
+
+  // throwing
   toThrow: new ToThrow(),
   toThrowError: new ToThrowError(),
 
