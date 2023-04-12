@@ -1,5 +1,5 @@
-import { assertType, ExpectationError, isType, stringifyValue, prefixType, stringifyConstructor } from './types'
 import { diff } from './diff'
+import { assertType, ExpectationError, isType, prefixType, stringifyConstructor, stringifyValue } from './types'
 
 import type { Constructor, TypeName, StringMatcher } from './types'
 import type { Expectation, Expectations } from './expect'
@@ -116,15 +116,7 @@ export class ToEqual implements Expectation {
   expect(context: Expectations, negative: boolean, expected: any): void {
     const result = diff(context.value, expected)
     if (result.diff === negative) return
-    const differences = negative ? undefined : result // differences only on _positive_ matches
-    throw new ExpectationError(context, negative, `to loosely equal ${stringifyValue(expected)}`, differences)
-  }
-}
-
-export class ToInclude implements Expectation {
-  expect(context: Expectations, negative: boolean, expected: any): void {
-    void context, negative, expected
-    // TODO
+    throw new ExpectationError(context, negative, `to loosely equal ${stringifyValue(expected)}`, result)
   }
 }
 
