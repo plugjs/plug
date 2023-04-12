@@ -37,9 +37,10 @@ export interface MappingsDiff extends ObjectDiff {
 export type Diff =
   | NoDiff
   | ValueDiff
+  | ErrorDiff
   | ObjectDiff
   | ListDiff
-  | ErrorDiff
+  | MappingsDiff
 
 /* ========================================================================== *
  * IMPLEMENTATION INTERNALS                                                   *
@@ -47,7 +48,7 @@ export type Diff =
 
 type Binary = Buffer | Uint8Array | ArrayBuffer | SharedArrayBuffer
 type BoxedPrimitive = Boolean | String | Number
-type Remarks = { actualMemos: any[], expectedMemos: any[], partial: boolean }
+type Remarks = { actualMemos: any[], expectedMemos: any[] }
 
 /* ========================================================================== */
 
@@ -67,12 +68,8 @@ function objectDiff<T extends Record<string, any>>(
     remarks: Remarks,
     keys?: Set<string>,
 ): ObjectDiff {
-  // default keys: all keys from both actual and expected objects or (if
-  // partial matching) only from the expected object
-  if (! keys) {
-    keys = remarks.partial ? new Set(Object.keys(expected)) :
-      new Set([ ...Object.keys(actual), ...Object.keys(expected) ])
-  }
+  // default keys: all keys from both actual and expected objects
+  if (! keys) keys = new Set([ ...Object.keys(actual), ...Object.keys(expected) ])
 
   // no keys? no diff!
   if (! keys.size) return { diff: false, actual: stringifyValue(actual) }
@@ -437,6 +434,6 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
  * EXPORTS                                                                    *
  * ========================================================================== */
 
-export function diff(actual: any, expected: any, partial: boolean = false): Diff {
-  return diffValues(actual, expected, { actualMemos: [], expectedMemos: [], partial })
+export function diff(actual: any, expected: any): Diff {
+  return diffValues(actual, expected, { actualMemos: [], expectedMemos: [] })
 }
