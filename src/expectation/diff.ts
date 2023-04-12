@@ -47,7 +47,7 @@ export type Diff =
 
 type Binary = Buffer | Uint8Array | ArrayBuffer | SharedArrayBuffer
 type BoxedPrimitive = Boolean | String | Number
-type Remarks = { __brand_remarks: never }
+type Remarks = { actualMemos: any[], expectedMemos: any[] }
 
 /* ========================================================================== */
 
@@ -349,6 +349,18 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
     // everything else is an object and must be checked
   }
 
+  // check for cyclical dependencies, see node's commit here:
+  // https://github.com/nodejs/node/commit/d3aafd02efd3a403d646a3044adcf14e63a88d32
+  const actualIndex = remarks.actualMemos.indexOf(actual)
+  if (actualIndex !== -1) {
+    if (actualIndex === remarks.expectedMemos.indexOf(expected)) {
+      return { diff: false, actual: stringifyValue(actual) }
+    }
+  }
+
+  remarks.actualMemos.push(actual)
+  remarks.expectedMemos.push(expected)
+
   // check that actual is _assignable_ from expected
   const prototype = Object.getPrototypeOf(expected)
   if (prototype && prototype.constructor) {
@@ -440,5 +452,5 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
  * ========================================================================== */
 
 export function diff(actual: any, expected: any): Diff {
-  return diffValues(actual, expected, {} as Remarks)
+  return diffValues(actual, expected, { actualMemos: [], expectedMemos: [] })
 }
