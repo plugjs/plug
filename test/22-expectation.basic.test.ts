@@ -177,9 +177,25 @@ describe('Basic Expectations', () => {
     expectPass(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'baz' }))
     expectPass(() => expect([ 'foo', 'bar' ]).not.toEqual([ 'foo', 'baz' ]))
 
-    expectFail(() => expect('foo').not.toEqual('foo'), 'Expected "foo" not to loosely equal "foo"')
-    expectFail(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'bar' }), 'Expected <object> not to loosely equal <object>')
-    expectFail(() => expect([ 'foo', 'bar' ]).not.toEqual([ 'foo', 'bar' ]), 'Expected <array> not to loosely equal <array>')
+    expectFail(() => expect('foo').not.toEqual('foo'), 'Expected "foo" not to loosely equal "foo"', {
+      diff: false,
+      actual: '"foo"',
+    })
+    expectFail(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'bar' }), 'Expected <object> not to loosely equal <object>', {
+      diff: false,
+      actual: '<object>',
+      props: {
+        foo: { diff: false, actual: '"bar"' },
+      },
+    })
+    expectFail(() => expect([ 'foo', 'bar' ]).not.toEqual([ 'foo', 'bar' ]), 'Expected <array> not to loosely equal <array>', {
+      diff: false,
+      actual: '<array>',
+      values: [
+        { diff: false, actual: '"foo"' },
+        { diff: false, actual: '"bar"' },
+      ],
+    })
 
     expectFail(() => expect('foo').toEqual('bar'), 'Expected "foo" to loosely equal "bar"', {
       diff: true,
