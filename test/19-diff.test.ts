@@ -164,13 +164,13 @@ describe('Differences', () => {
     assert.deepEqual(diff({}, new SyntaxError('foo')), {
       diff: true,
       actual: '<object>',
-      error: 'to be instance of [SyntaxError]',
+      error: 'Expected <object> to be instance of [SyntaxError]',
     })
 
     assert.deepEqual(diff(new TypeError('foo'), new SyntaxError('bar')), {
       diff: true,
       actual: '[TypeError]',
-      error: 'to be instance of [SyntaxError]',
+      error: 'Expected [TypeError] to be instance of [SyntaxError]',
     })
   })
 
@@ -468,7 +468,7 @@ describe('Differences', () => {
       assert.deepEqual(diff([ true ], []), {
         diff: true,
         actual: '<array>',
-        error: 'to have length 0 (length=1)',
+        error: 'Expected <array> to have length 0 (length=1)',
       })
     })
 
@@ -476,7 +476,7 @@ describe('Differences', () => {
       assert.deepEqual(diff([], {}), {
         diff: true,
         actual: '<array>',
-        error: 'not to be an instance of <array>',
+        error: 'Expected <array> not to be an instance of <array>',
       })
     })
   })
@@ -573,19 +573,19 @@ describe('Differences', () => {
       assert.deepEqual(diff(new Boolean(true), {}), {
         diff: true,
         actual: '[Boolean: true]',
-        error: 'not to be an instance of [Boolean]',
+        error: 'Expected [Boolean: true] not to be an instance of [Boolean]',
       })
 
       assert.deepEqual(diff(new Number(123), {}), {
         diff: true,
         actual: '[Number: 123]',
-        error: 'not to be an instance of [Number]',
+        error: 'Expected [Number: 123] not to be an instance of [Number]',
       })
 
       assert.deepEqual(diff(new String('foo'), {}), {
         diff: true,
         actual: '[String: "foo"]',
-        error: 'not to be an instance of [String]',
+        error: 'Expected [String: "foo"] not to be an instance of [String]',
       })
     })
   })
@@ -634,7 +634,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(act, exp), {
         diff: true,
         actual: '[Buffer]',
-        error: 'to equal at index 0 (actual=cafebabe, expected=babecafe)',
+        error: 'Expected [Buffer] to equal at index 0 (actual=cafebabe, expected=babecafe)',
       })
 
       const uact = new Uint8Array(act)
@@ -643,7 +643,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(uact, uexp), {
         diff: true,
         actual: '[Uint8Array]',
-        error: 'to equal at index 0 (actual=cafebabe, expected=babecafe)',
+        error: 'Expected [Uint8Array] to equal at index 0 (actual=cafebabe, expected=babecafe)',
       })
 
       const aact = uact.buffer
@@ -652,7 +652,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(aact, aexp), {
         diff: true,
         actual: '[ArrayBuffer]',
-        error: 'to equal at index 0 (actual=cafebabe, expected=babecafe)',
+        error: 'Expected [ArrayBuffer] to equal at index 0 (actual=cafebabe, expected=babecafe)',
       })
 
       const sact = new SharedArrayBuffer(uact.byteLength)
@@ -663,7 +663,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(sact, sexp), {
         diff: true,
         actual: '[SharedArrayBuffer]',
-        error: 'to equal at index 0 (actual=cafebabe, expected=babecafe)',
+        error: 'Expected [SharedArrayBuffer] to equal at index 0 (actual=cafebabe, expected=babecafe)',
       })
     })
 
@@ -674,7 +674,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(act, exp), {
         diff: true,
         actual: '[Buffer]',
-        error: 'to have length 2 (length=4)',
+        error: 'Expected [Buffer] to have length 2 (length=4)',
       })
 
       const uact = new Uint8Array(act)
@@ -683,7 +683,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(uact, uexp), {
         diff: true,
         actual: '[Uint8Array]',
-        error: 'to have length 2 (length=4)',
+        error: 'Expected [Uint8Array] to have length 2 (length=4)',
       })
 
       const aact = uact.buffer
@@ -692,7 +692,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(aact, aexp), {
         diff: true,
         actual: '[ArrayBuffer]',
-        error: 'to have length 2 (length=4)',
+        error: 'Expected [ArrayBuffer] to have length 2 (length=4)',
       })
 
       const sact = new SharedArrayBuffer(uact.byteLength)
@@ -703,7 +703,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(sact, sexp), {
         diff: true,
         actual: '[SharedArrayBuffer]',
-        error: 'to have length 2 (length=4)',
+        error: 'Expected [SharedArrayBuffer] to have length 2 (length=4)',
       })
     })
 
@@ -715,7 +715,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(act, exp), {
         diff: true,
         actual: '[Buffer]',
-        error: 'to equal at index 50 (actual=\u20266162636465\u2026, expected=\u20264142434445\u2026)',
+        error: 'Expected [Buffer] to equal at index 50 (actual=\u20266162636465\u2026, expected=\u20264142434445\u2026)',
       })
     })
 
@@ -725,7 +725,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(act, {}), {
         diff: true,
         actual: '[Buffer]',
-        error: 'not to be an instance of [Buffer]',
+        error: 'Expected [Buffer] not to be an instance of [Buffer]',
       })
 
       const uact = new Uint8Array(act)
@@ -733,7 +733,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(uact, {}), {
         diff: true,
         actual: '[Uint8Array]',
-        error: 'not to be an instance of [Uint8Array]',
+        error: 'Expected [Uint8Array] not to be an instance of [Uint8Array]',
       })
 
       const aact = uact.buffer
@@ -741,7 +741,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(aact, {}), {
         diff: true,
         actual: '[ArrayBuffer]',
-        error: 'not to be an instance of [ArrayBuffer]',
+        error: 'Expected [ArrayBuffer] not to be an instance of [ArrayBuffer]',
       })
 
       const sact = new SharedArrayBuffer(uact.byteLength)
@@ -750,7 +750,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(sact, {}), {
         diff: true,
         actual: '[SharedArrayBuffer]',
-        error: 'not to be an instance of [SharedArrayBuffer]',
+        error: 'Expected [SharedArrayBuffer] not to be an instance of [SharedArrayBuffer]',
       })
     })
   })
@@ -772,7 +772,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(act, exp), {
         diff: true,
         actual: '[Promise]',
-        error: 'to strictly equal [Promise]',
+        error: 'Expected [Promise] to strictly equal [Promise]',
       })
     })
 
@@ -782,7 +782,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(promise, {}), {
         diff: true,
         actual: '[Promise]',
-        error: 'not to be an instance of [Promise]',
+        error: 'Expected [Promise] not to be an instance of [Promise]',
       })
     })
   })
@@ -822,7 +822,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(re, {}), {
         diff: true,
         actual: '/abc/gm',
-        error: 'not to be an instance of [RegExp]',
+        error: 'Expected /abc/gm not to be an instance of [RegExp]',
       })
     })
   })
@@ -855,7 +855,7 @@ describe('Differences', () => {
       assert.deepEqual(diff(date, {}), {
         diff: true,
         actual: '[Date: 2023-04-11T14:34:00.879Z]',
-        error: 'not to be an instance of [Date]',
+        error: 'Expected [Date: 2023-04-11T14:34:00.879Z] not to be an instance of [Date]',
       })
     })
   })
@@ -1005,13 +1005,13 @@ describe('Differences', () => {
       assert.deepEqual(diff(new Set([ 'foo' ]), new Set()), {
         diff: true,
         actual: '[Set]',
-        error: 'to have size 0 (size=1)',
+        error: 'Expected [Set] to have size 0 (size=1)',
       })
 
       assert.deepEqual(diff(new Set(), new Set([ 'foo' ])), {
         diff: true,
         actual: '[Set]',
-        error: 'to have size 1 (size=0)',
+        error: 'Expected [Set] to have size 1 (size=0)',
       })
     })
 
@@ -1085,13 +1085,13 @@ describe('Differences', () => {
       assert.deepEqual(diff(new Map([ [ 'foo', 'bar' ] ]), new Map()), {
         diff: true,
         actual: '[Map]',
-        error: 'to have size 0 (size=1)',
+        error: 'Expected [Map] to have size 0 (size=1)',
       })
 
       assert.deepEqual(diff(new Map(), new Map([ [ 'foo', 'bar' ] ])), {
         diff: true,
         actual: '[Map]',
-        error: 'to have size 1 (size=0)',
+        error: 'Expected [Map] to have size 1 (size=0)',
       })
     })
 
