@@ -51,6 +51,16 @@ type Remarks = { actualMemos: any[], expectedMemos: any[] }
 
 /* ========================================================================== */
 
+function errorDiff(actual: any, message: string): ErrorDiff {
+  return {
+    diff: true,
+    actual: stringifyValue(actual),
+    error: `Expected ${stringifyValue(actual)} ${message}`,
+  }
+}
+
+/* ========================================================================== */
+
 function objectDiff<T extends Record<string, any>>(
     actual: T,
     expected: T,
@@ -82,11 +92,7 @@ function arrayDiff<T extends Record<number, any> & { length: number }>(
 ): ListDiff | ErrorDiff {
   // make sure that the length of both arrays is the same
   if (actual.length !== expected.length) {
-    return {
-      diff: true,
-      actual: stringifyValue(actual),
-      error: `to have length ${expected.length} (length=${actual.length})`,
-    }
+    return errorDiff(actual, `to have length ${expected.length} (length=${actual.length})`)
   }
 
   // prepare a set with _all_ keys from both expected and actual object
@@ -118,11 +124,7 @@ function setDiff<T>(
 ): ListDiff | ErrorDiff {
   // make sure that the size of both sets is the same
   if (actual.size !== expected.size) {
-    return {
-      diff: true,
-      actual: stringifyValue(actual),
-      error: `to have size ${expected.size} (size=${actual.size})`,
-    }
+    return errorDiff(actual, `to have size ${expected.size} (size=${actual.size})`)
   }
 
   // check differences between sets
@@ -173,11 +175,7 @@ function mapDiff<K, V>(
 ): MappingsDiff | ErrorDiff {
   // make sure that the size of both maps is the same
   if (actual.size !== expected.size) {
-    return {
-      diff: true,
-      actual: stringifyValue(actual),
-      error: `to have size ${expected.size} (size=${actual.size})`,
-    }
+    return errorDiff(actual, `to have size ${expected.size} (size=${actual.size})`)
   }
 
   // check mappings
@@ -210,11 +208,7 @@ function binaryDiff<T extends Binary>(
 ): ObjectDiff | ErrorDiff {
   // make sure that the length of both arrays is the same
   if (actualData.length !== expectedData.length) {
-    return {
-      diff: true,
-      actual: stringifyValue(actual),
-      error: `to have length ${expectedData.length} (length=${actualData.length})`,
-    }
+    return errorDiff(actual, `to have length ${expectedData.length} (length=${actualData.length})`)
   }
 
   // remember keys
@@ -237,11 +231,7 @@ function binaryDiff<T extends Binary>(
       exp = '\u2026' + exp
     }
 
-    return {
-      diff: true,
-      actual: stringifyValue(actual),
-      error: `to equal at index ${i} (actual=${act}, expected=${exp})`,
-    }
+    return errorDiff(actual, `to equal at index ${i} (actual=${act}, expected=${exp})`)
   }
 
   // same contents, check extra properties
@@ -365,11 +355,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
   const prototype = Object.getPrototypeOf(expected)
   if (prototype && prototype.constructor) {
     if (! (actual instanceof prototype.constructor)) {
-      return {
-        diff: true,
-        actual: stringifyValue(actual),
-        error: `to be instance of ${stringifyConstructor(prototype.constructor)}`,
-      }
+      return errorDiff(actual, `to be instance of ${stringifyConstructor(prototype.constructor)}`)
     }
   }
 
@@ -381,11 +367,9 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
   ): Diff | undefined =>
     (expected instanceof ctor) ?
       callback(actual as InstanceType<typeof ctor>, expected, remarks) :
-    (actual instanceof ctor) ? {
-      diff: true,
-      actual: stringifyValue(actual),
-      error: `not to be an instance of ${stringifyConstructor(ctor)}`,
-    } : undefined
+    (actual instanceof ctor) ?
+      errorDiff(actual, `not to be an instance of ${stringifyConstructor(ctor)}`) :
+    undefined
 
   return (
     /* == ARRAYS ============================================================ */
@@ -403,11 +387,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
     checkInstance(Number, primitiveDiff) ||
 
     /* == PROMISES (always error, must be ===) ============================== */
-    checkInstance(Promise, (act, exp) => ({
-      diff: true,
-      actual: stringifyValue(act),
-      error: `to strictly equal ${stringifyValue(exp)}`,
-    })) ||
+    checkInstance(Promise, (act, exp) => errorDiff(act, `to strictly equal ${stringifyValue(exp)}`)) ||
 
     /* == DATES ============================================================= */
     checkInstance(Date, (act, exp) =>
