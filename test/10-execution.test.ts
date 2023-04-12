@@ -1,8 +1,8 @@
-import { Suite, skip } from '../src/execution/executable'
-import { runSuite, type Execution } from '../src/execution/executor'
-// import * as setup from '../src/execution/setup'
+import { Suite, skip, Spec, Hook } from '../src/execution/executable'
+import { runSuite } from '../src/execution/executor'
 
-import type { Spec, Hook } from '../src/execution/executable'
+import type { Execution } from '../src/execution/executor'
+
 
 function setupListeners(execution: Execution, calls: any[][]): void {
   const listener = (event: string) => {
@@ -88,7 +88,6 @@ describe('Executor', () => {
 
     expect(result).toEqual({
       time: expect.toBeA('number'),
-      specs: 2,
       passed: 2,
       failed: 0,
       skipped: 0,
@@ -116,7 +115,7 @@ describe('Executor', () => {
       it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const hook = expect.toInclude({
+    const hook = expect.toBeInstanceOf(Hook).toInclude({
       parent: suite,
       name: 'beforeAll',
     })
@@ -129,7 +128,7 @@ describe('Executor', () => {
       [ 'suite:exec', 'suite 0' ],
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
-      [ 'hook:fail', 'beforeAll', expect.toBeA('number'), { hook, error } ],
+      [ 'hook:fail', 'beforeAll', expect.toBeA('number'), { number: 1, source: hook, type: 'hook', error } ],
       [ 'spec:start', 'spec 1' ],
       [ 'spec:skip', 'spec 1', expect.toBeA('number') ],
       [ 'spec:start', 'spec 2' ],
@@ -139,11 +138,10 @@ describe('Executor', () => {
 
     expect(result as any).toEqual({
       time: expect.toBeA('number'),
-      specs: 2,
       passed: 0,
       failed: 0,
       skipped: 2,
-      failures: [ { hook, error } ],
+      failures: [ { number: 1, source: hook, type: 'hook', error } ],
     })
   })
 
@@ -167,7 +165,7 @@ describe('Executor', () => {
       it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const hook = expect.toInclude({
+    const hook = expect.toBeInstanceOf(Hook).toInclude({
       parent: suite,
       name: 'afterAll',
     })
@@ -201,17 +199,16 @@ describe('Executor', () => {
       [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
       [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
-      [ 'hook:fail', 'afterAll', expect.toBeA('number'), { hook, error } ],
+      [ 'hook:fail', 'afterAll', expect.toBeA('number'), { number: 1, source: hook, type: 'hook', error } ],
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result as any).toEqual({
       time: expect.toBeA('number'),
-      specs: 2,
       passed: 2,
       failed: 0,
       skipped: 0,
-      failures: [ { hook, error } ],
+      failures: [ { number: 1, source: hook, type: 'hook', error } ],
     })
   })
 
@@ -235,17 +232,17 @@ describe('Executor', () => {
       it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const hook1 = expect.toInclude({
+    const hook1 = expect.toBeInstanceOf(Hook).toInclude({
       name: 'beforeEach',
-      parent: expect.toInclude({
+      parent: expect.toBeInstanceOf(Spec).toInclude({
         name: 'spec 1',
         parent: suite,
       }),
     })
 
-    const hook2 = expect.toInclude({
+    const hook2 = expect.toBeInstanceOf(Hook).toInclude({
       name: 'beforeEach',
-      parent: expect.toInclude({
+      parent: expect.toBeInstanceOf(Spec).toInclude({
         name: 'spec 2',
         parent: suite,
       }),
@@ -263,11 +260,11 @@ describe('Executor', () => {
       [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
-      [ 'hook:fail', 'beforeEach', expect.toBeA('number'), { hook: hook1, error } ],
+      [ 'hook:fail', 'beforeEach', expect.toBeA('number'), { number: 1, source: hook1, type: 'hook', error } ],
       [ 'spec:skip', 'spec 1', expect.toBeA('number') ],
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
-      [ 'hook:fail', 'beforeEach', expect.toBeA('number'), { hook: hook2, error } ],
+      [ 'hook:fail', 'beforeEach', expect.toBeA('number'), { number: 2, source: hook2, type: 'hook', error } ],
       [ 'spec:skip', 'spec 2', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
@@ -277,13 +274,12 @@ describe('Executor', () => {
 
     expect(result as any).toEqual({
       time: expect.toBeA('number'),
-      specs: 2,
       passed: 0,
       failed: 0,
       skipped: 2,
       failures: [
-        { hook: hook1, error },
-        { hook: hook2, error },
+        { number: 1, source: hook1, type: 'hook', error },
+        { number: 2, source: hook2, type: 'hook', error },
       ],
     })
   })
@@ -308,17 +304,17 @@ describe('Executor', () => {
       it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const hook1 = expect.toInclude({
+    const hook1 = expect.toBeInstanceOf(Hook).toInclude({
       name: 'afterEach',
-      parent: expect.toInclude({
+      parent: expect.toBeInstanceOf(Spec).toInclude({
         name: 'spec 1',
         parent: suite,
       }),
     })
 
-    const hook2 = expect.toInclude({
+    const hook2 = expect.toBeInstanceOf(Hook).toInclude({
       name: 'afterEach',
-      parent: expect.toInclude({
+      parent: expect.toBeInstanceOf(Spec).toInclude({
         name: 'spec 2',
         parent: suite,
       }),
@@ -341,7 +337,7 @@ describe('Executor', () => {
       [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 1' ],
       [ 'hook:start', 'afterEach' ],
-      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { hook: hook1, error } ],
+      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { number: 1, source: hook1, type: 'hook', error } ],
       [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
@@ -349,7 +345,7 @@ describe('Executor', () => {
       [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
-      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { hook: hook2, error } ],
+      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { number: 2, source: hook2, type: 'hook', error } ],
       [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
@@ -359,13 +355,12 @@ describe('Executor', () => {
 
     expect(result as any).toEqual({
       time: expect.toBeA('number'),
-      specs: 2,
       passed: 2,
       failed: 0,
       skipped: 0,
       failures: [
-        { hook: hook1, error },
-        { hook: hook2, error },
+        { number: 1, source: hook1, type: 'hook', error },
+        { number: 2, source: hook2, type: 'hook', error },
       ],
     })
   })
@@ -390,7 +385,7 @@ describe('Executor', () => {
       it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const spec = expect.toInclude({
+    const spec = expect.toBeInstanceOf(Spec).toInclude({
       name: 'spec 1',
       parent: suite,
     })
@@ -412,7 +407,7 @@ describe('Executor', () => {
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
       [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
-      [ 'spec:fail', 'spec 1', expect.toBeA('number'), { spec, error } ], // reported _after_ hooks
+      [ 'spec:fail', 'spec 1', expect.toBeA('number'), { number: 1, source: spec, type: 'spec', error } ], // reported _after_ hooks
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
@@ -430,11 +425,10 @@ describe('Executor', () => {
 
     expect(result as any).toEqual({
       time: expect.toBeA('number'),
-      specs: 2,
       passed: 1,
       failed: 1,
       skipped: 0,
-      failures: [ { spec, error } ],
+      failures: [ { number: 1, source: spec, type: 'spec', error } ],
     })
   })
 
@@ -463,27 +457,27 @@ describe('Executor', () => {
       it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
-    const spec = expect.toInclude({
+    const spec = expect.toBeInstanceOf(Spec).toInclude({
       name: 'spec 1',
       parent: suite,
     })
 
-    const hook = expect.toInclude({
+    const hook = expect.toBeInstanceOf(Hook).toInclude({
       name: 'afterAll',
       parent: suite,
     })
 
-    const hook1 = expect.toInclude({
+    const hook1 = expect.toBeInstanceOf(Hook).toInclude({
       name: 'afterEach',
-      parent: expect.toInclude({
+      parent: expect.toBeInstanceOf(Spec).toInclude({
         name: 'spec 1',
         parent: suite,
       }),
     })
 
-    const hook2 = expect.toInclude({
+    const hook2 = expect.toBeInstanceOf(Hook).toInclude({
       name: 'afterEach',
-      parent: expect.toInclude({
+      parent: expect.toBeInstanceOf(Spec).toInclude({
         name: 'spec 2',
         parent: suite,
       }),
@@ -504,32 +498,32 @@ describe('Executor', () => {
       [ 'hook:exec', 'beforeEach' ],
       [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'hook:start', 'afterEach' ],
-      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { hook: hook1, error: errorAfterEach } ],
-      [ 'spec:fail', 'spec 1', expect.toBeA('number'), { spec, error: errorSpec } ],
+      // remember, the "spec:fail" event is emitted _after_ hooks, so here numbers are inverted!
+      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { number: 2, source: hook1, type: 'hook', error: errorAfterEach } ],
+      [ 'spec:fail', 'spec 1', expect.toBeA('number'), { number: 1, source: spec, type: 'spec', error: errorSpec } ],
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
       [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
-      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { hook: hook2, error: errorAfterEach } ],
+      [ 'hook:fail', 'afterEach', expect.toBeA('number'), { number: 3, source: hook2, type: 'hook', error: errorAfterEach } ],
       [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
-      [ 'hook:fail', 'afterAll', expect.toBeA('number'), { hook, error: errorAfterAll } ],
+      [ 'hook:fail', 'afterAll', expect.toBeA('number'), { number: 4, source: hook, type: 'hook', error: errorAfterAll } ],
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result as any).toEqual({
       time: expect.toBeA('number'),
-      specs: 2,
       passed: 1,
       failed: 1,
       skipped: 0,
       failures: [
-        { spec, error: errorSpec },
-        { hook: hook1, error: errorAfterEach },
-        { hook: hook2, error: errorAfterEach },
-        { hook, error: errorAfterAll },
+        { number: 1, source: spec, type: 'spec', error: errorSpec }, // spec fails first, but emitted later
+        { number: 2, source: hook1, type: 'hook', error: errorAfterEach }, // hooks fails later, but emitted first
+        { number: 3, source: hook2, type: 'hook', error: errorAfterEach },
+        { number: 4, source: hook, type: 'hook', error: errorAfterAll },
       ],
     })
   })
@@ -604,7 +598,6 @@ describe('Executor', () => {
 
     expect(result).toEqual({
       time: expect.toBeA('number'),
-      specs: 4,
       passed: 1,
       failed: 0,
       skipped: 3,
@@ -634,7 +627,6 @@ describe('Executor', () => {
 
     expect(result).toEqual({
       time: expect.toBeA('number'),
-      specs: 0,
       passed: 0,
       failed: 0,
       skipped: 0,
@@ -676,7 +668,6 @@ describe('Executor', () => {
 
     expect(result).toEqual({
       time: expect.toBeA('number'),
-      specs: 3,
       passed: 0,
       failed: 0,
       skipped: 3,
@@ -773,7 +764,6 @@ describe('Executor', () => {
 
     expect(result).toEqual({
       time: expect.toBeA('number'),
-      specs: 12,
       passed: 6,
       failed: 0,
       skipped: 6,
@@ -801,31 +791,30 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'spec:start', 'should fail' ],
       [ 'spec:fail', 'should fail', expect.toBeA('number'), {
-        spec: expect.toInclude({
+        number: 1,
+        type: 'spec',
+        source: expect.toBeInstanceOf(Spec).toInclude({
           name: 'should fail',
           parent: suite,
         }),
-        error: expect.toInclude({
-          message: 'fail with a string!',
-        }),
+        error: expect.toBeError(Error, 'fail with a string!'),
       } ],
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
     expect(result as any).toEqual({
       time: expect.toBeA('number'),
-      specs: 1,
       passed: 0,
       failed: 1,
       skipped: 0,
       failures: [ {
-        spec: expect.toInclude({
+        number: 1,
+        type: 'spec',
+        source: expect.toBeInstanceOf(Spec).toInclude({
           name: 'should fail',
           parent: suite,
         }),
-        error: expect.toInclude({
-          message: 'fail with a string!',
-        }),
+        error: expect.toBeError(Error, 'fail with a string!'),
       } ],
     })
   })
@@ -854,53 +843,58 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'spec:start', 'should timeout 1' ],
       [ 'spec:fail', 'should timeout 1', expect.toBeA('number'), {
-        spec: expect.toInclude({ name: 'should timeout 1', parent: suite }),
-        error: expect.toInclude({ message: 'Timeout of 5 ms reached' } ),
+        number: 1,
+        type: 'spec',
+        source: expect.toBeInstanceOf(Spec).toInclude({ name: 'should timeout 1', parent: suite }),
+        error: expect.toBeError(Error, 'Timeout of 5 ms reached'),
       } ],
       [ 'spec:start', 'should timeout 2' ],
       [ 'spec:fail', 'should timeout 2', expect.toBeA('number'), {
-        spec: expect.toInclude({ name: 'should timeout 2', parent: suite }),
-        error: expect.toInclude({ message: 'Timeout of 5 ms reached' } ),
+        number: 2,
+        type: 'spec',
+        source: expect.toBeInstanceOf(Spec).toInclude({ name: 'should timeout 2', parent: suite }),
+        error: expect.toBeError(Error, 'Timeout of 5 ms reached'),
       } ],
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
 
       // failure raised *after* timeout!
       [ 'spec:error', 'should timeout 2', {
-        spec: expect.toInclude({ name: 'should timeout 2', parent: suite }),
-        error: expect.toInclude({ message: 'Whatever...' } ),
+        number: 3,
+        type: 'spec',
+        source: expect.toBeInstanceOf(Spec).toInclude({ name: 'should timeout 2', parent: suite }),
+        error: expect.toBeError(Error, 'Whatever...'),
       } ],
     ])
 
     expect(result as any).toEqual({
       time: expect.toBeA('number'),
-      specs: 2,
       passed: 0,
       failed: 2,
       skipped: 0,
       failures: [ {
-        spec: expect.toInclude({
+        number: 1,
+        type: 'spec',
+        source: expect.toBeInstanceOf(Spec).toInclude({
           name: 'should timeout 1',
           parent: suite,
         }),
-        error: expect.toInclude({
-          message: 'Timeout of 5 ms reached',
-        }),
+        error: expect.toBeError(Error, 'Timeout of 5 ms reached'),
       }, {
-        spec: expect.toInclude({
+        number: 2,
+        type: 'spec',
+        source: expect.toBeInstanceOf(Spec).toInclude({
           name: 'should timeout 2',
           parent: suite,
         }),
-        error: expect.toInclude({
-          message: 'Timeout of 5 ms reached',
-        }),
+        error: expect.toBeError(Error, 'Timeout of 5 ms reached'),
       }, {
-        spec: expect.toInclude({
+        number: 3,
+        type: 'spec',
+        source: expect.toBeInstanceOf(Spec).toInclude({
           name: 'should timeout 2',
           parent: suite,
         }),
-        error: expect.toInclude({
-          message: 'Whatever...',
-        }),
+        error: expect.toBeError(Error, 'Whatever...'),
       } ],
     })
   })
@@ -940,7 +934,7 @@ describe('Executor', () => {
       it('should skip this', () => skip())
       it('should fail this', () => {
         skip()
-        throw new Error('Whatever...')
+        throw new SyntaxError('Whatever...')
       })
     })
 
@@ -962,13 +956,13 @@ describe('Executor', () => {
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:skip', 'beforeEach', expect.toBeA('number') ],
       [ 'spec:fail', 'should fail this', expect.toBeA('number'), {
-        spec: expect.toInclude({
+        number: 1,
+        type: 'spec',
+        source: expect.toBeInstanceOf(Spec).toInclude({
           name: 'should fail this',
           parent: suite,
         }),
-        error: expect.toInclude({
-          message: 'Whatever...',
-        }),
+        error: expect.toBeError(SyntaxError, 'Whatever...'),
       } ],
 
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
@@ -976,18 +970,17 @@ describe('Executor', () => {
 
     expect(result as any).toEqual({
       time: expect.toBeA('number'),
-      specs: 2,
       passed: 0,
       failed: 1,
       skipped: 1,
       failures: [ {
-        spec: expect.toInclude({
+        number: 1,
+        type: 'spec',
+        source: expect.toBeInstanceOf(Spec).toInclude({
           name: 'should fail this',
           parent: suite,
         }),
-        error: expect.toInclude({
-          message: 'Whatever...',
-        }),
+        error: expect.toBeError(SyntaxError, 'Whatever...'),
       } ],
     })
   })
