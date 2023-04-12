@@ -167,7 +167,6 @@ export interface ExpectationsParent {
   prop: string | number | symbol,
 }
 
-
 /** Basic definition of an {@link Expectation} as an object */
 export interface Expectation {
   expect(context: Expectations, negative: boolean, ...args: any[]): void
@@ -278,12 +277,14 @@ class ExpectationsImpl<T = unknown> implements Expectations<T> {
   static {
     for (const [ key, value ] of Object.entries(expectations)) {
       const expectation = value as Expectation
-      Object.defineProperty(this.prototype, key, {
-        value: function(this: ExpectationsImpl, ...args: any[]): any {
-          expectation.expect(this._positiveExpectations, this._negative, ...args)
-          return this._positiveExpectations
-        },
-      })
+
+      const fn = function(this: ExpectationsImpl, ...args: any[]): any {
+        expectation.expect(this._positiveExpectations, this._negative, ...args)
+        return this._positiveExpectations
+      }
+
+      Object.defineProperty(fn, 'name', { value: key })
+      Object.defineProperty(this.prototype, key, { value: fn })
     }
   }
 }
