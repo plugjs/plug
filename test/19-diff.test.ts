@@ -281,6 +281,10 @@ describe('Differences', () => {
             actual: '"foo"',
             expected: 'false',
           },
+          cycle: {
+            diff: false,
+            actual: '<object>',
+          },
         },
       })
     })
@@ -309,6 +313,16 @@ describe('Differences', () => {
             diff: true,
             actual: '"foo"',
             expected: 'false',
+          },
+          cycle_act: {
+            diff: true,
+            actual: '<object>',
+            expected: '<undefined>',
+          },
+          cycle_exp: {
+            diff: true,
+            actual: '<undefined>',
+            expected: '<object>',
           },
         },
       })
