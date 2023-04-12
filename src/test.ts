@@ -67,8 +67,8 @@ export class Test implements Plug<void> {
       } else {
         const snum = current.specs
         const fnum = files.length
-        const smsg = snum > 1 ? 'specs' : 'spec'
-        const fmsg = fnum > 1 ? 'files' : 'file'
+        const smsg = snum === 1 ? 'spec' : 'specs'
+        const fmsg = fnum === 1 ? 'file' : 'files'
         context.log.enter(NOTICE, `Running ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}`)
       }
     })
@@ -116,15 +116,39 @@ export class Test implements Plug<void> {
       context.log.enter(ERROR, `${$gry('[')}${$red(number)}${$gry(']:')} ${details}`)
       dumpError(context.log, error)
       context.log.leave()
-
-      // context.log.notice(names, source.name)
-      // source.
     }
-    context.log.notice('RESULT', failed, passed, skipped, time)
 
-    if (failed) throw BuildFailure.fail()
+    // Epilogue
+    const snum = suite.specs
+    const fnum = files.length
+    const smsg = snum === 1 ? 'spec' : 'specs'
+    const fmsg = fnum === 1 ? 'file' : 'files'
+
+    const summary: string[] = []
+    if (failed) summary.push(`${failed} ${$gry('failed')}`)
+    if (skipped) summary.push(`${skipped} ${$gry('skipped')}`)
+    if (passed) summary.push(`${passed} ${$gry('passed')}`)
+
+    const epilogue = summary.length ? ` ${$gry('(')}${summary.join($gry(', '))}${$gry(')')}` : ''
+    const message = `Ran ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}${epilogue}`
+
+    if (failed) {
+      context.log.error('')
+      context.log.error(message)
+      throw new BuildFailure(`${failed} specs failed`)
+    } else if (skipped) {
+      context.log.warn('')
+      context.log.warn(message)
+    } else {
+      context.log.notice('')
+      context.log.notice(message)
+    }
   }
 }
+
+/* ========================================================================== *
+ * ERROR REPORTING                                                            *
+ * ========================================================================== */
 
 function dumpError(log: Logger, error: any): void {
   if (error instanceof AssertionError) {
