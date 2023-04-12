@@ -1,16 +1,21 @@
 // Reference ourselves, so that the constructor's parameters are correct
 /// <reference path="./index.ts"/>
 
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
+import { AssertionError } from 'node:assert'
+
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN, type Logger } from '@plugjs/plug/logging'
+import { BuildFailure } from '@plugjs/plug'
 
 import { runSuite } from './execution/executor'
 import { Suite, skip } from './execution/executable'
 import { expect } from './expectation/expect'
 import * as setup from './execution/setup'
+import { ExpectationError } from './expectation/types'
 
 import type { Files } from '@plugjs/plug/files'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
 import type { TestOptions } from './index'
+import type { Diff } from './expectation/diff'
 
 const _pending = '\u22EF' // middle ellipsis
 const _success = '\u2714' // heavy check mark
@@ -51,7 +56,6 @@ export class Test implements Plug<void> {
     })
 
     // Run our suite and setup listeners
-    await suite.setup()
     const execution = runSuite(suite)
 
     execution.on('suite:start', (current) => {
@@ -78,20 +82,160 @@ export class Test implements Plug<void> {
     })
 
     execution.on('spec:skip', (spec, ms) => {
-      context.log.leave(WARN, `${$ylw(_pending)} ${spec.name} ${$ms(ms)}`)
+      context.log.leave(WARN, `${$ylw(_pending)} ${spec.name} ${$ms(ms)} ${$gry('[')}${$ylw('skipped')}${$gry(']')}`)
     })
 
     execution.on('spec:pass', (spec, ms) => {
       context.log.leave(NOTICE, `${$grn(_success)} ${spec.name} ${$ms(ms)}`)
     })
 
-    execution.on('spec:fail', (spec, ms, failure) => {
-      context.log.error(failure) // TODO
-      context.log.leave(ERROR, `${$red(_failure)} ${spec.name} ${$ms(ms)}`)
+    execution.on('spec:fail', (spec, ms, { number }) => {
+      context.log.leave(ERROR,
+          `${$red(_failure)} ${spec.name} ${$ms(ms)} ` +
+          `${$gry('[')}${$red('failed')}${$gry('|')}${$red(`${number}`)}${$gry(']')}`)
+    })
+
+    execution.on('hook:fail', (hook, ms, { number }) => {
+      context.log.error(ERROR,
+          `${$red(_failure)} Hook "${hook.name}" ${$ms(ms)} ` +
+          `${$gry('[')}${$red('failed')}${$gry('|')}${$red(`${number}`)}${$gry(']')}`)
     })
 
     // Await execution
-    const result = await execution.result
-    void result, context
+    const { failed, passed, skipped, failures, time } = await execution.result
+
+    // Dump all failures
+    for (const { source, error, number } of failures) {
+      const names: string[] = [ '' ]
+      for (let p = source.parent; p?.parent; p = p.parent) {
+        if (p) names.unshift(p.name)
+      }
+      const details = names.join(` ${$gry(_details)} `) + $wht(source.name)
+
+      context.log.notice('')
+      context.log.enter(ERROR, `${$gry('[')}${$red(number)}${$gry(']:')} ${details}`)
+      dumpError(context.log, error)
+      context.log.leave()
+
+      // context.log.notice(names, source.name)
+      // source.
+    }
+    context.log.notice('RESULT', failed, passed, skipped, time)
+
+    if (failed) throw BuildFailure.fail()
   }
+}
+
+function dumpError(log: Logger, error: any): void {
+  if (error instanceof AssertionError) {
+    const [ message = 'Unknown Error', ...lines ] = error.message.split('\n')
+    log.enter(ERROR, `${$gry('Assertion Error:')} ${$red(message)}`)
+    dumpStack(log, error)
+    while (! lines[0]) lines.shift()
+    for (const line of lines) log.error(' ', line)
+    log.leave()
+    return
+  }
+
+  if (error instanceof ExpectationError) {
+    log.enter(ERROR, `${$gry('Expectation Error:')} ${$red(error.message)}`)
+    dumpStack(log, error)
+    if (error.diff) {
+      log.error(`  ${$wht('Differences')} ${$gry('(')}${$red('actual')}${$gry('/')}${$grn('expected')}${$gry('/')}${$ylw('errors')}${$gry(')')}:`)
+      // log.error(JSON.stringify(error.diff, null, 2))
+      dumpDiff(log, error.diff)
+    }
+    log.leave()
+    return
+  }
+
+  log.error(error)
+}
+
+function dumpStack(log: Logger, error: Error): void {
+  (error.stack || '')
+      .split('\n')
+      .filter((line) => line.match(/^\s+at\s+/))
+      .map((line) => line.trim())
+      .forEach((line) => log.error(line))
+}
+
+function dumpDiff(
+    log: Logger,
+    diff: Diff,
+    comma?: boolean,
+    mapping?: boolean,
+    prop?: string,
+    propsLen: number = prop ? prop.length : 0,
+): void {
+  log.enter()
+
+  const sep = mapping ? ` ${_details} ` : ': '
+  const prefix = prop ? $gry(`${prop.padStart(propsLen)}${sep}`) : ''
+  const blank = prop ? $gry(`${sep}`.padStart(propsLen + sep.length)) : ''
+  const suffix = comma ? $gry(',') : ''
+
+  if ('error' in diff) {
+    log.error(prefix + $red(diff.actual))
+    log.error(blank + $ylw(diff.error) + suffix)
+    return log.leave()
+  } else if ('expected' in diff) {
+    log.error(prefix + $red(diff.actual))
+    log.error(blank + $grn(diff.expected) + suffix)
+    return log.leave()
+  }
+
+  let logged = false
+
+  const actual =
+    diff.actual === '<array>' ? '' :
+    diff.actual === '<object>' ? '' :
+    diff.actual + ' '
+
+  if (('props' in diff) && (diff.props)) {
+    logged = true
+
+    if (Object.keys(diff.props).length) {
+      log.error(`${prefix}${actual}${$gry('{')}`)
+      const length = Object.keys(diff.props).reduce((l, k) => (k.length > l ? k.length : l), 0)
+      for (const [ prop, subdiff ] of Object.entries(diff.props)) {
+        dumpDiff(log, subdiff, true, false, prop, length)
+      }
+      log.error(`${$gry('}')}${suffix}`)
+    } else {
+      log.error(`${prefix}${actual}${$gry('{}')}${suffix}`)
+    }
+  }
+
+  if ('values' in diff) {
+    logged = true
+
+    if (diff.values.length) {
+      log.error(`${prefix}${actual}${$gry('[')}`)
+      for (const subdiff of diff.values) {
+        dumpDiff(log, subdiff, true, false)
+      }
+      log.error(`${$gry(']')}${suffix}`)
+    } else {
+      log.error(`${prefix}${actual}${$gry('[]')}${suffix}`)
+    }
+  }
+
+  if ('mappings' in diff) {
+    logged = true
+
+    if (diff.mappings.length) {
+      log.error(`${prefix}${actual}${$gry('(')}`)
+      for (const [ key, subdiff ] of diff.mappings) {
+        dumpDiff(log, subdiff, true, true, key)
+      }
+      log.error(`${$gry(')')}${suffix}`)
+    } else {
+      log.error(`${prefix}${actual}${$gry('()')}${suffix}`)
+    }
+  }
+
+  if (! logged) log.error(`${prefix}${diff.actual}${suffix}`)
+
+  log.leave()
 }
