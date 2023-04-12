@@ -1,7 +1,7 @@
 import { diff } from './diff'
 import { ExpectationError, stringifyValue } from './types'
 
-import type { MappingsDiff, ObjectDiff } from './diff'
+import type { Diff } from './diff'
 import type { Expectation, Expectations } from './expect'
 
 export class ToInclude implements Expectation {
@@ -24,25 +24,24 @@ export class ToInclude implements Expectation {
 }
 
 export function includesProps(context: Expectations, negative: boolean, expected: Record<string, any>): void {
+  // simple include for maps with objects...
+  if (context.value instanceof Map) {
+    return includesMappings(context, negative, new Map(Object.entries(expected)))
+  }
+
+  //
   context.toBeInstanceOf(Object)
   const actual: Record<string, any> = context.value as any
 
-  // Initial diff
-  const result: Required<ObjectDiff> = {
-    diff: false,
-    actual: stringifyValue(actual),
-    props: {},
-  }
-
   // Get expected key set and process...
   const keys = new Set(Object.keys(expected))
+  const props: Record<string, Diff> = {}
 
   if (negative) {
     // only consider keys... if they exist, fail!
     for (const key of keys) {
       if ((actual[key] !== undefined) || (key in actual)) {
-        result.diff = true
-        result.props[key] = {
+        props[key] = {
           diff: true,
           actual: stringifyValue(actual[key]),
           expected: stringifyValue(undefined),
@@ -53,14 +52,19 @@ export function includesProps(context: Expectations, negative: boolean, expected
     for (const key of keys) {
       const difference = diff(actual[key], expected[key])
       if (! difference.diff) continue
-      result.props[key] = difference
-      result.diff = true
+      props[key] = difference
     }
   }
 
-  if (! result.diff) return
-  const message = `to include properties from ${stringifyValue(expected)}`
-  throw new ExpectationError(context, negative, message, result)
+  const count = Object.keys(props).length
+  if (count === 0) return // no props? no errors!
+
+  const type = count === 1 ? 'property' : 'properties'
+  throw new ExpectationError(context, negative, `to include ${count} ${type}`, {
+    diff: true,
+    actual: stringifyValue(actual),
+    props,
+  })
 }
 
 export function includesValues(context: Expectations, negative: boolean, expected: Set<any>): void {
@@ -72,22 +76,15 @@ export function includesMappings(context: Expectations, negative: boolean, expec
   context.toBeInstanceOf(Map)
   const actual: Map<any, any> = context.value as any
 
-  // Initial diff
-  const result: MappingsDiff = {
-    diff: false,
-    actual: stringifyValue(actual),
-    mappings: [],
-  }
-
   // Get expected key set and process...
   const keys = new Set(expected.keys())
+  const mappings: [ string, Diff ][] = []
 
   if (negative) {
     // only consider keys... if they exist, fail!
     for (const key of keys) {
       if (actual.has(key)) {
-        result.diff = true
-        result.mappings.push([
+        mappings.push([
           stringifyValue(key), {
             diff: true,
             actual: stringifyValue(actual.get(key)),
@@ -99,12 +96,17 @@ export function includesMappings(context: Expectations, negative: boolean, expec
     for (const key of keys) {
       const difference = diff(actual.get(key), expected.get(key))
       if (! difference.diff) continue
-      result.mappings.push([ stringifyValue(key), difference ])
-      result.diff = true
+      mappings.push([ stringifyValue(key), difference ])
     }
   }
 
-  if (! result.diff) return
-  const message = `to include mappings from ${stringifyValue(expected)}`
-  throw new ExpectationError(context, negative, message, result)
+  const count = mappings.length
+  if (count === 0) return // no mappings? no errors!
+
+  const type = count === 1 ? 'mapping' : 'mappings'
+  throw new ExpectationError(context, negative, `to include ${count} ${type}`, {
+    diff: true,
+    actual: stringifyValue(actual),
+    mappings,
+  })
 }

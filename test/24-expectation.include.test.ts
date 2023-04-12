@@ -10,7 +10,7 @@ describe('Inclusion Expectations', () => {
           .toInclude({ o: { a: 'foo' }, a: [ 123, true ] }))
 
       expectFail(() => expect({ a: 'foo' }).toInclude({ a: 'foo', b: 123 }),
-          'Expected <object> to include properties from <object>', {
+          'Expected <object> to include 1 property', {
             diff: true,
             actual: '<object>',
             props: {
@@ -23,7 +23,7 @@ describe('Inclusion Expectations', () => {
           })
 
       expectFail(() => expect({ a: 'foo', b: 123 }).toInclude({ a: 'foo', b: 'bar' }),
-          'Expected <object> to include properties from <object>', {
+          'Expected <object> to include 1 property', {
             diff: true,
             actual: '<object>',
             props: {
@@ -36,7 +36,7 @@ describe('Inclusion Expectations', () => {
           })
 
       expectFail(() => expect({ a: 'foo', b: undefined }).toInclude({ a: 'foo', b: 123 }),
-          'Expected <object> to include properties from <object>', {
+          'Expected <object> to include 1 property', {
             diff: true,
             actual: '<object>',
             props: {
@@ -49,7 +49,7 @@ describe('Inclusion Expectations', () => {
           })
 
       expectFail(() => expect({ a: 'foo', b: 123 }).toInclude({ a: 'foo', b: undefined }),
-          'Expected <object> to include properties from <object>', {
+          'Expected <object> to include 1 property', {
             diff: true,
             actual: '<object>',
             props: {
@@ -64,7 +64,7 @@ describe('Inclusion Expectations', () => {
       expectFail(
           () => expect({ o: { a: 'foo' }, a: [ 123, true ], c: { x: 123 } })
               .toInclude({ o: { a: 'bar' }, a: [ 123, false ], c: { x: 123 } }),
-          'Expected <object> to include properties from <object>', {
+          'Expected <object> to include 2 properties', {
             diff: true,
             actual: '<object>',
             props: {
@@ -91,7 +91,7 @@ describe('Inclusion Expectations', () => {
       expectPass(() => expect({ a: 'foo', b: 123 }).not.toInclude({ c: 'foo', d: 123 }))
 
       expectFail(() => expect({ a: 'foo', b: 123 }).not.toInclude({ a: 'foo', b: 123 }),
-          'Expected <object> not to include properties from <object>', {
+          'Expected <object> not to include 2 properties', {
             diff: true,
             actual: '<object>',
             props: {
@@ -109,7 +109,7 @@ describe('Inclusion Expectations', () => {
           })
 
       expectFail(() => expect({ a: 'foo', b: undefined }).not.toInclude({ a: 'foo', b: undefined }),
-          'Expected <object> not to include properties from <object>', {
+          'Expected <object> not to include 2 properties', {
             diff: true,
             actual: '<object>',
             props: {
@@ -127,7 +127,7 @@ describe('Inclusion Expectations', () => {
           })
 
       expectFail(() => expect({ a: 'foo', b: 123 }).not.toInclude({ a: true, b: true }),
-          'Expected <object> not to include properties from <object>', {
+          'Expected <object> not to include 2 properties', {
             diff: true,
             actual: '<object>',
             props: {
@@ -165,7 +165,7 @@ describe('Inclusion Expectations', () => {
       return new Map(Object.entries(object))
     }
 
-    it('should include mappings from an object', () => {
+    it('should include mappings from a map', () => {
       expectPass(() => expect(map({ a: 'foo', b: 123 })).toInclude(map({ a: 'foo', b: 123 })))
       expectPass(() => expect(map({ a: 'foo', b: 123, c: true })).toInclude(map({ a: 'foo', b: 123 })))
       expectPass(() => expect(map({ a: 'foo', b: undefined })).toInclude(map({ a: 'foo', b: undefined })))
@@ -173,7 +173,7 @@ describe('Inclusion Expectations', () => {
           .toInclude(map({ o: { a: 'foo' }, a: [ 123, true ] })))
 
       expectFail(() => expect(map({ a: 'foo' })).toInclude(map({ a: 'foo', b: 123 })),
-          'Expected [Map] to include mappings from [Map]', {
+          'Expected [Map] to include 1 mapping', {
             diff: true,
             actual: '[Map]',
             mappings: [
@@ -186,7 +186,7 @@ describe('Inclusion Expectations', () => {
           })
 
       expectFail(() => expect(map({ a: 'foo', b: 123 })).toInclude(map({ a: 'foo', b: 'bar' })),
-          'Expected [Map] to include mappings from [Map]', {
+          'Expected [Map] to include 1 mapping', {
             diff: true,
             actual: '[Map]',
             mappings: [
@@ -199,7 +199,7 @@ describe('Inclusion Expectations', () => {
           })
 
       expectFail(() => expect(map({ a: 'foo', b: undefined })).toInclude(map({ a: 'foo', b: 123 })),
-          'Expected [Map] to include mappings from [Map]', {
+          'Expected [Map] to include 1 mapping', {
             diff: true,
             actual: '[Map]',
             mappings: [
@@ -212,7 +212,7 @@ describe('Inclusion Expectations', () => {
           })
 
       expectFail(() => expect(map({ a: 'foo', b: 123 })).toInclude(map({ a: 'foo', b: undefined })),
-          'Expected [Map] to include mappings from [Map]', {
+          'Expected [Map] to include 1 mapping', {
             diff: true,
             actual: '[Map]',
             mappings: [
@@ -227,7 +227,7 @@ describe('Inclusion Expectations', () => {
       expectFail(
           () => expect(map({ o: { a: 'foo' }, a: [ 123, true ], c: { x: 123 } }))
               .toInclude(map({ o: { a: 'bar' }, a: [ 123, false ], c: { x: 123 } })),
-          'Expected [Map] to include mappings from [Map]', {
+          'Expected [Map] to include 2 mappings', {
             diff: true,
             actual: '[Map]',
             mappings: [
@@ -250,11 +250,11 @@ describe('Inclusion Expectations', () => {
           })
     })
 
-    it('should not include mappings from an object', () => {
+    it('should not include mappings from a map', () => {
       expectPass(() => expect(map({ a: 'foo', b: 123 })).not.toInclude(map({ c: 'foo', d: 123 })))
 
       expectFail(() => expect(map({ a: 'foo', b: 123 })).not.toInclude(map({ a: 'foo', b: 123 })),
-          'Expected [Map] not to include mappings from [Map]', {
+          'Expected [Map] not to include 2 mappings', {
             diff: true,
             actual: '[Map]',
             mappings: [
@@ -272,7 +272,7 @@ describe('Inclusion Expectations', () => {
           })
 
       expectFail(() => expect(map({ a: 'foo', b: undefined })).not.toInclude(map({ a: 'foo', b: undefined })),
-          'Expected [Map] not to include mappings from [Map]', {
+          'Expected [Map] not to include 2 mappings', {
             diff: true,
             actual: '[Map]',
             mappings: [
@@ -290,7 +290,7 @@ describe('Inclusion Expectations', () => {
           })
 
       expectFail(() => expect(map({ a: 'foo', b: 123 })).not.toInclude(map({ a: true, b: true })),
-          'Expected [Map] not to include mappings from [Map]', {
+          'Expected [Map] not to include 2 mappings', {
             diff: true,
             actual: '[Map]',
             mappings: [
@@ -315,6 +315,41 @@ describe('Inclusion Expectations', () => {
       expectPass(() => expect(new Date()).toInclude({
         constructor: Date, // basically, instanceof!
       }))
+    })
+
+    it('should include mappings from an object', () => {
+      expectPass(() => expect(map({ a: 'foo', b: 123, c: true })).toInclude({ a: 'foo', b: 123 }))
+      expectFail(() => expect(map({ a: 'foo' })).toInclude({ a: 'foo', b: 123 }),
+          'Expected [Map] to include 1 mapping', {
+            diff: true,
+            actual: '[Map]',
+            mappings: [
+              [ '"b"', {
+                diff: true,
+                actual: '<undefined>',
+                expected: '123',
+              } ],
+            ],
+          })
+
+      expectPass(() => expect(map({ a: 'foo', b: 123 })).not.toInclude({ c: 'foo', d: 123 }))
+      expectFail(() => expect(map({ a: 'foo', b: 123 })).not.toInclude({ a: 'foo', b: 123 }),
+          'Expected [Map] not to include 2 mappings', {
+            diff: true,
+            actual: '[Map]',
+            mappings: [
+              [ '"a"', {
+                diff: true,
+                actual: '"foo"',
+                expected: '<undefined>',
+              } ],
+              [ '"b"', {
+                diff: true,
+                actual: '123',
+                expected: '<undefined>',
+              } ],
+            ],
+          })
     })
 
     it('should fail with the wrong type', () => {
