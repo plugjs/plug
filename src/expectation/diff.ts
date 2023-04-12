@@ -47,7 +47,7 @@ export type Diff =
 
 type Binary = Buffer | Uint8Array | ArrayBuffer | SharedArrayBuffer
 type BoxedPrimitive = Boolean | String | Number
-type Remarks = { actualMemos: any[], expectedMemos: any[] }
+type Remarks = { actualMemos: any[], expectedMemos: any[], partial: boolean }
 
 /* ========================================================================== */
 
@@ -67,8 +67,14 @@ function objectDiff<T extends Record<string, any>>(
     remarks: Remarks,
     keys?: Set<string>,
 ): ObjectDiff {
-  // default keys: all keys from both actual and expected objects
-  if (! keys) keys = new Set([ ...Object.keys(actual), ...Object.keys(expected) ])
+  // default keys: all keys from both actual and expected objects or (if
+  // partial matching) only from the expected object
+  if (! keys) {
+    keys = remarks.partial ? new Set(Object.keys(expected)) :
+      new Set([ ...Object.keys(actual), ...Object.keys(expected) ])
+  }
+
+  // no keys? no diff!
   if (! keys.size) return { diff: false, actual: stringifyValue(actual) }
 
   // evaluate differences between objects
@@ -431,6 +437,6 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
  * EXPORTS                                                                    *
  * ========================================================================== */
 
-export function diff(actual: any, expected: any): Diff {
-  return diffValues(actual, expected, { actualMemos: [], expectedMemos: [] })
+export function diff(actual: any, expected: any, partial: boolean = false): Diff {
+  return diffValues(actual, expected, { actualMemos: [], expectedMemos: [], partial })
 }

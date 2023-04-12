@@ -199,6 +199,30 @@ describe('Differences', () => {
       })
     })
 
+    it('should diff two objects partially', () => {
+      const act = { a: true, b: 123, c: 'foo', d: 'an extra prop' }
+      const exp = { a: true, b: 123, c: 'foo' }
+
+      assert.deepEqual(diff(act, exp, true), {
+        diff: false,
+        actual: '<object>',
+        props: {
+          a: {
+            diff: false,
+            actual: 'true',
+          },
+          b: {
+            diff: false,
+            actual: '123',
+          },
+          c: {
+            diff: false,
+            actual: '"foo"',
+          },
+        },
+      })
+    })
+
     it('should diff two equal cyclical objects', () => {
       const act = { a: true, b: 123, c: 'foo', cycle: {} }
       const exp = { a: true, b: 123, c: 'foo', cycle: {} }
@@ -234,6 +258,33 @@ describe('Differences', () => {
       const exp = { a: null, b: 321, c: false }
 
       assert.deepEqual(diff(act, exp), {
+        diff: true,
+        actual: '<object>',
+        props: {
+          a: {
+            diff: true,
+            actual: 'true',
+            expected: '<null>',
+          },
+          b: {
+            diff: true,
+            actual: '123',
+            expected: '321',
+          },
+          c: {
+            diff: true,
+            actual: '"foo"',
+            expected: 'false',
+          },
+        },
+      })
+    })
+
+    it('should diff two objects with different properties partially', () => {
+      const act = { a: true, b: 123, c: 'foo', d: 'an extra prop' }
+      const exp = { a: null, b: 321, c: false }
+
+      assert.deepEqual(diff(act, exp, true), {
         diff: true,
         actual: '<object>',
         props: {
