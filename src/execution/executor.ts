@@ -8,19 +8,10 @@ import type { Executor } from './executable'
 /* ========================================================================== */
 
 export interface ExecutionFailure {
+  number: number,
   error: Error,
-}
-
-export interface SuiteExecutionFailure extends ExecutionFailure {
-  suite: Suite,
-}
-
-export interface SpecExecutionFailure extends ExecutionFailure {
-  spec: Spec,
-}
-
-export interface HookExecutionFailure extends ExecutionFailure {
-  hook: Hook,
+  source: Suite | Spec | Hook,
+  type: 'suite' | 'spec' | 'hook',
 }
 
 export interface ExecutionEvents {
@@ -28,16 +19,16 @@ export interface ExecutionEvents {
   'suite:done': (suite: Suite, time: number) => void
 
   'spec:start': (spec: Spec) => void
-  'spec:error': (spec: Spec, failure: SpecExecutionFailure) => void
+  'spec:error': (spec: Spec, failure: ExecutionFailure) => void
   'spec:skip': (spec: Spec, time: number) => void
   'spec:pass': (spec: Spec, time: number) => void
-  'spec:fail': (spec: Spec, time: number, failure: SpecExecutionFailure) => void
+  'spec:fail': (spec: Spec, time: number, failure: ExecutionFailure) => void
 
   'hook:start': (hook: Hook) => void
-  'hook:error': (hook: Hook, failure: HookExecutionFailure) => void
+  'hook:error': (hook: Hook, failure: ExecutionFailure) => void
   'hook:skip': (hook: Hook, time: number) => void
   'hook:pass': (hook: Hook, time: number) => void
-  'hook:fail': (hook: Hook, time: number, failure: HookExecutionFailure) => void
+  'hook:fail': (hook: Hook, time: number, failure: ExecutionFailure) => void
 }
 
 export interface Execution {
@@ -48,7 +39,6 @@ export interface Execution {
 }
 
 export interface ExecutionResult {
-  specs: number
   passed: number
   failed: number
   skipped: number
@@ -70,7 +60,6 @@ export function runSuite(suite: Suite): Execution {
 
   const result: ExecutionResult = {
     time: 0,
-    specs: 0,
     passed: 0,
     failed: 0,
     skipped: 0,
@@ -94,7 +83,7 @@ export function runSuite(suite: Suite): Execution {
   }
 
   const start = (executable: Suite | Spec | Hook): ReturnType<Executor['start']> => {
-    const type =
+    const type: 'suite' | 'spec' | 'hook' =
       executable instanceof Suite ? 'suite' :
       executable instanceof Spec ? 'spec' :
       executable instanceof Hook ? 'hook' :
@@ -103,7 +92,6 @@ export function runSuite(suite: Suite): Execution {
 
     const now = Date.now()
     _emitter.emit(`${type}:start`, executable)
-    if (type === 'spec') result.specs ++
 
     let done = false
     let failure: ExecutionFailure | undefined
@@ -130,7 +118,8 @@ export function runSuite(suite: Suite): Execution {
         }
       },
       notify(error: Error): void {
-        const fail = { error, [type]: executable }
+        const number = result.failures.length + 1
+        const fail = { error, number, source: executable, type }
         result.failures.push(fail)
 
         // notify error after done, or include in failure?
