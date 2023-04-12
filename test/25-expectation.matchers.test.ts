@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 
 import { expect } from '../src/expectation/expect'
-import { expectFail, expectPass } from './utils'
 import { isMatcher } from '../src/expectation/types'
+import { expectFail, expectPass } from './utils'
 
 describe('Expectations Matcher', () => {
   it('should expect with matchers', () => {
@@ -122,7 +122,13 @@ describe('Expectations Matcher', () => {
     expectFail(() => expect.not.toBeLessThan(100).expect(99), 'Expected 99 not to be less than 100')
     expectFail(() => expect.not.toBeLessThanOrEqual(100).expect(100), 'Expected 100 not to be less than or equal to 100')
     expectFail(() => expect.not.toBeWithinRange(100, 200).expect(150), 'Expected 150 not to be within 100...200')
-    expectFail(() => expect.not.toEqual({ a: 'foo' }).expect({ a: 'foo' }), 'Expected <object> not to loosely equal <object>')
+    expectFail(() => expect.not.toEqual({ a: 'foo' }).expect({ a: 'foo' }), 'Expected <object> not to loosely equal <object>', {
+      diff: false,
+      actual: '<object>',
+      props: {
+        a: { diff: false, actual: '"foo"' },
+      },
+    })
     expectFail(() => expect.not.toHaveLength(3).expect('foo'), 'Expected property ["length"] of "foo" (3) not to strictly equal 3')
     expectFail(() => expect.not.toHaveProperty('a').expect({ a: 'foo' }), 'Expected <object> not to have property "a"')
     expectFail(() => expect.not.toHaveSize(1).expect(new Set([ 'foo' ])), 'Expected property ["size"] of [Set] (1) not to strictly equal 1')
