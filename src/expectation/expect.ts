@@ -279,8 +279,13 @@ class ExpectationsImpl<T = unknown> implements Expectations<T> {
       const expectation = value as Expectation
 
       const fn = function(this: ExpectationsImpl, ...args: any[]): any {
-        expectation.expect(this._positiveExpectations, this._negative, ...args)
-        return this._positiveExpectations
+        try {
+          expectation.expect(this._positiveExpectations, this._negative, ...args)
+          return this._positiveExpectations
+        } catch (error) {
+          if (error instanceof ExpectationError) Error.captureStackTrace(error, fn)
+          throw error
+        }
       }
 
       Object.defineProperty(fn, 'name', { value: key })
