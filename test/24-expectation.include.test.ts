@@ -1,6 +1,16 @@
+import assert from 'node:assert'
+
 import { expectFail, expectPass } from './utils'
 
 describe('Inclusion Expectations', () => {
+  it('should fail when the expectation is not recognized', () => {
+    assert.throws(() => expect('foo').toInclude('bar' as any), (thrown) => {
+      assert(thrown instanceof TypeError, 'Error type')
+      assert.strictEqual(thrown.message, 'Invalid type for "toInclude(...)": "bar"')
+      return true
+    })
+  })
+
   describe('properties', () => {
     it('should include properties from an object', () => {
       expectPass(() => expect({ a: 'foo', b: 123 }).toInclude({ a: 'foo', b: 123 }))
@@ -355,6 +365,81 @@ describe('Inclusion Expectations', () => {
     it('should fail with the wrong type', () => {
       expectFail(() => expect('foo').toInclude(map({})), 'Expected "foo" to be an instance of [Map]')
       expectFail(() => expect(12345).toInclude(map({})), 'Expected 12345 to be an instance of [Map]')
+    })
+  })
+
+  describe('values', () => {
+    it('should include values from an array', () => {
+      expectPass(() => expect([ 1, 2, 3, 4 ]).toInclude([ 1, 2 ]))
+
+      expectFail(() => expect([ 1, 2, 3, 4 ]).toInclude([ 5, 6 ]),
+          'Expected <array> to include 2 values', {
+            diff: true,
+            actual: '[Set]',
+            values: [ {
+              diff: true,
+              actual: '<undefined>',
+              expected: '5',
+            }, {
+              diff: true,
+              actual: '<undefined>',
+              expected: '6',
+            } ],
+          })
+    })
+
+    it('should include values from a set', () => {
+      expectPass(() => expect(new Set([ 1, 2, 3, 4 ])).toInclude(new Set([ 1, 2 ])))
+
+      expectFail(() => expect(new Set([ 1, 2, 3, 4 ])).toInclude(new Set([ 5 ])),
+          'Expected [Set] to include 1 value', {
+            diff: true,
+            actual: '[Set]',
+            values: [ {
+              diff: true,
+              actual: '<undefined>',
+              expected: '5',
+            } ],
+          })
+    })
+
+    it('should not include values from an array', () => {
+      expectPass(() => expect([ 1, 2, 3, 4 ]).not.toInclude([ 5, 6 ]))
+
+      expectFail(() => expect([ 1, 2, 3, 4 ]).not.toInclude([ 1, 2 ]),
+          'Expected <array> not to include 2 values', {
+            diff: true,
+            actual: '[Set]',
+            values: [ {
+              diff: true,
+              actual: '<undefined>',
+              expected: '1',
+            }, {
+              diff: true,
+              actual: '<undefined>',
+              expected: '2',
+            } ],
+          })
+    })
+
+    it('should not include values from a set', () => {
+      expectPass(() => expect(new Set([ 1, 2, 3, 4 ])).not.toInclude(new Set([ 5, 6 ])))
+
+      expectFail(() => expect(new Set([ 1, 2, 3, 4 ])).not.toInclude(new Set([ 1 ])),
+          'Expected [Set] not to include 1 value', {
+            diff: true,
+            actual: '[Set]',
+            values: [ {
+              diff: true,
+              actual: '<undefined>',
+              expected: '1',
+            } ],
+          })
+    })
+
+    it('should fail with the wrong type', () => {
+      expectFail(() => expect('foo').toInclude([]), 'Expected "foo" to be an instance of <object>')
+      expectFail(() => expect({}).toInclude(new Set()), 'Expected <object> to be an iterable object')
     })
   })
 })
