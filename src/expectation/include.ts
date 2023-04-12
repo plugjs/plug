@@ -29,11 +29,11 @@ export function includesProps(context: Expectations, negative: boolean, expected
     return includesMappings(context, negative, new Map(Object.entries(expected)))
   }
 
-  //
+  // we really need an object as actual
   context.toBeInstanceOf(Object)
   const actual: Record<string, any> = context.value as any
 
-  // Get expected key set and process...
+  // get expected key set and process...
   const keys = new Set(Object.keys(expected))
   const props: Record<string, Diff> = {}
 
@@ -68,8 +68,59 @@ export function includesProps(context: Expectations, negative: boolean, expected
 }
 
 export function includesValues(context: Expectations, negative: boolean, expected: Set<any>): void {
-  void context, negative, expected
-  throw new Error()
+  // we really need an _iterable_ object as actual
+  context.toBeInstanceOf(Object)
+  if (typeof (context.value as any)[Symbol.iterator] !== 'function') {
+    throw new ExpectationError(context, false, 'to be an iterable object')
+  }
+  const actual = new Set(context.value as Iterable<any>)
+
+  // iterate through all the values and see what we can find
+  const values: Diff[] = []
+  if (negative) {
+    for (const exp of expected) {
+      for (const act of actual) {
+        const result = diff(act, exp)
+        if (result.diff) continue
+
+        values.push({
+          diff: true,
+          actual: stringifyValue(undefined),
+          expected: stringifyValue(exp),
+        })
+        break
+      }
+    }
+  } else {
+    for (const exp of expected) {
+      let found = false
+
+      for (const act of actual) {
+        const result = diff(act, exp)
+        if (result.diff) continue
+        found = true
+        break
+      }
+
+      if (! found) {
+        values.push({
+          diff: true,
+          actual: stringifyValue(undefined),
+          expected: stringifyValue(exp),
+        })
+      }
+    }
+  }
+
+  const count = values.length
+  if (count === 0) return // no values? no errors!
+
+  const type = count === 1 ? 'value' : 'values'
+  throw new ExpectationError(context, negative, `to include ${count} ${type}`, {
+    diff: true,
+    actual: stringifyValue(actual),
+    values,
+  })
 }
 
 export function includesMappings(context: Expectations, negative: boolean, expected: Map<any, any>): void {
