@@ -3,19 +3,20 @@
 
 import { AssertionError } from 'node:assert'
 
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN, type Logger } from '@plugjs/plug/logging'
 import { BuildFailure } from '@plugjs/plug'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 
+import { skip, Suite } from './execution/executable'
 import { runSuite } from './execution/executor'
-import { Suite, skip } from './execution/executable'
-import { expect } from './expectation/expect'
 import * as setup from './execution/setup'
+import { expect } from './expectation/expect'
 import { ExpectationError } from './expectation/types'
 
 import type { Files } from '@plugjs/plug/files'
+import type { Logger } from '@plugjs/plug/logging'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
-import type { TestOptions } from './index'
 import type { Diff } from './expectation/diff'
+import type { TestOptions } from './index'
 
 const _pending = '\u22EF' // middle ellipsis
 const _success = '\u2714' // heavy check mark
@@ -130,7 +131,7 @@ export class Test implements Plug<void> {
     if (passed) summary.push(`${passed} ${$gry('passed')}`)
 
     const epilogue = summary.length ? ` ${$gry('(')}${summary.join($gry(', '))}${$gry(')')}` : ''
-    const message = `Ran ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}${epilogue}`
+    const message = `Ran ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}${epilogue} ${$ms(time)}`
 
     if (failed) {
       context.log.error('')
@@ -155,7 +156,7 @@ function dumpError(log: Logger, error: any): void {
     const [ message = 'Unknown Error', ...lines ] = error.message.split('\n')
     log.enter(ERROR, `${$gry('Assertion Error:')} ${$red(message)}`)
     dumpStack(log, error)
-    while (! lines[0]) lines.shift()
+    while (lines.length && (! lines[0])) lines.shift()
     for (const line of lines) log.error(' ', line)
     log.leave()
     return
@@ -166,7 +167,6 @@ function dumpError(log: Logger, error: any): void {
     dumpStack(log, error)
     if (error.diff) {
       log.error(`  ${$wht('Differences')} ${$gry('(')}${$red('actual')}${$gry('/')}${$grn('expected')}${$gry('/')}${$ylw('errors')}${$gry(')')}:`)
-      // log.error(JSON.stringify(error.diff, null, 2))
       dumpDiff(log, error.diff)
     }
     log.leave()
