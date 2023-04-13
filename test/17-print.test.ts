@@ -166,6 +166,13 @@ describe.only('Diff Printer', () => {
       ))
     })
 
+    it('should print the difference between two different objects (2)', () => {
+      print(diff(
+          { foo: 123, bar: true, baz: { hello: 'planet' } },
+          { foo: 321, bar: false, xyz: { hello: 'world' } },
+      ))
+    })
+
     it('should print the difference between two different arrays', () => {
       print(diff(
           [ 1, true, { hello: 'planet' } ],
@@ -222,19 +229,19 @@ describe.only('Diff Printer', () => {
 
   describe('error diff', () => {
     it('should print a simple error difference', () => {
-      print(diff([], [ true ]))
+      print(diff([ true ], []))
     })
 
     it('should print an error difference within properties', () => {
-      print(diff({ foo: new Set() }, { foo: new Map() }))
+      print(diff({ foo: new Set([ 'foo', 'bar' ]) }, { foo: new Map() }))
     })
 
     it('should print an error difference within values', () => {
-      print(diff([ new Set() ], [ new Map() ]))
+      print(diff([ new Set([ 'foo', 'bar' ]) ], [ new Map() ]))
     })
 
     it('should print an error difference within mappings', () => {
-      print(diff(map({ foo: new Set() }), map({ foo: new Map() })))
+      print(diff(map({ foo: new Set([ 'foo', 'bar' ]) }), map({ foo: new Map() })))
     })
   })
 })
