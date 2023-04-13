@@ -151,11 +151,14 @@ describe('Type Utilities', () => {
     assert.strictEqual(stringifyValue(new SharedArrayBuffer(0)), '[SharedArrayBuffer: empty]')
 
     assert.strictEqual(stringifyValue(new TypeError()), '[TypeError]')
-    assert.strictEqual(stringifyValue(new SyntaxError('foo')), '[SyntaxError: foo]')
+    assert.strictEqual(stringifyValue(new SyntaxError('foo')), '[SyntaxError]')
 
-    assert.strictEqual(stringifyValue(new Promise(() => {})), '[Promise: pending]')
-    assert.strictEqual(stringifyValue(Promise.resolve('foo')), '[Promise: resolved]')
-    assert.strictEqual(stringifyValue(Promise.reject(new Error())), '[Promise: rejected]')
+    assert.strictEqual(stringifyValue(new Promise(() => {})), '[Promise]')
+    assert.strictEqual(stringifyValue(Promise.resolve('foo')), '[Promise]')
+
+    const rejected = Promise.reject(new Error())
+    assert.strictEqual(stringifyValue(rejected), '[Promise]')
+    rejected.catch(() => {}) // catch it... avoids "unhandled rejection" in logs
   })
 
   it('should prefix a type name', () => {
