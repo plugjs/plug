@@ -1,0 +1,6 @@
+{
+  "compilerOptions": {
+    // empty for defaults
+  },
+  "include": [ "" ],
+}
