@@ -1058,8 +1058,8 @@ describe('Differences', () => {
         diff: false,
         type: '[Map (2)]',
         mappings: [
-          [ '[Object]', { diff: false, value: 123 } ],
-          [ '"bar"', { diff: false, value: true } ],
+          [ key, { diff: false, value: 123 } ],
+          [ 'bar', { diff: false, value: true } ],
         ],
       })
     })
@@ -1073,10 +1073,10 @@ describe('Differences', () => {
         diff: true,
         type: '[Map (3)]',
         mappings: [
-          [ '[Object]', { diff: true, actual: 123, expected: 321 } ],
-          [ '"foo"', { diff: true, extra: 'baz' } ],
-          [ '"bar"', { diff: true, actual: true, expected: false } ],
-          [ '"baz"', { diff: true, missing: 'foo' } ],
+          [ key, { diff: true, actual: 123, expected: 321 } ],
+          [ 'foo', { diff: true, extra: 'baz' } ],
+          [ 'bar', { diff: true, actual: true, expected: false } ],
+          [ 'baz', { diff: true, missing: 'foo' } ],
         ],
       })
     })
@@ -1089,7 +1089,7 @@ describe('Differences', () => {
         diff: true,
         type: '[Map (1)]',
         mappings: [
-          [ '"foo"', { diff: true, extra: 'bar' } ],
+          [ 'foo', { diff: true, extra: 'bar' } ],
         ],
       })
 
@@ -1097,7 +1097,7 @@ describe('Differences', () => {
         diff: true,
         type: '[Map (0)]',
         mappings: [
-          [ '"foo"', { diff: true, missing: 'bar' } ],
+          [ 'foo', { diff: true, missing: 'bar' } ],
         ],
       })
     })
@@ -1109,14 +1109,14 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: true,
+        type: '[Map (2)]',
         props: {
           hello: { diff: true, actual: 'world', expected: 'planet' },
         },
         mappings: [
-          [ '[Object]', { diff: false, value: 123 } ],
-          [ '"bar"', { diff: false, value: true } ],
+          [ key, { diff: false, value: 123 } ],
+          [ 'bar', { diff: false, value: true } ],
         ],
-        type: '[Map (2)]',
       })
     })
   })

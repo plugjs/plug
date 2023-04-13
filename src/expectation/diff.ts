@@ -25,7 +25,7 @@ export interface ObjectDiff {
   type: string,
   props?: Record<string, Diff>,
   values?: Diff[],
-  mappings?: [ string, Diff ][]
+  mappings?: [ any, Diff ][]
 }
 
 export interface ExtraValueDiff {
@@ -186,21 +186,20 @@ function mapDiff<K, V>(
 ): ObjectDiff | ErrorDiff {
   // check mappings
   let diff = false
-  const mappings: [ string, Diff ][] = []
+  const mappings: [ any, Diff ][] = []
   for (const key of new Set([ ...actual.keys(), ...expected.keys() ])) {
-    const keyString = stringifyValue(key)
     const act = actual.get(key)
     const exp = expected.get(key)
 
     if (! actual.has(key)) {
-      mappings.push([ keyString, { diff: true, missing: exp } ])
+      mappings.push([ key, { diff: true, missing: exp } ])
       diff = true
     } else if (! expected.has(key)) {
-      mappings.push([ keyString, { diff: true, extra: act } ])
+      mappings.push([ key, { diff: true, extra: act } ])
       diff = true
     } else {
       const result = diffValues(act, exp, remarks)
-      mappings.push([ keyString, result ])
+      mappings.push([ key, result ])
       diff = diff || result.diff
     }
   }
