@@ -4,7 +4,7 @@
 import { AssertionError } from 'node:assert'
 
 import { BuildFailure } from '@plugjs/plug'
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
+import { $blu, $grn, $gry, $ms, $red, $und, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 
 import { skip, Suite } from './execution/executable'
 import { runSuite } from './execution/executor'
@@ -61,7 +61,7 @@ export class Test implements Plug<void> {
 
     execution.on('suite:start', (current) => {
       if (current.parent === suite) {
-        context.log.notice('')
+        if (suite.flag !== 'only') context.log.notice('')
         context.log.enter(NOTICE, `${$wht(current.name)}`)
       } else if (current.parent) {
         context.log.enter(NOTICE, `${$blu(_details)} ${$wht(current.name)}`)
@@ -71,6 +71,7 @@ export class Test implements Plug<void> {
         const smsg = snum === 1 ? 'spec' : 'specs'
         const fmsg = fnum === 1 ? 'file' : 'files'
         context.log.enter(NOTICE, `Running ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}`)
+        if (suite.flag === 'only') context.log.notice('')
       }
     })
 
@@ -83,6 +84,7 @@ export class Test implements Plug<void> {
     })
 
     execution.on('spec:skip', (spec, ms) => {
+      if (suite.flag === 'only') return context.log.leave()
       context.log.leave(WARN, `${$ylw(_pending)} ${spec.name} ${$ms(ms)} ${$gry('[')}${$ylw('skipped')}${$gry(']')}`)
     })
 
@@ -137,6 +139,10 @@ export class Test implements Plug<void> {
       context.log.error('')
       context.log.error(message)
       throw new BuildFailure(`${failed} specs failed`)
+    } else if (suite.flag === 'only') {
+      context.log.error('')
+      context.log.error(message)
+      throw new BuildFailure('Suite running in focus ("only") mode')
     } else if (skipped) {
       context.log.warn('')
       context.log.warn(message)
