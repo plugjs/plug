@@ -69,7 +69,7 @@ export default build({
     const file = join(dir, 'output.js')
     try {
       await find('**/*.ts', { directory: '@/data' })
-          .plug(new Tsc({
+          .plug(new Tsc('@/tsconfig-empty.json', {
             module: ts.ModuleKind.AMD,
             outDir: dir,
             outFile: file,
