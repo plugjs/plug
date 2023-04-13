@@ -160,7 +160,7 @@ export function stringifyPrimitive(
     case 'symbol':
       return value.description ? `<symbol ${value.description}>`: '<symbol>'
     default:
-      return '<unknown>'
+      return '<object>'
   }
 }
 
