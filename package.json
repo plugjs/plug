@@ -13,10 +13,10 @@
     "src/"
   ],
   "devDependencies": {
-    "@plugjs/build": "^0.3.0"
+    "@plugjs/build": "^0.3.3"
   },
   "dependencies": {
-    "@plugjs/plug": "^0.3.1"
+    "@plugjs/plug": "^0.3.4"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -42,5 +42,6 @@
         "default": "./dist/globals.mjs"
       }
     }
-  }
+  },
+  "version": null
 }
