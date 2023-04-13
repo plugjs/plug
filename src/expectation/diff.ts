@@ -273,8 +273,8 @@ function primitiveDiff<T extends BoxedPrimitive>(
   // remove string indexes from properties
   const keys = new Set([ ...Object.keys(actual), ...Object.keys(expected) ])
   if (actual instanceof String) {
-    const value = actual.valueOf()
-    for (let i = 0; i < value.length; i ++) {
+    const length = actual.valueOf().length
+    for (let i = 0; i < length; i ++) {
       keys.delete(String(i))
     }
   }
