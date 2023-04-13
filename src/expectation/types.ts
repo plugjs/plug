@@ -105,13 +105,6 @@ export function assertType<T extends keyof TypeMappings>(
  * PRETTY PRINTING FOR MESSAGES AND DIFFS                                     *
  * ========================================================================== */
 
-/** Stringify a constructor */
-export function stringifyConstructor(ctor: Constructor): string {
-  if (! ctor) return '[Object: no constructor]'
-  if (! ctor.name) return '[Object: anonymous]'
-  return `[${ctor.name}]`
-}
-
 /** Default inspector for {@link stringifyValue} */
 function defaultInspector(value: any): string {
   const proto = Object.getPrototypeOf(value)
@@ -134,16 +127,22 @@ function formatBinaryData(value: Record<any, any>, buffer: Buffer): string {
       `[${constructorName(value)}: empty]`
 }
 
-/** Pretty print the value (strings, numbers, booleans) or return the type */
-export function stringifyValue(
-    value: unknown,
-    inspector: (value: any) => string = defaultInspector,
+/* ========================================================================== */
+
+/** Stringify a constructor */
+export function stringifyConstructor(ctor: Constructor): string {
+  if (! ctor) return '[Object: no constructor]'
+  if (! ctor.name) return '[Object: anonymous]'
+  return `[${ctor.name}]`
+}
+
+/** Stringify a primitive */
+export function stringifyPrimitive(
+    value: null | undefined | string | number | boolean | bigint | symbol | Function,
 ): string {
-  // null, undefined, ...
   if (value === null) return '<null>'
   if (value === undefined) return '<undefined>'
 
-  // basic types
   switch (typeof value) {
     case 'string':
       if (value.length > 40) value = `${value.substring(0, 40)}\u2026, length=${value.length}`
@@ -160,7 +159,19 @@ export function stringifyValue(
       return value.name ? `<function ${value.name}>` : '<function>'
     case 'symbol':
       return value.description ? `<symbol ${value.description}>`: '<symbol>'
+    default:
+      return '<unknown>'
   }
+}
+
+/** Pretty print the value (strings, numbers, booleans) or return the type */
+export function stringifyValue(
+    value: unknown,
+    inspector: (value: any) => string = defaultInspector,
+): string {
+  // null, undefined, ...
+  if (value === null) return stringifyPrimitive(value)
+  if (typeof value !== 'object') return stringifyPrimitive(value as any)
 
   // specific object types
   if (isMatcher(value)) return '<matcher>'
