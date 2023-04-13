@@ -4,7 +4,7 @@ import { Writable } from 'node:stream'
 import { githubAnnotation } from '../../src/logging/github'
 import { logOptions } from '../../src/logging/options.js'
 
-fdescribe('GitHub Annotations', () => {
+describe('GitHub Annotations', () => {
   it('should produce some annotations', () => {
     const _colors = logOptions.colors
     const _output = logOptions.output
