@@ -181,15 +181,6 @@ export function stringifyValue(
   if (value instanceof ArrayBuffer) return formatBinaryData(value, ArrayBuffer, Buffer.from(value))
   if (value instanceof SharedArrayBuffer) return formatBinaryData(value, SharedArrayBuffer, Buffer.from(value))
 
-  if (value instanceof Promise) {
-    const inspected = (inspect(value).split('\n')[1] || '').trim()
-    const state: 'resolved' | 'rejected' | 'pending' =
-        inspected.startsWith('<rejected> ') ? 'rejected' :
-        inspected === '<pending>,' ? 'pending' :
-        'resolved'
-    return `[${constructorName(value, Promise)}: ${state}]`
-  }
-
   // inspect anything else...
   return inspector(value)
 }
