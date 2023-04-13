@@ -27,54 +27,30 @@ function print(log: Logger, diff: Diff, prefix: string, mapping: boolean, comma:
 }
 
 function printNoDiff(log: Logger, diff: NoDiff, prop: string, mapping: boolean, comma: boolean): void {
-  dump(log, diff.value, prop, mapping, comma, $wht)
+  const { prefix, suffix } = fixups(prop, mapping, comma)
+  dump(log, diff.value, prefix, suffix, $wht)
 }
 
 function printValueDiff(log: Logger, diff: ValueDiff, prop: string, mapping: boolean, comma: boolean): void {
-  const [ aFirst, aRest ] = toString(diff.actual)
-  const [ eFirst, eRest ] = toString(diff.expected)
-
   const { prefix, filler, suffix } = fixups(prop, mapping, comma)
-
-  if (aRest || eRest) {
-    log.warn(`${prefix}${$red(aFirst)}${aRest ? '' : suffix}`)
-    if (aRest) log.warn(`${$red(aRest)}${suffix}`)
-
-    log.warn(`${filler}${$grn(eFirst)}${eRest ? '' : suffix}`)
-    if (eRest) log.warn(`${$grn(eRest)}${suffix}`)
-  } else {
-    log.warn(`${prefix}${$red(aFirst)} ${$gry('/')} ${$grn(eFirst)}${suffix}`)
-  }
+  dump(log, diff.actual, prefix, suffix, $red)
+  dump(log, diff.expected, filler, suffix, $grn)
 }
 
 function printErrorDiff(log: Logger, diff: ErrorDiff, prop: string, mapping: boolean, comma: boolean): void {
-  const [ first, rest ] = toString(diff.value)
-
-  const { prefix, suffix } = fixups(prop, mapping, comma)
-  const error = ` ${$gry('/')} ${$ylw(diff.error)} ${$gry('(')}${$gry($und('error'))}${$gry(')')}${suffix}`
-
-  log.warn(`${prefix}${$red(first)}${rest ? '' : error}`)
-  if (rest) log.warn(`${$red(rest)}${error}`)
+  const { prefix, suffix } = fixups(prop, mapping, comma, $ylw, 'error')
+  const error = `${suffix} ${$ylw(diff.error)}`
+  dump(log, diff.value, prefix, error, $red)
 }
 
 function printMissingDiff(log: Logger, diff: MissingValueDiff, prop: string, mapping: boolean, comma: boolean): void {
-  const [ first, rest ] = toString(diff.missing)
-
-  const { prefix, suffix } = fixups(prop, mapping, comma)
-  const missing = ` ${$gry('(')}${$gry($und('missing'))}${$gry(')')}${suffix}`
-
-  log.warn(`${prefix}${$grn(first)}${rest ? '' : missing}`)
-  if (rest) log.warn(`${$red(rest)}${missing}`)
+  const { prefix, suffix } = fixups(prop, mapping, comma, $red, 'missing')
+  dump(log, diff.missing, prefix, suffix, $red)
 }
 
 function printExtraDiff(log: Logger, diff: ExtraValueDiff, prop: string, mapping: boolean, comma: boolean): void {
-  const [ first, rest ] = toString(diff.extra)
-
-  const { prefix, suffix } = fixups(prop, mapping, comma)
-  const extra = ` ${$gry('(')}${$gry($und('extra'))}${$gry(')')}${suffix}`
-
-  log.warn(`${prefix}${$red(first)}${rest ? '' : extra}`)
-  if (rest) log.warn(`${$red(rest)}${extra}`)
+  const { prefix, suffix } = fixups(prop, mapping, comma, $red, 'extra')
+  dump(log, diff.extra, prefix, suffix, $red)
 }
 
 function printObjectDiff(log: Logger, diff: ObjectDiff, prop: string, mapping: boolean, comma: boolean): void {
@@ -140,10 +116,24 @@ function fixups(
     prop: string,
     mapping: boolean,
     comma: boolean,
+    color?: (string: string) => string,
+    label: string = '',
 ): { prefix: string, filler: string, suffix: string } {
+  const lbl = label ? `${$gry('(')}${$gry($und(label))}${$gry(')')} ` : ''
   const sep = mapping ? ' => ': ': '
-  const prefix = prop ? `${prop}${$gry(sep)}` : ''
-  const filler = prop ? ''.padStart(prop.length + sep.length) : ''
+  const prefix = prop ?
+      color ?
+          `${$gry(lbl)}${color(prop)}${$gry(sep)}` :
+          `${$gry(lbl)}${prop}${$gry(sep)}` :
+      label ?
+          `${$gry(lbl)}` :
+          ''
+  const filler = prop ?
+      label ?
+        ''.padStart(prop.length + sep.length + label.length + 3) :
+        ''.padStart(prop.length + sep.length) :
+        ''
+
   const suffix = comma ? $gry(',') : ''
   return { prefix, filler, suffix }
 }
@@ -151,14 +141,11 @@ function fixups(
 function dump(
     log: Logger,
     value: any,
-    prop: string,
-    mapping: boolean,
-    comma: boolean,
+    prefix: string,
+    suffix: string,
     color: (string: string) => string,
     stack: any[] = [],
 ): void {
-  const { prefix, suffix } = fixups(prop, mapping, comma)
-
   // primitives just get dumped
   if ((value === null) || (typeof value !== 'object')) {
     const string = stringifyPrimitive(value)
@@ -189,7 +176,8 @@ function dump(
       try {
         log.enter()
         for (let i = 0; i < value.length; i ++) {
-          dump(log, value[i], '', false, true, color, [ ...stack, value ])
+          const { prefix, suffix } = fixups('', false, true, color)
+          dump(log, value[i], prefix, suffix, color, [ ...stack, value ])
           keys.delete(String(i))
         }
       } finally {
@@ -207,7 +195,8 @@ function dump(
       log.warn(`${line}${$gry('[')}`)
       try {
         log.enter()
-        value.forEach((v) => dump(log, v, '', false, true, color, [ ...stack, value ]))
+        const { prefix, suffix } = fixups('', false, true, color)
+        value.forEach((v) => dump(log, v, prefix, suffix, color, [ ...stack, value ]))
       } finally {
         log.leave()
       }
@@ -224,7 +213,8 @@ function dump(
       try {
         log.enter()
         for (const [ key, subvalue ] of value) {
-          dump(log, subvalue, stringifyValue(key), true, true, color, [ ...stack, value ])
+          const { prefix, suffix } = fixups(stringifyValue(key), true, true, color)
+          dump(log, subvalue, prefix, suffix, color, [ ...stack, value ])
         }
       } finally {
         log.leave()
@@ -247,7 +237,8 @@ function dump(
     try {
       log.enter()
       for (const key of keys) {
-        dump(log, value[key], key, false, true, color, [ ...stack, value ])
+        const { prefix, suffix } = fixups(stringifyValue(key), false, true, color)
+        dump(log, value[key], prefix, suffix, color, [ ...stack, value ])
       }
     } finally {
       log.leave()
@@ -261,15 +252,4 @@ function dump(
   } else {
     log.warn(`${line}${$gry('{}')}${suffix}`)
   }
-}
-
-function toString(value: any): [ string, string? ] {
-  const inspected = stringifyValue(value, (value) => {
-    if (value instanceof Promise) return '[Promise]'
-    return inspect(value)
-  })
-
-  const [ first = '', ...lines ] = inspected.split('\n')
-  const rest = lines.join('\n')
-  return [ first, rest ? rest : undefined ]
 }
