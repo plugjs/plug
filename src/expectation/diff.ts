@@ -22,7 +22,7 @@ export interface ErrorDiff {
 
 export interface ObjectDiff {
   diff: boolean,
-  type: string,
+  type: string, // TODO: value as any (not stringifyValue!)
   props?: Record<string, Diff>,
   values?: Diff[],
   mappings?: [ any, Diff ][]
