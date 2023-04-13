@@ -105,7 +105,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@types/node": "<19",
-    "esbuild": "^0.17.15",
+    "esbuild": "^0.17.16",
     "picomatch": "^2.3.1"
   },
   "devDependencies": {
