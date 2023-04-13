@@ -76,7 +76,7 @@ describe('Void Expectations', () => {
       [ 'xy', 'Expected "xy" to be false' ],
     ],
     toBeFalsy: [
-      [ {}, 'Expected <object> to be falsy' ],
+      [ {}, 'Expected [Object] to be falsy' ],
       [ Symbol(), 'Expected <symbol> to be falsy' ],
     ],
     toBeNaN: [

@@ -153,7 +153,7 @@ describe('Asynchronous Expectations', () => {
 
     await assert.rejects(expect({ then: 'foo' }).toBeResolved(), (reason) => {
       assert(reason instanceof ExpectationError)
-      assert.strictEqual(reason.message, 'Expected property ["then"] of <object> ("foo") to be a <function>')
+      assert.strictEqual(reason.message, 'Expected property ["then"] of [Object] ("foo") to be a <function>')
       return true
     })
 
@@ -165,7 +165,7 @@ describe('Asynchronous Expectations', () => {
 
     await assert.rejects(expect({ then: 'foo' }).toBeRejected(), (reason) => {
       assert(reason instanceof ExpectationError)
-      assert.strictEqual(reason.message, 'Expected property ["then"] of <object> ("foo") to be a <function>')
+      assert.strictEqual(reason.message, 'Expected property ["then"] of [Object] ("foo") to be a <function>')
       return true
     })
   })
