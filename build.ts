@@ -398,7 +398,9 @@ export default build({
     } catch (err) {
       error = err
     } finally {
-      await this.coverage().catch((err) => {
+      await this.coverage().then(() => {
+        if (error) throw error
+      }, (err) => {
         throw error || err
       })
     }
