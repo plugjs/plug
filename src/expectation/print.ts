@@ -1,5 +1,3 @@
-import { inspect } from 'node:util'
-
 import { $grn, $gry, $red, $und, $wht, $ylw, type Logger } from '@plugjs/plug/logging'
 
 import { stringifyPrimitive, stringifyValue } from './types'
@@ -33,8 +31,16 @@ function printNoDiff(log: Logger, diff: NoDiff, prop: string, mapping: boolean, 
 
 function printValueDiff(log: Logger, diff: ValueDiff, prop: string, mapping: boolean, comma: boolean): void {
   const { prefix, filler, suffix } = fixups(prop, mapping, comma)
-  dump(log, diff.actual, prefix, suffix, $red)
-  dump(log, diff.expected, filler, suffix, $grn)
+
+  if ((diff.actual === null) || (typeof diff.actual !== 'object')) {
+    const joined = `${prefix} ${$red(stringifyPrimitive(diff.actual))} ${$gry('~')} `
+    dump(log, diff.expected, joined, suffix, $grn)
+  } else if ((diff.expected === null) || (typeof diff.expected !== 'object')) {
+    const joined = ` ${$gry('~')} ${$grn(stringifyPrimitive(diff.expected))}${suffix}`
+    dump(log, diff.actual, prefix, joined, $red)
+  } else {
+    dump(log, diff.expected, filler, suffix, $grn)
+  }
 }
 
 function printErrorDiff(log: Logger, diff: ErrorDiff, prop: string, mapping: boolean, comma: boolean): void {
