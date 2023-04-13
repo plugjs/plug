@@ -159,6 +159,22 @@ describe.only('Diff Printer', () => {
       print(diff(123, 321))
     })
 
+    it('should print the difference between a primitive and an object', () => {
+      print(diff(123, { foo: 'bar' }))
+    })
+
+    it('should print the difference between a primitive and an object (2)', () => {
+      print(diff({ key: 123 }, { key: { foo: 'bar' } }))
+    })
+
+    it('should print the difference between an object and a primitive', () => {
+      print(diff({ foo: 'bar' }, 123))
+    })
+
+    it('should print the difference between an object and a primitive (2)', () => {
+      print(diff({ key: { foo: 'bar' } }, { key: 123 }))
+    })
+
     it('should print the difference between two different objects', () => {
       print(diff(
           { foo: 123, bar: true, baz: { hello: 'planet' } },
