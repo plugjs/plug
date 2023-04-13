@@ -96,7 +96,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
      * and consumed by the `Exec` plug (which has no other way of communicating)
      */
     const { fd, ...options } = JSON.parse(process.env.__LOG_OPTIONS || '{}')
-    if (fd) this.output = new Socket({ fd }).unref()
+    if (fd) this._output = new Socket({ fd, readable: false, writable: true }).unref()
     Object.assign(this, options)
   }
 
