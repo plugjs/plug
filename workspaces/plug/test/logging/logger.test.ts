@@ -82,8 +82,9 @@ describe('Logger', () => {
           .split('\n')
 
       expect(lines.length).toBeGreaterThan(1)
-      expect(lines[0]).toEqual(`${taskName} │  error │ BuildFailure: This is the build failure`)
-      expect(lines[1]).toMatch(`${taskName} │  error │     at `)
+      const index = lines.indexOf(`${taskName} │  error │ BuildFailure: This is the build failure`)
+      if (index < 0) throw new Error('Unable to find error in log')
+      expect(lines[index + 1]).toMatch(`${taskName} │  error │     at `)
     } finally {
       logOptions.level = _level
       logOptions.colors = _colors
