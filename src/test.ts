@@ -4,7 +4,7 @@
 import { AssertionError } from 'node:assert'
 
 import { BuildFailure } from '@plugjs/plug'
-import { $blu, $grn, $gry, $ms, $red, $und, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 
 import { skip, Suite } from './execution/executable'
 import { runSuite } from './execution/executor'
@@ -15,7 +15,6 @@ import { ExpectationError } from './expectation/types'
 import type { Files } from '@plugjs/plug/files'
 import type { Logger } from '@plugjs/plug/logging'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
-import type { Diff } from './expectation/diff'
 import type { TestOptions } from './index'
 
 const _pending = '\u22EF' // middle ellipsis
