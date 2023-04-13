@@ -1,5 +1,3 @@
-import { inspect } from 'node:util'
-
 import type { Diff } from './diff'
 import type { Expectations, ExpectationsMatcher } from './expect'
 
