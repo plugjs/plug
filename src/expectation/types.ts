@@ -1,3 +1,5 @@
+import { inspect } from 'node:util'
+
 import type { Diff } from './diff'
 import type { Expectations, ExpectationsMatcher } from './expect'
 
@@ -107,15 +109,38 @@ export function assertType<T extends keyof TypeMappings>(
 
 /** Stringify a constructor */
 export function stringifyConstructor(ctor: Constructor): string {
-  if (ctor === Object) return '<object>'
-  if (ctor === Array) return '<array>'
   if (! ctor) return '[Object: no constructor]'
   if (! ctor.name) return '[Object: anonymous]'
   return `[${ctor.name}]`
 }
 
+/** Default inspector for {@link stringifyValue} */
+function defaultInspector(value: any): string {
+  const proto = Object.getPrototypeOf(value)
+  if (! proto) return '[Object: null prototype]'
+  return stringifyConstructor(proto.constructor)
+}
+
+/** Get constructor name or default for {@link stringifyValue} */
+function constructorName(value: any, clazz: Constructor): string {
+  return Object.getPrototypeOf(value)?.constructor?.name || clazz.name
+}
+
+/** Format binary data for {@link stringifyValue} */
+function formatBinaryData(value: any, clazz: Constructor, buffer: Buffer): string {
+  const binary = buffer.length > 20 ?
+      `${buffer.toString('hex', 0, 20)}\u2026, length=${value.length}` :
+      buffer.toString('hex')
+  return binary ?
+      `[${constructorName(value, clazz)}: ${binary}]` :
+      `[${constructorName(value, clazz)}: empty]`
+}
+
 /** Pretty print the value (strings, numbers, booleans) or return the type */
-export function stringifyValue(value: unknown): string {
+export function stringifyValue(
+    value: unknown,
+    inspector: (value: any) => string = defaultInspector,
+): string {
   // null, undefined, ...
   if (value === null) return '<null>'
   if (value === undefined) return '<undefined>'
@@ -123,7 +148,7 @@ export function stringifyValue(value: unknown): string {
   // basic types
   switch (typeof value) {
     case 'string':
-      if (value.length > 40) value = value.substring(0, 39) + `\u2026, length=${value.length}`
+      if (value.length > 40) value = `${value.substring(0, 40)}\u2026, length=${value.length}`
       return JSON.stringify(value)
     case 'number':
       if (value === Number.POSITIVE_INFINITY) return '+Infinity'
@@ -142,15 +167,35 @@ export function stringifyValue(value: unknown): string {
   // specific object types
   if (isMatcher(value)) return '<matcher>'
   if (value instanceof RegExp) return String(value)
-  if (value instanceof Date) return `[Date: ${value.toISOString()}]`
-  if (value instanceof Boolean) return `[Boolean: ${value.valueOf()}]`
-  if (value instanceof Number) return `[Number: ${stringifyValue(value.valueOf())}]`
-  if (value instanceof String) return `[String: ${stringifyValue(value.valueOf())}]`
+  if (value instanceof Date) return `[${constructorName(value, Date)}: ${value.toISOString()}]`
+  if (value instanceof Boolean) return `[${constructorName(value, Boolean)}: ${value.valueOf()}]`
+  if (value instanceof Number) return `[${constructorName(value, Number)}: ${stringifyValue(value.valueOf())}]`
+  if (value instanceof String) return `[${constructorName(value, String)}: ${stringifyValue(value.valueOf())}]`
 
-  // default: stringify type...
-  const proto = Object.getPrototypeOf(value)
-  if (! proto) return '[Object: null prototype]'
-  return stringifyConstructor(proto.constructor)
+  if (Array.isArray(value)) return `[${constructorName(value, Array)} (${value.length})]`
+  if (value instanceof Set) return `[${constructorName(value, Set)} (${value.size})]`
+  if (value instanceof Map) return `[${constructorName(value, Map)} (${value.size})]`
+
+  if (value instanceof Buffer) return formatBinaryData(value, Buffer, value)
+  if (value instanceof Uint8Array) return formatBinaryData(value, Uint8Array, Buffer.from(value))
+  if (value instanceof ArrayBuffer) return formatBinaryData(value, ArrayBuffer, Buffer.from(value))
+  if (value instanceof SharedArrayBuffer) return formatBinaryData(value, SharedArrayBuffer, Buffer.from(value))
+
+  if (value instanceof Error) {
+    return value.message ? `[${constructorName(value, Error)}: ${value.message}]` : `[${constructorName(value, Error)}]`
+  }
+
+  if (value instanceof Promise) {
+    const inspected = (inspect(value).split('\n')[1] || '').trim()
+    const state: 'resolved' | 'rejected' | 'pending' =
+        inspected.startsWith('<rejected> ') ? 'rejected' :
+        inspected === '<pending>,' ? 'pending' :
+        'resolved'
+    return `[${constructorName(value, Promise)}: ${state}]`
+  }
+
+  // inspect anything else...
+  return inspector(value)
 }
 
 /** Add the `a`/`an`/... prefix to the type name */
