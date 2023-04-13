@@ -43,8 +43,8 @@ export function includesProps(context: Expectations, negative: boolean, expected
       if ((actual[key] !== undefined) || (key in actual)) {
         props[key] = {
           diff: true,
-          actual: stringifyValue(actual[key]),
-          expected: stringifyValue(undefined),
+          actual: actual[key],
+          expected: undefined,
         }
       }
     }
@@ -62,7 +62,7 @@ export function includesProps(context: Expectations, negative: boolean, expected
   const type = count === 1 ? 'property' : 'properties'
   throw new ExpectationError(context, negative, `to include ${count} ${type}`, {
     diff: true,
-    actual: stringifyValue(actual),
+    type: stringifyValue(actual),
     props,
   })
 }
@@ -83,11 +83,7 @@ export function includesValues(context: Expectations, negative: boolean, expecte
         const result = diff(act, exp)
         if (result.diff) continue
 
-        values.push({
-          diff: true,
-          actual: stringifyValue(undefined),
-          expected: stringifyValue(exp),
-        })
+        values.push({ diff: true, extra: act })
         break
       }
     }
@@ -103,11 +99,7 @@ export function includesValues(context: Expectations, negative: boolean, expecte
       }
 
       if (! found) {
-        values.push({
-          diff: true,
-          actual: stringifyValue(undefined),
-          expected: stringifyValue(exp),
-        })
+        values.push({ diff: true, missing: exp })
       }
     }
   }
@@ -118,7 +110,7 @@ export function includesValues(context: Expectations, negative: boolean, expecte
   const type = count === 1 ? 'value' : 'values'
   throw new ExpectationError(context, negative, `to include ${count} ${type}`, {
     diff: true,
-    actual: stringifyValue(actual),
+    type: stringifyValue(actual),
     values,
   })
 }
@@ -138,8 +130,8 @@ export function includesMappings(context: Expectations, negative: boolean, expec
         mappings.push([
           stringifyValue(key), {
             diff: true,
-            actual: stringifyValue(actual.get(key)),
-            expected: stringifyValue(undefined),
+            actual: actual.get(key),
+            expected: undefined,
           } ])
       }
     }
@@ -157,7 +149,7 @@ export function includesMappings(context: Expectations, negative: boolean, expec
   const type = count === 1 ? 'mapping' : 'mappings'
   throw new ExpectationError(context, negative, `to include ${count} ${type}`, {
     diff: true,
-    actual: stringifyValue(actual),
+    type: stringifyValue(actual),
     mappings,
   })
 }
