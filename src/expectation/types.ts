@@ -181,10 +181,6 @@ export function stringifyValue(
   if (value instanceof ArrayBuffer) return formatBinaryData(value, ArrayBuffer, Buffer.from(value))
   if (value instanceof SharedArrayBuffer) return formatBinaryData(value, SharedArrayBuffer, Buffer.from(value))
 
-  if (value instanceof Error) {
-    return value.message ? `[${constructorName(value, Error)}: ${value.message}]` : `[${constructorName(value, Error)}]`
-  }
-
   if (value instanceof Promise) {
     const inspected = (inspect(value).split('\n')[1] || '').trim()
     const state: 'resolved' | 'rejected' | 'pending' =
@@ -264,7 +260,27 @@ export class ExpectationError extends Error {
       }
 
       preamble = properties.reverse().join('')
-      preamble = `property ${preamble} of ${stringifyValue(context.value)} (${stringifyValue(value)})`
+
+      // type of root value is constructor without details
+      let type: string
+      switch (typeof context.value) {
+        case 'bigint':
+        case 'boolean':
+        case 'function':
+        case 'number':
+        case 'string':
+        case 'symbol':
+        case 'undefined':
+          type = stringifyValue(context.value)
+          break
+        default:
+          type = context.value === null ?
+              stringifyValue(context.value) :
+              defaultInspector(context.value)
+      }
+
+      // assemble the preamble
+      preamble = `property ${preamble} of ${type} (${stringifyValue(value)})`
     }
 
     super(`Expected ${preamble}${not} ${details}`)
