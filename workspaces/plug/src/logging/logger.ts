@@ -26,6 +26,8 @@ logOptions.on('changed', ({ defaultTaskName, colors, level }) => {
 
 /** The basic interface giving access to log facilities. */
 export interface Log {
+  /** The current {@link Logger} */
+  readonly logger: Logger
   /** Log a `TRACE` message */
   trace(...args: [ any, ...any ]): void
   /** Log a `DEBUG` message */
@@ -43,7 +45,7 @@ export interface Log {
 }
 
 /** A {@link Logger} extends the basic {@link Log} adding some state. */
-export interface Logger extends Log {
+export interface Logger extends Omit<Log, 'logger'> {
   /** The current level for logging. */
   level: LogLevel,
 
