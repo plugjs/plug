@@ -41,18 +41,25 @@ export function includesProps(context: Expectations, negative: boolean, expected
     // only consider keys... if they exist, fail!
     for (const key of keys) {
       if ((actual[key] !== undefined) || (key in actual)) {
-        props[key] = {
-          diff: true,
-          actual: actual[key],
-          expected: undefined,
-        }
+        props[key] = { diff: true, extra: actual[key] }
       }
     }
   } else {
     for (const key of keys) {
-      const difference = diff(actual[key], expected[key])
-      if (! difference.diff) continue
-      props[key] = difference
+      const act = actual[key]
+      const exp = expected[key]
+
+      const result = diff(act, exp)
+      if (! result.diff) continue
+
+      // if there is a difference, we _might_ have a missing/extra property
+      if ((act === undefined) && (! (key in actual))) {
+        props[key] = { diff: true, missing: exp }
+      } else if ((exp === undefined) && (! (key in expected))) {
+        props[key] = { diff: true, extra: act }
+      } else {
+        props[key] = result
+      }
     }
   }
 
@@ -127,19 +134,19 @@ export function includesMappings(context: Expectations, negative: boolean, expec
     // only consider keys... if they exist, fail!
     for (const key of keys) {
       if (actual.has(key)) {
-        mappings.push([
-          stringifyValue(key), {
-            diff: true,
-            actual: actual.get(key),
-            expected: undefined,
-          } ])
+        mappings.push([ key, { diff: true, extra: actual.get(key) } ])
       }
     }
   } else {
     for (const key of keys) {
-      const difference = diff(actual.get(key), expected.get(key))
-      if (! difference.diff) continue
-      mappings.push([ stringifyValue(key), difference ])
+      if (! actual.has(key)) {
+        mappings.push([ key, { diff: true, missing: expected.get(key) } ])
+      } else if (! expected.has(key)) {
+        mappings.push([ key, { diff: true, extra: actual.get(key) } ])
+      } else {
+        const result = diff(actual.get(key), expected.get(key))
+        mappings.push([ key, result ])
+      }
     }
   }
 
