@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/jasmine",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -38,7 +38,7 @@
     "chai": "^4.3.7"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.3.3"
+    "@plugjs/plug": "0.3.4"
   },
   "files": [
     "*.md",
