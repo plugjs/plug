@@ -9,11 +9,11 @@ describe('Diff Printer', () => {
     return new Map(Object.entries(object))
   }
 
-  function print(diff: Diff): void {
+  function print(diff: Diff, header = false): void {
     const logger = log.logger
     try {
       logger.enter()
-      printDiff(logger, diff, false)
+      printDiff(logger, diff, header)
     } finally {
       logger.leave()
     }
@@ -23,7 +23,7 @@ describe('Diff Printer', () => {
 
   describe('values dump', () => {
     it('should dump a primitive', () => {
-      print({ diff: false, value: 123 })
+      print({ diff: false, value: 123 }, true)
     })
 
     it('should dump a simple object', () => {
