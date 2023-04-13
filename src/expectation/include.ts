@@ -55,8 +55,6 @@ export function includesProps(context: Expectations, negative: boolean, expected
       // if there is a difference, we _might_ have a missing/extra property
       if ((act === undefined) && (! (key in actual))) {
         props[key] = { diff: true, missing: exp }
-      } else if ((exp === undefined) && (! (key in expected))) {
-        props[key] = { diff: true, extra: act }
       } else {
         props[key] = result
       }
@@ -141,8 +139,6 @@ export function includesMappings(context: Expectations, negative: boolean, expec
     for (const key of keys) {
       if (! actual.has(key)) {
         mappings.push([ key, { diff: true, missing: expected.get(key) } ])
-      } else if (! expected.has(key)) {
-        mappings.push([ key, { diff: true, extra: actual.get(key) } ])
       } else {
         const result = diff(actual.get(key), expected.get(key))
         if (result.diff) mappings.push([ key, result ])
