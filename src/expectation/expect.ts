@@ -324,24 +324,24 @@ export interface ExpectationsMatcher extends ImportedMatchers {
 interface ExpectationsMatcherImpl extends ExpectationsMatcher {}
 
 class ExpectationsMatcherImpl {
-  private readonly _matchers: [ string, boolean, any[] ][]
+  private readonly _matchers: readonly [ string, boolean, any[] ][]
   private readonly _positiveBuilder: ExpectationsMatcherImpl
   private readonly _negativeBuilder: ExpectationsMatcherImpl
   private readonly _negative: boolean
 
   constructor(
+      _matchers: readonly [ string, boolean, any[] ][],
       _positiveBuilder?: ExpectationsMatcherImpl,
   ) {
+    this._matchers = _matchers
     if (_positiveBuilder) {
       this._negative = true
-      this._matchers = _positiveBuilder._matchers
       this._positiveBuilder = _positiveBuilder
       this._negativeBuilder = this
     } else {
       this._negative = false
-      this._matchers = []
       this._positiveBuilder = this
-      this._negativeBuilder = new ExpectationsMatcherImpl(this)
+      this._negativeBuilder = new ExpectationsMatcherImpl(this._matchers, this)
     }
   }
 
@@ -366,9 +366,9 @@ class ExpectationsMatcherImpl {
     for (const key in expectations) {
       Object.defineProperty(this.prototype, key, {
         value: function(this: ExpectationsMatcherImpl, ...args: any[]): any {
-          const builder = new ExpectationsMatcherImpl()
-          builder._matchers.push(...this._matchers, [ key, this._negative, args ])
-          return builder
+          return new ExpectationsMatcherImpl([
+            ...this._matchers, [ key, this._negative, args ],
+          ])
         },
       })
     }
@@ -386,14 +386,14 @@ export const expect = (<T = unknown>(value: T): Expectations<T> => {
 
 // Instrument a getter for negative matchers
 Object.defineProperty(expect, 'not', {
-  get: () => new ExpectationsMatcherImpl().not,
+  get: () => new ExpectationsMatcherImpl([]).not,
 })
 
 // Create a matcher for each expectation
 for (const name in expectations) {
   Object.defineProperty(expect, name, {
     value: function(...args: any[]): ExpectationsMatcher {
-      const builder = new ExpectationsMatcherImpl()
+      const builder = new ExpectationsMatcherImpl([])
       return (builder as any)[name](...args)
     },
   })
