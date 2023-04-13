@@ -39,7 +39,8 @@ function printValueDiff(log: Logger, diff: ValueDiff, prop: string, mapping: boo
     const joined = ` ${$gry('~')} ${$grn(stringifyPrimitive(diff.expected))}${suffix}`
     dump(log, diff.actual, prefix, joined, $red)
   } else {
-    dump(log, diff.expected, filler, suffix, $grn)
+    dump(log, diff.expected, prefix, `${suffix} ${$gry('~')}`, $red)
+    dump(log, diff.expected, `${$gry('~')} ${filler}`, suffix, $grn)
   }
 }
 
@@ -81,7 +82,6 @@ function printObjectDiff(log: Logger, diff: ObjectDiff, prop: string, mapping: b
 
   // values and mappings (arrays/sets/maps) are mutually exclusive
   } else if (diff.mappings) {
-    if (marked) line = `${line} ${$gry('\u2026 mappings \u2026')} `
     log.warn(`${line}${$gry('{')}`)
     try {
       log.enter()

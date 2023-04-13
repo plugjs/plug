@@ -4,7 +4,7 @@ import { log } from '@plugjs/plug'
 import { diff, type Diff } from '../src/expectation/diff'
 import { printDiff } from '../src/expectation/print'
 
-describe.only('Diff Printer', () => {
+describe('Diff Printer', () => {
   function map(object: Record<string, any>): Map<any, any> {
     return new Map(Object.entries(object))
   }
@@ -136,7 +136,7 @@ describe.only('Diff Printer', () => {
     })
 
     it('should print the difference between two empty objects', () => {
-      print({ diff: false, type: '[Object]' }) // edge case, no
+      print({ diff: false, type: '[Object]' }) // edge case
     })
 
     it('should print the difference between two equal arrays with extra properties', () => {
@@ -159,7 +159,7 @@ describe.only('Diff Printer', () => {
       print(diff(123, 321))
     })
 
-    it('should print the difference between a primitive and an object', () => {
+    it('should print the difference between a primitive and an object (1)', () => {
       print(diff(123, { foo: 'bar' }))
     })
 
@@ -167,7 +167,7 @@ describe.only('Diff Printer', () => {
       print(diff({ key: 123 }, { key: { foo: 'bar' } }))
     })
 
-    it('should print the difference between an object and a primitive', () => {
+    it('should print the difference between an object and a primitive (1)', () => {
       print(diff({ foo: 'bar' }, 123))
     })
 
@@ -175,7 +175,7 @@ describe.only('Diff Printer', () => {
       print(diff({ key: { foo: 'bar' } }, { key: 123 }))
     })
 
-    it('should print the difference between two different objects', () => {
+    it('should print the difference between two different objects (1)', () => {
       print(diff(
           { foo: 123, bar: true, baz: { hello: 'planet' } },
           { foo: 321, bar: false, baz: { hello: 'world' } },
@@ -187,6 +187,14 @@ describe.only('Diff Printer', () => {
           { foo: 123, bar: true, baz: { hello: 'planet' } },
           { foo: 321, bar: false, xyz: { hello: 'world' } },
       ))
+    })
+
+    it('should print the difference between two different objects (3)', () => {
+      print({ diff: true, actual: { foo: 'bar' }, expected: { baz: 123 } }) // edge case
+    })
+
+    it('should print the difference between two different objects (4)', () => {
+      print({ diff: true, actual: map({ foo: 'bar' }), expected: new Set([ 1 ]) }) // edge case
     })
 
     it('should print the difference between two different arrays', () => {
