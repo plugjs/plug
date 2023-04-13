@@ -120,18 +120,18 @@ function defaultInspector(value: any): string {
 }
 
 /** Get constructor name or default for {@link stringifyValue} */
-function constructorName(value: any, clazz: Constructor): string {
-  return Object.getPrototypeOf(value)?.constructor?.name || clazz.name
+function constructorName(value: Record<any, any>): string {
+  return Object.getPrototypeOf(value)?.constructor?.name
 }
 
 /** Format binary data for {@link stringifyValue} */
-function formatBinaryData(value: any, clazz: Constructor, buffer: Buffer): string {
+function formatBinaryData(value: Record<any, any>, buffer: Buffer): string {
   const binary = buffer.length > 20 ?
       `${buffer.toString('hex', 0, 20)}\u2026, length=${value.length}` :
       buffer.toString('hex')
   return binary ?
-      `[${constructorName(value, clazz)}: ${binary}]` :
-      `[${constructorName(value, clazz)}: empty]`
+      `[${constructorName(value)}: ${binary}]` :
+      `[${constructorName(value)}: empty]`
 }
 
 /** Pretty print the value (strings, numbers, booleans) or return the type */
@@ -165,19 +165,19 @@ export function stringifyValue(
   // specific object types
   if (isMatcher(value)) return '<matcher>'
   if (value instanceof RegExp) return String(value)
-  if (value instanceof Date) return `[${constructorName(value, Date)}: ${value.toISOString()}]`
-  if (value instanceof Boolean) return `[${constructorName(value, Boolean)}: ${value.valueOf()}]`
-  if (value instanceof Number) return `[${constructorName(value, Number)}: ${stringifyValue(value.valueOf())}]`
-  if (value instanceof String) return `[${constructorName(value, String)}: ${stringifyValue(value.valueOf())}]`
+  if (value instanceof Date) return `[${constructorName(value)}: ${value.toISOString()}]`
+  if (value instanceof Boolean) return `[${constructorName(value)}: ${value.valueOf()}]`
+  if (value instanceof Number) return `[${constructorName(value)}: ${stringifyValue(value.valueOf())}]`
+  if (value instanceof String) return `[${constructorName(value)}: ${stringifyValue(value.valueOf())}]`
 
-  if (Array.isArray(value)) return `[${constructorName(value, Array)} (${value.length})]`
-  if (value instanceof Set) return `[${constructorName(value, Set)} (${value.size})]`
-  if (value instanceof Map) return `[${constructorName(value, Map)} (${value.size})]`
+  if (Array.isArray(value)) return `[${constructorName(value)} (${value.length})]`
+  if (value instanceof Set) return `[${constructorName(value)} (${value.size})]`
+  if (value instanceof Map) return `[${constructorName(value)} (${value.size})]`
 
-  if (value instanceof Buffer) return formatBinaryData(value, Buffer, value)
-  if (value instanceof Uint8Array) return formatBinaryData(value, Uint8Array, Buffer.from(value))
-  if (value instanceof ArrayBuffer) return formatBinaryData(value, ArrayBuffer, Buffer.from(value))
-  if (value instanceof SharedArrayBuffer) return formatBinaryData(value, SharedArrayBuffer, Buffer.from(value))
+  if (value instanceof Buffer) return formatBinaryData(value, value)
+  if (value instanceof Uint8Array) return formatBinaryData(value, Buffer.from(value))
+  if (value instanceof ArrayBuffer) return formatBinaryData(value, Buffer.from(value))
+  if (value instanceof SharedArrayBuffer) return formatBinaryData(value, Buffer.from(value))
 
   // inspect anything else...
   return inspector(value)
@@ -251,22 +251,9 @@ export class ExpectationError extends Error {
       preamble = properties.reverse().join('')
 
       // type of root value is constructor without details
-      let type: string
-      switch (typeof context.value) {
-        case 'bigint':
-        case 'boolean':
-        case 'function':
-        case 'number':
-        case 'string':
-        case 'symbol':
-        case 'undefined':
-          type = stringifyValue(context.value)
-          break
-        default:
-          type = context.value === null ?
-              stringifyValue(context.value) :
-              defaultInspector(context.value)
-      }
+      const type = typeof context.value === 'object' ?
+          defaultInspector(context.value) : // parent values can not be null!
+          stringifyValue(context.value)
 
       // assemble the preamble
       preamble = `property ${preamble} of ${type} (${stringifyValue(value)})`
