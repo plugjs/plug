@@ -76,8 +76,8 @@ describe('Type Utilities', () => {
   })
 
   it('should stringify a constructor', () => {
-    assert.strictEqual(stringifyConstructor(Object), '<object>')
-    assert.strictEqual(stringifyConstructor(Array), '<array>')
+    assert.strictEqual(stringifyConstructor(Array), '[Array]')
+    assert.strictEqual(stringifyConstructor(Object), '[Object]')
     assert.strictEqual(stringifyConstructor(null as any), '[Object: no constructor]')
     assert.strictEqual(stringifyConstructor((() => {}) as any), '[Object: anonymous]')
     assert.strictEqual(stringifyConstructor(class FooBar {}), '[FooBar]')
@@ -90,7 +90,7 @@ describe('Type Utilities', () => {
     assert.strictEqual(stringifyValue('foobar'), '"foobar"')
     assert.strictEqual(
         stringifyValue('the quick brown fox jumped over the lazy dog'),
-        '"the quick brown fox jumped over the laz\u2026, length=44"')
+        '"the quick brown fox jumped over the lazy\u2026, length=44"')
 
     assert.strictEqual(stringifyValue(123), '123')
     assert.strictEqual(stringifyValue(-123), '-123')
@@ -127,12 +127,35 @@ describe('Type Utilities', () => {
     assert.strictEqual(stringifyValue(new String('foobar')), '[String: "foobar"]')
     assert.strictEqual(
         stringifyValue(new String('the quick brown fox jumped over the lazy dog')),
-        '[String: "the quick brown fox jumped over the laz\u2026, length=44"]')
+        '[String: "the quick brown fox jumped over the lazy\u2026, length=44"]')
 
-    assert.strictEqual(stringifyValue({}), '<object>')
-    assert.strictEqual(stringifyValue([]), '<array>')
+    assert.strictEqual(stringifyValue({}), '[Object]')
+    assert.strictEqual(stringifyValue([]), '[Array (0)]')
+    assert.strictEqual(stringifyValue([ 1, 2, 3 ]), '[Array (3)]')
     assert.strictEqual(stringifyValue(Object.create(null)), '[Object: null prototype]')
     assert.strictEqual(stringifyValue(new class FooBar {}), '[FooBar]')
+
+    assert.strictEqual(stringifyValue(new Set()), '[Set (0)]')
+    assert.strictEqual(stringifyValue(new Map()), '[Map (0)]')
+    assert.strictEqual(stringifyValue(new Set([ 0 ])), '[Set (1)]')
+    assert.strictEqual(stringifyValue(new Map([ [ 0, 0 ] ])), '[Map (1)]')
+
+    const buffer0 = Buffer.from('')
+    const buffer1 = Buffer.from('hello')
+    const buffer2 = Buffer.from('hello world, and something extra for the kicks')
+    assert.strictEqual(stringifyValue(buffer0), '[Buffer: empty]')
+    assert.strictEqual(stringifyValue(buffer1), '[Buffer: 68656c6c6f]')
+    assert.strictEqual(stringifyValue(buffer2), '[Buffer: 68656c6c6f20776f726c642c20616e6420736f6d\u2026, length=46]')
+    assert.strictEqual(stringifyValue(new Uint8Array(2)), '[Uint8Array: 0000]')
+    assert.strictEqual(stringifyValue(new ArrayBuffer(1)), '[ArrayBuffer: 00]')
+    assert.strictEqual(stringifyValue(new SharedArrayBuffer(0)), '[SharedArrayBuffer: empty]')
+
+    assert.strictEqual(stringifyValue(new TypeError()), '[TypeError]')
+    assert.strictEqual(stringifyValue(new SyntaxError('foo')), '[SyntaxError: foo]')
+
+    assert.strictEqual(stringifyValue(new Promise(() => {})), '[Promise: pending]')
+    assert.strictEqual(stringifyValue(Promise.resolve('foo')), '[Promise: resolved]')
+    assert.strictEqual(stringifyValue(Promise.reject(new Error())), '[Promise: rejected]')
   })
 
   it('should prefix a type name', () => {
