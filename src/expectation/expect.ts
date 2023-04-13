@@ -187,9 +187,9 @@ interface ExpectationsImpl<T = unknown> extends Expectations<T> {}
 
 /** Implementation of our {@link Expectations} interface */
 class ExpectationsImpl<T = unknown> implements Expectations<T> {
-  private _positiveExpectations: ExpectationsImpl<T>
-  private _negativeExpectations: ExpectationsImpl<T>
-  private _negative: boolean
+  private readonly _positiveExpectations: ExpectationsImpl<T>
+  private readonly _negativeExpectations: ExpectationsImpl<T>
+  private readonly _negative: boolean
 
   constructor(
       public readonly value: T,
@@ -324,10 +324,10 @@ export interface ExpectationsMatcher extends ImportedMatchers {
 interface ExpectationsMatcherImpl extends ExpectationsMatcher {}
 
 class ExpectationsMatcherImpl {
-  private _matchers: [ string, boolean, any[] ][]
-  private _positiveBuilder: ExpectationsMatcherImpl
-  private _negativeBuilder: ExpectationsMatcherImpl
-  private _negative: boolean
+  private readonly _matchers: [ string, boolean, any[] ][]
+  private readonly _positiveBuilder: ExpectationsMatcherImpl
+  private readonly _negativeBuilder: ExpectationsMatcherImpl
+  private readonly _negative: boolean
 
   constructor(
       _positiveBuilder?: ExpectationsMatcherImpl,
@@ -366,8 +366,9 @@ class ExpectationsMatcherImpl {
     for (const key in expectations) {
       Object.defineProperty(this.prototype, key, {
         value: function(this: ExpectationsMatcherImpl, ...args: any[]): any {
-          this._matchers.push([ key, this._negative, args ])
-          return this._positiveBuilder
+          const builder = new ExpectationsMatcherImpl()
+          builder._matchers.push(...this._matchers, [ key, this._negative, args ])
+          return builder
         },
       })
     }
