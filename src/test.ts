@@ -167,7 +167,6 @@ function dumpError(log: Logger, error: any): void {
     dumpStack(log, error)
     if (error.diff) {
       log.error(`  ${$wht('Differences')} ${$gry('(')}${$red('actual')}${$gry('/')}${$grn('expected')}${$gry('/')}${$ylw('errors')}${$gry(')')}:`)
-      dumpDiff(log, error.diff)
     }
     log.leave()
     return
@@ -182,84 +181,4 @@ function dumpStack(log: Logger, error: Error): void {
       .filter((line) => line.match(/^\s+at\s+/))
       .map((line) => line.trim())
       .forEach((line) => log.error(line))
-}
-
-function dumpDiff(
-    log: Logger,
-    diff: Diff,
-    comma?: boolean,
-    mapping?: boolean,
-    prop?: string,
-    propsLen: number = prop ? prop.length : 0,
-): void {
-  log.enter()
-
-  const sep = mapping ? ` ${_details} ` : ': '
-  const prefix = prop ? $gry(`${prop.padStart(propsLen)}${sep}`) : ''
-  const blank = prop ? $gry(`${sep}`.padStart(propsLen + sep.length)) : ''
-  const suffix = comma ? $gry(',') : ''
-
-  if ('error' in diff) {
-    log.error(prefix + $red(diff.actual))
-    log.error(blank + $ylw(diff.error) + suffix)
-    return log.leave()
-  } else if ('expected' in diff) {
-    log.error(prefix + $red(diff.actual))
-    log.error(blank + $grn(diff.expected) + suffix)
-    return log.leave()
-  }
-
-  let logged = false
-
-  const actual =
-    diff.actual === '<array>' ? '' :
-    diff.actual === '<object>' ? '' :
-    diff.actual + ' '
-
-  if (('props' in diff) && (diff.props)) {
-    logged = true
-
-    if (Object.keys(diff.props).length) {
-      log.error(`${prefix}${actual}${$gry('{')}`)
-      const length = Object.keys(diff.props).reduce((l, k) => (k.length > l ? k.length : l), 0)
-      for (const [ prop, subdiff ] of Object.entries(diff.props)) {
-        dumpDiff(log, subdiff, true, false, prop, length)
-      }
-      log.error(`${$gry('}')}${suffix}`)
-    } else {
-      log.error(`${prefix}${actual}${$gry('{}')}${suffix}`)
-    }
-  }
-
-  if ('values' in diff) {
-    logged = true
-
-    if (diff.values.length) {
-      log.error(`${prefix}${actual}${$gry('[')}`)
-      for (const subdiff of diff.values) {
-        dumpDiff(log, subdiff, true, false)
-      }
-      log.error(`${$gry(']')}${suffix}`)
-    } else {
-      log.error(`${prefix}${actual}${$gry('[]')}${suffix}`)
-    }
-  }
-
-  if ('mappings' in diff) {
-    logged = true
-
-    if (diff.mappings.length) {
-      log.error(`${prefix}${actual}${$gry('(')}`)
-      for (const [ key, subdiff ] of diff.mappings) {
-        dumpDiff(log, subdiff, true, true, key)
-      }
-      log.error(`${$gry(')')}${suffix}`)
-    } else {
-      log.error(`${prefix}${actual}${$gry('()')}${suffix}`)
-    }
-  }
-
-  if (! logged) log.error(`${prefix}${diff.actual}${suffix}`)
-
-  log.leave()
 }
