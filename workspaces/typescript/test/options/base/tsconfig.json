@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    // will be overridden
+    "module": "amd",
+    // those will be resolved
+    "outDir": "./outDir",
+    "rootDir": "./rootDir",
+    "declarationDir": "./declarationDir",
+    "rootDirs": [ "./rootDirs/1", "./rootDirs/2" ],
+    "outFile": "./outDile.js",
+  },
+}

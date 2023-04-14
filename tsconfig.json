@@ -1,0 +1,29 @@
+{
+  "extends": "./tsconfig-base.json",
+  "compilerOptions": {
+    // Monorepo setup
+    "rootDir": ".",
+    "baseUrl": "./",
+    "paths": {
+      "@plugjs/cov8": [ "workspaces/cov8/src" ],
+      "@plugjs/cov8/*": [ "workspaces/cov8/src/*" ],
+      "@plugjs/eslint": [ "workspaces/eslint/src" ],
+      "@plugjs/eslint/*": [ "workspaces/eslint/src/*" ],
+      "@plugjs/jasmine": [ "workspaces/jasmine/src" ],
+      "@plugjs/jasmine/*": [ "workspaces/jasmine/src/*" ],
+      "@plugjs/mocha": [ "workspaces/mocha/src" ],
+      "@plugjs/mocha/*": [ "workspaces/mocha/src/*" ],
+      "@plugjs/plug": [ "workspaces/plug/src" ],
+      "@plugjs/plug/*": [ "workspaces/plug/src/*" ],
+      "@plugjs/tsd": [ "workspaces/tsd/src" ],
+      "@plugjs/tsd/*": [ "workspaces/tsd/src/*" ],
+      "@plugjs/typescript": [ "workspaces/typescript/src" ],
+      "@plugjs/typescript/*": [ "workspaces/typescript/src/*" ],
+      "@plugjs/zip": [ "workspaces/zip/src" ],
+      "@plugjs/zip/*": [ "workspaces/zip/src/*" ],
+    },
+  },
+  "include": [
+    "build.ts",
+  ]
+}

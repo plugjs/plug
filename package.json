@@ -1,0 +1,32 @@
+{
+  "name": "@plugjs/monorepo",
+  "private": true,
+  "version": "0.3.5",
+  "type": "module",
+  "workspaces": [
+    "workspaces/cov8",
+    "workspaces/eslint",
+    "workspaces/jasmine",
+    "workspaces/mocha",
+    "workspaces/plug",
+    "workspaces/tsd",
+    "workspaces/typescript",
+    "workspaces/zip"
+  ],
+  "scripts": {
+    "prepare": "./bootstrap.sh",
+    "clean": "./bootstrap/plug.mjs clean",
+    "dev": "ls -1d workspaces/*/src workspaces/*/test | sed 's|^|-w |g' | xargs ./bootstrap/plug.mjs dev",
+    "build": "./bootstrap/plug.mjs",
+    "lint": "./bootstrap/plug.mjs lint",
+    "test": "./bootstrap/plug.mjs transpile test",
+    "transpile": "./bootstrap/plug.mjs transpile",
+    "updates": "check-updates package.json workspaces/*/package.json"
+  },
+  "devDependencies": {
+    "@plugjs/eslint-plugin": "^0.1.5",
+    "@types/node": "<19",
+    "typescript": "^5.0.4"
+  },
+  "files": []
+}

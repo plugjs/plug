@@ -1,0 +1,8 @@
+*.tgz
+.coverage-data/
+.coverage-test-data/
+bootstrap/
+coverage/
+node_modules/
+workspaces/*/dist
+workspaces/plug/cli
