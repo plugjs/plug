@@ -4,9 +4,10 @@ import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
 import { ReportImpl } from './report'
 
-import type { LogEmitter } from './emit'
+import type { LogEmitter, LogEmitterOptions } from './emit'
 import type { LogLevel } from './levels'
 import type { Report } from './report'
+
 
 /* ========================================================================== */
 
@@ -196,6 +197,10 @@ class LoggerImpl implements Logger {
   }
 
   report(title: string): Report {
-    return new ReportImpl(title, this._task, this._emitter)
+    const emitter: LogEmitter = (options: LogEmitterOptions, args: any) => {
+      const indent = (this._indent ? this._indent + 1 : 0) + (options.indent || 0)
+      this._emitter({ ...options, indent }, args)
+    }
+    return new ReportImpl(title, this._task, emitter)
   }
 }
