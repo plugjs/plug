@@ -105,13 +105,6 @@ export function assertType<T extends keyof TypeMappings>(
  * PRETTY PRINTING FOR MESSAGES AND DIFFS                                     *
  * ========================================================================== */
 
-/** Default inspector for {@link stringifyValue} */
-function defaultInspector(value: any): string {
-  const proto = Object.getPrototypeOf(value)
-  if (! proto) return '[Object: null prototype]'
-  return stringifyConstructor(proto.constructor)
-}
-
 /** Get constructor name or default for {@link stringifyValue} */
 function constructorName(value: Record<any, any>): string {
   return Object.getPrototypeOf(value)?.constructor?.name
@@ -128,6 +121,13 @@ function formatBinaryData(value: Record<any, any>, buffer: Buffer): string {
 }
 
 /* ========================================================================== */
+
+/** Stringify the type of an object (its constructor name) */
+export function stringifyObjectType(value: object): string {
+  const proto = Object.getPrototypeOf(value)
+  if (! proto) return '[Object: null prototype]'
+  return stringifyConstructor(proto.constructor)
+}
 
 /** Stringify a constructor */
 export function stringifyConstructor(ctor: Constructor): string {
@@ -165,10 +165,7 @@ export function stringifyPrimitive(
 }
 
 /** Pretty print the value (strings, numbers, booleans) or return the type */
-export function stringifyValue(
-    value: unknown,
-    inspector: (value: any) => string = defaultInspector,
-): string {
+export function stringifyValue(value: unknown): string {
   // null, undefined, ...
   if (value === null) return stringifyPrimitive(value)
   if (typeof value !== 'object') return stringifyPrimitive(value as any)
@@ -191,7 +188,7 @@ export function stringifyValue(
   if (value instanceof SharedArrayBuffer) return formatBinaryData(value, Buffer.from(value))
 
   // inspect anything else...
-  return inspector(value)
+  return stringifyObjectType(value)
 }
 
 /** Add the `a`/`an`/... prefix to the type name */
@@ -263,7 +260,7 @@ export class ExpectationError extends Error {
 
       // type of root value is constructor without details
       const type = typeof context.value === 'object' ?
-          defaultInspector(context.value) : // parent values can not be null!
+          stringifyObjectType(context.value as object) : // parent values can not be null!
           stringifyValue(context.value)
 
       // assemble the preamble
