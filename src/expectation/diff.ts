@@ -3,31 +3,31 @@ import { ExpectationError, isMatcher, stringifyConstructor, stringifyValue } fro
 
 import type { Constructor } from './types'
 
-export interface AbstractDiff {
+export interface BaseDiff {
   diff: boolean,
   error?: string,
 }
 
-export interface BaseDiff extends AbstractDiff {
+export interface ValueDiff extends BaseDiff {
   value: any,
 }
 
-export interface ValueDiff extends BaseDiff {
+export interface ExpectedDiff extends ValueDiff {
   diff: true,
   expected: any,
 }
 
-export interface ExtraValueDiff extends AbstractDiff {
+export interface ExtraValueDiff extends BaseDiff {
   diff: true,
   extra: any,
 }
 
-export interface MissingValueDiff extends AbstractDiff {
+export interface MissingValueDiff extends BaseDiff {
   diff: true,
   missing: any,
 }
 
-export interface ObjectDiff extends BaseDiff {
+export interface ObjectDiff extends ValueDiff {
   diff: boolean,
   props?: Record<string, Diff>,
   values?: Diff[],
@@ -35,8 +35,8 @@ export interface ObjectDiff extends BaseDiff {
 }
 
 export type Diff =
-  | BaseDiff
   | ValueDiff
+  | ExpectedDiff
   | ObjectDiff
   | ExtraValueDiff
   | MissingValueDiff
@@ -51,7 +51,7 @@ type Remarks = { actualMemos: any[], expectedMemos: any[] }
 
 /* ========================================================================== */
 
-function errorDiff(value: any, message: string): BaseDiff {
+function errorDiff(value: any, message: string): ValueDiff {
   const error = `Expected ${stringifyValue(value)} ${message}`
   return { diff: true, value, error }
 }
@@ -63,7 +63,7 @@ function objectDiff<T extends Record<string, any>>(
     expected: T,
     remarks: Remarks,
     keys?: Set<string>,
-): ObjectDiff | BaseDiff {
+): ObjectDiff | ValueDiff {
   // default keys: all keys from both actual and expected objects
   if (! keys) keys = new Set([ ...Object.keys(actual), ...Object.keys(expected) ])
 
@@ -211,7 +211,7 @@ function binaryDiff<T extends Binary>(
     actualData: Buffer,
     expectedData: Buffer,
     remarks: Remarks,
-): ObjectDiff | BaseDiff {
+): ObjectDiff | ValueDiff {
   // make sure that the length of both arrays is the same
   if (actualData.length !== expectedData.length) {
     return errorDiff(actual, `to have length ${expectedData.length} (length=${actualData.length})`)
@@ -250,7 +250,7 @@ function primitiveDiff<T extends BoxedPrimitive>(
     actual: T,
     expected: T,
     remarks: Remarks,
-): ObjectDiff | ValueDiff | BaseDiff {
+): ObjectDiff | ExpectedDiff | ValueDiff {
   if (actual.valueOf() !== expected.valueOf()) {
     return {
       diff: true,
