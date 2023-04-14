@@ -3,14 +3,14 @@ import { ExpectationError, isMatcher, stringifyConstructor, stringifyValue } fro
 
 import type { Constructor } from './types'
 
-export interface NoDiff {
-  diff: false,
-  value: any
+export interface BaseDiff {
+  diff: boolean,
+  value: any,
 }
 
 export interface ValueDiff {
   diff: true,
-  actual: any,
+  value: any,
   expected: any,
 }
 
@@ -18,14 +18,6 @@ export interface ErrorDiff {
   diff: true,
   value: any,
   error: any,
-}
-
-export interface ObjectDiff {
-  diff: boolean,
-  type: string, // TODO: value as any (not stringifyValue!)
-  props?: Record<string, Diff>,
-  values?: Diff[],
-  mappings?: [ any, Diff ][]
 }
 
 export interface ExtraValueDiff {
@@ -38,8 +30,16 @@ export interface MissingValueDiff {
   missing: any,
 }
 
+export interface ObjectDiff {
+  diff: boolean,
+  value: any,
+  props?: Record<string, Diff>,
+  values?: Diff[],
+  mappings?: [ any, Diff ][]
+}
+
 export type Diff =
-  | NoDiff
+  | BaseDiff
   | ValueDiff
   | ErrorDiff
   | ObjectDiff
@@ -68,7 +68,7 @@ function objectDiff<T extends Record<string, any>>(
     expected: T,
     remarks: Remarks,
     keys?: Set<string>,
-): ObjectDiff | NoDiff {
+): ObjectDiff | BaseDiff {
   // default keys: all keys from both actual and expected objects
   if (! keys) keys = new Set([ ...Object.keys(actual), ...Object.keys(expected) ])
 
@@ -97,7 +97,7 @@ function objectDiff<T extends Record<string, any>>(
   }
 
   // return our differences
-  return { diff, type: stringifyValue(actual), props }
+  return { diff, value: actual, props }
 }
 
 /* ========================================================================== */
@@ -129,10 +129,8 @@ function arrayDiff<T extends Record<number, any> & { length: number }>(
   const result = objectDiff(actual, expected, remarks, keys)
   const diff = result.diff || valuesDiff
 
-  // return always an object diff
-  return 'type' in result ?
-    { diff, type: result.type, props: result.props, values } :
-    { diff, type: stringifyValue(actual), values }
+  // all done!
+  return { ...result, diff, values }
 }
 
 /* ========================================================================== */
@@ -172,9 +170,7 @@ function setDiff<T>(
   missing.forEach((value) => values.push({ diff: true, missing: value }))
 
   // done...
-  return 'type' in result ?
-    { diff, type: result.type, props: result.props, values } :
-    { diff, type: stringifyValue(actual), values }
+  return { ...result, diff, values }
 }
 
 /* ========================================================================== */
@@ -208,10 +204,8 @@ function mapDiff<K, V>(
   const result = objectDiff(actual, expected, remarks)
   diff = diff || result.diff
 
-  // return our combined diff
-  return 'type' in result ?
-    { diff, type: result.type, props: result.props, mappings } :
-    { diff, type: stringifyValue(actual), mappings }
+  // done...
+  return { ...result, diff, mappings }
 }
 
 /* ========================================================================== */
@@ -222,7 +216,7 @@ function binaryDiff<T extends Binary>(
     actualData: Buffer,
     expectedData: Buffer,
     remarks: Remarks,
-): ObjectDiff | ErrorDiff | NoDiff {
+): ObjectDiff | ErrorDiff | BaseDiff {
   // make sure that the length of both arrays is the same
   if (actualData.length !== expectedData.length) {
     return errorDiff(actual, `to have length ${expectedData.length} (length=${actualData.length})`)
@@ -261,11 +255,11 @@ function primitiveDiff<T extends BoxedPrimitive>(
     actual: T,
     expected: T,
     remarks: Remarks,
-): ObjectDiff | ValueDiff | NoDiff {
+): ObjectDiff | ValueDiff | BaseDiff {
   if (actual.valueOf() !== expected.valueOf()) {
     return {
       diff: true,
-      actual: actual,
+      value: actual,
       expected: expected,
     }
   }
@@ -298,7 +292,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
   if (expected === null) {
     return {
       diff: true,
-      actual: actual,
+      value: actual,
       expected: null,
     }
   }
@@ -329,7 +323,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
   if (actualType !== expectedType) {
     return {
       diff: true,
-      actual: actual,
+      value: actual,
       expected: expected,
     }
   }
@@ -350,7 +344,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
     case 'undefined':
       return {
         diff: true,
-        actual: actual,
+        value: actual,
         expected: expected,
       }
     // everything else is an object and must be checked
@@ -410,7 +404,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
     checkInstance(Date, (act, exp) =>
       (act.getTime() !== exp.getTime()) ? {
         diff: true,
-        actual: act,
+        value: act,
         expected: exp,
       } : objectDiff(act, exp, remarks)) ||
 
@@ -418,7 +412,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
     checkInstance(RegExp, (act, exp) =>
       ((act.source !== exp.source) || (act.flags !== exp.flags)) ? {
         diff: true,
-        actual: act,
+        value: act,
         expected: exp,
       } : objectDiff(act, exp, remarks)) ||
 
