@@ -26,6 +26,8 @@ export interface State {
   readonly tasks: Tasks
   /** All _properties_ available in this {@link State} */
   readonly props: Props
+  /** All _tasks_ that have failed in this {@link State} */
+  readonly fails: Set<Task>
 }
 
 /* ========================================================================== *
