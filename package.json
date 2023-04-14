@@ -8,7 +8,6 @@
     "workspaces/eslint",
     "workspaces/expect5",
     "workspaces/jasmine",
-    "workspaces/mocha",
     "workspaces/plug",
     "workspaces/tsd",
     "workspaces/typescript",

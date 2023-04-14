@@ -11,7 +11,6 @@ Packages
 * [`@plugjs/eslint`](./workspaces/eslint/README.md): ESLint Support
 * [`@plugjs/expect5`](./workspaces/expect5/README.md): Unit Testing Support
 * [`@plugjs/jasmine`](./workspaces/jasmine/README.md): Jasmine Support
-* [`@plugjs/mocha`](./workspaces/mocha/README.md): Mocha Support
 * [`@plugjs/typescript`](./workspaces/typescript/README.md): TypeScript Support
 * [`@plugjs/zip`](./workspaces/zip/README.md): Zip Files Support
 

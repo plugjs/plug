@@ -16,8 +16,6 @@ module.exports = {
       './workspaces/expect5/test/tsconfig.json',
       './workspaces/jasmine/tsconfig.json',
       './workspaces/jasmine/test/tsconfig.json',
-      './workspaces/mocha/tsconfig.json',
-      './workspaces/mocha/test/tsconfig.json',
       './workspaces/plug/tsconfig.json',
       './workspaces/plug/test/tsconfig.json',
       './workspaces/tsd/tsconfig.json',
