@@ -248,10 +248,26 @@ describe('Expectations Matcher', () => {
       props: {
         foo: {
           diff: true,
+          error: 'Expected [Object] to loosely equal [Object]',
           value: { bar: 300 },
           props: {
             bar: { diff: true, value: 300, expected: 'baz' },
           },
+        },
+      },
+    })
+
+    // nested diff with different error
+    expectFail(() => expect({ foo: { bar: 300 } }).toEqual({
+      foo: expect.toBeA('number'),
+    }), 'Expected [Object] to loosely equal [Object]', {
+      diff: true,
+      value: { foo: { bar: 300 } },
+      props: {
+        foo: {
+          diff: true,
+          error: 'Expected [Object] to be a <number>',
+          value: { bar: 300 },
         },
       },
     })
