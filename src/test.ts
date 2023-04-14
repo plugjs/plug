@@ -30,7 +30,13 @@ export class Test implements Plug<void> {
   constructor(private readonly _options: TestOptions = {}) {}
 
   async pipe(files: Files, context: Context): Promise<void> {
-    const { globals = true } = this._options
+    const {
+      globals = true,
+      genericErrorDiffs = true,
+      maxFailures = Number.POSITIVE_INFINITY,
+    } = this._options
+
+    // Inject globals if we were told to do so...
     if (globals) {
       const anyGlobal = globalThis as any
 
@@ -108,8 +114,11 @@ export class Test implements Plug<void> {
     // Await execution
     const { failed, passed, skipped, failures, time } = await execution.result
 
-    // Dump all failures
-    for (const { source, error, number } of failures) {
+    // Dump all (or a limited number of) failures
+    const limit = Math.min(failures.length, maxFailures)
+    for (let i = 0; i < limit; i ++) {
+      const { source, error, number } = failures[i]!
+
       const names: string[] = [ '' ]
       for (let p = source.parent; p?.parent; p = p.parent) {
         if (p) names.unshift(p.name)
@@ -118,7 +127,7 @@ export class Test implements Plug<void> {
 
       context.log.notice('')
       context.log.enter(ERROR, `${$gry('[')}${$red(number)}${$gry(']:')} ${details}`)
-      dumpError(context.log, error)
+      dumpError(context.log, error, genericErrorDiffs)
       context.log.leave()
     }
 
@@ -139,7 +148,7 @@ export class Test implements Plug<void> {
     if (failed) {
       context.log.error('')
       context.log.error(message)
-      throw new BuildFailure(`${failed} specs failed`)
+      throw new BuildFailure()
     } else if (suite.flag === 'only') {
       context.log.error('')
       context.log.error(message)
@@ -158,7 +167,7 @@ export class Test implements Plug<void> {
  * ERROR REPORTING                                                            *
  * ========================================================================== */
 
-function dumpError(log: Logger, error: any): void {
+function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
   // First and foremost, our own expectation errors
   if (error instanceof ExpectationError) {
     log.enter(ERROR, `${$gry('Expectation Error:')} ${$red(error.message)}`)
@@ -176,11 +185,16 @@ function dumpError(log: Logger, error: any): void {
     try {
       dumpStack(log, error)
 
-      // if this is a generated message ignore all extra lines
-      if (! error.generatedMessage) for (const line of lines) log.error(' ', line)
-
-      // generate and print a diff between actual and expected values
-      printDiff(log, diff(error.actual, error.expected))
+      // If we print diffs from generic errors, we take over
+      if (genericErrorDiffs) {
+        // if this is a generated message ignore all extra lines
+        if (! error.generatedMessage) for (const line of lines) log.error(' ', line)
+        printDiff(log, diff(error.actual, error.expected))
+      } else {
+        // trim initial empty lines
+        while (lines.length && (! lines[0])) lines.shift()
+        for (const line of lines) log.error(' ', line)
+      }
     } finally {
       log.leave()
     }
@@ -194,7 +208,7 @@ function dumpError(log: Logger, error: any): void {
       dumpStack(log, error)
 
       // if there are "actual" or "expected" properties on the error, diff!
-      if (('actual' in error) || ('expected' in error)) {
+      if (genericErrorDiffs && (('actual' in error) || ('expected' in error))) {
         printDiff(log, diff((error as any).actual, (error as any).expected))
       }
     } finally {
