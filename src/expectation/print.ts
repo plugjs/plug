@@ -2,7 +2,7 @@ import { $grn, $gry, $red, $und, $wht, $ylw, type Logger } from '@plugjs/plug/lo
 
 import { stringifyPrimitive, stringifyValue } from './types'
 
-import type { Diff, ExtraValueDiff, MissingValueDiff, BaseDiff, ObjectDiff, ValueDiff } from './diff'
+import type { Diff, ExtraValueDiff, MissingValueDiff, ObjectDiff, ExpectedDiff } from './diff'
 
 /* ========================================================================== *
  * CONSTANT LABELS FOR PRINTING                                               *
@@ -29,17 +29,20 @@ const _diffHeader = `${$wht('Differences')} ${_opnPar}${$red('actual')}${_slash}
  * PRINT DEPENDING ON DIFF TYPE                                               *
  * ========================================================================== */
 
-function print(log: Logger, diff: Diff, prefix: string, mapping: boolean, comma: boolean): void {
-  if ('props' in diff) return printObjectDiff(log, diff, prefix, mapping, comma)
-  if ('values' in diff) return printObjectDiff(log, diff, prefix, mapping, comma)
-  if ('mappings' in diff) return printObjectDiff(log, diff, prefix, mapping, comma)
-  if ('expected' in diff) return printValueDiff(log, diff, prefix, mapping, comma)
-  if ('missing' in diff) return printMissingDiff(log, diff, prefix, mapping, comma)
-  if ('extra' in diff) return printExtraDiff(log, diff, prefix, mapping, comma)
-  return printBaseDiff(log, diff, prefix, mapping, comma)
-}
+function printBaseDiff(
+    log: Logger,
+    diff: Diff,
+    prop: string,
+    mapping: boolean,
+    comma: boolean,
+): void {
+  if ('props' in diff) return printObjectDiff(log, diff, prop, mapping, comma)
+  if ('values' in diff) return printObjectDiff(log, diff, prop, mapping, comma)
+  if ('mappings' in diff) return printObjectDiff(log, diff, prop, mapping, comma)
+  if ('expected' in diff) return printExpectedDiff(log, diff, prop, mapping, comma)
+  if ('missing' in diff) return printMissingDiff(log, diff, prop, mapping, comma)
+  if ('extra' in diff) return printExtraDiff(log, diff, prop, mapping, comma)
 
-function printBaseDiff(log: Logger, diff: BaseDiff, prop: string, mapping: boolean, comma: boolean): void {
   const { prefix, suffix } =
       diff.error ? // default style if error is the only property
           fixups(prop, mapping, comma, diff.error) :
@@ -50,38 +53,64 @@ function printBaseDiff(log: Logger, diff: BaseDiff, prop: string, mapping: boole
   dump(log, diff.value, prefix, suffix, diff.diff ? $red : $wht)
 }
 
-function printValueDiff(log: Logger, diff: ValueDiff, prop: string, mapping: boolean, comma: boolean): void {
+/* ========================================================================== */
+
+function printExpectedDiff(
+    log: Logger,
+    diff: ExpectedDiff,
+    prop: string,
+    mapping: boolean,
+    comma: boolean,
+): void {
   const { prefix, suffix } = fixups(prop, mapping, comma, diff.error)
 
   if ((diff.value === null) || (typeof diff.value !== 'object')) {
-    const joined = `${prefix} ${$red(stringifyPrimitive(diff.value))} ${_tilde} `
+    const joined = `${prefix}${$red(stringifyPrimitive(diff.value))} ${_tilde} `
     dump(log, diff.expected, joined, suffix, $grn)
   } else if ((diff.expected === null) || (typeof diff.expected !== 'object')) {
     const joined = ` ${_tilde} ${$grn(stringifyPrimitive(diff.expected))}${suffix}`
     dump(log, diff.value, prefix, joined, $red)
   } else {
-    const lastLine = dumpToLine(log, diff.expected, prefix, suffix, $red)
+    const lastLine = dumpAndContinue(log, diff.expected, prefix, suffix, $red)
     dump(log, diff.expected, `${lastLine} ${_tilde} `, suffix, $grn)
   }
 }
 
-// function printErrorDiff(log: Logger, diff: ErrorDiff, prop: string, mapping: boolean, comma: boolean): void {
-//   const { prefix, suffix } = fixups(prop, mapping, comma, $ylw, 'error')
-//   const error = `${suffix} ${$ylw(diff.error)}`
-//   dump(log, diff.value, prefix, error, $red)
-// }
+/* ========================================================================== */
 
-function printMissingDiff(log: Logger, diff: MissingValueDiff, prop: string, mapping: boolean, comma: boolean): void {
+function printMissingDiff(
+    log: Logger,
+    diff: MissingValueDiff,
+    prop: string,
+    mapping: boolean,
+    comma: boolean,
+): void {
   const { prefix, suffix } = fixups(prop, mapping, comma, diff.error, $red, 'missing')
   dump(log, diff.missing, prefix, suffix, $red)
 }
 
-function printExtraDiff(log: Logger, diff: ExtraValueDiff, prop: string, mapping: boolean, comma: boolean): void {
+/* ========================================================================== */
+
+function printExtraDiff(
+    log: Logger,
+    diff: ExtraValueDiff,
+    prop: string,
+    mapping: boolean,
+    comma: boolean,
+): void {
   const { prefix, suffix } = fixups(prop, mapping, comma, diff.error, $red, 'extra')
   dump(log, diff.extra, prefix, suffix, $red)
 }
 
-function printObjectDiff(log: Logger, diff: ObjectDiff, prop: string, mapping: boolean, comma: boolean): void {
+/* ========================================================================== */
+
+function printObjectDiff(
+    log: Logger,
+    diff: ObjectDiff,
+    prop: string,
+    mapping: boolean,
+    comma: boolean,
+): void {
   const { prefix, suffix } = fixups(prop, mapping, comma, diff.error)
 
   // prepare for deep inspection
@@ -99,7 +128,7 @@ function printObjectDiff(log: Logger, diff: ObjectDiff, prop: string, mapping: b
     try {
       log.enter()
       for (const subdiff of diff.values) {
-        print(log, subdiff, '', false, true)
+        printBaseDiff(log, subdiff, '', false, true)
       }
     } finally {
       log.leave()
@@ -113,7 +142,7 @@ function printObjectDiff(log: Logger, diff: ObjectDiff, prop: string, mapping: b
     try {
       log.enter()
       for (const [ key, subdiff ] of diff.mappings) {
-        print(log, subdiff, stringifyValue(key), true, true)
+        printBaseDiff(log, subdiff, stringifyValue(key), true, true)
       }
     } finally {
       log.leave()
@@ -129,7 +158,7 @@ function printObjectDiff(log: Logger, diff: ObjectDiff, prop: string, mapping: b
     try {
       log.enter()
       for (const [ prop, subdiff ] of Object.entries(diff.props)) {
-        print(log, subdiff, prop, false, true)
+        printBaseDiff(log, subdiff, prop, false, true)
       }
     } finally {
       log.leave()
@@ -177,11 +206,10 @@ function dump(
     color: (string: string) => string,
     stack: any[] = [],
 ): void {
-  const lastLine = dumpToLine(log, value, prefix, suffix, color, stack)
-  log.warn(lastLine)
+  log.warn(dumpAndContinue(log, value, prefix, suffix, color, stack))
 }
 
-function dumpToLine(
+function dumpAndContinue(
     log: Logger,
     value: any,
     prefix: string,
@@ -304,5 +332,5 @@ function dumpToLine(
 /** Print a {@link Diff} to a log, with a nice header by default... */
 export function printDiff(log: Logger, diff: Diff, header = true): void {
   if (header) log.warn(_diffHeader)
-  print(log, diff, '', false, false)
+  printBaseDiff(log, diff, '', false, false)
 }
