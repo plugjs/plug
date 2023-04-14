@@ -67,7 +67,7 @@ export function includesProps(context: Expectations, negative: boolean, expected
   const type = count === 1 ? 'property' : 'properties'
   throw new ExpectationError(context, negative, `to include ${count} ${type}`, {
     diff: true,
-    type: stringifyValue(actual),
+    value: actual,
     props,
   })
 }
@@ -115,7 +115,7 @@ export function includesValues(context: Expectations, negative: boolean, expecte
   const type = count === 1 ? 'value' : 'values'
   throw new ExpectationError(context, negative, `to include ${count} ${type}`, {
     diff: true,
-    type: stringifyValue(context.value),
+    value: context.value,
     values,
   })
 }
@@ -152,7 +152,7 @@ export function includesMappings(context: Expectations, negative: boolean, expec
   const type = count === 1 ? 'mapping' : 'mappings'
   throw new ExpectationError(context, negative, `to include ${count} ${type}`, {
     diff: true,
-    type: stringifyValue(context.value),
+    value: context.value,
     mappings,
   })
 }
