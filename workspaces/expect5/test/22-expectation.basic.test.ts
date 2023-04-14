@@ -330,7 +330,7 @@ describe('Basic Expectations', () => {
     expectFail(() => expect({}).not.toMatch(/^.*$/), 'Expected [Object] to be a <string>')
   })
 
-  it('should expect "toStrictlyEqual(...)"', () => {
+  it('should expect "toStrictlyEqual(...)" / "toBe(...)"', () => {
     const xx = {}
 
     expectPass(() => expect('').toStrictlyEqual(''))
@@ -340,5 +340,13 @@ describe('Basic Expectations', () => {
     expectFail(() => expect('').not.toStrictlyEqual(''), 'Expected "" not to strictly equal ""')
     expectFail(() => expect(xx).not.toStrictlyEqual(xx), 'Expected [Object] not to strictly equal [Object]')
     expectPass(() => expect(xx).not.toStrictlyEqual({}))
+
+    expectPass(() => expect('').toBe(''))
+    expectPass(() => expect(xx).toBe(xx))
+    expectFail(() => expect(xx).toBe({}), 'Expected [Object] to strictly equal [Object]')
+
+    expectFail(() => expect('').not.toBe(''), 'Expected "" not to strictly equal ""')
+    expectFail(() => expect(xx).not.toBe(xx), 'Expected [Object] not to strictly equal [Object]')
+    expectPass(() => expect(xx).not.toBe({}))
   })
 })
