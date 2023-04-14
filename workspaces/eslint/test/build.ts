@@ -4,29 +4,29 @@ import { assert } from '@plugjs/plug/asserts'
 import { ESLint } from '../src/eslint'
 
 export default build({
-  async test_basic() {
+  async ['basic eslint test']() {
     await find('test.js', { directory: '@/data' })
         .plug(new ESLint())
   },
 
-  async test_warnings() {
+  async ['warnings eslint test']() {
     await find('test.js', { directory: '@/data' })
         .plug(new ESLint('@/data/eslint-warnings.cjs'))
   },
 
-  async test_errors() {
+  async ['errors eslint test']() {
     await find('test-multiline.js', { directory: '@/data' })
         .plug(new ESLint({ configFile: '@/data/eslint-errors.cjs' }))
         .then(() => assert(false, 'This should throw'), () => void 0)
   },
 
-  async test_failure() {
+  async ['failure eslint test']() {
     await find('test.js', { directory: '@/data' })
         .plug(new ESLint({ configFile: '@/data/eslint-failure.cjs', directory: '@/data' }))
         .then(() => assert(false, 'This should throw'), () => void 0)
   },
 
-  async test_install() {
+  async ['install eslint test']() {
     const pipe1 = merge([])
     assert(typeof pipe1.eslint === 'undefined', 'ESLint already installed')
     await import('../src/index')
@@ -35,10 +35,10 @@ export default build({
   },
 
   async ['eslint test'](): Promise<void> {
-    await this.test_basic()
-    await this.test_warnings()
-    await this.test_errors()
-    await this.test_failure()
-    await this.test_install()
+    await this['basic eslint test']()
+    await this['warnings eslint test']()
+    await this['errors eslint test']()
+    await this['failure eslint test']()
+    await this['install eslint test']()
   },
 })
