@@ -3,7 +3,7 @@ import { fork } from 'node:child_process'
 import { assert, BuildFailure } from './asserts'
 import { runAsync } from './async'
 import { Files } from './files'
-import { $gry, $p, logOptions } from './logging'
+import { $gry, $p, $red, logOptions } from './logging'
 import { requireFilename, resolveFile } from './paths'
 import { Context, install } from './pipe'
 
@@ -158,6 +158,16 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
  * for the message and respond once the plug returns _something_!
  */
 if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
+  /* Unhandled exceptions and graceful termination */
+  process.on('uncaughtException', (error, origin) => {
+    // eslint-disable-next-line no-console
+    console.error(
+        $red('\n= UNCAUGHT EXCEPTION ========================================='),
+        `\nError (${origin}):`, error,
+        `\nNode.js ${process.version} (pid=${process.pid})\n`)
+    process.nextTick(() => process.exit(3))
+  })
+
   /* If we haven't processed our message in 5 seconds, fail _badly_ */
   const timeout = setTimeout(() => {
     // eslint-disable-next-line no-console
@@ -228,20 +238,18 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
     promise.then(() => {
       context.log.debug('Forked plug exiting')
       process.disconnect()
-
+      process.exitCode = 0
+    }, (error) => {
+      // eslint-disable-next-line no-console
+      console.log('\n\nError sending message back to parent process', error)
+      process.exitCode = 1
+    }).finally(() => {
       /* Set a timeout _forcefully_ killing the process in 5 seconds */
       setTimeout(() => {
         // eslint-disable-next-line no-console
         console.log('\n\nProcess %d for %s did not exit in 5 seconds', process.pid, exportName)
         process.exit(2)
       }, 5000).unref()
-
-      /* Set the process exit code and let node exit gracefully */
-      process.exitCode = 0
-    }, (error) => {
-      // eslint-disable-next-line no-console
-      console.log('\n\nError sending message back to parent process', error)
-      process.exit(1)
     })
   })
 }
