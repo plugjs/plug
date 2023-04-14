@@ -331,6 +331,13 @@ function dumpAndContinue(
 
 /** Print a {@link Diff} to a log, with a nice header by default... */
 export function printDiff(log: Logger, diff: Diff, header = true): void {
-  if (header) log.warn(_diffHeader)
-  printBaseDiff(log, diff, '', false, false)
+  if (! header) return printBaseDiff(log, diff, '', false, false)
+
+  log.warn(_diffHeader)
+  log.enter()
+  try {
+    printBaseDiff(log, diff, '', false, false)
+  } finally {
+    log.leave()
+  }
 }
