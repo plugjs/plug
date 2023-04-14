@@ -4,7 +4,7 @@
 import { AssertionError } from 'node:assert'
 
 import { BuildFailure } from '@plugjs/plug'
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, log, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 
 import { skip, Suite } from './execution/executable'
 import { runSuite } from './execution/executor'
@@ -56,6 +56,7 @@ export class Test implements Plug<void> {
       anyGlobal['xbeforeEach'] = setup.xbeforeEach
       anyGlobal['skip'] = skip
       anyGlobal['expect'] = expect
+      anyGlobal['log'] = log
     }
 
     // Create our _root_ Suite
