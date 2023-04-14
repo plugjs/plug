@@ -12,6 +12,8 @@ module.exports = {
       './workspaces/cov8/test/tsconfig.json',
       './workspaces/eslint/tsconfig.json',
       './workspaces/eslint/test/tsconfig.json',
+      './workspaces/expect5/tsconfig.json',
+      './workspaces/expect5/test/tsconfig.json',
       './workspaces/jasmine/tsconfig.json',
       './workspaces/jasmine/test/tsconfig.json',
       './workspaces/mocha/tsconfig.json',

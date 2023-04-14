@@ -36,6 +36,7 @@ const workspaces = [
   'workspaces/plug', // this _must_ be the first
   'workspaces/cov8',
   'workspaces/eslint',
+  'workspaces/expect5',
   'workspaces/jasmine',
   'workspaces/mocha',
   'workspaces/tsd',
@@ -58,6 +59,7 @@ const workspaceExports: Record<typeof workspaces[number], [ string, ...string[] 
   ],
   'workspaces/cov8': [ 'index.*', 'coverage.*' ],
   'workspaces/eslint': [ 'index.*', 'eslint.*' ],
+  'workspaces/expect5': [ 'index.*', 'globals.*', 'test.*' ],
   'workspaces/jasmine': [ 'index.*', 'jasmine.*' ],
   'workspaces/mocha': [ 'index.*', 'mocha.*' ],
   'workspaces/tsd': [ 'index.*', 'tsd.*' ],

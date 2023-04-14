@@ -9,6 +9,8 @@
       "@plugjs/cov8/*": [ "workspaces/cov8/src/*" ],
       "@plugjs/eslint": [ "workspaces/eslint/src" ],
       "@plugjs/eslint/*": [ "workspaces/eslint/src/*" ],
+      "@plugjs/expect5": [ "workspaces/expect5/src" ],
+      "@plugjs/expect5/*": [ "workspaces/expect5/src/*" ],
       "@plugjs/jasmine": [ "workspaces/jasmine/src" ],
       "@plugjs/jasmine/*": [ "workspaces/jasmine/src/*" ],
       "@plugjs/mocha": [ "workspaces/mocha/src" ],
