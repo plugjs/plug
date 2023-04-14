@@ -1,5 +1,5 @@
 /* eslint-disable no-new-wrappers */
-import { log } from '@plugjs/plug'
+import { context } from '@plugjs/plug'
 
 import { diff, type Diff } from '../src/expectation/diff'
 import { printDiff } from '../src/expectation/print'
@@ -10,7 +10,7 @@ describe('Diff Printer', () => {
   }
 
   function print(diff: Diff, header = false): void {
-    const logger = log.logger
+    const logger = context().log
     try {
       logger.enter()
       printDiff(logger, diff, header)

@@ -1,7 +1,6 @@
 import assert from 'node:assert'
 
-import { log } from '@plugjs/plug'
-
+import { requireContext } from '../../plug/src/async'
 import { ExpectationError } from '../src/expectation/types'
 import { printDiff } from '../src/expectation/print'
 
@@ -24,7 +23,7 @@ export function expectFail(expectation: () => void, message: string, diff?: Diff
     if ((! diff) && thrown.diff) assert.deepEqual(thrown.diff, diff, 'Error diff missing')
 
     if (thrown.diff) {
-      const logger = log.logger
+      const logger = requireContext().log
       try {
         logger.enter()
         printDiff(logger, thrown.diff, true)
