@@ -11,13 +11,13 @@ describe('Tsd', () => {
   })
 
   it('should fail including failing tests', async () => {
-    await expectAsync(find('**/*.test-d.ts', { directory: '@/data' })
+    await expect(find('**/*.test-d.ts', { directory: '@/data' })
         .plug(new Tsd({ cwd: '@/data', typingsFile: '@/data/index.d.ts' })))
         .toBeRejectedWithError(BuildFailure)
   })
 
   it('should fail with an incorrect typings file', async () => {
-    await expectAsync(find('**/*.test-d.ts', { directory: '@/data' })
+    await expect(find('**/*.test-d.ts', { directory: '@/data' })
         .plug(new Tsd({ cwd: '@/data', typingsFile: '@/data/does-not-exist.d.ts' })))
         .toBeRejectedWithError(Error, /The type definition `does-not-exist.d.ts` does not exist/)
   })
