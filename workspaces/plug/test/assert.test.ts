@@ -19,6 +19,7 @@ describe('Assertions', () => {
     const error2 = new Error('Error number two')
 
     const failure = BuildFailure.withErrors([ error1, error2 ])
+
     expect(failure).toBeInstanceOf(BuildFailure)
     expect(isBuildFailure(failure)).toBeTrue
     expect(failure.message).toBe('')
@@ -45,10 +46,11 @@ describe('Assertions', () => {
     const pX = Promise.reject(error1)
     const pY = Promise.reject(error2)
 
-    await expectAsync(assertPromises([ p1, p2 ])).toBeResolvedTo([ 'foo', 'bar' ])
+    const result = await assertPromises([ p1, p2 ])
+    expect(result).toEqual([ 'foo', 'bar' ])
 
     const promise = assertPromises([ p1, p2, pX, pY ])
-    await expectAsync(promise).toBeRejected()
+    await expect(promise).toBeRejected()
 
     const failure = await promise.catch((error) => error)
     expect(failure).toBeInstanceOf(BuildFailure)

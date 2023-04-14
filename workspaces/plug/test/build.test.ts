@@ -136,7 +136,7 @@ describe('Build Invocation', () => {
     expect(after2Calls).toEqual(1)
     expect(after3Calls).toEqual(1)
 
-    expect(calls).toEqual(jasmine.arrayWithExactContents([
+    expect(calls).toEqual([
       '_before1',
       '_before2',
       '_before3',
@@ -144,20 +144,20 @@ describe('Build Invocation', () => {
       '_after1',
       '_after2',
       '_after3',
-    ]))
+    ])
   })
 
   it('should fail with an invalid task name', async () => {
     const tasks = build({ myTask: () => void 0 })
 
-    await expectAsync((<any> tasks)[buildMarker]([ 'wrongTask' as any ]))
+    await expect((<any> tasks)[buildMarker]([ 'wrongTask' as any ]))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
   it('should fail when a task fails', async () => {
     const tasks = build({ myTask: () => Promise.reject(new Error('Foo!')) })
 
-    await expectAsync((<any> tasks)[buildMarker]([ 'myTask' ]))
+    await expect((<any> tasks)[buildMarker]([ 'myTask' ]))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
@@ -174,7 +174,7 @@ describe('Build Invocation', () => {
       },
     })
 
-    await expectAsync((<any> tasks)[buildMarker]([ 'task1' ]))
+    await expect((<any> tasks)[buildMarker]([ 'task1' ]))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
@@ -188,7 +188,7 @@ describe('Build Invocation', () => {
 
     hookBefore(tasks, 'task', [ 'hook' ])
 
-    await expectAsync(tasks.task())
+    await expect(tasks.task())
         .toBeRejectedWithError(BuildFailure)
     expect(taskCalls).toEqual(0)
   })
@@ -208,7 +208,7 @@ describe('Build Invocation', () => {
 
     hookAfter(tasks, 'task', [ 'hook' ])
 
-    await expectAsync(tasks.default())
+    await expect(tasks.default())
         .toBeRejectedWithError(BuildFailure)
     expect(taskCalls).toEqual(1)
     expect(defaultCalls).toEqual(0)
@@ -225,7 +225,7 @@ describe('Build Invocation', () => {
     hookBefore(tasks, '_task2', [ '_task3' ])
     hookBefore(tasks, '_task3', [ '_task1' ])
 
-    await expectAsync(tasks._task1())
+    await expect(tasks._task1())
         .toBeRejectedWithError(BuildFailure, /Recursion detected/)
   })
 
@@ -240,7 +240,7 @@ describe('Build Invocation', () => {
     hookAfter(tasks, '_task2', [ '_task3' ])
     hookAfter(tasks, '_task3', [ '_task1' ])
 
-    await expectAsync(tasks._task1())
+    await expect(tasks._task1())
         .toBeRejectedWithError(BuildFailure, /Recursion detected/)
   })
 
@@ -248,6 +248,6 @@ describe('Build Invocation', () => {
     const context1 = currentContext()
     const context2 = requireContext()
     expect(context1).toBe(context2)
-    expect(runningTasks()).toContain(context2.taskName)
+    expect(runningTasks()).toInclude([ context2.taskName ])
   })
 })

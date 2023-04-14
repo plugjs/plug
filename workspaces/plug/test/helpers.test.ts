@@ -26,19 +26,19 @@ describe('Helpers Test', () => {
 
   it('should create an empty pipe', async () => {
     const pipe1 = noop()
-    expect(pipe1.plug).toEqual(jasmine.any(Function))
+    expect(pipe1.plug).toBeA('function')
     const files1 = await pipe1
     expect(files1.length).toBe(0)
     expect(files1.directory).toBe(resolve('.'))
 
     const pipe2 = merge([])
-    expect(pipe2.plug).toEqual(jasmine.any(Function))
+    expect(pipe2.plug).toBeA('function')
     const files2 = await pipe2
     expect(files2.length).toBe(0)
     expect(files2.directory).toBe(resolve('.'))
 
     const pipe3 = merge([ new Files(resolve('@')) ])
-    expect(pipe3.plug).toEqual(jasmine.any(Function))
+    expect(pipe3.plug).toBeA('function')
     const files3 = await pipe2
     expect(files3.length).toBe(0)
     expect(files3.directory).toBe(resolve('.'))
@@ -63,18 +63,18 @@ describe('Helpers Test', () => {
     expect(files.directory).not.toEqual(files2.directory)
     expect(files.directory).toEqual(resolve('@/..'))
 
-    expect([ ...files.absolutePaths() ]).toEqual(jasmine.arrayWithExactContents([
+    expect([ ...files.absolutePaths() ]).toEqual([
       ...files1.absolutePaths(),
       ...files2.absolutePaths(),
-    ]))
+    ])
   })
 
   it('should execute a process', async () => {
-    await expectAsync(exec('true')).toBeResolved()
-    await expectAsync(exec('false')).toBeRejected()
+    await expect(exec('true')).toBeResolved()
+    await expect(exec('false')).toBeRejected()
 
-    await expectAsync(exec('exit 0')).toBeRejected() // sans shell
-    await expectAsync(exec('exit 0', { shell: true })).toBeResolved() // with shell
-    await expectAsync(exec('exit 1', { shell: true })).toBeRejected() // with shell
+    await expect(exec('exit 0')).toBeRejected() // sans shell
+    await expect(exec('exit 0', { shell: true })).toBeResolved() // with shell
+    await expect(exec('exit 1', { shell: true })).toBeRejected() // with shell
   })
 })

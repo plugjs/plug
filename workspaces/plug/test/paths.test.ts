@@ -87,7 +87,7 @@ describe('Paths Utilities', () => {
         .toBe(resolveAbsolutePath(buildDir, '..', 'src', 'index.ts'))
 
     // straight up modules!
-    expect(requireResolve(buildFile, 'typescript')).toEqual(jasmine.any(String))
+    expect(requireResolve(buildFile, 'typescript')).toBeA('string')
     expect(() => requireResolve(buildFile, '@plugjs/this-does-not-exist'))
         .toThrowError(/@plugjs\/this-does-not-exist/)
   })

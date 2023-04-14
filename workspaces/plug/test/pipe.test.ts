@@ -173,7 +173,7 @@ describe('Pipes and Context', () => {
           throw new Error('No way, Jose!')
         })
 
-    await expectAsync(promise).toBeRejectedWithError(BuildFailure as any, 'Unable to extend pipe')
+    await expect(promise).toBeRejectedWithError(BuildFailure as any, 'Unable to extend pipe')
     expect(calls).toEqual([ 'downgrade' ])
   })
 })
