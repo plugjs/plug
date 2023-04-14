@@ -125,8 +125,8 @@ function printObjectDiff(
   // arrays or sets
   if (diff.values) {
     log.warn(`${line}${_opnSqr}`)
+    log.enter()
     try {
-      log.enter()
       for (const subdiff of diff.values) {
         printBaseDiff(log, subdiff, '', false, true)
       }
@@ -139,8 +139,8 @@ function printObjectDiff(
   // values and mappings (arrays/sets/maps) are mutually exclusive
   } else if (diff.mappings) {
     log.warn(`${line}${_opnCrl}`)
+    log.enter()
     try {
-      log.enter()
       for (const [ key, subdiff ] of diff.mappings) {
         printBaseDiff(log, subdiff, stringifyValue(key), true, true)
       }
@@ -155,8 +155,8 @@ function printObjectDiff(
   if (diff.props) {
     if (marked) line = `${line} ${_extraProps} `
     log.warn(`${line}${_opnCrl}`)
+    log.enter()
     try {
-      log.enter()
       for (const [ prop, subdiff ] of Object.entries(diff.props)) {
         printBaseDiff(log, subdiff, prop, false, true)
       }
@@ -244,8 +244,8 @@ function dumpAndContinue(
       line = `${line}${_squares}`
     } else {
       log.warn(`${line}${_opnSqr}`)
+      log.enter()
       try {
-        log.enter()
         for (let i = 0; i < value.length; i ++) {
           const { prefix, suffix } = fixups('', false, true, undefined, color)
           dump(log, value[i], prefix, suffix, color, [ ...stack, value ])
@@ -264,8 +264,8 @@ function dumpAndContinue(
       line = `${line}${_squares}`
     } else {
       log.warn(`${line}${_opnSqr}`)
+      log.enter()
       try {
-        log.enter()
         const { prefix, suffix } = fixups('', false, true, undefined, color)
         value.forEach((v) => dump(log, v, prefix, suffix, color, [ ...stack, value ]))
       } finally {
@@ -281,8 +281,8 @@ function dumpAndContinue(
       line = `${line}${_curls}`
     } else {
       log.warn(`${line}${_opnCrl}`)
+      log.enter()
       try {
-        log.enter()
         for (const [ key, subvalue ] of value) {
           const { prefix, suffix } = fixups(stringifyValue(key), true, true, undefined, color)
           dump(log, subvalue, prefix, suffix, color, [ ...stack, value ])
@@ -305,8 +305,8 @@ function dumpAndContinue(
   if (keys.size) {
     if (marked) line = `${line} ${_extraProps} `
     log.warn(`${line}${_opnCrl}`)
+    log.enter()
     try {
-      log.enter()
       for (const key of keys) {
         const { prefix, suffix } = fixups(stringifyValue(key), false, true, undefined, color)
         dump(log, value[key], prefix, suffix, color, [ ...stack, value ])
