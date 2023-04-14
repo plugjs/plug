@@ -63,6 +63,7 @@ implements ts.CompilerHost {
       fileName
   }
 
+  /* coverage ignore next */
   /** Return the new line sequence used by this platform */
   getNewLine(): string {
     return ts.sys.newLine
