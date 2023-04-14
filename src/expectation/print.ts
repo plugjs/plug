@@ -2,7 +2,7 @@ import { $grn, $gry, $red, $und, $wht, $ylw, type Logger } from '@plugjs/plug/lo
 
 import { stringifyPrimitive, stringifyValue } from './types'
 
-import type { Diff, ErrorDiff, ExtraValueDiff, MissingValueDiff, NoDiff, ObjectDiff, ValueDiff } from './diff'
+import type { Diff, ErrorDiff, ExtraValueDiff, MissingValueDiff, BaseDiff, ObjectDiff, ValueDiff } from './diff'
 
 export function printDiff(log: Logger, diff: Diff, header = true): void {
   if (header) {
@@ -16,28 +16,32 @@ export function printDiff(log: Logger, diff: Diff, header = true): void {
  * ========================================================================== */
 
 function print(log: Logger, diff: Diff, prefix: string, mapping: boolean, comma: boolean): void {
-  if ('type' in diff) return printObjectDiff(log, diff, prefix, mapping, comma) // TODO: remove me!
+  if ('props' in diff) return printObjectDiff(log, diff, prefix, mapping, comma)
+  if ('values' in diff) return printObjectDiff(log, diff, prefix, mapping, comma)
+  if ('mappings' in diff) return printObjectDiff(log, diff, prefix, mapping, comma)
   if ('error' in diff) return printErrorDiff(log, diff, prefix, mapping, comma)
   if ('expected' in diff) return printValueDiff(log, diff, prefix, mapping, comma)
   if ('missing' in diff) return printMissingDiff(log, diff, prefix, mapping, comma)
   if ('extra' in diff) return printExtraDiff(log, diff, prefix, mapping, comma)
-  return printNoDiff(log, diff, prefix, mapping, comma)
+  return printBaseDiff(log, diff, prefix, mapping, comma)
 }
 
-function printNoDiff(log: Logger, diff: NoDiff, prop: string, mapping: boolean, comma: boolean): void {
-  const { prefix, suffix } = fixups(prop, mapping, comma)
-  dump(log, diff.value, prefix, suffix, $wht)
+function printBaseDiff(log: Logger, diff: BaseDiff, prop: string, mapping: boolean, comma: boolean): void {
+  const { prefix, suffix } = diff.diff ?
+      fixups(prop, mapping, comma, $red, 'differs') :
+      fixups(prop, mapping, comma)
+  dump(log, diff.value, prefix, suffix, diff.diff ? $red : $wht)
 }
 
 function printValueDiff(log: Logger, diff: ValueDiff, prop: string, mapping: boolean, comma: boolean): void {
   const { prefix, filler, suffix } = fixups(prop, mapping, comma)
 
-  if ((diff.actual === null) || (typeof diff.actual !== 'object')) {
-    const joined = `${prefix} ${$red(stringifyPrimitive(diff.actual))} ${$gry('~')} `
+  if ((diff.value === null) || (typeof diff.value !== 'object')) {
+    const joined = `${prefix} ${$red(stringifyPrimitive(diff.value))} ${$gry('~')} `
     dump(log, diff.expected, joined, suffix, $grn)
   } else if ((diff.expected === null) || (typeof diff.expected !== 'object')) {
     const joined = ` ${$gry('~')} ${$grn(stringifyPrimitive(diff.expected))}${suffix}`
-    dump(log, diff.actual, prefix, joined, $red)
+    dump(log, diff.value, prefix, joined, $red)
   } else {
     dump(log, diff.expected, prefix, `${suffix} ${$gry('~')}`, $red)
     dump(log, diff.expected, `${$gry('~')} ${filler}`, suffix, $grn)
@@ -63,7 +67,13 @@ function printExtraDiff(log: Logger, diff: ExtraValueDiff, prop: string, mapping
 function printObjectDiff(log: Logger, diff: ObjectDiff, prop: string, mapping: boolean, comma: boolean): void {
   const { prefix, suffix } = fixups(prop, mapping, comma)
 
-  let line = `${prefix}${$wht(diff.type)}`
+  // prepare for deep inspection
+  const value = diff.value
+  const ctor = Object.getPrototypeOf(value)?.constructor
+  const string = (ctor === Object) || (ctor === Array) ? '' : stringifyValue(value)
+
+  // prepare first line of output
+  let line = string ? `${prefix}${$wht(string)} ` : prefix
   let marked = false
 
   // arrays or sets
@@ -77,7 +87,7 @@ function printObjectDiff(log: Logger, diff: ObjectDiff, prop: string, mapping: b
     } finally {
       log.leave()
     }
-    line = $gry('] ')
+    line = $gry(']')
     marked = true
 
   // values and mappings (arrays/sets/maps) are mutually exclusive
@@ -91,7 +101,7 @@ function printObjectDiff(log: Logger, diff: ObjectDiff, prop: string, mapping: b
     } finally {
       log.leave()
     }
-    line = $gry('} ')
+    line = $gry('}')
     marked = true
   }
 
@@ -107,7 +117,7 @@ function printObjectDiff(log: Logger, diff: ObjectDiff, prop: string, mapping: b
     } finally {
       log.leave()
     }
-    line = $gry('} ')
+    line = $gry('}')
     marked = true
   }
 
@@ -238,7 +248,7 @@ function dump(
 
   // extra properties might appear at any time...
   if (keys.size) {
-    if (marked) line = `${line}${$gry(' \u2026 extra props \u2026 ')}`
+    if (marked) line = `${line} ${$gry('\u2026 extra props \u2026')} `
     log.warn(`${line}${$gry('{')}`)
     try {
       log.enter()
