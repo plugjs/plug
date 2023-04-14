@@ -22,7 +22,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect({ a: 'foo' }).toInclude({ a: 'foo', b: 123 }),
           'Expected [Object] to include 1 property', {
             diff: true,
-            type: '[Object]',
+            value: { a: 'foo' },
             props: {
               b: {
                 diff: true,
@@ -34,11 +34,11 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect({ a: 'foo', b: 123 }).toInclude({ a: 'foo', b: 'bar' }),
           'Expected [Object] to include 1 property', {
             diff: true,
-            type: '[Object]',
+            value: { a: 'foo', b: 123 },
             props: {
               b: {
                 diff: true,
-                actual: 123,
+                value: 123,
                 expected: 'bar',
               },
             },
@@ -47,11 +47,11 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect({ a: 'foo', b: undefined }).toInclude({ a: 'foo', b: 123 }),
           'Expected [Object] to include 1 property', {
             diff: true,
-            type: '[Object]',
+            value: { a: 'foo', b: undefined },
             props: {
               b: {
                 diff: true,
-                actual: undefined,
+                value: undefined,
                 expected: 123,
               },
             },
@@ -60,11 +60,11 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect({ a: 'foo', b: 123 }).toInclude({ a: 'foo', b: undefined }),
           'Expected [Object] to include 1 property', {
             diff: true,
-            type: '[Object]',
+            value: { a: 'foo', b: 123 },
             props: {
               b: {
                 diff: true,
-                actual: 123,
+                value: 123,
                 expected: undefined,
               },
             },
@@ -75,21 +75,21 @@ describe('Inclusion Expectations', () => {
               .toInclude({ o: { a: 'bar' }, a: [ 123, false ], c: { x: 123 } }),
           'Expected [Object] to include 2 properties', {
             diff: true,
-            type: '[Object]',
+            value: { o: { a: 'foo' }, a: [ 123, true ], c: { x: 123 } },
             props: {
               a: {
                 diff: true,
-                type: '[Array (2)]',
+                value: [ 123, true ],
                 values: [
                   { diff: false, value: 123 },
-                  { diff: true, actual: true, expected: false },
+                  { diff: true, value: true, expected: false },
                 ],
               },
               o: {
                 diff: true,
-                type: '[Object]',
+                value: { a: 'foo' },
                 props: {
-                  a: { diff: true, actual: 'foo', expected: 'bar' },
+                  a: { diff: true, value: 'foo', expected: 'bar' },
                 },
               },
             },
@@ -102,7 +102,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect({ a: 'foo', b: 123 }).not.toInclude({ a: 'foo', b: 123 }),
           'Expected [Object] not to include 2 properties', {
             diff: true,
-            type: '[Object]',
+            value: { a: 'foo', b: 123 },
             props: {
               a: {
                 diff: true,
@@ -118,7 +118,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect({ a: 'foo', b: undefined }).not.toInclude({ a: 'foo', b: undefined }),
           'Expected [Object] not to include 2 properties', {
             diff: true,
-            type: '[Object]',
+            value: { a: 'foo', b: undefined },
             props: {
               a: {
                 diff: true,
@@ -134,7 +134,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect({ a: 'foo', b: 123 }).not.toInclude({ a: true, b: true }),
           'Expected [Object] not to include 2 properties', {
             diff: true,
-            type: '[Object]',
+            value: { a: 'foo', b: 123 },
             props: {
               a: {
                 diff: true,
@@ -178,7 +178,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect(map({ a: 'foo' })).toInclude(map({ a: 'foo', b: 123 })),
           'Expected [Map (1)] to include 1 mapping', {
             diff: true,
-            type: '[Map (1)]',
+            value: map({ a: 'foo' }),
             mappings: [
               [ 'b', { diff: true, missing: 123 } ],
             ],
@@ -187,27 +187,27 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect(map({ a: 'foo', b: 123 })).toInclude(map({ a: 'foo', b: 'bar' })),
           'Expected [Map (2)] to include 1 mapping', {
             diff: true,
-            type: '[Map (2)]',
+            value: map({ a: 'foo', b: 123 }),
             mappings: [
-              [ 'b', { diff: true, actual: 123, expected: 'bar' } ],
+              [ 'b', { diff: true, value: 123, expected: 'bar' } ],
             ],
           })
 
       expectFail(() => expect(map({ a: 'foo', b: undefined })).toInclude(map({ a: 'foo', b: 123 })),
           'Expected [Map (2)] to include 1 mapping', {
             diff: true,
-            type: '[Map (2)]',
+            value: map({ a: 'foo', b: undefined }),
             mappings: [
-              [ 'b', { diff: true, actual: undefined, expected: 123 } ],
+              [ 'b', { diff: true, value: undefined, expected: 123 } ],
             ],
           })
 
       expectFail(() => expect(map({ a: 'foo', b: 123 })).toInclude(map({ a: 'foo', b: undefined })),
           'Expected [Map (2)] to include 1 mapping', {
             diff: true,
-            type: '[Map (2)]',
+            value: map({ a: 'foo', b: 123 }),
             mappings: [
-              [ 'b', { diff: true, actual: 123, expected: undefined } ],
+              [ 'b', { diff: true, value: 123, expected: undefined } ],
             ],
           })
 
@@ -216,21 +216,21 @@ describe('Inclusion Expectations', () => {
               .toInclude(map({ o: { a: 'bar' }, a: [ 123, false ], c: { x: 123 } })),
           'Expected [Map (3)] to include 2 mappings', {
             diff: true,
-            type: '[Map (3)]',
+            value: map({ o: { a: 'foo' }, a: [ 123, true ], c: { x: 123 } }),
             mappings: [
               [ 'o', {
                 diff: true,
-                type: '[Object]',
+                value: { a: 'foo' },
                 props: {
-                  a: { diff: true, actual: 'foo', expected: 'bar' },
+                  a: { diff: true, value: 'foo', expected: 'bar' },
                 },
               } ],
               [ 'a', {
                 diff: true,
-                type: '[Array (2)]',
+                value: [ 123, true ],
                 values: [
                   { diff: false, value: 123 },
-                  { diff: true, actual: true, expected: false },
+                  { diff: true, value: true, expected: false },
                 ],
               } ],
             ],
@@ -243,7 +243,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect(map({ a: 'foo', b: 123 })).not.toInclude(map({ a: 'foo', b: 123 })),
           'Expected [Map (2)] not to include 2 mappings', {
             diff: true,
-            type: '[Map (2)]',
+            value: map({ a: 'foo', b: 123 }),
             mappings: [
               [ 'a', { diff: true, extra: 'foo' } ],
               [ 'b', { diff: true, extra: 123 } ],
@@ -253,7 +253,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect(map({ a: 'foo', b: undefined })).not.toInclude(map({ a: 'foo', b: undefined })),
           'Expected [Map (2)] not to include 2 mappings', {
             diff: true,
-            type: '[Map (2)]',
+            value: map({ a: 'foo', b: undefined }),
             mappings: [
               [ 'a', { diff: true, extra: 'foo' } ],
               [ 'b', { diff: true, extra: undefined } ],
@@ -263,7 +263,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect(map({ a: 'foo', b: 123 })).not.toInclude(map({ a: true, b: true })),
           'Expected [Map (2)] not to include 2 mappings', {
             diff: true,
-            type: '[Map (2)]',
+            value: map({ a: 'foo', b: 123 }),
             mappings: [
               [ 'a', {
                 diff: true,
@@ -291,7 +291,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect(map({ a: 'foo' })).toInclude({ a: 'foo', b: 123 }),
           'Expected [Map (1)] to include 1 mapping', {
             diff: true,
-            type: '[Map (1)]',
+            value: map({ a: 'foo' }),
             mappings: [
               [ 'b', { diff: true, missing: 123 } ],
             ],
@@ -301,7 +301,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect(map({ a: 'foo', b: 123 })).not.toInclude({ a: 'foo', b: 123 }),
           'Expected [Map (2)] not to include 2 mappings', {
             diff: true,
-            type: '[Map (2)]',
+            value: map({ a: 'foo', b: 123 }),
             mappings: [
               [ 'a', {
                 diff: true,
@@ -328,7 +328,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect([ 1, 2, 3, 4 ]).toInclude([ 5, 6 ]),
           'Expected [Array (4)] to include 2 values', {
             diff: true,
-            type: '[Array (4)]',
+            value: [ 1, 2, 3, 4 ],
             values: [
               { diff: true, missing: 5 },
               { diff: true, missing: 6 },
@@ -342,7 +342,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect(new Set([ 1, 2, 3, 4 ])).toInclude(new Set([ 5 ])),
           'Expected [Set (4)] to include 1 value', {
             diff: true,
-            type: '[Set (4)]',
+            value: new Set([ 1, 2, 3, 4 ]),
             values: [ { diff: true, missing: 5 } ],
           })
     })
@@ -353,7 +353,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect([ 1, 2, 3, 4 ]).not.toInclude([ 1, 2 ]),
           'Expected [Array (4)] not to include 2 values', {
             diff: true,
-            type: '[Array (4)]',
+            value: [ 1, 2, 3, 4 ],
             values: [
               { diff: true, extra: 1 },
               { diff: true, extra: 2 },
@@ -367,7 +367,7 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect(new Set([ 1, 2, 3, 4 ])).not.toInclude(new Set([ 1 ])),
           'Expected [Set (4)] not to include 1 value', {
             diff: true,
-            type: '[Set (4)]',
+            value: new Set([ 1, 2, 3, 4 ]),
             values: [ { diff: true, extra: 1 } ],
           })
     })

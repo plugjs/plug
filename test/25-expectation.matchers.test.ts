@@ -82,7 +82,7 @@ describe('Expectations Matcher', () => {
     expectFail(() => expect.toBeWithinRange(100, 200).expect(300), 'Expected 300 to be within 100...200')
     expectFail(() => expect.toEqual({ a: 'foo' }).expect({ b: 'bar' }), 'Expected [Object] to loosely equal [Object]', {
       diff: true,
-      type: '[Object]',
+      value: { b: 'bar' },
       props: {
         a: { diff: true, missing: 'foo' },
         b: { diff: true, extra: 'bar' },
@@ -124,7 +124,7 @@ describe('Expectations Matcher', () => {
     expectFail(() => expect.not.toBeWithinRange(100, 200).expect(150), 'Expected 150 not to be within 100...200')
     expectFail(() => expect.not.toEqual({ a: 'foo' }).expect({ a: 'foo' }), 'Expected [Object] not to loosely equal [Object]', {
       diff: false,
-      type: '[Object]',
+      value: { a: 'foo' },
       props: {
         a: { diff: false, value: 'foo' },
       },
@@ -229,7 +229,7 @@ describe('Expectations Matcher', () => {
       foo: expect.toBeA('number').toBeLessThan(200),
     }), 'Expected [Object] to loosely equal [Object]', {
       diff: true,
-      type: '[Object]',
+      value: { foo: 300 },
       props: {
         foo: {
           diff: true,
@@ -244,13 +244,13 @@ describe('Expectations Matcher', () => {
       foo: expect.toEqual({ bar: 'baz' }),
     }), 'Expected [Object] to loosely equal [Object]', {
       diff: true,
-      type: '[Object]',
+      value: { foo: { bar: 300 } },
       props: {
         foo: {
           diff: true,
-          type: '[Object]',
+          value: { bar: 300 },
           props: {
-            bar: { diff: true, actual: 300, expected: 'baz' },
+            bar: { diff: true, value: 300, expected: 'baz' },
           },
         },
       },

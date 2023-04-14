@@ -108,7 +108,7 @@ describe('Diff Printer', () => {
 
   /* ======================================================================== */
 
-  describe('no diff', () => {
+  describe('base diff', () => {
     it('should print the difference between two equal primitives', () => {
       print(diff(123, 123))
     })
@@ -136,7 +136,11 @@ describe('Diff Printer', () => {
     })
 
     it('should print the difference between two empty objects', () => {
-      print({ diff: false, type: '[Object]' }) // edge case
+      print({ diff: false, value: {} }) // edge case
+    })
+
+    it('should print the difference without known changes', () => {
+      print({ diff: true, value: { foo: 'bar' } }) // edge case
     })
 
     it('should print the difference between two equal arrays with extra properties', () => {
@@ -190,11 +194,11 @@ describe('Diff Printer', () => {
     })
 
     it('should print the difference between two different objects (3)', () => {
-      print({ diff: true, actual: { foo: 'bar' }, expected: { baz: 123 } }) // edge case
+      print({ diff: true, value: { foo: 'bar' }, expected: { baz: 123 } }) // edge case
     })
 
     it('should print the difference between two different objects (4)', () => {
-      print({ diff: true, actual: map({ foo: 'bar' }), expected: new Set([ 1 ]) }) // edge case
+      print({ diff: true, value: map({ foo: 'bar' }), expected: new Set([ 1 ]) }) // edge case
     })
 
     it('should print the difference between two different arrays', () => {

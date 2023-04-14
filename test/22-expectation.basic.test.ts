@@ -183,14 +183,14 @@ describe('Basic Expectations', () => {
     })
     expectFail(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'bar' }), 'Expected [Object] not to loosely equal [Object]', {
       diff: false,
-      type: '[Object]',
+      value: { foo: 'bar' },
       props: {
         foo: { diff: false, value: 'bar' },
       },
     })
     expectFail(() => expect([ 'foo', 'bar' ]).not.toEqual([ 'foo', 'bar' ]), 'Expected [Array (2)] not to loosely equal [Array (2)]', {
       diff: false,
-      type: '[Array (2)]',
+      value: [ 'foo', 'bar' ],
       values: [
         { diff: false, value: 'foo' },
         { diff: false, value: 'bar' },
@@ -199,17 +199,17 @@ describe('Basic Expectations', () => {
 
     expectFail(() => expect('foo').toEqual('bar'), 'Expected "foo" to loosely equal "bar"', {
       diff: true,
-      actual: 'foo',
+      value: 'foo',
       expected: 'bar',
     })
 
     expectFail(() => expect({ foo: 'bar' }).toEqual({ foo: 'baz' }), 'Expected [Object] to loosely equal [Object]', {
       diff: true,
-      type: '[Object]',
+      value: { foo: 'bar' },
       props: {
         foo: {
           diff: true,
-          actual: 'bar',
+          value: 'bar',
           expected: 'baz',
         },
       },
@@ -217,10 +217,10 @@ describe('Basic Expectations', () => {
 
     expectFail(() => expect([ 'foo', 'bar' ]).toEqual([ 'foo', 'baz' ]), 'Expected [Array (2)] to loosely equal [Array (2)]', {
       diff: true,
-      type: '[Array (2)]',
+      value: [ 'foo', 'bar' ],
       values: [
         { diff: false, value: 'foo' },
-        { diff: true, actual: 'bar', expected: 'baz' },
+        { diff: true, value: 'bar', expected: 'baz' },
       ],
     })
   })

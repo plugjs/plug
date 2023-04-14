@@ -26,7 +26,7 @@ describe('Differences', () => {
 
     deepEqual(diff('foo', null), {
       diff: true,
-      actual: 'foo',
+      value: 'foo',
       expected: null,
     })
   })
@@ -34,20 +34,20 @@ describe('Differences', () => {
   it('should consider different value types', () => {
     deepEqual(diff(123, 'foo'), {
       diff: true,
-      actual: 123,
+      value: 123,
       expected: 'foo',
     })
 
     const e = new SyntaxError('Test')
     deepEqual(diff(e, false), {
       diff: true,
-      actual: e,
+      value: e,
       expected: false,
     })
 
     deepEqual(diff(123n, 123), {
       diff: true,
-      actual: 123n,
+      value: 123n,
       expected: 123,
     })
   })
@@ -55,19 +55,19 @@ describe('Differences', () => {
   it('should consider numbers (including NaN)', () => {
     deepEqual(diff(123, 321), {
       diff: true,
-      actual: 123,
+      value: 123,
       expected: 321,
     })
 
     deepEqual(diff(NaN, 321), {
       diff: true,
-      actual: NaN,
+      value: NaN,
       expected: 321,
     })
 
     deepEqual(diff(123, NaN), {
       diff: true,
-      actual: 123,
+      value: 123,
       expected: NaN,
     })
 
@@ -80,7 +80,7 @@ describe('Differences', () => {
   it('should consider bigints', () => {
     deepEqual(diff(123n, 321n), {
       diff: true,
-      actual: 123n,
+      value: 123n,
       expected: 321n,
     })
   })
@@ -88,7 +88,7 @@ describe('Differences', () => {
   it('should consider booleans', () => {
     deepEqual(diff(true, false), {
       diff: true,
-      actual: true,
+      value: true,
       expected: false,
     })
   })
@@ -99,7 +99,7 @@ describe('Differences', () => {
 
     deepEqual(diff(act, exp), {
       diff: true,
-      actual: act,
+      value: act,
       expected: exp,
     })
   })
@@ -107,7 +107,7 @@ describe('Differences', () => {
   it('should consider strings', () => {
     deepEqual(diff('foo', 'bar'), {
       diff: true,
-      actual: 'foo',
+      value: 'foo',
       expected: 'bar',
     })
   })
@@ -121,11 +121,11 @@ describe('Differences', () => {
     const sfb = Symbol.for('b')
     const sf = Symbol.for('a') // same as for "a"
 
-    deepEqual(diff(s1, s2), { diff: true, actual: s1, expected: s2 })
-    deepEqual(diff(sa, sb), { diff: true, actual: sa, expected: sb })
-    deepEqual(diff(sfa, sfb), { diff: true, actual: sfa, expected: sfb })
-    deepEqual(diff(sa, sfa), { diff: true, actual: sa, expected: sfa })
-    deepEqual(diff(sfb, sb), { diff: true, actual: sfb, expected: sb })
+    deepEqual(diff(s1, s2), { diff: true, value: s1, expected: s2 })
+    deepEqual(diff(sa, sb), { diff: true, value: sa, expected: sb })
+    deepEqual(diff(sfa, sfb), { diff: true, value: sfa, expected: sfb })
+    deepEqual(diff(sa, sfa), { diff: true, value: sa, expected: sfa })
+    deepEqual(diff(sfb, sb), { diff: true, value: sfb, expected: sb })
     deepEqual(diff(sfa, sf), { diff: false, value: sfa })
     deepEqual(diff(sf, sfa), { diff: false, value: sfa })
   })
@@ -152,7 +152,7 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: false,
-        type: '[Object]',
+        value: act,
         props: {
           a: {
             diff: false,
@@ -178,7 +178,7 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: false,
-        type: '[Object]',
+        value: act,
         props: {
           a: {
             diff: false,
@@ -206,21 +206,21 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: true,
-        type: '[Object]',
+        value: act,
         props: {
           a: {
             diff: true,
-            actual: true,
+            value: true,
             expected: null,
           },
           b: {
             diff: true,
-            actual: 123,
+            value: 123,
             expected: 321,
           },
           c: {
             diff: true,
-            actual: 'foo',
+            value: 'foo',
             expected: false,
           },
         },
@@ -233,16 +233,16 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: true,
-        type: '[Object]',
+        value: act,
         props: {
           a: {
             diff: true,
-            actual: true,
+            value: true,
             expected: null,
           },
           b: {
             diff: true,
-            actual: 123,
+            value: 123,
             expected: 321,
           },
           c: {
@@ -265,21 +265,21 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: true,
-        type: '[Object]',
+        value: act,
         props: {
           a: {
             diff: true,
-            actual: true,
+            value: true,
             expected: null,
           },
           b: {
             diff: true,
-            actual: 123,
+            value: 123,
             expected: 321,
           },
           c: {
             diff: true,
-            actual: 'foo',
+            value: 'foo',
             expected: false,
           },
           cycle: {
@@ -298,21 +298,21 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: true,
-        type: '[Object]',
+        value: act,
         props: {
           a: {
             diff: true,
-            actual: true,
+            value: true,
             expected: null,
           },
           b: {
             diff: true,
-            actual: 123,
+            value: 123,
             expected: 321,
           },
           c: {
             diff: true,
-            actual: 'foo',
+            value: 'foo',
             expected: false,
           },
           cycle_act: {
@@ -333,7 +333,7 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: false,
-        type: '[Object]',
+        value: act,
         props: {
           a: {
             diff: false,
@@ -361,9 +361,10 @@ describe('Differences', () => {
         }
       }
 
-      deepEqual(diff(new Act('bar'), new Exp('bar')), {
+      const act = new Act('bar')
+      deepEqual(diff(act, new Exp('bar')), {
         diff: false,
-        type: '[Act]',
+        value: act,
         props: {
           foo: {
             diff: false,
@@ -372,13 +373,13 @@ describe('Differences', () => {
         },
       })
 
-      deepEqual(diff(new Act('bar'), new Exp('baz')), {
+      deepEqual(diff(act, new Exp('baz')), {
         diff: true,
-        type: '[Act]',
+        value: act,
         props: {
           foo: {
             diff: true,
-            actual: 'bar',
+            value: 'bar',
             expected: 'baz',
           },
         },
@@ -391,7 +392,7 @@ describe('Differences', () => {
 
       deepEqual(diff(act, { foo: 'bar' }), {
         diff: false,
-        type: '[Object]',
+        value: act,
         props: {
           foo: {
             diff: false,
@@ -402,7 +403,7 @@ describe('Differences', () => {
 
       deepEqual(diff({ foo: 'bar' }, exp), {
         diff: false,
-        type: '[Object]',
+        value: { foo: 'bar' },
         props: {
           foo: {
             diff: false,
@@ -422,7 +423,7 @@ describe('Differences', () => {
     it('should diff two equal arrays', () => {
       deepEqual(diff([ 1, true, 'foo' ], [ 1, true, 'foo' ]), {
         diff: false,
-        type: '[Array (3)]',
+        value: [ 1, true, 'foo' ],
         values: [
           { diff: false, value: '1' },
           { diff: false, value: true },
@@ -434,11 +435,11 @@ describe('Differences', () => {
     it('should diff two arrays with different contents', () => {
       deepEqual(diff([ 1, true, 'foo' ], [ 2, false, 'bar' ]), {
         diff: true,
-        type: '[Array (3)]',
+        value: [ 1, true, 'foo' ],
         values: [
-          { diff: true, actual: 1, expected: 2 },
-          { diff: true, actual: true, expected: false },
-          { diff: true, actual: 'foo', expected: 'bar' },
+          { diff: true, value: 1, expected: 2 },
+          { diff: true, value: true, expected: false },
+          { diff: true, value: 'foo', expected: 'bar' },
         ],
       })
     })
@@ -449,7 +450,7 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: false,
-        type: '[Array (3)]',
+        value: act,
         props: {
           foo: { diff: false, value: 'bar' },
         },
@@ -463,9 +464,9 @@ describe('Differences', () => {
       act.foo = 'baz'
       deepEqual(diff(act, exp), {
         diff: true,
-        type: '[Array (3)]',
+        value: act,
         props: {
-          foo: { diff: true, actual: 'baz', expected: 'bar' },
+          foo: { diff: true, value: 'baz', expected: 'bar' },
         },
         values: [
           { diff: false, value: 1 },
@@ -513,19 +514,19 @@ describe('Differences', () => {
     it('should diff two differing boxed primitives', () => {
       deepEqual(diff(new Boolean(true), new Boolean(false)), {
         diff: true,
-        actual: new Boolean(true),
+        value: new Boolean(true),
         expected: new Boolean(false),
       })
 
       deepEqual(diff(new Number(123), new Number(321)), {
         diff: true,
-        actual: new Number(123),
+        value: new Number(123),
         expected: new Number(321),
       })
 
       deepEqual(diff(new String('foo'), new String('bar')), {
         diff: true,
-        actual: new String('foo'),
+        value: new String('foo'),
         expected: new String('bar'),
       })
     })
@@ -537,7 +538,7 @@ describe('Differences', () => {
 
       deepEqual(diff(act1, exp1), {
         diff: false,
-        type: '[String: "hello"]',
+        value: act1,
         props: {
           foo: { diff: false, value: 'bar' },
         },
@@ -545,11 +546,11 @@ describe('Differences', () => {
 
       deepEqual(diff(act1, exp2), {
         diff: true,
-        type: '[String: "hello"]',
+        value: act1,
         props: {
           foo: {
             diff: true,
-            actual: 'bar',
+            value: 'bar',
             expected: 'baz',
           },
         },
@@ -557,7 +558,7 @@ describe('Differences', () => {
 
       deepEqual(diff(act1, new String('hello')), {
         diff: true,
-        type: '[String: "hello"]',
+        value: act1,
         props: {
           foo: {
             diff: true,
@@ -568,7 +569,7 @@ describe('Differences', () => {
 
       deepEqual(diff(new String('hello'), exp1), {
         diff: true,
-        type: '[String: "hello"]',
+        value: new String('hello'),
         props: {
           foo: {
             diff: true,
@@ -815,13 +816,13 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp1), {
         diff: true,
-        actual: act,
+        value: act,
         expected: exp1,
       })
 
       deepEqual(diff(act, exp2), {
         diff: true,
-        actual: act,
+        value: act,
         expected: exp2,
       })
     })
@@ -854,7 +855,7 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: true,
-        actual: act,
+        value: act,
         expected: exp,
       })
     })
@@ -898,7 +899,7 @@ describe('Differences', () => {
 
           deepEqual(diff(aact, aexp), {
             diff: false,
-            type: `[${Ctor.name}]`,
+            value: aact,
             values,
           })
         })
@@ -913,13 +914,13 @@ describe('Differences', () => {
 
           const values = new Array(length).fill({
             diff: true,
-            actual: aact[0],
+            value: aact[0],
             expected: aexp[0],
           })
 
           deepEqual(diff(aact, aexp), {
             diff: true,
-            type: `[${Ctor.name}]`,
+            value: aact,
             values,
           })
         })
@@ -938,12 +939,12 @@ describe('Differences', () => {
 
           deepEqual(diff(aact, aexp), {
             diff: true,
-            type: `[${Ctor.name}]`,
+            value: aact,
             values,
             props: {
               foo: {
                 diff: true,
-                actual: 'bar',
+                value: 'bar',
                 expected: 'baz',
               },
             },
@@ -960,14 +961,14 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: false,
-        type: '[Set (4)]',
+        value: act,
         values: [
           { diff: false, value: '1' },
           { diff: false, value: true },
           { diff: false, value: 'foo' },
           {
             diff: false,
-            type: '[Object]',
+            value: { hello: 'world' },
             props: {
               hello: {
                 diff: false,
@@ -985,7 +986,7 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: true,
-        type: '[Set (4)]',
+        value: act,
         values: [
           { diff: false, value: 1 },
           { diff: true, extra: true },
@@ -1021,11 +1022,11 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: true,
-        type: '[Set (4)]',
+        value: act,
         props: {
           foo: {
             diff: true,
-            actual: 'bar',
+            value: 'bar',
             expected: 'baz',
           },
         },
@@ -1035,7 +1036,7 @@ describe('Differences', () => {
           { diff: false, value: 'foo' },
           {
             diff: false,
-            type: '[Object]',
+            value: { hello: 'world' },
             props: {
               hello: {
                 diff: false,
@@ -1056,7 +1057,7 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: false,
-        type: '[Map (2)]',
+        value: act,
         mappings: [
           [ key, { diff: false, value: 123 } ],
           [ 'bar', { diff: false, value: true } ],
@@ -1071,11 +1072,11 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: true,
-        type: '[Map (3)]',
+        value: act,
         mappings: [
-          [ key, { diff: true, actual: 123, expected: 321 } ],
+          [ key, { diff: true, value: 123, expected: 321 } ],
           [ 'foo', { diff: true, extra: 'baz' } ],
-          [ 'bar', { diff: true, actual: true, expected: false } ],
+          [ 'bar', { diff: true, value: true, expected: false } ],
           [ 'baz', { diff: true, missing: 'foo' } ],
         ],
       })
@@ -1087,7 +1088,7 @@ describe('Differences', () => {
 
       deepEqual(diff(map1, map0), {
         diff: true,
-        type: '[Map (1)]',
+        value: map1,
         mappings: [
           [ 'foo', { diff: true, extra: 'bar' } ],
         ],
@@ -1095,7 +1096,7 @@ describe('Differences', () => {
 
       deepEqual(diff(map0, map1), {
         diff: true,
-        type: '[Map (0)]',
+        value: map0,
         mappings: [
           [ 'foo', { diff: true, missing: 'bar' } ],
         ],
@@ -1109,9 +1110,9 @@ describe('Differences', () => {
 
       deepEqual(diff(act, exp), {
         diff: true,
-        type: '[Map (2)]',
+        value: act,
         props: {
-          hello: { diff: true, actual: 'world', expected: 'planet' },
+          hello: { diff: true, value: 'world', expected: 'planet' },
         },
         mappings: [
           [ key, { diff: false, value: 123 } ],
