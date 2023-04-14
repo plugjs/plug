@@ -123,6 +123,9 @@ const ForkingESLint = class extends fork.ForkingPlug {
 export default build({
   workspace: '',
 
+  // pad task names, as we run sub builds with long names
+  _1234567890_1234567890_1234567890: () => void 0,
+
   /* ======================================================================== *
    * TRANSPILATION                                                            *
    * ======================================================================== */
