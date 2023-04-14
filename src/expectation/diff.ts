@@ -3,36 +3,32 @@ import { ExpectationError, isMatcher, stringifyConstructor, stringifyValue } fro
 
 import type { Constructor } from './types'
 
-export interface BaseDiff {
+export interface AbstractDiff {
   diff: boolean,
+  error?: string,
+}
+
+export interface BaseDiff extends AbstractDiff {
   value: any,
 }
 
-export interface ValueDiff {
+export interface ValueDiff extends BaseDiff {
   diff: true,
-  value: any,
   expected: any,
 }
 
-export interface ErrorDiff {
-  diff: true,
-  value: any,
-  error: any,
-}
-
-export interface ExtraValueDiff {
+export interface ExtraValueDiff extends AbstractDiff {
   diff: true,
   extra: any,
 }
 
-export interface MissingValueDiff {
+export interface MissingValueDiff extends AbstractDiff {
   diff: true,
   missing: any,
 }
 
-export interface ObjectDiff {
+export interface ObjectDiff extends BaseDiff {
   diff: boolean,
-  value: any,
   props?: Record<string, Diff>,
   values?: Diff[],
   mappings?: [ any, Diff ][]
@@ -41,7 +37,6 @@ export interface ObjectDiff {
 export type Diff =
   | BaseDiff
   | ValueDiff
-  | ErrorDiff
   | ObjectDiff
   | ExtraValueDiff
   | MissingValueDiff
@@ -56,7 +51,7 @@ type Remarks = { actualMemos: any[], expectedMemos: any[] }
 
 /* ========================================================================== */
 
-function errorDiff(value: any, message: string): ErrorDiff {
+function errorDiff(value: any, message: string): BaseDiff {
   const error = `Expected ${stringifyValue(value)} ${message}`
   return { diff: true, value, error }
 }
@@ -106,7 +101,7 @@ function arrayDiff<T extends Record<number, any> & { length: number }>(
     actual: T,
     expected: T,
     remarks: Remarks,
-): ObjectDiff | ErrorDiff {
+): ObjectDiff {
   // make sure that the length of both arrays is the same
   if (actual.length !== expected.length) {
     return errorDiff(actual, `to have length ${expected.length} (length=${actual.length})`)
@@ -139,7 +134,7 @@ function setDiff<T>(
     actual: Set<T>,
     expected: Set<T>,
     remarks: Remarks,
-): ObjectDiff | ErrorDiff {
+): ObjectDiff {
   // make sure that the size of both sets is the same
   if (actual.size !== expected.size) {
     return errorDiff(actual, `to have size ${expected.size} (size=${actual.size})`)
@@ -179,7 +174,7 @@ function mapDiff<K, V>(
     actual: Map<K, V>,
     expected: Map<K, V>,
     remarks: Remarks,
-): ObjectDiff | ErrorDiff {
+): ObjectDiff {
   // check mappings
   let diff = false
   const mappings: [ any, Diff ][] = []
@@ -216,7 +211,7 @@ function binaryDiff<T extends Binary>(
     actualData: Buffer,
     expectedData: Buffer,
     remarks: Remarks,
-): ObjectDiff | ErrorDiff | BaseDiff {
+): ObjectDiff | BaseDiff {
   // make sure that the length of both arrays is the same
   if (actualData.length !== expectedData.length) {
     return errorDiff(actual, `to have length ${expectedData.length} (length=${actualData.length})`)
@@ -304,7 +299,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
       return { diff: false, value: actual }
     } catch (error) {
       if (error instanceof ExpectationError) {
-        return error.diff ? error.diff : {
+        return error.diff ? { ...error.diff, error: error.message } : {
           diff: true,
           value: actual,
           error: error.message,
