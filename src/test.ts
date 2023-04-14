@@ -8,9 +8,11 @@ import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN } from '@p
 
 import { skip, Suite } from './execution/executable'
 import { runSuite } from './execution/executor'
-import * as setup from './execution/setup'
 import { expect } from './expectation/expect'
-import { ExpectationError } from './expectation/types'
+import { ExpectationError, stringifyObjectType } from './expectation/types'
+import { printDiff } from './expectation/print'
+import { diff } from './expectation/diff'
+import * as setup from './execution/setup'
 
 import type { Files } from '@plugjs/plug/files'
 import type { Logger } from '@plugjs/plug/logging'
@@ -157,27 +159,52 @@ export class Test implements Plug<void> {
  * ========================================================================== */
 
 function dumpError(log: Logger, error: any): void {
-  if (error instanceof AssertionError) {
-    const [ message = 'Unknown Error', ...lines ] = error.message.split('\n')
-    log.enter(ERROR, `${$gry('Assertion Error:')} ${$red(message)}`)
-    dumpStack(log, error)
-    while (lines.length && (! lines[0])) lines.shift()
-    for (const line of lines) log.error(' ', line)
-    log.leave()
-    return
-  }
-
+  // First and foremost, our own expectation errors
   if (error instanceof ExpectationError) {
     log.enter(ERROR, `${$gry('Expectation Error:')} ${$red(error.message)}`)
-    dumpStack(log, error)
-    if (error.diff) {
-      log.error(`  ${$wht('Differences')} ${$gry('(')}${$red('actual')}${$gry('/')}${$grn('expected')}${$gry('/')}${$ylw('errors')}${$gry(')')}:`)
+    try {
+      dumpStack(log, error)
+      if (error.diff) printDiff(log, error.diff)
+    } finally {
+      log.leave()
     }
-    log.leave()
-    return
-  }
 
-  log.error(error)
+  // Assertion errors are another kind of exception we support
+  } else if (error instanceof AssertionError) {
+    const [ message = 'Unknown Error', ...lines ] = error.message.split('\n')
+    log.enter(ERROR, `${$gry('Assertion Error:')} ${$red(message)}`)
+    try {
+      dumpStack(log, error)
+
+      // if this is a generated message ignore all extra lines
+      if (! error.generatedMessage) for (const line of lines) log.error(' ', line)
+
+      // generate and print a diff between actual and expected values
+      printDiff(log, diff(error.actual, error.expected))
+    } finally {
+      log.leave()
+    }
+
+  // Any other error also gets printed somewhat nicely
+  } else if (error instanceof Error) {
+    const message = error.message || 'Unknown Error'
+    const type = stringifyObjectType(error)
+    log.enter(ERROR, `${$gry(type)}: ${$red(message)}`)
+    try {
+      dumpStack(log, error)
+
+      // if there are "actual" or "expected" properties on the error, diff!
+      if (('actual' in error) || ('expected' in error)) {
+        printDiff(log, diff((error as any).actual, (error as any).expected))
+      }
+    } finally {
+      log.leave()
+    }
+
+  // Anthing else just gets dumped out...
+  } else {
+    log.error($gry('Uknown error:'), error)
+  }
 }
 
 function dumpStack(log: Logger, error: Error): void {
