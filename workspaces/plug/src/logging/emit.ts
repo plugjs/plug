@@ -42,8 +42,8 @@ export type LogEmitter = (options: LogEmitterOptions, args: any[]) => void
 
 /** Emit in full colors! */
 export const emitColor: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
-  const { taskName, level, prefix, indent } = options
-  const logPrefix = prefix ? prefix : indent ? ''.padStart(indent * _indentSize) : ''
+  const { taskName, level, prefix = '', indent = 0 } = options
+  const logPrefix = ''.padStart(indent * _indentSize) + prefix
 
   /* Prefixes, to prepend at the beginning of each line */
   const prefixes: string[] = []
@@ -85,8 +85,8 @@ export const emitColor: LogEmitter = (options: LogEmitterOptions, args: any[]): 
 
 /** Emit in plain text! (no colors) */
 export const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
-  const { taskName, level, prefix, indent } = options
-  const logPrefix = prefix ? prefix : indent ? ''.padStart(indent * _indentSize) : ''
+  const { taskName, level, prefix = '', indent = 0 } = options
+  const logPrefix = ''.padStart(indent * _indentSize) + prefix
 
   const prefixes: string[] = []
 

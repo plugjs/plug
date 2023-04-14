@@ -3,6 +3,7 @@ import { emitColor, emitPlain } from './emit'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
 import { ReportImpl } from './report'
+import { $gry } from './colors'
 
 import type { LogEmitter, LogEmitterOptions } from './emit'
 import type { LogLevel } from './levels'
@@ -198,8 +199,17 @@ class LoggerImpl implements Logger {
 
   report(title: string): Report {
     const emitter: LogEmitter = (options: LogEmitterOptions, args: any) => {
-      const indent = (this._indent ? this._indent + 1 : 0) + (options.indent || 0)
-      this._emitter({ ...options, indent }, args)
+      if (this._stack.length) {
+        for (const { message, ...extras } of this._stack) {
+          this._emitter({ ...options, ...extras }, [ message ])
+        }
+        this._stack.splice(0)
+      }
+
+      let { indent = 0, prefix = '' } = options
+      prefix = this._indent ? $gry('| ') + prefix : prefix
+      indent += this._indent
+      this._emitter({ ...options, indent, prefix }, args)
     }
     return new ReportImpl(title, this._task, emitter)
   }
