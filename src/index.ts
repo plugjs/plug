@@ -6,8 +6,8 @@ import { requireResolve } from '@plugjs/plug/paths'
  * ========================================================================== */
 
 export {
-  describe, fdescribe, xdescribe,
   it, fit, xit,
+  describe, fdescribe, xdescribe,
   afterAll, afterEach, xafterAll, xafterEach,
   beforeAll, beforeEach, xbeforeAll, xbeforeEach,
 } from './execution/setup'
@@ -22,11 +22,18 @@ export { expect } from './expectation/expect'
 export interface TestOptions {
   /** Specify the directory where coverage data will be saved */
   coverageDir?: string,
+  /** Report up to the specified amount of failures (default: `+Infinity`) */
+  maxFailures?: number,
   /**
-   * Specify whether globals (`describe`, `it`, `expect`, ...) will be
+   * Specify whether the variables (`describe`, `it`, `expect`, ...) will be
    * exposed as _global_ variables to tests or not (default: `true`)
    */
   globals?: boolean,
+  /**
+   * Print differences between expected and actual values from generic errors
+   * (e.g. `AssertionError` or _Chai_ expectations) (default: `true`)
+   */
+  genericErrorDiffs?: boolean,
 }
 
 declare module '@plugjs/plug' {
