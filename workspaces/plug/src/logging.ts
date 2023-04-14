@@ -32,10 +32,6 @@ export const log: LogFunction = ((): LogFunction => {
 
   /* Create a Logger wrapping the current logger */
   const wrapper: Log = {
-    get logger() {
-      return logger()
-    },
-
     trace(...args: [ any, ...any ]): void {
       logger().trace(...args)
     },

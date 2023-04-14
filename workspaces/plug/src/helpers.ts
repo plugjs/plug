@@ -13,6 +13,7 @@ import { execChild } from './utils/exec'
 import { parseOptions } from './utils/options'
 import { walk } from './utils/walk'
 
+import type { Context } from './pipe'
 import type { Pipe } from './index'
 import type { AbsolutePath } from './paths'
 import type { ExecChildOptions } from './utils/exec'
@@ -27,6 +28,11 @@ import type { WalkOptions } from './utils/walk'
 export interface FindOptions extends WalkOptions {
   /** The directory where to start looking for files. */
   directory?: string
+}
+
+/** Return the current execution {@link Context} */
+export function context(): Context {
+  return requireContext()
 }
 
 /** Find files in the current directory using the specified _glob_. */

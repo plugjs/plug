@@ -1,7 +1,6 @@
 import { Writable } from 'node:stream'
 
-import { BuildFailure } from '@plugjs/plug'
-
+import { BuildFailure } from '../../src'
 import { getLogger, logLevels } from '../../src/logging.js'
 import { logOptions } from '../../src/logging/options.js'
 import { zapSpinner } from '../../src/logging/spinner.js'
