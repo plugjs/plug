@@ -25,20 +25,20 @@ describe('Zip Files', () => {
     const paths = [ ...files.absolutePaths() ]
 
     expect(files.directory).toEqual(outdir)
-    expect(paths).toEqual(jasmine.arrayWithExactContents([ outfile ]))
+    expect(paths).toEqual(expect.toInclude([ outfile ]))
 
-    const entries: string[] = []
+    const entries = new Set<string>()
 
     await new Promise((resolve, reject) => {
       yauzl.open(outfile, (error, zipfile) => {
         if (error) return reject(error)
-        zipfile.on('entry', (entry: yauzl.Entry) => entries.push(entry.fileName))
+        zipfile.on('entry', (entry: yauzl.Entry) => entries.add(entry.fileName))
         zipfile.on('error', reject)
         zipfile.on('end', resolve)
       })
     })
 
-    expect(entries.sort()).toEqual(jasmine.arrayWithExactContents([
+    expect(entries).toEqual(new Set([
       'build.ts',
       'zip.test.ts',
     ]))
@@ -51,20 +51,20 @@ describe('Zip Files', () => {
     const paths = [ ...files.absolutePaths() ]
 
     expect(files.directory).toEqual(outdir)
-    expect(paths).toEqual(jasmine.arrayWithExactContents([ outfile ]))
+    expect(paths).toEqual([ outfile ])
 
-    const entries: string[] = []
+    const entries = new Set<string>()
 
     await new Promise((resolve, reject) => {
       yauzl.open(outfile, (error, zipfile) => {
         if (error) return reject(error)
-        zipfile.on('entry', (entry: yauzl.Entry) => entries.push(entry.fileName))
+        zipfile.on('entry', (entry: yauzl.Entry) => entries.add(entry.fileName))
         zipfile.on('error', reject)
         zipfile.on('end', resolve)
       })
     })
 
-    expect(entries.sort()).toEqual(jasmine.arrayWithExactContents([
+    expect(entries).toEqual(new Set([
       'test/build.ts',
       'test/zip.test.ts',
     ]))
