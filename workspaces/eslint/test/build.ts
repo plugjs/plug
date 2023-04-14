@@ -29,7 +29,6 @@ export default build({
   async test_install() {
     const pipe1 = merge([])
     assert(typeof pipe1.eslint === 'undefined', 'ESLint already installed')
-    // @ts-ignore
     await import('../src/index')
     const pipe2 = merge([])
     assert(typeof pipe2.eslint === 'function', 'ESLint not installed')

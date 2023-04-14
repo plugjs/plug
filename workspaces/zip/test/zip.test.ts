@@ -73,7 +73,6 @@ describe('Zip Files', () => {
   it('should install the "zip" plug', async () => {
     const pipe1 = merge([])
     assert(typeof pipe1.zip === 'undefined', 'Zip already installed')
-    // @ts-ignore
     await import('../src/index')
     const pipe2 = merge([])
     assert(typeof pipe2.zip === 'function', 'Zip not installed')

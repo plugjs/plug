@@ -21,7 +21,6 @@ export default build({
   async test_install() {
     const pipe1 = merge([])
     assert(typeof pipe1.mocha === 'undefined', 'Mocha already installed')
-    // @ts-ignore
     await import('../src/index')
     const pipe2 = merge([])
     assert(typeof pipe2.mocha === 'function', 'Mocha not installed')

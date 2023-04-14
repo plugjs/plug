@@ -157,14 +157,13 @@ export default build({
         'b/two.js',
       ].sort())
     } finally {
-      // await rmrf(dir)
+      await rmrf(dir)
     }
   },
 
   async test_install() {
     const pipe1 = merge([])
     assert(typeof pipe1.tsc === 'undefined', 'Typescript already installed')
-    // @ts-ignore
     await import('../src/index')
     const pipe2 = merge([])
     assert(typeof pipe2.tsc === 'function', 'Typescript not installed')

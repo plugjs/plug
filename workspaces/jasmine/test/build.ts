@@ -20,7 +20,6 @@ export default build({
   async test_install() {
     const pipe1 = merge([])
     assert(typeof pipe1.jasmine === 'undefined', 'Jasmine already installed')
-    // @ts-ignore
     await import('../src/index')
     const pipe2 = merge([])
     assert(typeof pipe2.jasmine === 'function', 'Jasmine not installed')
