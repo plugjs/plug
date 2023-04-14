@@ -15,7 +15,7 @@ export default build({
     assert(typeof pipe2.test === 'function', 'Expect5 not installed')
   },
 
-  async test(): Promise<void> {
+  async ['expect5 test'](): Promise<void> {
     await this['self expect5 test']()
     await this['install expect5 test']()
   },

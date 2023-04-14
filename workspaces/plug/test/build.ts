@@ -5,7 +5,7 @@ import { requireResolve } from '../src/paths'
 export default build({
   find_tests: () => find('**/*.test.([cm])?ts', { directory: '@', ignore: '**/*.d.ts' }),
 
-  async test() {
+  async ['plug test']() {
     const jasmineScript = requireResolve(__fileurl, '../../jasmine/src/jasmine')
 
     const ForkingJasmine = class extends ForkingPlug {

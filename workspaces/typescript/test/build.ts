@@ -173,7 +173,7 @@ export default build({
     await find('options.test.ts', { directory: '@' }).jasmine()
   },
 
-  async test(): Promise<void> {
+  async ['typescript test'](): Promise<void> {
     await this.test_outfile()
 
     await this.test_simple()

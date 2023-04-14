@@ -92,7 +92,7 @@ export default build({
     assert(typeof pipe2.coverage === 'function', 'Cov8 not installed')
   },
 
-  async test(): Promise<void> {
+  async ['cov8 test'](): Promise<void> {
     await rmrf(this.coverageDir)
 
     await this.test_no_files()

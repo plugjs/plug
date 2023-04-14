@@ -30,7 +30,7 @@ export default build({
     await find('notfound.test.ts', { directory: '@' }).plug(new Jasmine())
   },
 
-  async test(): Promise<void> {
+  async ['jasmine test'](): Promise<void> {
     await this.test_asserts().then(() => assert(false, 'Should not pass'), () => void 0)
     await this.test_reporter().then(() => assert(false, 'Should not pass'), () => void 0)
     await this.test_nospecs().then(() => assert(false, 'Should not pass'), () => void 0)

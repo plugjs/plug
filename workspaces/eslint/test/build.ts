@@ -34,7 +34,7 @@ export default build({
     assert(typeof pipe2.eslint === 'function', 'ESLint not installed')
   },
 
-  async test(): Promise<void> {
+  async ['eslint test'](): Promise<void> {
     await this.test_basic()
     await this.test_warnings()
     await this.test_errors()

@@ -26,7 +26,7 @@ export default build({
     assert(typeof pipe2.mocha === 'function', 'Mocha not installed')
   },
 
-  async test(): Promise<void> {
+  async ['mocha test'](): Promise<void> {
     await this.test_reporter()
     await this.test_setup()
     await this.test_failure()

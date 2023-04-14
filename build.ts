@@ -258,7 +258,8 @@ export default build({
         try {
           banner(`${mode.toUpperCase()} Tests (${workspace})`)
 
-          await exec(resolve('@/bootstrap/plug.mjs'), `--force-${mode}`, '-f', buildFile, 'test', {
+          const task = `${workspace.substring(11)} test`
+          await exec(resolve('@/bootstrap/plug.mjs'), `--force-${mode}`, '-f', buildFile, task, {
             coverageDir: '.coverage-data',
             fork: true,
           })
