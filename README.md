@@ -10,7 +10,6 @@ Packages
 * [`@plugjs/cov8`](./workspaces/cov8/README.md): V8 Coverage Support
 * [`@plugjs/eslint`](./workspaces/eslint/README.md): ESLint Support
 * [`@plugjs/expect5`](./workspaces/expect5/README.md): Unit Testing Support
-* [`@plugjs/jasmine`](./workspaces/jasmine/README.md): Jasmine Support
 * [`@plugjs/typescript`](./workspaces/typescript/README.md): TypeScript Support
 * [`@plugjs/zip`](./workspaces/zip/README.md): Zip Files Support
 

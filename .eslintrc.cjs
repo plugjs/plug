@@ -14,8 +14,6 @@ module.exports = {
       './workspaces/eslint/test/tsconfig.json',
       './workspaces/expect5/tsconfig.json',
       './workspaces/expect5/test/tsconfig.json',
-      './workspaces/jasmine/tsconfig.json',
-      './workspaces/jasmine/test/tsconfig.json',
       './workspaces/plug/tsconfig.json',
       './workspaces/plug/test/tsconfig.json',
       './workspaces/tsd/tsconfig.json',
