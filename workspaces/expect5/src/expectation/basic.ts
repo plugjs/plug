@@ -148,7 +148,21 @@ export class ToHaveProperty implements Expectation {
     if (match === negative) {
       throw new ExpectationError(context, negative, `to have property "${String(prop)}"`)
     } else if (match && assert) {
-      assert(context.forProperty(prop))
+      try {
+        assert(context.forProperty(prop))
+      } catch (error) {
+        // any caught error difference gets remapped as a property diff
+        if ((error instanceof ExpectationError) && (error.diff)) {
+          error.diff = {
+            diff: true,
+            value: context.value,
+            props: { [prop]: error.diff },
+          }
+        }
+
+        // re-throw
+        throw error
+      }
     }
   }
 }
@@ -184,10 +198,12 @@ export class ToMatch implements Expectation {
 }
 
 export class ToStrictlyEqual implements Expectation {
-  expect(context: Expectations, negative: boolean, value: any): void {
-    const match = context.value === value
+  expect(context: Expectations, negative: boolean, expected: any): void {
+    const value = context.value
+    const match = value === expected
     if (match !== negative) return
-    // TODO: add diff
-    throw new ExpectationError(context, negative, `to strictly equal ${stringifyValue(value)}`)
+
+    const diff = negative ? undefined : { diff: true, value, expected }
+    throw new ExpectationError(context, negative, `to strictly equal ${stringifyValue(expected)}`, diff)
   }
 }
