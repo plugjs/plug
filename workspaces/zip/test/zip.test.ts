@@ -69,10 +69,8 @@ describe('Zip Files', () => {
   })
 
   it('should install the "zip" plug', async () => {
-    const pipe1 = merge([])
-    expect(pipe1.zip).toBeUndefined()
+    expect(merge([]).zip).toBeUndefined()
     await import('../src/index')
-    const pipe2 = merge([])
-    expect(pipe2.zip).toBeDefined()
+    expect(merge([]).zip).toBeA('function')
   })
 })

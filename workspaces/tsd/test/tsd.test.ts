@@ -1,5 +1,3 @@
-import assert from 'node:assert'
-
 import { BuildFailure, find, merge } from '@plugjs/plug'
 
 import { Tsd } from '../src/tsd'
@@ -23,10 +21,8 @@ describe('Tsd', () => {
   })
 
   it('should install the "tsd" plug', async () => {
-    const pipe1 = merge([])
-    assert(typeof pipe1.tsd === 'undefined', 'Tsd already installed')
+    expect(merge([]).tsd).toBeUndefined()
     await import('../src/index')
-    const pipe2 = merge([])
-    assert(typeof pipe2.tsd === 'function', 'Tsd not installed')
+    expect(merge([]).tsd).toBeA('function')
   })
 })
