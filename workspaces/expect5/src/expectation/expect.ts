@@ -79,9 +79,6 @@ const expectations = {
   toBeTrue: new ToBeTrue(),
   toBeTruthy: new ToBeTruthy(),
   toBeUndefined: new ToBeUndefined(),
-
-  // aliases
-  toBe: new ToStrictlyEqual(),
 } as const
 
 /** The type of our imported expectations */

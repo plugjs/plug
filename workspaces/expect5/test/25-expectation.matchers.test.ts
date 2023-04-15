@@ -26,7 +26,6 @@ describe('Expectations Matcher', () => {
     expectPass(() => expect.toHaveSize(1).expect(new Set([ 'foo' ])))
     expectPass(() => expect.toMatch(/^foo$/i).expect('FOO'))
     expectPass(() => expect.toStrictlyEqual('foo').expect('foo'))
-    expectPass(() => expect.toBe('foo').expect('foo')) // alias
     expectPass(() => expect.toThrow().expect(throwing))
     expectPass(() => expect.toThrowError(SyntaxError, 'Whatever').expect(throwing))
     expectPass(() => expect.toBeDefined().expect('foo'))
@@ -57,7 +56,6 @@ describe('Expectations Matcher', () => {
     expectPass(() => expect.not.toHaveSize(2).expect(new Set([ 'foo' ])))
     expectPass(() => expect.not.toMatch(/^foo$/i).expect('bar'))
     expectPass(() => expect.not.toStrictlyEqual('foo').expect('bar'))
-    expectPass(() => expect.not.toBe('foo').expect('bar')) // alias
     expectPass(() => expect.not.toThrow().expect(() => void 0))
     expectPass(() => expect.not.toThrowError(SyntaxError, 'Whatever').expect(() => void 0))
     expectPass(() => expect.not.toBeDefined().expect(null))
@@ -95,7 +93,6 @@ describe('Expectations Matcher', () => {
     expectFail(() => expect.toHaveSize(2).expect(new Set([ 'foo' ])), 'Expected property ["size"] of [Set] (1) to strictly equal 2')
     expectFail(() => expect.toMatch(/^foo$/i).expect('bar'), 'Expected "bar" to match /^foo$/i')
     expectFail(() => expect.toStrictlyEqual('foo').expect('bar'), 'Expected "bar" to strictly equal "foo"')
-    expectFail(() => expect.toBe('foo').expect('bar'), 'Expected "bar" to strictly equal "foo"') // alias
     expectFail(() => expect.toThrow().expect(() => void 0), 'Expected <function> to throw')
     expectFail(() => expect.toThrowError(SyntaxError, 'Whatever').expect(() => void 0), 'Expected <function> to throw')
     expectFail(() => expect.toBeDefined().expect(null), 'Expected <null> to be defined')
@@ -137,7 +134,6 @@ describe('Expectations Matcher', () => {
     expectFail(() => expect.not.toHaveSize(1).expect(new Set([ 'foo' ])), 'Expected property ["size"] of [Set] (1) not to strictly equal 1')
     expectFail(() => expect.not.toMatch(/^foo$/i).expect('FOO'), 'Expected "FOO" not to match /^foo$/i')
     expectFail(() => expect.not.toStrictlyEqual('foo').expect('foo'), 'Expected "foo" not to strictly equal "foo"')
-    expectFail(() => expect.not.toBe('foo').expect('foo'), 'Expected "foo" not to strictly equal "foo"') // alias
     expectFail(() => expect.not.toThrow().expect(throwing), 'Expected <function throwing> not to throw')
     expectFail(() => expect.not.toThrowError(TypeError, 'Whatever').expect(throwing), 'Expected <function throwing> not to throw')
     expectFail(() => expect.not.toBeDefined().expect('foo'), 'Expected "foo" not to be defined')
