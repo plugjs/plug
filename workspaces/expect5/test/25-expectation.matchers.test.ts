@@ -92,7 +92,11 @@ describe('Expectations Matcher', () => {
     expectFail(() => expect.toHaveProperty('a').expect({ b: 'foo' }), 'Expected [Object] to have property "a"')
     expectFail(() => expect.toHaveSize(2).expect(new Set([ 'foo' ])), 'Expected [Set (1)] to have size 2')
     expectFail(() => expect.toMatch(/^foo$/i).expect('bar'), 'Expected "bar" to match /^foo$/i')
-    expectFail(() => expect.toStrictlyEqual('foo').expect('bar'), 'Expected "bar" to strictly equal "foo"')
+    expectFail(() => expect.toStrictlyEqual('foo').expect('bar'), 'Expected "bar" to strictly equal "foo"', {
+      diff: true,
+      value: 'bar',
+      expected: 'foo',
+    })
     expectFail(() => expect.toThrow().expect(() => void 0), 'Expected <function> to throw')
     expectFail(() => expect.toThrowError(SyntaxError, 'Whatever').expect(() => void 0), 'Expected <function> to throw')
     expectFail(() => expect.toBeDefined().expect(null), 'Expected <null> to be defined')
@@ -267,6 +271,25 @@ describe('Expectations Matcher', () => {
           diff: true,
           error: 'Expected [Object] to be a <number>',
           value: { bar: 300 },
+        },
+      },
+    })
+
+    // nested matchers and "toHaveProperty" combined
+    expectFail(() => expect({ foo: { bar: 300 } }).toEqual({
+      foo: expect.toHaveProperty('bar', (assert) => {
+        assert.toStrictlyEqual(200)
+      }),
+    }), 'Expected [Object] to equal [Object]', {
+      diff: true,
+      value: { foo: { bar: 300 } },
+      props: {
+        foo: {
+          diff: true,
+          value: { bar: 300 },
+          props: {
+            bar: { diff: true, value: 300, expected: 200 },
+          },
         },
       },
     })

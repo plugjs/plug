@@ -39,7 +39,17 @@ describe('Throwing Expectations', () => {
     expectPass(() => expect(throwing).toThrowError(SyntaxError, /Whatever/))
 
     expectFail(() => expect(throwing).toThrowError(TypeError), 'Expected [SyntaxError] to be an instance of [TypeError]')
-    expectFail(() => expect(throwing).toThrowError('hateve'), 'Expected property ["message"] of [SyntaxError] ("Whatever") to strictly equal "hateve"')
+    expectFail(() => expect(throwing).toThrowError('hateve'), 'Expected property ["message"] of [SyntaxError] ("Whatever") to strictly equal "hateve"', {
+      diff: true,
+      value: error,
+      props: {
+        message: {
+          diff: true,
+          value: 'Whatever',
+          expected: 'hateve',
+        },
+      },
+    })
     expectFail(() => expect(throwing).toThrowError(/nope/), 'Expected property ["message"] of [SyntaxError] ("Whatever") to match /nope/')
 
     expectFail(() => expect(() => {

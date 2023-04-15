@@ -49,7 +49,17 @@ describe('Basic Expectations', () => {
     expectPass(() => expect({ message: 'foo' }).toBeError(Object as any, 'foo'))
 
     expectFail(() => expect('foo').toBeError(), 'Expected "foo" to be an instance of [Error]')
-    expectFail(() => expect(error).toBeError('Bar!'), 'Expected property ["message"] of [SyntaxError] ("Foo!") to strictly equal "Bar!"')
+    expectFail(() => expect(error).toBeError('Bar!'), 'Expected property ["message"] of [SyntaxError] ("Foo!") to strictly equal "Bar!"', {
+      diff: true,
+      value: error,
+      props: {
+        message: {
+          diff: true,
+          value: 'Foo!',
+          expected: 'Bar!',
+        },
+      },
+    })
     expectFail(() => expect(error).toBeError(/bar/i), 'Expected property ["message"] of [SyntaxError] ("Foo!") to match /bar/i')
     expectFail(() => expect(error).toBeError(TypeError), 'Expected [SyntaxError] to be an instance of [TypeError]')
     expectFail(() => expect({ message: 123 }).toBeError(Object as any, '123'), 'Expected property ["message"] of [Object] (123) to be a <string>')
@@ -230,6 +240,7 @@ describe('Basic Expectations', () => {
     const s2 = Symbol()
 
     expectPass(() => expect('foo').toHaveProperty('length'))
+    expectPass(() => expect('foo').toHaveProperty('length', (assert) => assert.toEqual(3)))
     expectPass(() => expect([ 0 ]).toHaveProperty(0))
     expectPass(() => expect({ [s]: 'foo' }).toHaveProperty(s))
 
@@ -237,6 +248,11 @@ describe('Basic Expectations', () => {
     expectFail(() => expect([ 0 ]).not.toHaveProperty(0), 'Expected [Array (1)] not to have property "0"')
     expectFail(() => expect({ [s]: 'foo' }).not.toHaveProperty(s), 'Expected [Object] not to have property "Symbol()"')
 
+    expectFail(() => expect('foo').toHaveProperty('length', (assert) => assert.toEqual(0)), 'Expected property ["length"] of "foo" (3) to equal 0', {
+      diff: true,
+      value: 'foo',
+      props: { length: { diff: true, value: 3, expected: 0 } },
+    })
     expectFail(() => expect('foo').toHaveProperty('bar'), 'Expected "foo" to have property "bar"')
     expectFail(() => expect([ 0 ]).toHaveProperty(1), 'Expected [Array (1)] to have property "1"')
     expectFail(() => expect({ [s]: 'foo' }).toHaveProperty(s2), 'Expected [Object] to have property "Symbol()"')
@@ -335,7 +351,11 @@ describe('Basic Expectations', () => {
 
     expectPass(() => expect('').toStrictlyEqual(''))
     expectPass(() => expect(xx).toStrictlyEqual(xx))
-    expectFail(() => expect(xx).toStrictlyEqual({}), 'Expected [Object] to strictly equal [Object]')
+    expectFail(() => expect(xx).toStrictlyEqual({}), 'Expected [Object] to strictly equal [Object]', {
+      diff: true,
+      value: xx,
+      expected: {},
+    })
 
     expectFail(() => expect('').not.toStrictlyEqual(''), 'Expected "" not to strictly equal ""')
     expectFail(() => expect(xx).not.toStrictlyEqual(xx), 'Expected [Object] not to strictly equal [Object]')
