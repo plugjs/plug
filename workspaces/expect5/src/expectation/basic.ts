@@ -42,7 +42,7 @@ export class ToBeError implements Expectation {
       [ Error, args[0] ]
 
     context.negated(negative).toBeInstanceOf(constructor)
-    if (negative || (! message)) return // if "not.toBeError" ignore the message
+    if (negative || (message === undefined)) return // if "not.toBeError" ignore the message
 
     context.toHaveProperty('message', (assert) => {
       assertType(assert, 'string')
@@ -116,16 +116,22 @@ export class ToEqual implements Expectation {
   expect(context: Expectations, negative: boolean, expected: any): void {
     const result = diff(context.value, expected)
     if (result.diff === negative) return
-    throw new ExpectationError(context, negative, `to loosely equal ${stringifyValue(expected)}`, result)
+    throw new ExpectationError(context, negative, `to equal ${stringifyValue(expected)}`, result)
   }
 }
 
 export class ToHaveLength implements Expectation {
   expect(context: Expectations, negative: boolean, length: number): void {
-    context.toHaveProperty('length', (context) => {
-      context.toBeA('number')
-      context.negated(negative).toStrictlyEqual(length)
-    })
+    context.toBeDefined()
+
+    const actualLength = (context.value as any).length
+    if (typeof actualLength !== 'number') {
+      throw new ExpectationError(context, false, 'to have a numeric "length" property')
+    }
+
+    if ((actualLength === length) === negative) {
+      throw new ExpectationError(context, negative, `to have length ${stringifyValue(length)}`)
+    }
   }
 }
 
@@ -139,18 +145,26 @@ export class ToHaveProperty implements Expectation {
     context.toBeDefined()
 
     const match = (context.value as any)[prop] !== undefined
-    if (match === negative) throw new ExpectationError(context, negative, `to have property "${String(prop)}"`)
-
-    if (match && assert) assert(context.forProperty(prop))
+    if (match === negative) {
+      throw new ExpectationError(context, negative, `to have property "${String(prop)}"`)
+    } else if (match && assert) {
+      assert(context.forProperty(prop))
+    }
   }
 }
 
 export class ToHaveSize implements Expectation {
   expect(context: Expectations, negative: boolean, size: number): void {
-    context.toHaveProperty('size', (context) => {
-      context.toBeA('number')
-      context.negated(negative).toStrictlyEqual(size)
-    })
+    context.toBeDefined()
+
+    const actualSize = (context.value as any).size
+    if (typeof actualSize !== 'number') {
+      throw new ExpectationError(context, false, 'to have a numeric "size" property')
+    }
+
+    if ((actualSize === size) === negative) {
+      throw new ExpectationError(context, negative, `to have size ${stringifyValue(size)}`)
+    }
   }
 }
 
@@ -173,6 +187,7 @@ export class ToStrictlyEqual implements Expectation {
   expect(context: Expectations, negative: boolean, value: any): void {
     const match = context.value === value
     if (match !== negative) return
+    // TODO: add diff
     throw new ExpectationError(context, negative, `to strictly equal ${stringifyValue(value)}`)
   }
 }
