@@ -80,7 +80,7 @@ describe('Expectations Matcher', () => {
     expectFail(() => expect.toBeLessThan(100).expect(100), 'Expected 100 to be less than 100')
     expectFail(() => expect.toBeLessThanOrEqual(100).expect(101), 'Expected 101 to be less than or equal to 100')
     expectFail(() => expect.toBeWithinRange(100, 200).expect(300), 'Expected 300 to be within 100...200')
-    expectFail(() => expect.toEqual({ a: 'foo' }).expect({ b: 'bar' }), 'Expected [Object] to loosely equal [Object]', {
+    expectFail(() => expect.toEqual({ a: 'foo' }).expect({ b: 'bar' }), 'Expected [Object] to equal [Object]', {
       diff: true,
       value: { b: 'bar' },
       props: {
@@ -88,9 +88,9 @@ describe('Expectations Matcher', () => {
         b: { diff: true, extra: 'bar' },
       },
     })
-    expectFail(() => expect.toHaveLength(0).expect('foo'), 'Expected property ["length"] of "foo" (3) to strictly equal 0')
+    expectFail(() => expect.toHaveLength(0).expect('foo'), 'Expected "foo" to have length 0')
     expectFail(() => expect.toHaveProperty('a').expect({ b: 'foo' }), 'Expected [Object] to have property "a"')
-    expectFail(() => expect.toHaveSize(2).expect(new Set([ 'foo' ])), 'Expected property ["size"] of [Set] (1) to strictly equal 2')
+    expectFail(() => expect.toHaveSize(2).expect(new Set([ 'foo' ])), 'Expected [Set (1)] to have size 2')
     expectFail(() => expect.toMatch(/^foo$/i).expect('bar'), 'Expected "bar" to match /^foo$/i')
     expectFail(() => expect.toStrictlyEqual('foo').expect('bar'), 'Expected "bar" to strictly equal "foo"')
     expectFail(() => expect.toThrow().expect(() => void 0), 'Expected <function> to throw')
@@ -122,16 +122,16 @@ describe('Expectations Matcher', () => {
     expectFail(() => expect.not.toBeLessThan(100).expect(99), 'Expected 99 not to be less than 100')
     expectFail(() => expect.not.toBeLessThanOrEqual(100).expect(100), 'Expected 100 not to be less than or equal to 100')
     expectFail(() => expect.not.toBeWithinRange(100, 200).expect(150), 'Expected 150 not to be within 100...200')
-    expectFail(() => expect.not.toEqual({ a: 'foo' }).expect({ a: 'foo' }), 'Expected [Object] not to loosely equal [Object]', {
+    expectFail(() => expect.not.toEqual({ a: 'foo' }).expect({ a: 'foo' }), 'Expected [Object] not to equal [Object]', {
       diff: false,
       value: { a: 'foo' },
       props: {
         a: { diff: false, value: 'foo' },
       },
     })
-    expectFail(() => expect.not.toHaveLength(3).expect('foo'), 'Expected property ["length"] of "foo" (3) not to strictly equal 3')
+    expectFail(() => expect.not.toHaveLength(3).expect('foo'), 'Expected "foo" not to have length 3')
     expectFail(() => expect.not.toHaveProperty('a').expect({ a: 'foo' }), 'Expected [Object] not to have property "a"')
-    expectFail(() => expect.not.toHaveSize(1).expect(new Set([ 'foo' ])), 'Expected property ["size"] of [Set] (1) not to strictly equal 1')
+    expectFail(() => expect.not.toHaveSize(1).expect(new Set([ 'foo' ])), 'Expected [Set (1)] not to have size 1')
     expectFail(() => expect.not.toMatch(/^foo$/i).expect('FOO'), 'Expected "FOO" not to match /^foo$/i')
     expectFail(() => expect.not.toStrictlyEqual('foo').expect('foo'), 'Expected "foo" not to strictly equal "foo"')
     expectFail(() => expect.not.toThrow().expect(throwing), 'Expected <function throwing> not to throw')
@@ -217,7 +217,7 @@ describe('Expectations Matcher', () => {
     }))
 
     expectFail(() => expect('foo').toEqual(expect.toBeA('number').toBeLessThan(200)),
-        'Expected "foo" to loosely equal <matcher>', {
+        'Expected "foo" to equal <matcher>', {
           diff: true,
           value: 'foo',
           error: 'Expected "foo" to be a <number>',
@@ -227,7 +227,7 @@ describe('Expectations Matcher', () => {
     // nested error
     expectFail(() => expect({ foo: 300 }).toEqual({
       foo: expect.toBeA('number').toBeLessThan(200),
-    }), 'Expected [Object] to loosely equal [Object]', {
+    }), 'Expected [Object] to equal [Object]', {
       diff: true,
       value: { foo: 300 },
       props: {
@@ -242,7 +242,7 @@ describe('Expectations Matcher', () => {
     // nested diff
     expectFail(() => expect({ foo: { bar: 300 } }).toEqual({
       foo: expect.toEqual({ bar: 'baz' }),
-    }), 'Expected [Object] to loosely equal [Object]', {
+    }), 'Expected [Object] to equal [Object]', {
       diff: true,
       value: { foo: { bar: 300 } },
       props: {
@@ -259,7 +259,7 @@ describe('Expectations Matcher', () => {
     // nested diff with different error
     expectFail(() => expect({ foo: { bar: 300 } }).toEqual({
       foo: expect.toBeA('number'),
-    }), 'Expected [Object] to loosely equal [Object]', {
+    }), 'Expected [Object] to equal [Object]', {
       diff: true,
       value: { foo: { bar: 300 } },
       props: {

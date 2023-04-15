@@ -177,18 +177,18 @@ describe('Basic Expectations', () => {
     expectPass(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'baz' }))
     expectPass(() => expect([ 'foo', 'bar' ]).not.toEqual([ 'foo', 'baz' ]))
 
-    expectFail(() => expect('foo').not.toEqual('foo'), 'Expected "foo" not to loosely equal "foo"', {
+    expectFail(() => expect('foo').not.toEqual('foo'), 'Expected "foo" not to equal "foo"', {
       diff: false,
       value: 'foo',
     })
-    expectFail(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'bar' }), 'Expected [Object] not to loosely equal [Object]', {
+    expectFail(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'bar' }), 'Expected [Object] not to equal [Object]', {
       diff: false,
       value: { foo: 'bar' },
       props: {
         foo: { diff: false, value: 'bar' },
       },
     })
-    expectFail(() => expect([ 'foo', 'bar' ]).not.toEqual([ 'foo', 'bar' ]), 'Expected [Array (2)] not to loosely equal [Array (2)]', {
+    expectFail(() => expect([ 'foo', 'bar' ]).not.toEqual([ 'foo', 'bar' ]), 'Expected [Array (2)] not to equal [Array (2)]', {
       diff: false,
       value: [ 'foo', 'bar' ],
       values: [
@@ -197,13 +197,13 @@ describe('Basic Expectations', () => {
       ],
     })
 
-    expectFail(() => expect('foo').toEqual('bar'), 'Expected "foo" to loosely equal "bar"', {
+    expectFail(() => expect('foo').toEqual('bar'), 'Expected "foo" to equal "bar"', {
       diff: true,
       value: 'foo',
       expected: 'bar',
     })
 
-    expectFail(() => expect({ foo: 'bar' }).toEqual({ foo: 'baz' }), 'Expected [Object] to loosely equal [Object]', {
+    expectFail(() => expect({ foo: 'bar' }).toEqual({ foo: 'baz' }), 'Expected [Object] to equal [Object]', {
       diff: true,
       value: { foo: 'bar' },
       props: {
@@ -215,7 +215,7 @@ describe('Basic Expectations', () => {
       },
     })
 
-    expectFail(() => expect([ 'foo', 'bar' ]).toEqual([ 'foo', 'baz' ]), 'Expected [Array (2)] to loosely equal [Array (2)]', {
+    expectFail(() => expect([ 'foo', 'bar' ]).toEqual([ 'foo', 'baz' ]), 'Expected [Array (2)] to equal [Array (2)]', {
       diff: true,
       value: [ 'foo', 'bar' ],
       values: [
@@ -261,15 +261,15 @@ describe('Basic Expectations', () => {
     expectPass(() => expect([]).toHaveLength(0))
     expectPass(() => expect({ length: 123 }).toHaveLength(123))
 
-    expectFail(() => expect('foo').toHaveLength(9), 'Expected property ["length"] of "foo" (3) to strictly equal 9')
-    expectFail(() => expect('').toHaveLength(9), 'Expected property ["length"] of "" (0) to strictly equal 9')
-    expectFail(() => expect([]).toHaveLength(9), 'Expected property ["length"] of [Array] (0) to strictly equal 9')
-    expectFail(() => expect({ length: 123 }).toHaveLength(9), 'Expected property ["length"] of [Object] (123) to strictly equal 9')
+    expectFail(() => expect('foo').toHaveLength(9), 'Expected "foo" to have length 9')
+    expectFail(() => expect('').toHaveLength(9), 'Expected "" to have length 9')
+    expectFail(() => expect([]).toHaveLength(9), 'Expected [Array (0)] to have length 9')
+    expectFail(() => expect({ length: 123 }).toHaveLength(9), 'Expected [Object] to have length 9')
 
-    expectFail(() => expect('foo').not.toHaveLength(3), 'Expected property ["length"] of "foo" (3) not to strictly equal 3')
-    expectFail(() => expect('').not.toHaveLength(0), 'Expected property ["length"] of "" (0) not to strictly equal 0')
-    expectFail(() => expect([]).not.toHaveLength(0), 'Expected property ["length"] of [Array] (0) not to strictly equal 0')
-    expectFail(() => expect({ length: 123 }).not.toHaveLength(123), 'Expected property ["length"] of [Object] (123) not to strictly equal 123')
+    expectFail(() => expect('foo').not.toHaveLength(3), 'Expected "foo" not to have length 3')
+    expectFail(() => expect('').not.toHaveLength(0), 'Expected "" not to have length 0')
+    expectFail(() => expect([]).not.toHaveLength(0), 'Expected [Array (0)] not to have length 0')
+    expectFail(() => expect({ length: 123 }).not.toHaveLength(123), 'Expected [Object] not to have length 123')
 
     expectPass(() => expect('foo').not.toHaveLength(9))
     expectPass(() => expect('').not.toHaveLength(9))
@@ -281,10 +281,10 @@ describe('Basic Expectations', () => {
     expectFail(() => expect(undefined).toHaveLength(123), 'Expected <undefined> to be defined')
     expectFail(() => expect(undefined).not.toHaveLength(123), 'Expected <undefined> to be defined')
 
-    expectFail(() => expect({}).toHaveLength(123), 'Expected [Object] to have property "length"')
-    expectFail(() => expect({}).not.toHaveLength(123), 'Expected [Object] to have property "length"')
-    expectFail(() => expect({ length: 'foo' }).toHaveLength(123), 'Expected property ["length"] of [Object] ("foo") to be a <number>')
-    expectFail(() => expect({ length: 'foo' }).not.toHaveLength(123), 'Expected property ["length"] of [Object] ("foo") to be a <number>')
+    expectFail(() => expect({}).toHaveLength(123), 'Expected [Object] to have a numeric "length" property')
+    expectFail(() => expect({}).not.toHaveLength(123), 'Expected [Object] to have a numeric "length" property')
+    expectFail(() => expect({ length: 'foo' }).toHaveLength(123), 'Expected [Object] to have a numeric "length" property')
+    expectFail(() => expect({ length: 'foo' }).not.toHaveLength(123), 'Expected [Object] to have a numeric "length" property')
   })
 
   it('should expect "toHaveSize(...)"', () => {
@@ -292,13 +292,13 @@ describe('Basic Expectations', () => {
     expectPass(() => expect(new Map([ [ 'foo', 'bar' ] ])).toHaveSize(1))
     expectPass(() => expect({ size: 123 }).toHaveSize(123))
 
-    expectFail(() => expect(new Set([ 'foo' ])).toHaveSize(9), 'Expected property ["size"] of [Set] (1) to strictly equal 9')
-    expectFail(() => expect(new Map([ [ 'foo', 'bar' ] ])).toHaveSize(9), 'Expected property ["size"] of [Map] (1) to strictly equal 9')
-    expectFail(() => expect({ size: 123 }).toHaveSize(9), 'Expected property ["size"] of [Object] (123) to strictly equal 9')
+    expectFail(() => expect(new Set([ 'foo' ])).toHaveSize(9), 'Expected [Set (1)] to have size 9')
+    expectFail(() => expect(new Map([ [ 'foo', 'bar' ] ])).toHaveSize(9), 'Expected [Map (1)] to have size 9')
+    expectFail(() => expect({ size: 123 }).toHaveSize(9), 'Expected [Object] to have size 9')
 
-    expectFail(() => expect(new Set([ 'foo' ])).not.toHaveSize(1), 'Expected property ["size"] of [Set] (1) not to strictly equal 1')
-    expectFail(() => expect(new Map([ [ 'foo', 'bar' ] ])).not.toHaveSize(1), 'Expected property ["size"] of [Map] (1) not to strictly equal 1')
-    expectFail(() => expect({ size: 123 }).not.toHaveSize(123), 'Expected property ["size"] of [Object] (123) not to strictly equal 123')
+    expectFail(() => expect(new Set([ 'foo' ])).not.toHaveSize(1), 'Expected [Set (1)] not to have size 1')
+    expectFail(() => expect(new Map([ [ 'foo', 'bar' ] ])).not.toHaveSize(1), 'Expected [Map (1)] not to have size 1')
+    expectFail(() => expect({ size: 123 }).not.toHaveSize(123), 'Expected [Object] not to have size 123')
 
     expectPass(() => expect(new Set([ 'foo' ])).not.toHaveSize(9))
     expectPass(() => expect(new Map([ [ 'foo', 'bar' ] ])).not.toHaveSize(9))
@@ -309,10 +309,10 @@ describe('Basic Expectations', () => {
     expectFail(() => expect(undefined).toHaveSize(123), 'Expected <undefined> to be defined')
     expectFail(() => expect(undefined).not.toHaveSize(123), 'Expected <undefined> to be defined')
 
-    expectFail(() => expect({}).toHaveSize(123), 'Expected [Object] to have property "size"')
-    expectFail(() => expect({}).not.toHaveSize(123), 'Expected [Object] to have property "size"')
-    expectFail(() => expect({ size: 'foo' }).toHaveSize(123), 'Expected property ["size"] of [Object] ("foo") to be a <number>')
-    expectFail(() => expect({ size: 'foo' }).not.toHaveSize(123), 'Expected property ["size"] of [Object] ("foo") to be a <number>')
+    expectFail(() => expect({}).toHaveSize(123), 'Expected [Object] to have a numeric "size" property')
+    expectFail(() => expect({}).not.toHaveSize(123), 'Expected [Object] to have a numeric "size" property')
+    expectFail(() => expect({ size: 'foo' }).toHaveSize(123), 'Expected [Object] to have a numeric "size" property')
+    expectFail(() => expect({ size: 'foo' }).not.toHaveSize(123), 'Expected [Object] to have a numeric "size" property')
   })
 
   it('should expect "toMatch(...)"', () => {
