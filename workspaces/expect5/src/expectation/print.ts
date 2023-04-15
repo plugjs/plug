@@ -1,6 +1,6 @@
 import { $grn, $gry, $red, $und, $wht, $ylw, type Logger } from '@plugjs/plug/logging'
 
-import { stringifyPrimitive, stringifyValue } from './types'
+import { stringifyValue } from './types'
 
 import type { Diff, ExtraValueDiff, MissingValueDiff, ObjectDiff, ExpectedDiff } from './diff'
 
@@ -65,10 +65,10 @@ function printExpectedDiff(
   const { prefix, suffix } = fixups(prop, mapping, comma, diff.error)
 
   if ((diff.value === null) || (typeof diff.value !== 'object')) {
-    const joined = `${prefix}${$red(stringifyPrimitive(diff.value))} ${_tilde} `
+    const joined = `${prefix}${$red(stringify(diff.value))} ${_tilde} `
     dump(log, diff.expected, joined, suffix, $grn)
   } else if ((diff.expected === null) || (typeof diff.expected !== 'object')) {
-    const joined = ` ${_tilde} ${$grn(stringifyPrimitive(diff.expected))}${suffix}`
+    const joined = ` ${_tilde} ${$grn(stringify(diff.expected))}${suffix}`
     dump(log, diff.value, prefix, joined, $red)
   } else {
     const lastLine = dumpAndContinue(log, diff.expected, prefix, suffix, $red)
@@ -174,6 +174,13 @@ function printObjectDiff(
  * PRINT HELPERS                                                              *
  * ========================================================================== */
 
+function stringify(
+    value: null | undefined | string | number | boolean | bigint | symbol | Function,
+): string {
+  if (typeof value === 'string') return JSON.stringify(value)
+  return stringifyValue(value)
+}
+
 function fixups(
     prop: string,
     mapping: boolean,
@@ -217,10 +224,9 @@ function dumpAndContinue(
     color: (string: string) => string,
     stack: any[] = [],
 ): string {
-// primitives just get dumped
+  // primitives just get dumped
   if ((value === null) || (typeof value !== 'object')) {
-    const string = stringifyPrimitive(value)
-    return `${prefix}${color(string)}${suffix}`
+    return `${prefix}${color(stringify(value))}${suffix}`
   }
 
   // check for circular dependencies
