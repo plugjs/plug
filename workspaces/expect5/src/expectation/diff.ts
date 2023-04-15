@@ -299,11 +299,10 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
       return { diff: false, value: actual }
     } catch (error) {
       if (error instanceof ExpectationError) {
-        return error.diff ? { ...error.diff, error: error.message } : {
-          diff: true,
-          value: actual,
-          error: error.message,
-        }
+        // if the error highlights a difference, simply return that
+        // otherwise wrap the error into a new ErrorDiff and return it
+        const { message, diff } = error
+        return diff?.diff ? diff : { diff: true, value: actual, error: message }
       } else {
         throw error
       }

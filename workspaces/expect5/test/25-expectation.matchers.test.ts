@@ -248,7 +248,6 @@ describe('Expectations Matcher', () => {
       props: {
         foo: {
           diff: true,
-          error: 'Expected [Object] to loosely equal [Object]',
           value: { bar: 300 },
           props: {
             bar: { diff: true, value: 300, expected: 'baz' },
