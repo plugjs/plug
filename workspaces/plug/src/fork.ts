@@ -97,24 +97,24 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
       let response: ForkResult | undefined = undefined
 
       child.on('error', (error) => {
-        context.log.error('Child process error', error)
+        context.log.error('Forked plug process error', error)
         return done || reject(BuildFailure.fail())
       })
 
       child.on('message', (message: ForkResult) => {
-        context.log.debug('Message from child process with PID', child.pid, message)
+        context.log.debug('Message from forked plug process with PID', child.pid, message)
         response = message
       })
 
       child.on('exit', (code, signal) => {
         if (signal) {
-          context.log.error(`Child process exited with signal ${signal}`, $gry(`(pid=${child.pid})`))
+          context.log.error(`Forked plug process exited with signal ${signal}`, $gry(`(pid=${child.pid})`))
           return done || reject(BuildFailure.fail())
         } else if (code !== 0) {
-          context.log.error(`Child process exited with code ${code}`, $gry(`(pid=${child.pid})`))
+          context.log.error(`Forked plug process exited with code ${code}`, $gry(`(pid=${child.pid})`))
           return done || reject(BuildFailure.fail())
         } else if (! response) {
-          context.log.error('Child process exited with no result', $gry(`(pid=${child.pid})`))
+          context.log.error('Forked plug process exited with no result', $gry(`(pid=${child.pid})`))
           return done || reject(BuildFailure.fail())
         } else if (response.failed) {
           // definitely logged on the child side
@@ -131,16 +131,16 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
       try {
         const result = child.send(request, (error) => {
           if (error) {
-            context.log.error('Error sending message to child process (callback failure)', error)
+            context.log.error('Error sending message to forked plug process (callback failure)', error)
             reject(BuildFailure.fail())
           }
         })
         if (! result) {
-          context.log.error('Error sending message to child process (send returned false)')
+          context.log.error('Error sending message to forked plug process (send returned false)')
           reject(BuildFailure.fail())
         }
       } catch (error) {
-        context.log.error('Error sending message to child process (exception caught)', error)
+        context.log.error('Error sending message to forked plug process (exception caught)', error)
         reject(BuildFailure.fail())
       }
     }).finally(() => done = true)
