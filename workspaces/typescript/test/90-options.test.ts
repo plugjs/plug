@@ -7,21 +7,24 @@ describe('TypeScript Compiler Options', () => {
   it('should return the default options or fail', async () => {
     let { options, errors } = await getCompilerOptions()
     expect(options).toEqual(ts.getDefaultCompilerOptions())
-    expect(errors.length).toEqual(0)
+    expect(errors).toHaveLength(0)
 
 
     ;({ options, errors } = await getCompilerOptions(resolve('@/foobar.json')))
     expect(options).toEqual({})
-    expect(errors.length).toStrictlyEqual(1)
-    expect(errors[0]!.code).toStrictlyEqual(5083)
-    expect(errors[0]!.messageText).toMatch(/foobar\.json/)
-    expect(errors[0]!.category).toStrictlyEqual(ts.DiagnosticCategory.Error)
+    expect(errors).toEqual([
+      expect.toInclude({
+        code: 5083,
+        messageText: expect.toMatch(/foobar\.json/),
+        category: ts.DiagnosticCategory.Error,
+      }),
+    ])
   })
 
   it('should read a basic configuration file', async () => {
     const base = resolve('@/options/base.json')
     let { options, errors } = await getCompilerOptions(base)
-    expect(errors.length).toEqual(0)
+    expect(errors).toHaveLength(0)
     expect(options).toEqual(Object.assign({}, ts.getDefaultCompilerOptions(), {
       configFilePath: base,
       module: ts.ModuleKind.CommonJS,
@@ -31,17 +34,20 @@ describe('TypeScript Compiler Options', () => {
     const wrong = resolve('@/options/wrong.json')
     ;({ options, errors } = await getCompilerOptions(wrong))
     expect(options).toEqual({})
-    expect(errors.length).toStrictlyEqual(1)
-    expect(errors[0]!.code).toStrictlyEqual(6046)
-    expect(errors[0]!.messageText).toMatch(/module/)
-    expect(errors[0]!.category).toStrictlyEqual(ts.DiagnosticCategory.Error)
+    expect(errors).toEqual([
+      expect.toInclude({
+        code: 6046,
+        messageText: expect.toMatch(/module/),
+        category: ts.DiagnosticCategory.Error,
+      }),
+    ])
   })
 
   it('should read an extended configuration file', async () => {
     // base file
     const base = resolve('@/options/base/tsconfig.json')
     let { options, errors } = await getCompilerOptions(base)
-    expect(errors.length).toEqual(0)
+    expect(errors).toHaveLength(0)
     expect(options).toEqual(Object.assign(ts.getDefaultCompilerOptions(), {
       module: ts.ModuleKind.AMD,
       configFilePath: base,
@@ -58,7 +64,7 @@ describe('TypeScript Compiler Options', () => {
     // extended file (overrides module, preserves paths)
     const ext = resolve('@/options/ext/tsconfig.json')
     ;({ options, errors } = await getCompilerOptions(ext))
-    expect(errors.length).toEqual(0)
+    expect(errors).toHaveLength(0)
     expect(options).toEqual(Object.assign(ts.getDefaultCompilerOptions(), {
       module: ts.ModuleKind.CommonJS,
       configFilePath: ext,
@@ -77,7 +83,7 @@ describe('TypeScript Compiler Options', () => {
       module: ts.ModuleKind.AMD,
     }))
 
-    expect(errors.length).toEqual(0)
+    expect(errors).toHaveLength(0)
     expect(options).toEqual(Object.assign(ts.getDefaultCompilerOptions(), {
       module: ts.ModuleKind.AMD,
       configFilePath: ext,
@@ -96,9 +102,12 @@ describe('TypeScript Compiler Options', () => {
     const base = resolve('@/options/circular/tsconfig.json')
     const { options, errors } = await getCompilerOptions(base)
     expect(options).toEqual({})
-    expect(errors.length).toEqual(1)
-    expect(errors[0]!.code).toStrictlyEqual(18000)
-    expect(errors[0]!.category).toStrictlyEqual(ts.DiagnosticCategory.Error)
-    expect(errors[0]!.messageText).toStrictlyEqual(`Circularity detected extending from "${base}"`)
+    expect(errors).toEqual([
+      expect.toInclude({
+        code: 18000,
+        messageText: `Circularity detected extending from "${base}"`,
+        category: ts.DiagnosticCategory.Error,
+      }),
+    ])
   })
 })
