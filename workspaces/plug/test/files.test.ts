@@ -15,8 +15,8 @@ describe('Files Collection', () => {
 
   it('should create an empty Files instance', () => {
     const files = new Files(tempdir)
-    expect(files.length).toBe(0)
-    expect(files.directory).toBe(tempdir)
+    expect(files.length).toStrictlyEqual(0)
+    expect(files.directory).toStrictlyEqual(tempdir)
     expect([ ...files ]).toEqual([])
     expect([ ...files.absolutePaths() ]).toEqual([])
     expect([ ...files.pathMappings() ]).toEqual([])
@@ -30,8 +30,8 @@ describe('Files Collection', () => {
 
     // remember, alphabetical order
 
-    expect(files1.length).toBe(2)
-    expect(files1.directory).toBe(tempdir)
+    expect(files1.length).toStrictlyEqual(2)
+    expect(files1.directory).toStrictlyEqual(tempdir)
     expect([ ...files1 ]).toEqual([ 'bar', 'foo' ])
     expect([ ...files1.absolutePaths() ]).toEqual([
       `${tempdir}/bar`,
@@ -54,8 +54,8 @@ describe('Files Collection', () => {
     builder2.add('baz')
     const files2 = builder2.build()
 
-    expect(files2.length).toBe(3)
-    expect(files2.directory).toBe(tempdir)
+    expect(files2.length).toStrictlyEqual(3)
+    expect(files2.directory).toStrictlyEqual(tempdir)
     expect([ ...files2 ]).toEqual([ 'bar', 'baz', 'foo' ])
     expect([ ...files2.absolutePaths() ]).toEqual([
       `${tempdir}/bar`,
@@ -102,8 +102,8 @@ describe('Files Collection', () => {
     await builder1.write('file.txt', 'Hello, world!')
     const files1 = builder1.build()
 
-    expect(files1.length).toBe(2)
-    expect(files1.directory).toBe(tempdir)
+    expect(files1.length).toStrictlyEqual(2)
+    expect(files1.directory).toStrictlyEqual(tempdir)
     expect([ ...files1 ]).toEqual([ 'file.bin', 'file.txt' ])
     expect([ ...files1.absolutePaths() ]).toEqual([
       `${tempdir}/file.bin`,
@@ -114,7 +114,7 @@ describe('Files Collection', () => {
       [ 'file.txt', `${tempdir}/file.txt` ],
     ] as [ string, AbsolutePath ][])
 
-    expect(await readFile(`${tempdir}/file.bin`, 'hex')).toBe('cafebabe')
-    expect(await readFile(`${tempdir}/file.txt`, 'utf8')).toBe('Hello, world!')
+    expect(await readFile(`${tempdir}/file.bin`, 'hex')).toStrictlyEqual('cafebabe')
+    expect(await readFile(`${tempdir}/file.txt`, 'utf8')).toStrictlyEqual('Hello, world!')
   })
 })

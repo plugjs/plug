@@ -17,21 +17,21 @@ describe('Pipes and Context', () => {
     const file = resolveAbsolutePath(cwd, 'subdir', 'build.ts')
     const context = new Context(file, taskName)
 
-    expect(context.resolve('')).toBe(process.cwd())
-    expect(context.resolve('.')).toBe(process.cwd())
-    expect(context.resolve('@')).toBe(join(process.cwd(), 'subdir'))
+    expect(context.resolve('')).toStrictlyEqual(process.cwd())
+    expect(context.resolve('.')).toStrictlyEqual(process.cwd())
+    expect(context.resolve('@')).toStrictlyEqual(join(process.cwd(), 'subdir'))
 
-    expect(context.resolve('foobar')).toBe(join(process.cwd(), 'foobar'))
-    expect(context.resolve('./foobar')).toBe(join(process.cwd(), 'foobar'))
-    expect(context.resolve('../foobar')).toBe(join(process.cwd(), '..', 'foobar'))
-    expect(context.resolve('foobar', 'baz')).toBe(join(process.cwd(), 'foobar', 'baz'))
-    expect(context.resolve('./foobar', 'baz')).toBe(join(process.cwd(), 'foobar', 'baz'))
-    expect(context.resolve('../foobar', 'baz')).toBe(join(process.cwd(), '..', 'foobar', 'baz'))
+    expect(context.resolve('foobar')).toStrictlyEqual(join(process.cwd(), 'foobar'))
+    expect(context.resolve('./foobar')).toStrictlyEqual(join(process.cwd(), 'foobar'))
+    expect(context.resolve('../foobar')).toStrictlyEqual(join(process.cwd(), '..', 'foobar'))
+    expect(context.resolve('foobar', 'baz')).toStrictlyEqual(join(process.cwd(), 'foobar', 'baz'))
+    expect(context.resolve('./foobar', 'baz')).toStrictlyEqual(join(process.cwd(), 'foobar', 'baz'))
+    expect(context.resolve('../foobar', 'baz')).toStrictlyEqual(join(process.cwd(), '..', 'foobar', 'baz'))
 
-    expect(context.resolve('@foobar')).toBe(join(process.cwd(), 'subdir', 'foobar'))
-    expect(context.resolve('@/foobar')).toBe(join(process.cwd(), 'subdir', 'foobar'))
-    expect(context.resolve('@foobar', 'baz')).toBe(join(process.cwd(), 'subdir', 'foobar', 'baz'))
-    expect(context.resolve('@/foobar', 'baz')).toBe(join(process.cwd(), 'subdir', 'foobar', 'baz'))
+    expect(context.resolve('@foobar')).toStrictlyEqual(join(process.cwd(), 'subdir', 'foobar'))
+    expect(context.resolve('@/foobar')).toStrictlyEqual(join(process.cwd(), 'subdir', 'foobar'))
+    expect(context.resolve('@foobar', 'baz')).toStrictlyEqual(join(process.cwd(), 'subdir', 'foobar', 'baz'))
+    expect(context.resolve('@/foobar', 'baz')).toStrictlyEqual(join(process.cwd(), 'subdir', 'foobar', 'baz'))
   })
 
   it('should await a fullfilled pipe', async () => {
@@ -42,7 +42,7 @@ describe('Pipes and Context', () => {
     await pipe
         .then((result) => {
           calls.push('then ok')
-          expect(result).toBe(files)
+          expect(result).toStrictlyEqual(files)
         }, (error) => {
           calls.push('then no')
           throw error
@@ -73,14 +73,14 @@ describe('Pipes and Context', () => {
           throw new Error('then ok')
         }, (error) => {
           calls.push('then no')
-          expect(error.message).toBe('foo')
+          expect(error.message).toStrictlyEqual('foo')
         })
         .catch(() => Promise.reject(new Error('then')))
 
     await pipe
         .catch((error) => {
           calls.push('catch')
-          expect(error.message).toBe('foo')
+          expect(error.message).toStrictlyEqual('foo')
         })
         .catch(() => Promise.reject(new Error('catch')))
 
@@ -90,7 +90,7 @@ describe('Pipes and Context', () => {
         })
         // remember, finally re-throws :)
         .catch((error) => {
-          expect(error.message).toBe('foo')
+          expect(error.message).toStrictlyEqual('foo')
         })
 
     expect(calls).toEqual([ 'then no', 'catch', 'finally' ])
@@ -105,20 +105,20 @@ describe('Pipes and Context', () => {
     const result = await pipe
         .plug((result, context) => {
           calls.push('function')
-          expect(result).toBe(files)
-          expect(context).toBe(requireContext())
+          expect(result).toStrictlyEqual(files)
+          expect(context).toStrictlyEqual(requireContext())
           return result
         })
         .plug(new class implements Plug<Files> {
           pipe(result: Files, context: Context): Files | Promise<Files> {
             calls.push('class')
-            expect(result).toBe(files)
-            expect(context).toBe(requireContext())
+            expect(result).toStrictlyEqual(files)
+            expect(context).toStrictlyEqual(requireContext())
             return result
           }
         })
 
-    expect(result).toBe(files)
+    expect(result).toStrictlyEqual(files)
     expect(calls).toEqual([ 'function', 'class' ])
   })
 
@@ -165,8 +165,8 @@ describe('Pipes and Context', () => {
     const promise = pipe
         .plug((result, context) => {
           calls.push('downgrade')
-          expect(result).toBe(files)
-          expect(context).toBe(requireContext())
+          expect(result).toStrictlyEqual(files)
+          expect(context).toStrictlyEqual(requireContext())
           return undefined as any as Files
         })
         .plug(() => {

@@ -7,15 +7,15 @@ describe('Helpers Test', () => {
   const { buildFile, buildDir } = requireContext()
 
   it('should check for the existance of a file', () => {
-    expect(isFile(buildFile)).toBe(buildFile)
-    expect(isFile(buildDir, 'this-does-not-exist')).toBe(undefined)
-    expect(isFile(buildDir)).toBe(undefined) // wrong type!
+    expect(isFile(buildFile)).toStrictlyEqual(buildFile)
+    expect(isFile(buildDir, 'this-does-not-exist')).toStrictlyEqual(undefined)
+    expect(isFile(buildDir)).toStrictlyEqual(undefined) // wrong type!
   })
 
   it('should check for the existance of a directory', () => {
-    expect(isDirectory(buildDir)).toBe(buildDir)
-    expect(isDirectory(buildDir, 'this-does-not-exist')).toBe(undefined)
-    expect(isDirectory(buildFile)).toBe(undefined) // wrong type!
+    expect(isDirectory(buildDir)).toStrictlyEqual(buildDir)
+    expect(isDirectory(buildDir, 'this-does-not-exist')).toStrictlyEqual(undefined)
+    expect(isDirectory(buildFile)).toStrictlyEqual(undefined) // wrong type!
   })
 
   it('should find files in the current directory', async () => {
@@ -28,21 +28,21 @@ describe('Helpers Test', () => {
     const pipe1 = noop()
     expect(pipe1.plug).toBeA('function')
     const files1 = await pipe1
-    expect(files1.length).toBe(0)
-    expect(files1.directory).toBe(resolve('.'))
+    expect(files1.length).toStrictlyEqual(0)
+    expect(files1.directory).toStrictlyEqual(resolve('.'))
 
     const pipe2 = merge([])
     expect(pipe2.plug).toBeA('function')
     const files2 = await pipe2
-    expect(files2.length).toBe(0)
-    expect(files2.directory).toBe(resolve('.'))
+    expect(files2.length).toStrictlyEqual(0)
+    expect(files2.directory).toStrictlyEqual(resolve('.'))
 
     const pipe3 = merge([ new Files(resolve('@')) ])
     expect(pipe3.plug).toBeA('function')
     const files3 = await pipe2
-    expect(files3.length).toBe(0)
-    expect(files3.directory).toBe(resolve('.'))
-    expect(files3.directory).not.toBe(resolve('@'))
+    expect(files3.length).toStrictlyEqual(0)
+    expect(files3.directory).toStrictlyEqual(resolve('.'))
+    expect(files3.directory).not.toStrictlyEqual(resolve('@'))
   })
 
   it('should merge two pipes', async () => {

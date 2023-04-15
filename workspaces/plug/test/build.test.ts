@@ -17,12 +17,12 @@ describe('Build Invocation', () => {
     })
 
     await (<any> tasks)[buildMarker]([ '_myTask' ])
-    expect(propValue).toBe('this is the default')
+    expect(propValue).toStrictlyEqual('this is the default')
 
     // task as a function
     propValue = 'wrong'
     await tasks._myTask()
-    expect(propValue).toBe('this is the default')
+    expect(propValue).toStrictlyEqual('this is the default')
   })
 
   it('should invoke a build overriding its properties', async () => {
@@ -36,12 +36,12 @@ describe('Build Invocation', () => {
     })
 
     await (<any> tasks)[buildMarker]([ '_myTask' ], { myProp: 'this is overridden' })
-    expect(propValue).toBe('this is overridden')
+    expect(propValue).toStrictlyEqual('this is overridden')
 
     // task as a function
     propValue = 'wrong'
     await tasks._myTask({ myProp: 'this is overridden' })
-    expect(propValue).toBe('this is overridden')
+    expect(propValue).toStrictlyEqual('this is overridden')
   })
 
   it('should cache the output of a task', async () => {
@@ -247,7 +247,7 @@ describe('Build Invocation', () => {
   it('should get the current task context', () => {
     const context1 = currentContext()
     const context2 = requireContext()
-    expect(context1).toBe(context2)
+    expect(context1).toStrictlyEqual(context2)
     expect(runningTasks()).toInclude([ context2.taskName ])
   })
 })

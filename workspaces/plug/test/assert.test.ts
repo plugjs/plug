@@ -11,7 +11,7 @@ describe('Assertions', () => {
     const failure = BuildFailure.withMessage('Hello, world!')
     expect(failure).toBeInstanceOf(BuildFailure)
     expect(isBuildFailure(failure)).toBeTrue
-    expect(failure.message).toBe('Hello, world!')
+    expect(failure.message).toStrictlyEqual('Hello, world!')
   })
 
   it('should create a build failure with root causes', () => {
@@ -22,7 +22,7 @@ describe('Assertions', () => {
 
     expect(failure).toBeInstanceOf(BuildFailure)
     expect(isBuildFailure(failure)).toBeTrue
-    expect(failure.message).toBe('')
+    expect(failure.message).toStrictlyEqual('')
     expect(failure.errors).toEqual([ error1, error2 ])
   })
 
@@ -55,7 +55,7 @@ describe('Assertions', () => {
     const failure = await promise.catch((error) => error)
     expect(failure).toBeInstanceOf(BuildFailure)
     expect(isBuildFailure(failure)).toBeTrue
-    expect(failure.message).toBe('')
+    expect(failure.message).toStrictlyEqual('')
     expect(failure.errors).toEqual([ error1, error2 ])
   })
 })
