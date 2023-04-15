@@ -136,10 +136,8 @@ export function stringifyConstructor(ctor: Constructor): string {
   return `[${ctor.name}]`
 }
 
-/** Stringify a primitive */
-export function stringifyPrimitive(
-    value: null | undefined | string | number | boolean | bigint | symbol | Function,
-): string {
+/** Pretty print the value (strings, numbers, booleans) or return the type */
+export function stringifyValue(value: unknown): string {
   if (value === null) return '<null>'
   if (value === undefined) return '<undefined>'
 
@@ -159,16 +157,7 @@ export function stringifyPrimitive(
       return value.name ? `<function ${value.name}>` : '<function>'
     case 'symbol':
       return value.description ? `<symbol ${value.description}>`: '<symbol>'
-    default:
-      return '<object>'
   }
-}
-
-/** Pretty print the value (strings, numbers, booleans) or return the type */
-export function stringifyValue(value: unknown): string {
-  // null, undefined, ...
-  if (value === null) return stringifyPrimitive(value)
-  if (typeof value !== 'object') return stringifyPrimitive(value as any)
 
   // specific object types
   if (isMatcher(value)) return '<matcher>'
