@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 
-import { assertType, isType, prefixType, stringifyConstructor, stringifyPrimitive, stringifyValue, typeOf } from '../src/expectation/types'
+import { assertType, isType, prefixType, stringifyConstructor, stringifyValue, typeOf } from '../src/expectation/types'
 import { expectPass, expectFail } from './utils'
 
 /* eslint-disable no-new-wrappers */
@@ -81,37 +81,6 @@ describe('Type Utilities', () => {
     assert.strictEqual(stringifyConstructor(null as any), '[Object: no constructor]')
     assert.strictEqual(stringifyConstructor((() => {}) as any), '[Object: anonymous]')
     assert.strictEqual(stringifyConstructor(class FooBar {}), '[FooBar]')
-  })
-
-  it('should stringify a primitive', () => {
-    assert.strictEqual(stringifyPrimitive(null), '<null>')
-    assert.strictEqual(stringifyPrimitive(undefined), '<undefined>')
-
-    assert.strictEqual(stringifyPrimitive('foobar'), '"foobar"')
-    assert.strictEqual(
-        stringifyPrimitive('the quick brown fox jumped over the lazy dog'),
-        '"the quick brown fox jumped over the lazy\u2026, length=44"')
-
-    assert.strictEqual(stringifyPrimitive(123), '123')
-    assert.strictEqual(stringifyPrimitive(-123), '-123')
-    assert.strictEqual(stringifyPrimitive(NaN), 'NaN')
-    assert.strictEqual(stringifyPrimitive(Number.POSITIVE_INFINITY), '+Infinity')
-    assert.strictEqual(stringifyPrimitive(Number.NEGATIVE_INFINITY), '-Infinity')
-
-    assert.strictEqual(stringifyPrimitive(true), 'true')
-    assert.strictEqual(stringifyPrimitive(false), 'false')
-
-    assert.strictEqual(stringifyPrimitive(123n), '123n')
-    assert.strictEqual(stringifyPrimitive(-123n), '-123n')
-
-    assert.strictEqual(stringifyPrimitive(() => {}), '<function>')
-    assert.strictEqual(stringifyPrimitive(function foo() {}), '<function foo>')
-
-    assert.strictEqual(stringifyPrimitive(Symbol()), '<symbol>')
-    assert.strictEqual(stringifyPrimitive(Symbol('foo')), '<symbol foo>')
-    assert.strictEqual(stringifyPrimitive(Symbol.for('foo')), '<symbol foo>')
-
-    assert.strictEqual(stringifyPrimitive({} as any), '<object>') // edge case
   })
 
   it('should stringify a value', () => {
