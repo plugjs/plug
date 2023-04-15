@@ -244,6 +244,9 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
       console.log('\n\nError sending message back to parent process', error)
       process.exitCode = 1
     }).finally(() => {
+      /* Flush and end our log output */
+      logOptions.output.end()
+
       /* Set a timeout _forcefully_ killing the process in 5 seconds */
       setTimeout(() => {
         // eslint-disable-next-line no-console
