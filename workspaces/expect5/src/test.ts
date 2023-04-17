@@ -71,6 +71,7 @@ export class Test implements Plug<void> {
       if (current.parent === suite) {
         if (suite.flag !== 'only') context.log.notice('')
         context.log.enter(NOTICE, `${$wht(current.name)}`)
+        context.log.notice('')
       } else if (current.parent) {
         context.log.enter(NOTICE, `${$blu(_details)} ${$wht(current.name)}`)
       } else {
@@ -78,13 +79,13 @@ export class Test implements Plug<void> {
         const fnum = files.length
         const smsg = snum === 1 ? 'spec' : 'specs'
         const fmsg = fnum === 1 ? 'file' : 'files'
-        context.log.enter(NOTICE, `Running ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}`)
+        context.log.notice(`Running ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}`)
         if (suite.flag === 'only') context.log.notice('')
       }
     })
 
-    execution.on('suite:done', () => {
-      context.log.leave()
+    execution.on('suite:done', (current) => {
+      if (current.parent) context.log.leave()
     })
 
     execution.on('spec:start', (spec) => {
