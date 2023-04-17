@@ -1,4 +1,4 @@
-import { BuildFailure, isBuildFailure } from '../asserts'
+import { BuildFailure } from '../asserts'
 import { emitColor, emitPlain } from './emit'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
@@ -95,7 +95,7 @@ class LoggerImpl implements Logger {
 
     // The `BuildFailure` is a bit special case
     const params = args.filter((arg) => {
-      if (isBuildFailure(arg)) {
+      if (arg instanceof BuildFailure) {
         // Filter out any previously logged build failure and mark
         if (_loggedFailures.has(arg)) return false
         _loggedFailures.add(arg)

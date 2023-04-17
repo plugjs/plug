@@ -7,11 +7,6 @@ import { githubAnnotation } from './logging/github'
 /** A symbol marking {@link BuildFailure} instances */
 const buildFailure = Symbol.for('plugjs:buildFailure')
 
-/** Check if the specified argument is a {@link BuildFailure} */
-export function isBuildFailure(arg: any): arg is BuildFailure {
-  return arg && arg[buildFailure] === buildFailure
-}
-
 /** A {@link BuildFailure} represents an error _already logged_ in our build. */
 export class BuildFailure extends Error {
   readonly errors?: readonly any[] | undefined
@@ -28,12 +23,6 @@ export class BuildFailure extends Error {
     /* Basic error setup: stack and errors */
     Error.captureStackTrace(this, BuildFailure)
     if (errors.length) this.errors = Object.freeze([ ...errors ])
-
-    /* Other properties: marker and name */
-    Object.defineProperties(this, {
-      [buildFailure]: { value: buildFailure },
-      'name': { value: 'BuildFailure' },
-    })
   }
 
   static fail(): BuildFailure {
@@ -46,6 +35,15 @@ export class BuildFailure extends Error {
 
   static withErrors(errors: any[]): BuildFailure {
     return new BuildFailure(undefined, errors)
+  }
+
+  static [Symbol.hasInstance](instance: any): boolean {
+    return instance && instance[buildFailure] === buildFailure
+  }
+
+  static {
+    (this.prototype as any)[buildFailure] = buildFailure
+    this.prototype.name = this.name
   }
 }
 
