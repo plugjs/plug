@@ -122,7 +122,7 @@ export default build({
   async transpile_cjs(): Promise<Files> {
     return merge(workspaces.map((workspace) => {
       log.notice(`Transpiling sources to CJS from ${$p(resolve(workspace))}`)
-      return find('**/*.([cm])?ts', { directory: `${workspace}/src` })
+      return find('**/*.(c)?ts', { directory: `${workspace}/src` })
           .esbuild({
             ...esbuildOptions,
             format: 'cjs',
@@ -136,7 +136,7 @@ export default build({
   async transpile_esm(): Promise<Files> {
     return merge(workspaces.map((workspace) => {
       log.notice(`Transpiling sources to ESM from ${$p(resolve(workspace))}`)
-      return find('**/*.([cm])?ts', { directory: `${workspace}/src` })
+      return find('**/*.(m)?ts', { directory: `${workspace}/src` })
           .esbuild({
             ...esbuildOptions,
             format: 'esm',
@@ -207,6 +207,8 @@ export default build({
   /** Transpile all source code */
   async transpile(): Promise<void> {
     banner('Transpiling')
+
+    await Promise.all(workspaces.map((workspace) => rmrf(`${workspace}/dist`)))
 
     await this.transpile_cjs()
     await this.transpile_esm()
