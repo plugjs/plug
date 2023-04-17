@@ -62,17 +62,23 @@ function printExpectedDiff(
     mapping: boolean,
     comma: boolean,
 ): void {
-  const { prefix, suffix } = fixups(prop, mapping, comma, diff.error)
-
   if ((diff.value === null) || (typeof diff.value !== 'object')) {
+    const { prefix, suffix } = fixups(prop, mapping, comma, diff.error)
+
     const joined = `${prefix}${$red(stringify(diff.value))} ${_tilde} `
     dump(log, diff.expected, joined, suffix, $grn)
   } else if ((diff.expected === null) || (typeof diff.expected !== 'object')) {
+    const { prefix, suffix } = fixups(prop, mapping, comma, diff.error)
+
     const joined = ` ${_tilde} ${$grn(stringify(diff.expected))}${suffix}`
     dump(log, diff.value, prefix, joined, $red)
   } else {
-    const lastLine = dumpAndContinue(log, diff.expected, prefix, suffix, $red)
-    dump(log, diff.expected, `${lastLine} ${_tilde} `, suffix, $grn)
+    // here the error _only_ goes on the last line...
+    const { prefix, suffix: suffix1 } = fixups(prop, mapping, false, '')
+    const { suffix: suffix2 } = fixups(prop, mapping, comma, diff.error)
+
+    const lastLine = dumpAndContinue(log, diff.expected, prefix, suffix1, $red)
+    dump(log, diff.value, `${lastLine} ${_tilde} `, suffix2, $grn)
   }
 }
 
