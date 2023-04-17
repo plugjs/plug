@@ -10,6 +10,17 @@ import { Context, install } from './pipe'
 import type { AbsolutePath } from './paths'
 import type { Plug, PlugName, PlugResult } from './pipe'
 
+/**
+ * Options accepted by {@link ForkingPlug}'s instrumenting how the process
+ * will be spawned (environment variables to be passed to the child process).
+ */
+export interface ForkOptions {
+  /** The directory where coverage data will be saved */
+  coverageDir?: string,
+  /** Force the specified module type when dynamically transpiling TypeScript */
+  forceModule?: 'commonjs' | 'module'
+}
+
 /** Fork data, from parent to child process */
 export interface ForkData {
   /** Script name for the Plug to execute */
@@ -74,6 +85,10 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
         if (typeof this._arguments[i].coverageDir === 'string') {
           const dir = env.NODE_V8_COVERAGE = context.resolve(this._arguments[i].coverageDir)
           context.log.debug('Forked process will produce coverage in', $p(dir))
+        }
+        if (typeof this._arguments[i].forceModule === 'string') {
+          const force = env.__TS_LOADER_FORCE_TYPE = this._arguments[i].forceModule
+          context.log.debug('Forked process will force module type as', $p(force))
         }
       }
     }

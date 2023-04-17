@@ -1,6 +1,8 @@
 import { installForking } from '@plugjs/plug/fork'
 import { requireResolve } from '@plugjs/plug/paths'
 
+import type { ForkOptions } from '@plugjs/plug/fork'
+
 /* ========================================================================== *
  * EXPORTED VARIABLES (for when globals is false)                             *
  * ========================================================================== */
@@ -19,9 +21,7 @@ export { expect } from './expectation/expect'
  * ========================================================================== */
 
 /** Options to construct our {@link Jasmine} plug. */
-export interface TestOptions {
-  /** Specify the directory where coverage data will be saved */
-  coverageDir?: string,
+export interface TestOptions extends ForkOptions {
   /** Report up to the specified amount of failures (default: `+Infinity`) */
   maxFailures?: number,
   /**
