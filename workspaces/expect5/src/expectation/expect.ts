@@ -17,7 +17,7 @@ import {
   ToStrictlyEqual,
 } from './basic'
 import {
-  ToInclude,
+  ToInclude, ToMatchContents,
 } from './include'
 import {
   ToThrow,
@@ -63,6 +63,7 @@ const expectations = {
 
   // include
   toInclude: new ToInclude(),
+  toMatchContents: new ToMatchContents(),
 
   // throwing
   toThrow: new ToThrow(),

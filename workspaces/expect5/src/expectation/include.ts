@@ -23,6 +23,31 @@ export class ToInclude implements Expectation {
   }
 }
 
+export class ToMatchContents implements Expectation {
+  expect(
+      context: Expectations,
+      negative: boolean,
+      contents: any[] | Set<any>,
+  ): void {
+    let actual: Set<any>
+    let expected: Set<any>
+    try {
+      actual = new Set(context.value as any)
+      expected = new Set(contents)
+    } catch (error) {
+      throw new ExpectationError(context, false, 'to be an iterable object')
+    }
+
+    const result = diff(actual, expected)
+    if (result.diff === negative) return
+    throw new ExpectationError(
+        context,
+        negative,
+        `to match contents of ${stringifyValue(contents)}`,
+        { ...result, value: context.value })
+  }
+}
+
 export function includesProps(context: Expectations, negative: boolean, expected: Record<string, any>): void {
   // simple include for maps with objects...
   if (context.value instanceof Map) {
