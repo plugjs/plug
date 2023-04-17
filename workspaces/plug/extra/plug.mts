@@ -337,33 +337,48 @@ main(async (args: string[]): Promise<void> => {
 
   // Watch directories
   if (watchDirs.length) {
-    let timeout: NodeJS.Timeout | undefined = undefined
+    return new Promise((resolve, reject) => {
+      // filesystems change trigger a new run after 250 ms a change is detected,
+      // in order to give time to editors to save a bunch of files open and
+      // modified at the same time...
+      let timeout: NodeJS.Timeout | undefined = undefined
 
-    const runme = (): void => {
-      build[buildMarker](tasks, props)
-          .then(() => {
-            console.log(`\n${$gry}Watching for files change...${$rst}\n`)
-          }, (error) => {
-            if (isBuildFailure(error)) {
-              console.log(`\n${$gry}Watching for files change...${$rst}\n`)
-            } else {
-              console.log(error)
-              watchers.forEach((watcher) => watcher.close())
-            }
-          })
-          .finally(() => {
-            timeout = undefined
-          })
-    }
-
-    const watchers = watchDirs.map((watchDir) => {
-      return _fs.watch(watchDir, { recursive: true }, () => {
-        if (! timeout) timeout = setTimeout(runme, 250)
+      // ctrl-c resolves the promise and exits the process
+      process.on('SIGINT', () => {
+        console.log(`\n${$gry}CTRL-C detected, goodbye...${$rst}\n`)
+        watchers.forEach((watcher) => watcher.close())
+        clearTimeout(timeout)
+        resolve()
       })
-    })
 
-    runme()
-    return
+      // our runner executed by the timeout
+      const runme = (): void => {
+        build[buildMarker](tasks, props)
+            .then(() => {
+              console.log(`\n${$gry}Watching for files change...${$rst}\n`)
+            }, (error) => {
+              if (isBuildFailure(error)) {
+                console.log(`\n${$gry}Watching for files change...${$rst}\n`)
+              } else {
+                watchers.forEach((watcher) => watcher.close())
+                reject(error)
+              }
+            })
+            .finally(() => {
+              timeout = undefined
+            })
+      }
+
+      // watch all directories and trigger a run after 250 milliseconds
+      const watchers = watchDirs.map((watchDir) => {
+        return _fs.watch(watchDir, { recursive: true }, () => {
+          if (! timeout) timeout = setTimeout(runme, 250)
+        })
+      })
+
+      // start a build immediately on first run
+      runme()
+    })
   }
 
   // Normal build (no list, no watchers)
