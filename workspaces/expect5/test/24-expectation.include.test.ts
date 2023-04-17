@@ -377,4 +377,64 @@ describe('Inclusion Expectations', () => {
       expectFail(() => expect({}).toInclude(new Set()), 'Expected [Object] to be an iterable object')
     })
   })
+
+  describe('contents matching', () => {
+    it('should match all contents', () => {
+      expectPass(() => expect([ 'one', true, 123 ]).toMatchContents([ true, 123, 'one' ]))
+      expectPass(() => expect(new Set([ 'one', true, 123 ])).toMatchContents([ true, 123, 'one' ]))
+      expectPass(() => expect([ 'one', true, 123 ]).toMatchContents(new Set([ true, 123, 'one' ])))
+
+      expectFail(() => expect([ 'one', false ]).toMatchContents([ true, 123, 'one' ]),
+          'Expected [Array (2)] to match contents of [Array]', {
+            diff: true,
+            value: [ 'one', false ],
+            values: [
+              { 'diff': false, 'value': 'one' },
+              { 'diff': true, 'extra': false },
+              { 'diff': true, 'missing': true },
+              { 'diff': true, 'missing': 123 },
+            ],
+          })
+      expectFail(() => expect(new Set([ 'one', 345 ])).toMatchContents(new Set([ true, 123, 'one' ])),
+          'Expected [Set (2)] to match contents of [Set]', {
+            diff: true,
+            value: new Set([ 'one', 345 ]),
+            values: [
+              { 'diff': false, 'value': 'one' },
+              { 'diff': true, 'extra': 345 },
+              { 'diff': true, 'missing': true },
+              { 'diff': true, 'missing': 123 },
+            ],
+          })
+    })
+
+    it('should not match all contents', () => {
+      expectFail(() => expect([ 'one', true, 123 ]).not.toMatchContents([ true, 123, 'one' ]),
+          'Expected [Array (3)] not to match contents of [Array]', {
+            diff: false,
+            value: [ 'one', true, 123 ],
+            values: [
+              { 'diff': false, 'value': 'one' },
+              { 'diff': false, 'value': true },
+              { 'diff': false, 'value': 123 },
+            ] })
+      expectFail(() => expect(new Set([ 'one', true, 123 ])).not.toMatchContents([ true, 123, 'one' ]),
+          'Expected [Set (3)] not to match contents of [Array]', {
+            diff: false,
+            value: new Set([ 'one', true, 123 ]),
+            values: [
+              { 'diff': false, 'value': 'one' },
+              { 'diff': false, 'value': true },
+              { 'diff': false, 'value': 123 },
+            ] })
+
+      expectPass(() => expect([ 'one', false ]).not.toMatchContents([ true, 123, 'one' ]))
+      expectPass(() => expect(new Set([ 'one', 345 ])).not.toMatchContents([ true, 123, 'one' ]))
+    })
+
+    it('should not match contents of a non-iterable', () => {
+      expectFail(() => expect({}).toMatchContents([]), 'Expected [Object] to be an iterable object')
+      expectFail(() => expect({}).not.toMatchContents([]), 'Expected [Object] to be an iterable object')
+    })
+  })
 })
