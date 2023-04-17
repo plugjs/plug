@@ -1,5 +1,5 @@
 import { diff } from './diff'
-import { ExpectationError, stringifyValue } from './types'
+import { ExpectationError, stringifyObjectType, stringifyValue } from './types'
 
 import type { Diff } from './diff'
 import type { Expectation, Expectations } from './expect'
@@ -39,11 +39,12 @@ export class ToMatchContents implements Expectation {
     }
 
     const result = diff(actual, expected)
+    delete result.error // remove extra error message about size differences...
     if (result.diff === negative) return
     throw new ExpectationError(
         context,
         negative,
-        `to match contents of ${stringifyValue(contents)}`,
+        `to match contents of ${stringifyObjectType(contents)}`,
         { ...result, value: context.value })
   }
 }
