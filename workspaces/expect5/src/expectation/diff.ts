@@ -78,11 +78,12 @@ function objectDiff<T extends Record<string, any>>(
     const exp = expected[key]
 
     let result = diffValues(act, exp, remarks)
+
+    // if there is a difference, we _might_ have a missing/extra property
     if (result.diff) {
-      // if there is a difference, we _might_ have a missing/extra property
-      if ((act === undefined) && (! (key in actual))) {
+      if ((act === undefined) && (key in expected)) {
         result = { diff: true, missing: exp }
-      } else if ((exp === undefined) && (! (key in expected))) {
+      } else if ((exp === undefined) && (key in actual)) {
         result = { diff: true, extra: act }
       }
     }
@@ -135,10 +136,10 @@ function setDiff<T>(
     expected: Set<T>,
     remarks: Remarks,
 ): ObjectDiff {
-  // make sure that the size of both sets is the same
-  if (actual.size !== expected.size) {
-    return errorDiff(actual, `to have size ${expected.size} (size=${actual.size})`)
-  }
+  // highlight if sets have different sizes... don't expand the returned error
+  // as this might inject an extra "error: undefined" property in the final diff
+  const error = actual.size === expected.size ? {} :
+    errorDiff(actual, `to have size ${expected.size} (size=${actual.size})`)
 
   // check differences between sets
   const values: Diff[] = []
@@ -165,7 +166,7 @@ function setDiff<T>(
   missing.forEach((value) => values.push({ diff: true, missing: value }))
 
   // done...
-  return { ...result, diff, values }
+  return { ...error, ...result, diff, values }
 }
 
 /* ========================================================================== */
@@ -360,7 +361,10 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
   const prototype = Object.getPrototypeOf(expected)
   if (prototype && prototype.constructor) {
     if (! (actual instanceof prototype.constructor)) {
-      return errorDiff(actual, `to be instance of ${stringifyConstructor(prototype.constructor)}`)
+      return {
+        ...errorDiff(actual, `to be instance of ${stringifyConstructor(prototype.constructor)}`),
+        expected,
+      }
     }
   }
 
@@ -373,7 +377,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
     (expected instanceof ctor) ?
       callback(actual as InstanceType<typeof ctor>, expected, remarks) :
     (actual instanceof ctor) ?
-      errorDiff(actual, `not to be an instance of ${stringifyConstructor(ctor)}`) :
+      { ...errorDiff(actual, `not to be an instance of ${stringifyConstructor(ctor)}`), expected } :
     undefined
 
   return (
