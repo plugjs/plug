@@ -86,7 +86,6 @@ export function main(callback: (args: string[]) => void | Promise<void>): void {
       }
     })
 
-
     Promise.resolve().then(async () => {
       process.exitCode = 0
       await callback(args)
