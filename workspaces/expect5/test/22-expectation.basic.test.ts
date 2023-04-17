@@ -233,6 +233,16 @@ describe('Basic Expectations', () => {
         { diff: true, value: 'bar', expected: 'baz' },
       ],
     })
+
+    // arrays with different order
+    expectFail(() => expect([ 'foo', 'bar' ]).toEqual([ 'bar', 'foo' ]), 'Expected [Array (2)] to equal [Array (2)]', {
+      diff: true,
+      value: [ 'foo', 'bar' ],
+      values: [
+        { diff: true, value: 'foo', expected: 'bar' },
+        { diff: true, value: 'bar', expected: 'foo' },
+      ],
+    })
   })
 
   it('should expect "toHaveProperty(...)"', () => {
