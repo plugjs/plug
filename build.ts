@@ -3,7 +3,6 @@ import {
   $p,
   banner,
   build,
-  fail,
   find,
   fixExtensions,
   fork,
@@ -19,11 +18,7 @@ import {
 
 import type { ESLint } from './workspaces/eslint/src/eslint'
 import type { Test } from './workspaces/expect5/src/test'
-import type {
-  AbsolutePath,
-  ESBuildOptions,
-  Files,
-} from './workspaces/plug/src/index'
+import type { ESBuildOptions, Files } from './workspaces/plug/src/index'
 import type { Tsc } from './workspaces/typescript/src/typescript'
 
 logging.logOptions.githubAnnotations = false
@@ -118,9 +113,6 @@ const ForkingTsc = class extends fork.ForkingPlug {
 
 export default build({
   workspace: '',
-
-  // pad task names, as we run sub builds with long names
-  _1234567890_1234567890_1234567890: () => void 0,
 
   /* ======================================================================== *
    * TRANSPILATION                                                            *
@@ -244,34 +236,38 @@ export default build({
   },
 
   /** Run tests in CJS mode */
-  async test(): Promise<void> {
+  async test_cjs(): Promise<void> {
+    banner('Running Tests (CommonJS)')
+
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
 
-    for (const mode of [ 'cjs', 'esm' ] as const) {
-      const errors: AbsolutePath[] = []
-      for (const workspace of selection) {
-        const directory = resolve(workspace, 'test')
-        try {
-          banner(`${mode.toUpperCase()} Tests (${workspace})`)
-          await find('**/*.test.ts', { directory })
-              .plug(new ForkingTest({
-                forceModule: mode === 'cjs' ? 'commonjs' : 'module',
-                coverageDir,
-              }))
-        } catch (error: any) {
-          log.error(error)
-          errors.push(resolve(workspace))
-        }
-      }
+    await merge(selection.map((workspace) => {
+      return find('**/*.test.ts', { directory: `${workspace}/test` })
+    })).plug(new ForkingTest({
+      forceModule: 'commonjs',
+      coverageDir,
+    }))
+  },
 
-      if (errors.length === 0) continue
+  /** Run tests in ESM mode */
+  async test_esm(): Promise<void> {
+    banner('Running Tests (ES Modules)')
 
-      banner('Tests failed')
-      log.error(`Found test errors in ${errors.length} workspaces`)
-      errors.forEach((workspace) => log.error('*', $p(workspace)))
-      log.error('')
-      fail('')
-    }
+    const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
+
+    await merge(selection.map((workspace) => {
+      return find('**/*.test.ts', { directory: `${workspace}/test` })
+    })).plug(new ForkingTest({
+      forceModule: 'module',
+      coverageDir,
+    }))
+  },
+
+  /** Run all tests */
+  async test(): Promise<void> {
+    await this.check()
+    await this.test_cjs()
+    await this.test_esm()
   },
 
   /* ======================================================================== *
@@ -362,7 +358,7 @@ export default build({
 
     await this.clean_coverage()
     await this.transpile()
-    await this.check()
+    await this.check() // dev mode, run checks _before_ tests
     try {
       await this.test()
     } catch (err) {
@@ -378,7 +374,6 @@ export default build({
   async build(): Promise<void> {
     await this.clean_coverage()
     await this.transpile()
-    await this.check()
     await this.test()
     await this.lint()
   },
