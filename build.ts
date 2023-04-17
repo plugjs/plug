@@ -68,6 +68,9 @@ const workspaceExports: Record<typeof workspaces[number], [ string, ...string[] 
  * SHARED CONSTANTS (DEFAULTS) AND FUNCTIONS                                  *
  * ========================================================================== */
 
+/** Coverage Data Directory */
+const coverageDir = '.coverage-data'
+
 /** Shared ESBuild options */
 const esbuildOptions: ESBuildOptions = {
   platform: 'node',
@@ -253,7 +256,7 @@ export default build({
           await find('**/*.test.ts', { directory })
               .plug(new ForkingTest({
                 forceModule: mode === 'cjs' ? 'commonjs' : 'module',
-                coverageDir: 'coverage-data',
+                coverageDir,
               }))
         } catch (error: any) {
           log.error(error)
@@ -276,8 +279,7 @@ export default build({
    * ======================================================================== */
 
   async clean_coverage(): Promise<void> {
-    await rmrf('.coverage-data')
-    await rmrf('.coverage-test-data')
+    await rmrf(coverageDir)
   },
 
   /** Gnerate coverage report */
@@ -294,7 +296,7 @@ export default build({
     })).filter('**/*.*', { directory: '.' })
 
     // @ts-ignore
-    await sources.plug(new Coverage('.coverage-data', {
+    await sources.plug(new Coverage(coverageDir, {
       reportDir: 'coverage',
       optimalCoverage: 100,
       minimumCoverage: 80,
@@ -349,8 +351,7 @@ export default build({
 
   /* Cleanup generated files */
   async clean(): Promise<void> {
-    await rmrf('.coverage-data')
-    await rmrf('.coverage-test-data')
+    await rmrf(coverageDir)
     await rmrf('workspaces/plug/cli')
     await Promise.all( workspaces.map((workspace) => rmrf(`${workspace}/dist`)))
   },
@@ -389,7 +390,7 @@ export default build({
       log.notice('Forking to collect self coverage')
       await invokeBuild('./build.ts', 'build', {
         workspace: this.workspace,
-        coverageDir: '.coverage-data',
+        coverageDir,
       })
     } catch (err) {
       error = err
