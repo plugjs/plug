@@ -4,7 +4,7 @@ import { Coverage } from '../src/coverage'
 
 import type { AbsolutePath, Files } from '@plugjs/plug'
 
-describe('ESLint Plug', () => {
+describe('Cov8 Plug', () => {
   const sourceDir = '@/workspaces/cov8/test/sources'
   let coverageDataDir: AbsolutePath
   let sources: Files

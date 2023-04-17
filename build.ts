@@ -242,7 +242,7 @@ export default build({
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
 
     await merge(selection.map((workspace) => {
-      return find('**/*.test.ts', { directory: `${workspace}/test` })
+      return find('test.ts', { directory: `${workspace}/test` })
     })).plug(new ForkingTest({
       forceModule: 'commonjs',
       coverageDir,
@@ -256,7 +256,7 @@ export default build({
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
 
     await merge(selection.map((workspace) => {
-      return find('**/*.test.ts', { directory: `${workspace}/test` })
+      return find('test.ts', { directory: `${workspace}/test` })
     })).plug(new ForkingTest({
       forceModule: 'module',
       coverageDir,
@@ -380,21 +380,13 @@ export default build({
 
   /* Run all tasks (sequentially) */
   async default(): Promise<void> {
-    let error: any = undefined
-    try {
-      log.notice('Forking to collect self coverage')
-      await invokeBuild('./build.ts', 'build', {
-        workspace: this.workspace,
-        coverageDir,
-      })
-    } catch (err) {
-      error = err
-    } finally {
-      await this.coverage().then(() => {
-        if (error) throw error
-      }, (err) => {
-        throw error || err
-      })
-    }
+    log.notice('Forking to collect self coverage')
+
+    await invokeBuild('./build.ts', 'build', {
+      workspace: this.workspace,
+      coverageDir,
+    })
+
+    await this.coverage()
   },
 })

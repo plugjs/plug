@@ -2,7 +2,7 @@ import { BuildFailure, find, merge } from '@plugjs/plug'
 
 import { Tsd } from '../src/tsd'
 
-describe('Tsd', () => {
+describe('Tsd Plug', () => {
   const dataDir = '@/workspaces/tsd/test/data'
 
   it('should succeed with only passing tests', async () => {

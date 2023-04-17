@@ -3,7 +3,7 @@ import * as yauzl from 'yauzl'
 
 import { Zip } from '../src/zip'
 
-describe('Zip Files', () => {
+describe('Zip Plug', () => {
   let outdir: string
 
   beforeAll(() => {
@@ -17,7 +17,8 @@ describe('Zip Files', () => {
   it('should zip this directory', async () => {
     const outfile = resolve(outdir, 'zipfile1.zip')
 
-    const files = await find('*.ts', { directory: '@/workspaces/zip/test' }).plug(new Zip(outfile))
+    const files = await find('*.ts', { directory: '@/workspaces/zip/test' })
+        .plug(new Zip(outfile))
     const paths = [ ...files.absolutePaths() ]
 
     expect(files.directory).toEqual(outdir)
@@ -35,15 +36,15 @@ describe('Zip Files', () => {
     })
 
     expect(entries).toEqual(new Set([
-      'build.ts',
-      'zip.test.ts',
+      'test.ts',
     ]))
   })
 
   it('should zip contents of this directory from the parent', async () => {
     const outfile = resolve(outdir, 'zipfile2.zip')
 
-    const files = await find('test/*.ts', { directory: '@/workspaces/zip' }).plug(new Zip(outfile))
+    const files = await find('test/*.ts', { directory: '@/workspaces/zip' })
+        .plug(new Zip(outfile))
     const paths = [ ...files.absolutePaths() ]
 
     expect(files.directory).toEqual(outdir)
@@ -61,8 +62,7 @@ describe('Zip Files', () => {
     })
 
     expect(entries).toEqual(new Set([
-      'test/build.ts',
-      'test/zip.test.ts',
+      'test/test.ts',
     ]))
   })
 
