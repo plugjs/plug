@@ -38,6 +38,8 @@ describe('Expectations Matcher', () => {
     expectPass(() => expect.toBeTrue().expect(true))
     expectPass(() => expect.toBeTruthy().expect(1))
     expectPass(() => expect.toBeUndefined().expect(undefined))
+    expectPass(() => expect.toInclude([ 'foo' ]).expect([ 'foo', 'bar' ]))
+    expectPass(() => expect.toMatchContents([ 'foo', 123 ]).expect([ 123, 'foo' ]))
   })
 
   it('should expect negatively with matchers', () => {
@@ -68,6 +70,8 @@ describe('Expectations Matcher', () => {
     expectPass(() => expect.not.toBeTrue().expect(false))
     expectPass(() => expect.not.toBeTruthy().expect(0))
     expectPass(() => expect.not.toBeUndefined().expect(null))
+    expectPass(() => expect.not.toInclude([ 'foo' ]).expect([ 'bar' ]))
+    expectPass(() => expect.not.toMatchContents([ 'foo', 123 ]).expect([ 'bar', 456 ]))
   })
 
   it('should expect failures with matchers', () => {
@@ -109,6 +113,19 @@ describe('Expectations Matcher', () => {
     expectFail(() => expect.toBeTrue().expect(false), 'Expected false to be true')
     expectFail(() => expect.toBeTruthy().expect(0), 'Expected 0 to be truthy')
     expectFail(() => expect.toBeUndefined().expect(null), 'Expected <null> to be <undefined>')
+    expectFail(() => expect.toInclude([ 'foo' ]).expect([ 'bar' ]), 'Expected [Array (1)] to include 1 value', {
+      diff: true,
+      value: [ 'bar' ],
+      values: [ { diff: true, missing: 'foo' } ],
+    })
+    expectFail(() => expect.toMatchContents([ 'foo', 123 ]).expect([ 123 ]), 'Expected [Array (1)] to match contents of [Array]', {
+      diff: true,
+      value: [ 123 ],
+      values: [
+        { diff: false, value: 123 },
+        { diff: true, missing: 'foo' },
+      ],
+    })
   })
 
   it('should expect failures negatively with matchers', () => {
@@ -150,6 +167,19 @@ describe('Expectations Matcher', () => {
     expectFail(() => expect.not.toBeTrue().expect(true), 'Expected true not to be true')
     expectFail(() => expect.not.toBeTruthy().expect(1), 'Expected 1 not to be truthy')
     expectFail(() => expect.not.toBeUndefined().expect(undefined), 'Expected <undefined> not to be <undefined>')
+    expectFail(() => expect.not.toInclude([ 'foo' ]).expect([ 'foo' ]), 'Expected [Array (1)] not to include 1 value', {
+      diff: true,
+      value: [ 'foo' ],
+      values: [ { diff: true, extra: 'foo' } ],
+    })
+    expectFail(() => expect.not.toMatchContents([ 'foo', 123 ]).expect([ 123, 'foo' ]), 'Expected [Array (2)] not to match contents of [Array]', {
+      diff: false,
+      value: [ 123, 'foo' ],
+      values: [
+        { diff: false, value: 123 },
+        { diff: false, value: 'foo' },
+      ],
+    })
   })
 
   it('should expect matchers in chains', () => {
