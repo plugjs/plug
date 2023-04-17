@@ -17,7 +17,10 @@ describe('ESLint Plug', () => {
 
   it('should lint some files with errors', async () => {
     const promise = find('test-multiline.js', { directory: dataDir })
-        .plug(new ESLint({ configFile: `${dataDir}/eslint-errors.cjs` }))
+        .plug(new ESLint({
+          configFile: `${dataDir}/eslint-errors.cjs`,
+          directory: dataDir,
+        }))
     await expect(promise).toBeRejectedWithError(BuildFailure)
   })
 
