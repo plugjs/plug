@@ -337,19 +337,11 @@ main(async (args: string[]): Promise<void> => {
 
   // Watch directories
   if (watchDirs.length) {
-    return new Promise((resolve, reject) => {
+    return new Promise((_, reject) => {
       // filesystems change trigger a new run after 250 ms a change is detected,
       // in order to give time to editors to save a bunch of files open and
       // modified at the same time...
       let timeout: NodeJS.Timeout | undefined = undefined
-
-      // ctrl-c resolves the promise and exits the process
-      process.on('SIGINT', () => {
-        console.log(`\n${$gry}CTRL-C detected, goodbye...${$rst}\n`)
-        watchers.forEach((watcher) => watcher.close())
-        clearTimeout(timeout)
-        resolve()
-      })
 
       // our runner executed by the timeout
       const runme = (): void => {
