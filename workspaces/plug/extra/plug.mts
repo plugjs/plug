@@ -372,9 +372,5 @@ main(async (args: string[]): Promise<void> => {
   } catch (error) {
     if (! isBuildFailure(error)) console.log(error)
     process.exitCode = 1
-    setTimeout(() => {
-      console.log('\n\nProcess %d did not exit in 5 seconds', process.pid)
-      process.exit(2)
-    }, 5000).unref()
   }
 })
