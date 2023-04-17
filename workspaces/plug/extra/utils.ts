@@ -92,7 +92,7 @@ export function main(callback: (args: string[]) => void | Promise<void>): void {
     }).catch((error) => {
       console.error(error)
       process.exitCode = 1
-    }).finally(() => {
+
       setTimeout(() => {
         console.log('\n\nProcess %d did not exit in 5 seconds', process.pid)
         process.exit(2)
