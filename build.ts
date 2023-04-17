@@ -3,11 +3,11 @@ import {
   $p,
   $wht,
   build,
-  exec,
   fail,
   find,
   fixExtensions,
   fork,
+  invokeBuild,
   log,
   logging,
   merge,
@@ -17,13 +17,13 @@ import {
   rmrf,
 } from './workspaces/plug/src/index'
 
+import type { ESLint } from './workspaces/eslint/src/eslint'
 import type {
   AbsolutePath,
   ESBuildOptions,
   Files,
 } from './workspaces/plug/src/index'
 import type { Tsc } from './workspaces/typescript/src/typescript'
-import type { ESLint } from './workspaces/eslint/src/eslint'
 
 logging.logOptions.githubAnnotations = false
 
@@ -255,10 +255,7 @@ export default build({
           banner(`${mode.toUpperCase()} Tests (${workspace})`)
 
           const task = `${workspace.substring(11)} test`
-          await exec(resolve('@/bootstrap/plug.mjs'), `--force-${mode}`, '-f', buildFile, task, {
-            coverageDir: '.coverage-data',
-            fork: true,
-          })
+          await invokeBuild(buildFile, task, { coverageDir: '.coverage-data' })
         } catch (error: any) {
           log.error(error)
           errors.push(buildFile)
@@ -391,11 +388,9 @@ export default build({
     let error: any = undefined
     try {
       log.notice('Forking to collect self coverage')
-      const args = [ 'build' ]
-      if (this.workspace) args.push(`workspace=${this.workspace}`)
-      await exec(resolve('@/bootstrap/plug.mjs'), ...args, {
+      await invokeBuild('./build.ts', 'build', {
+        workspace: this.workspace,
         coverageDir: '.coverage-data',
-        fork: true,
       })
     } catch (err) {
       error = err
