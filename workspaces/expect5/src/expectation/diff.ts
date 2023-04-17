@@ -377,7 +377,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
     (expected instanceof ctor) ?
       callback(actual as InstanceType<typeof ctor>, expected, remarks) :
     (actual instanceof ctor) ?
-      { ...errorDiff(actual, `not to be an instance of ${stringifyConstructor(ctor)}`), expected } :
+      { diff: true, value: actual, expected } :
     undefined
 
   return (

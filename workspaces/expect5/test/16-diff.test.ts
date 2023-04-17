@@ -136,12 +136,15 @@ describe('Differences', () => {
       diff: true,
       value: {},
       error: 'Expected [Object] to be instance of [SyntaxError]',
+      expected: a,
     })
 
-    deepEqual(diff(a, new TypeError('foo')), {
+    const b = new TypeError('foo')
+    deepEqual(diff(a, b), {
       diff: true,
       value: a,
       error: 'Expected [SyntaxError] to be instance of [TypeError]',
+      expected: b,
     })
   })
 
@@ -488,7 +491,7 @@ describe('Differences', () => {
       deepEqual(diff([], {}), {
         diff: true,
         value: [],
-        error: 'Expected [Array (0)] not to be an instance of [Array]',
+        expected: {},
       })
     })
   })
@@ -583,19 +586,19 @@ describe('Differences', () => {
       deepEqual(diff(new Boolean(true), {}), {
         diff: true,
         value: new Boolean(true),
-        error: 'Expected [Boolean: true] not to be an instance of [Boolean]',
+        expected: {},
       })
 
       deepEqual(diff(new Number(123), {}), {
         diff: true,
         value: new Number(123),
-        error: 'Expected [Number: 123] not to be an instance of [Number]',
+        expected: {},
       })
 
       deepEqual(diff(new String('foo'), {}), {
         diff: true,
         value: new String('foo'),
-        error: 'Expected [String: "foo"] not to be an instance of [String]',
+        expected: {},
       })
     })
   })
@@ -735,7 +738,7 @@ describe('Differences', () => {
       deepEqual(diff(act, {}), {
         diff: true,
         value: act,
-        error: 'Expected [Buffer: cafebabe] not to be an instance of [Buffer]',
+        expected: {},
       })
 
       const uact = new Uint8Array(act)
@@ -743,7 +746,7 @@ describe('Differences', () => {
       deepEqual(diff(uact, {}), {
         diff: true,
         value: uact,
-        error: 'Expected [Uint8Array: cafebabe] not to be an instance of [Uint8Array]',
+        expected: {},
       })
 
       const aact = uact.buffer
@@ -751,7 +754,7 @@ describe('Differences', () => {
       deepEqual(diff(aact, {}), {
         diff: true,
         value: aact,
-        error: 'Expected [ArrayBuffer: cafebabe] not to be an instance of [ArrayBuffer]',
+        expected: {},
       })
 
       const sact = new SharedArrayBuffer(uact.byteLength)
@@ -760,7 +763,7 @@ describe('Differences', () => {
       deepEqual(diff(sact, {}), {
         diff: true,
         value: sact,
-        error: 'Expected [SharedArrayBuffer: cafebabe] not to be an instance of [SharedArrayBuffer]',
+        expected: {},
       })
     })
   })
@@ -793,7 +796,7 @@ describe('Differences', () => {
       deepEqual(diff(promise, {}), {
         diff: true,
         value: promise,
-        error: 'Expected [Promise] not to be an instance of [Promise]',
+        expected: {},
       })
     })
   })
@@ -833,7 +836,7 @@ describe('Differences', () => {
       deepEqual(diff(re, {}), {
         diff: true,
         value: re,
-        error: 'Expected /abc/gm not to be an instance of [RegExp]',
+        expected: {},
       })
     })
   })
@@ -866,7 +869,7 @@ describe('Differences', () => {
       deepEqual(diff(date, {}), {
         diff: true,
         value: date,
-        error: 'Expected [Date: 2023-04-11T14:34:00.879Z] not to be an instance of [Date]',
+        expected: {},
       })
     })
   })
@@ -963,7 +966,7 @@ describe('Differences', () => {
         diff: false,
         value: act,
         values: [
-          { diff: false, value: '1' },
+          { diff: false, value: 1 },
           { diff: false, value: true },
           { diff: false, value: 'foo' },
           {
@@ -1007,12 +1010,14 @@ describe('Differences', () => {
         diff: true,
         value: set1,
         error: 'Expected [Set (1)] to have size 0 (size=1)',
+        values: [ { diff: true, extra: 'foo' } ],
       })
 
       deepEqual(diff(set0, set1), {
         diff: true,
         value: set0,
         error: 'Expected [Set (0)] to have size 1 (size=0)',
+        values: [ { diff: true, missing: 'foo' } ],
       })
     })
 
