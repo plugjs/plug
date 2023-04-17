@@ -18,6 +18,7 @@ import {
 } from './workspaces/plug/src/index'
 
 import type { ESLint } from './workspaces/eslint/src/eslint'
+import type { Test } from './workspaces/expect5/src/test'
 import type {
   AbsolutePath,
   ESBuildOptions,
@@ -85,17 +86,24 @@ const esbuildOptions: ESBuildOptions = {
  * only be read and executed once the plug is instantiated!                   *
  * ========================================================================== */
 
-const ForkingTsc = class extends fork.ForkingPlug {
-  constructor(...args: ConstructorParameters<typeof Tsc>) {
-    const scriptFile = paths.requireResolve(__fileurl, './workspaces/typescript/src/typescript')
-    super(scriptFile, args, 'Tsc')
-  }
-}
-
 const ForkingESLint = class extends fork.ForkingPlug {
   constructor(...args: ConstructorParameters<typeof ESLint>) {
     const scriptFile = paths.requireResolve(__fileurl, './workspaces/eslint/src/eslint')
     super(scriptFile, args, 'ESLint')
+  }
+}
+
+const ForkingTest = class extends fork.ForkingPlug {
+  constructor(...args: ConstructorParameters<typeof Test>) {
+    const scriptFile = paths.requireResolve(__fileurl, './workspaces/expect5/src/test')
+    super(scriptFile, args, 'Test')
+  }
+}
+
+const ForkingTsc = class extends fork.ForkingPlug {
+  constructor(...args: ConstructorParameters<typeof Tsc>) {
+    const scriptFile = paths.requireResolve(__fileurl, './workspaces/typescript/src/typescript')
+    super(scriptFile, args, 'Tsc')
   }
 }
 
@@ -239,23 +247,25 @@ export default build({
     for (const mode of [ 'cjs', 'esm' ] as const) {
       const errors: AbsolutePath[] = []
       for (const workspace of selection) {
-        const buildFile = resolve(workspace, 'test', 'build.ts')
+        const directory = resolve(workspace, 'test')
         try {
           banner(`${mode.toUpperCase()} Tests (${workspace})`)
-
-          const task = `${workspace.substring(11)} test`
-          await invokeBuild(buildFile, task, { coverageDir: '.coverage-data' })
+          await find('**/*.test.ts', { directory })
+              .plug(new ForkingTest({
+                forceModule: mode === 'cjs' ? 'commonjs' : 'module',
+                coverageDir: 'coverage-data',
+              }))
         } catch (error: any) {
           log.error(error)
-          errors.push(buildFile)
+          errors.push(resolve(workspace))
         }
       }
 
       if (errors.length === 0) continue
 
       banner('Tests failed')
-      log.error(`Found test errors in ${errors.length} subprojects`)
-      errors.forEach((file) => log.error('*', $p(file)))
+      log.error(`Found test errors in ${errors.length} workspaces`)
+      errors.forEach((workspace) => log.error('*', $p(workspace)))
       log.error('')
       fail('')
     }
