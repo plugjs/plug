@@ -2,17 +2,17 @@ import { BuildFailure, exec, find, merge, mkdtemp, rmrf } from '@plugjs/plug'
 
 import { Coverage } from '../src/coverage'
 
-import type { Files, AbsolutePath } from '@plugjs/plug'
-
+import type { AbsolutePath, Files } from '@plugjs/plug'
 
 describe('ESLint Plug', () => {
+  const sourceDir = '@/workspaces/cov8/test/sources'
   let coverageDataDir: AbsolutePath
   let sources: Files
   let covered: Files
 
   beforeAll(async () => {
     coverageDataDir = mkdtemp()
-    sources = await find('**/*.([cm])?[tj]s', { directory: '@/sources' })
+    sources = await find('**/*.([cm])?[tj]s', { directory: sourceDir })
     covered = await merge([ sources ]).filter('!**/sourcemap.([cm])?js')
 
     const files = await merge([ sources ]).filter('!**/*.([cm])?ts')

@@ -4,13 +4,15 @@ import { resolve } from '@plugjs/plug'
 import { getCompilerOptions } from '../src/options'
 
 describe('TypeScript Compiler Options', () => {
+  const testDir = '@/workspaces/typescript/test'
+
   it('should return the default options or fail', async () => {
     let { options, errors } = await getCompilerOptions()
     expect(options).toEqual(ts.getDefaultCompilerOptions())
     expect(errors).toHaveLength(0)
 
 
-    ;({ options, errors } = await getCompilerOptions(resolve('@/foobar.json')))
+    ;({ options, errors } = await getCompilerOptions(resolve(`${testDir}/foobar.json`)))
     expect(options).toEqual({})
     expect(errors).toEqual([
       expect.toInclude({
@@ -22,7 +24,7 @@ describe('TypeScript Compiler Options', () => {
   })
 
   it('should read a basic configuration file', async () => {
-    const base = resolve('@/options/base.json')
+    const base = resolve(`${testDir}/options/base.json`)
     let { options, errors } = await getCompilerOptions(base)
     expect(errors).toHaveLength(0)
     expect(options).toEqual(Object.assign({}, ts.getDefaultCompilerOptions(), {
@@ -31,7 +33,7 @@ describe('TypeScript Compiler Options', () => {
     }))
 
 
-    const wrong = resolve('@/options/wrong.json')
+    const wrong = resolve(`${testDir}/options/wrong.json`)
     ;({ options, errors } = await getCompilerOptions(wrong))
     expect(options).toEqual({})
     expect(errors).toEqual([
@@ -45,37 +47,37 @@ describe('TypeScript Compiler Options', () => {
 
   it('should read an extended configuration file', async () => {
     // base file
-    const base = resolve('@/options/base/tsconfig.json')
+    const base = resolve(`${testDir}/options/base/tsconfig.json`)
     let { options, errors } = await getCompilerOptions(base)
     expect(errors).toHaveLength(0)
     expect(options).toEqual(Object.assign(ts.getDefaultCompilerOptions(), {
       module: ts.ModuleKind.AMD,
       configFilePath: base,
-      outDir: resolve('@/options/base/outDir'),
-      rootDir: resolve('@/options/base/rootDir'),
-      declarationDir: resolve('@/options/base/declarationDir'),
+      outDir: resolve(`${testDir}/options/base/outDir`),
+      rootDir: resolve(`${testDir}/options/base/rootDir`),
+      declarationDir: resolve(`${testDir}/options/base/declarationDir`),
       rootDirs: [
-        resolve('@/options/base/rootDirs/1'),
-        resolve('@/options/base/rootDirs/2'),
+        resolve(`${testDir}/options/base/rootDirs/1`),
+        resolve(`${testDir}/options/base/rootDirs/2`),
       ],
-      outFile: resolve('@/options/base/outDile.js'),
+      outFile: resolve(`${testDir}/options/base/outDile.js`),
     }))
 
     // extended file (overrides module, preserves paths)
-    const ext = resolve('@/options/ext/tsconfig.json')
+    const ext = resolve(`${testDir}/options/ext/tsconfig.json`)
     ;({ options, errors } = await getCompilerOptions(ext))
     expect(errors).toHaveLength(0)
     expect(options).toEqual(Object.assign(ts.getDefaultCompilerOptions(), {
       module: ts.ModuleKind.CommonJS,
       configFilePath: ext,
-      outDir: resolve('@/options/base/outDir'),
-      rootDir: resolve('@/options/base/rootDir'),
-      declarationDir: resolve('@/options/base/declarationDir'),
+      outDir: resolve(`${testDir}/options/base/outDir`),
+      rootDir: resolve(`${testDir}/options/base/rootDir`),
+      declarationDir: resolve(`${testDir}/options/base/declarationDir`),
       rootDirs: [
-        resolve('@/options/base/rootDirs/1'),
-        resolve('@/options/base/rootDirs/2'),
+        resolve(`${testDir}/options/base/rootDirs/1`),
+        resolve(`${testDir}/options/base/rootDirs/2`),
       ],
-      outFile: resolve('@/options/base/outDile.js'),
+      outFile: resolve(`${testDir}/options/base/outDile.js`),
     }))
 
     // extended file with manual overrides
@@ -87,19 +89,19 @@ describe('TypeScript Compiler Options', () => {
     expect(options).toEqual(Object.assign(ts.getDefaultCompilerOptions(), {
       module: ts.ModuleKind.AMD,
       configFilePath: ext,
-      outDir: resolve('@/options/base/outDir'),
-      rootDir: resolve('@/options/base/rootDir'),
-      declarationDir: resolve('@/options/base/declarationDir'),
+      outDir: resolve(`${testDir}/options/base/outDir`),
+      rootDir: resolve(`${testDir}/options/base/rootDir`),
+      declarationDir: resolve(`${testDir}/options/base/declarationDir`),
       rootDirs: [
-        resolve('@/options/base/rootDirs/1'),
-        resolve('@/options/base/rootDirs/2'),
+        resolve(`${testDir}/options/base/rootDirs/1`),
+        resolve(`${testDir}/options/base/rootDirs/2`),
       ],
-      outFile: resolve('@/options/base/outDile.js'),
+      outFile: resolve(`${testDir}/options/base/outDile.js`),
     }))
   })
 
   it('should detect circular dependencies when reading extended configurations', async () => {
-    const base = resolve('@/options/circular/tsconfig.json')
+    const base = resolve(`${testDir}/options/circular/tsconfig.json`)
     const { options, errors } = await getCompilerOptions(base)
     expect(options).toEqual({})
     expect(errors).toEqual([

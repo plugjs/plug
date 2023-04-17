@@ -77,14 +77,14 @@ describe('Paths Utilities', () => {
   })
 
   it('should return the module name to require / import', () => {
-    expect(requireResolve(buildFile, '../src/index.ts'))
-        .toStrictlyEqual(resolveAbsolutePath(buildDir, '..', 'src', 'index.ts'))
-    expect(requireResolve(buildFile, '../src/index')) // no extension
-        .toStrictlyEqual(resolveAbsolutePath(buildDir, '..', 'src', 'index.ts'))
-    expect(requireResolve(buildFile, '../src')) // directory index!
-        .toStrictlyEqual(resolveAbsolutePath(buildDir, '..', 'src', 'index.ts'))
-    expect(requireResolve(buildFile, '../src/')) // directory with slash
-        .toStrictlyEqual(resolveAbsolutePath(buildDir, '..', 'src', 'index.ts'))
+    expect(requireResolve(buildFile, './workspaces/plug/src/index.ts'))
+        .toStrictlyEqual(resolveAbsolutePath(buildDir, 'workspaces', 'plug', 'src', 'index.ts'))
+    expect(requireResolve(buildFile, './workspaces/plug//src/index')) // no extension
+        .toStrictlyEqual(resolveAbsolutePath(buildDir, 'workspaces', 'plug', 'src', 'index.ts'))
+    expect(requireResolve(buildFile, './workspaces/plug/src')) // directory index!
+        .toStrictlyEqual(resolveAbsolutePath(buildDir, 'workspaces', 'plug', 'src', 'index.ts'))
+    expect(requireResolve(buildFile, './workspaces/plug/src/')) // directory with slash
+        .toStrictlyEqual(resolveAbsolutePath(buildDir, 'workspaces', 'plug', 'src', 'index.ts'))
 
     // straight up modules!
     expect(requireResolve(buildFile, 'typescript')).toBeA('string')

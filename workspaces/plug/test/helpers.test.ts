@@ -37,17 +37,22 @@ describe('Helpers Test', () => {
     expect(files2.length).toStrictlyEqual(0)
     expect(files2.directory).toStrictlyEqual(resolve('.'))
 
-    const pipe3 = merge([ new Files(resolve('@')) ])
+    const pipe3 = merge([ new Files(resolve('@/workspaces/plug')) ])
     expect(pipe3.plug).toBeA('function')
-    const files3 = await pipe2
+    const files3 = await pipe3
     expect(files3.length).toStrictlyEqual(0)
     expect(files3.directory).toStrictlyEqual(resolve('.'))
-    expect(files3.directory).not.toStrictlyEqual(resolve('@'))
+
+    const pipe4 = merge([ new Files(resolve('@workspaces/plug')) ])
+    expect(pipe4.plug).toBeA('function')
+    const files4 = await pipe4
+    expect(files4.length).toStrictlyEqual(0)
+    expect(files4.directory).toStrictlyEqual(resolve('.'))
   })
 
   it('should merge two pipes', async () => {
-    const pipe1 = find('**/*.*', { directory: '@/../src' })
-    const pipe2 = find('**/*.*', { directory: '@/../test' })
+    const pipe1 = find('**/*.*', { directory: '@/workspaces/plug/src' })
+    const pipe2 = find('**/*.*', { directory: '@/workspaces/plug/test' })
     const pipe = merge([ pipe1, pipe2 ])
 
     const files1 = await pipe1
@@ -61,7 +66,7 @@ describe('Helpers Test', () => {
     expect(files.length).toEqual(files1.length + files2.length)
     expect(files.directory).not.toEqual(files1.directory)
     expect(files.directory).not.toEqual(files2.directory)
-    expect(files.directory).toEqual(resolve('@/..'))
+    expect(files.directory).toEqual(resolve('@/workspaces/plug'))
 
     expect([ ...files.absolutePaths() ]).toEqual([
       ...files1.absolutePaths(),
