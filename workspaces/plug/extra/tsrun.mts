@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
+import _os from 'node:os'
 import _path from 'node:path'
 import _repl from 'node:repl'
 import _module from 'node:module'
@@ -39,7 +40,7 @@ function help(): never {
 }
 
 /** Process the command line */
-main((args: string[]): void => {
+main((args: string[]): void | Promise<void> => {
   let _script: string | undefined
   let _scriptArgs: string[] = []
   let _print: boolean = false
@@ -89,9 +90,25 @@ main((args: string[]): void => {
   // Start the repl or run the script?
   if (! _script) {
     // No script? Then repl
-    console.log(`Welcome to Node.js ${process.version} (tsrun v${__version}).`)
-    console.log('Type ".help" for more information.')
-    _repl.start()
+    return new Promise((resolve, reject) => {
+      // Some niceties for welcoming to tsrun
+      console.log(`Welcome to Node.js ${process.version} (tsrun v${__version}).`)
+      console.log('Type ".help" for more information.')
+
+      // Start our repl
+      const repl = _repl.start()
+
+      // Setup and track history
+      const history = _path.resolve(_os.homedir(), '.node_repl_history')
+      repl.setupHistory(history, (error) => {
+        if (! error) return
+        reject(error)
+        repl.close()
+      })
+
+      // On exit, let the process exit
+      repl.on('exit', () => resolve())
+    })
   } else if (_eval) {
     // If we are evaluating a script, we need to use some node internals to do
     // all the tricks to run this... We a fake script running the code to
