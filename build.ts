@@ -1,7 +1,7 @@
 import {
   $gry,
   $p,
-  $wht,
+  banner,
   build,
   fail,
   find,
@@ -74,17 +74,6 @@ const esbuildOptions: ESBuildOptions = {
   sourcemap: 'linked',
   sourcesContent: false,
   plugins: [ fixExtensions() ],
-}
-
-/** Niceties... */
-function banner(message: string): void {
-  log.notice([
-    '',
-    $gry(`\u2554${''.padStart(60, '\u2550')}\u2557`),
-    `${$gry('\u2551')} ${$wht(message.padEnd(58, ' '))} ${$gry('\u2551')}`,
-    $gry(`\u255A${''.padStart(60, '\u2550')}\u255D`),
-    '',
-  ].join('\n'))
 }
 
 /* ========================================================================== *

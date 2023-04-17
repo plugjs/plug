@@ -37,7 +37,7 @@ export * as pipe from './pipe'
 export * as utils from './utils'
 
 // Individual utilities
-export { log, $ms, $p, $t, $blu, $cyn, $grn, $gry, $mgt, $red, $und, $wht, $ylw } from './logging'
+export { banner, log, $ms, $p, $t, $blu, $cyn, $grn, $gry, $mgt, $red, $und, $wht, $ylw } from './logging'
 export { assert, fail, BuildFailure } from './asserts'
 
 // Our minimal exports
