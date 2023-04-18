@@ -187,7 +187,7 @@ export function build<
     } catch (error) {
       if (state.fails.size) {
         logger.error('')
-        logger.error(state.fails.size, state.fails.size ? 'tasks' : 'task', 'failed:')
+        logger.error(state.fails.size, state.fails.size === 1 ? 'task' : 'tasks', 'failed:')
         state.fails.forEach((task) => logger.error($gry('*'), $t(task.name)))
         logger.error('')
       }
