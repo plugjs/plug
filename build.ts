@@ -324,7 +324,6 @@ export default build({
   /* Cleanup generated files */
   async clean(): Promise<void> {
     await rmrf(coverageDir)
-    await rmrf('workspaces/plug/cli')
     await Promise.all( workspaces.map((workspace) => rmrf(`${workspace}/dist`)))
   },
 
