@@ -7,8 +7,8 @@ import { main, yargsParser } from '@plugjs/tsrun'
 
 import { getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
 import { $blu, $gry, $p, $red, $t, $und, $wht } from './logging/colors'
+import { BuildFailure } from './asserts'
 
-import type { BuildFailure } from './asserts'
 import type { AbsolutePath } from './paths'
 import type { Build } from './types'
 
@@ -22,16 +22,11 @@ const version = typeof __version === 'string' ? __version : '0.0.0-dev'
 declare const __version: string | undefined
 
 /* ========================================================================== *
- * ========================================================================== *
  * BUILD INSPECTION                                                           *
- * ========================================================================== *
  * ========================================================================== */
 
 /** Symbol indicating that an object is a Build */
 const buildMarker = Symbol.for('plugjs:isBuild')
-
-/** Symbol indicating that an object is a Build Failure */
-const buildFailure = Symbol.for('plugjs:buildFailure')
 
 /** Check if the specified build is actually a {@link Build} */
 function isBuild(build: any): build is Build<Record<string, any>> & {
@@ -40,16 +35,9 @@ function isBuild(build: any): build is Build<Record<string, any>> & {
   return build && typeof build[buildMarker] === 'function'
 }
 
-/** Check if the specified argument is a {@link BuildFailure} */
-function isBuildFailure(arg: any): arg is BuildFailure {
-  return arg && arg[buildFailure] === buildFailure
-}
-
 
 /* ========================================================================== *
- * ========================================================================== *
  * PARSE COMMAND LINE ARGUMENTS                                               *
- * ========================================================================== *
  * ========================================================================== */
 
 /* Parsed and normalised command line options */
@@ -265,20 +253,9 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
 }
 
 /* ========================================================================== *
- * ========================================================================== *
  * MAIN ENTRY POINT                                                           *
- * ========================================================================== *
  * ========================================================================== */
 
-/* ========================================================================== *
- * ========================================================================== *
- * PROCESS SETUP                                                              *
- * ========================================================================== *
- * ========================================================================== */
-
-/* eslint-disable no-console */
-
-/* We have everyhing we need to start our asynchronous main! */
 main(import.meta.url, async (args: string[]): Promise<void> => {
   // Parse and destructure command line
   const {
@@ -355,7 +332,7 @@ main(import.meta.url, async (args: string[]): Promise<void> => {
             .then(() => {
               console.log(`\n${$gry('Watching for files change...')}\n`)
             }, (error) => {
-              if (isBuildFailure(error)) {
+              if (error instanceof BuildFailure) {
                 console.log(`\n${$gry('Watching for files change...')}\n`)
               } else {
                 watchers.forEach((watcher) => watcher.close())
@@ -383,7 +360,7 @@ main(import.meta.url, async (args: string[]): Promise<void> => {
   try {
     await build[buildMarker](tasks, props)
   } catch (error) {
-    if (! isBuildFailure(error)) console.log(error)
+    if (!(error instanceof BuildFailure)) console.log(error)
     process.exitCode = 1
   }
 })

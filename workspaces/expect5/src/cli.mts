@@ -43,7 +43,7 @@ function help(): void {
       matching all JavaScript and TypeScript files with a ".test" prefix.
 
   ${$bnd('Environment Variables:')}
-                                                                               |
+
       ${$wht('LOG_LEVEL$      ')}    The default ${$wnd('notice')}, or ${$gnd('debug')}, ${$gnd('info')}, ${$gnd('warn')} or ${$gnd('error')}.
       ${$wht('NODE_V8_COVERAGE')}    The directory where Node will write coverage data to.
 
