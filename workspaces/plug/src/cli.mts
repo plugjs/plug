@@ -2,23 +2,20 @@
 /* eslint-disable no-console */
 
 import _fs from 'node:fs'
-import _path from 'node:path'
 
-import {
-  $blu,
-  $gry,
-  $rst,
-  $tsk,
-  $und,
-  $wht,
-  isDirectory,
-  isFile,
-  main,
-  yargsParser,
-} from '@plugjs/tsrun'
+import { main, yargsParser } from '@plugjs/tsrun'
+
+import { getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
+import { $blu, $gry, $p, $red, $t, $und, $wht } from './logging/colors'
 
 import type { BuildFailure } from './asserts'
-import type { Build } from './index.js'
+import type { AbsolutePath } from './paths'
+import type { Build } from './types'
+
+/* Extra colors */
+const $bnd = (s: string): string => $blu($und(s))
+const $gnd = (s: string): string => $gry($und(s))
+const $wnd = (s: string): string => $wht($und(s))
 
 /** Version injected by esbuild, defaulted in case of dynamic transpilation */
 const version = typeof __version === 'string' ? __version : '0.0.0-dev'
@@ -57,7 +54,7 @@ function isBuildFailure(arg: any): arg is BuildFailure {
 
 /* Parsed and normalised command line options */
 interface CommandLineOptions {
-  buildFile: string,
+  buildFile: AbsolutePath,
   watchDirs: string[],
   tasks: string[],
   props: Record<string, string>
@@ -151,48 +148,48 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
 
   /* If help, end here! */
   if (help) {
-    console.log(`${$blu}${$und}Usage:${$rst}
+    console.log(`${$bnd('Usage:')}
 
-    ${$wht}plugjs${$rst} ${$gry}[${$rst}--options${$gry}] [...${$rst}prop=val${$gry}] [...${$rst}tasks${$gry}]${$rst}
+    ${$wht('plugjs')} ${$gry('[')}--options${$gry('] [... ')}prop=val${$gry(' ...] [... ')}task${$gry(' ...]')}
 
-    ${$blu}${$und}Options:${$rst}
+    ${$bnd('Options:')}
 
-        ${$wht}-f --file ${$gry}${$und}file${$rst}  Specify the build file to use (default "./build.[ts/js/...]")
-        ${$wht}-w --watch ${$gry}${$und}dir${$rst}  Watch for changes on the specified directory and run build
-        ${$wht}-v --verbose${$rst}    Increase logging verbosity
-        ${$wht}-q --quiet${$rst}      Decrease logging verbosity
-        ${$wht}-c --colors${$rst}     Force colorful output (use "--no-colors" to force plain text)
-        ${$wht}-l --list${$rst}       Only list the tasks defined by the build, nothing more!
-        ${$wht}-h --help${$rst}       Help! You're reading it now!
-        ${$wht}   --version${$rst}    Version! This one: ${version}!
+        ${$wht(`-f --file ${$gnd('file')}`)}  Specify the build file to use (default ${$wnd('./build.ts')})
+        ${$wht(`-w --watch ${$gnd('dir')}`)}  Watch for changes on the specified directory and run
+        ${$wht('-v --verbose')}    Increase logging verbosity
+        ${$wht('-q --quiet')}      Decrease logging verbosity
+        ${$wht('-c --colors')}     Force colorful output (use ${$wnd('--no-colors')} to force plain text)
+        ${$wht('-l --list')}       Only list the tasks defined by the build, nothing more!
+        ${$wht('-h --help')}       Help! You're reading it now!
+        ${$wht('   --version')}    Version! This one: ${version}!
 
-    ${$blu}${$und}Properties:${$rst}
+    ${$bnd('Properties:')}
 
-        Any argument in the format "key=value" will be interpeted as a property to
-        be injected in the build process (e.g. "mode=production").
+        Any argument in the format ${$wnd('key=value')} will be interpeted as a property to
+        be injected in the build process (e.g. ${$wnd('mode=production')}).
 
-    ${$blu}${$und}Tasks:${$rst}
+    ${$bnd('Tasks:')}
 
         Any other argument will be treated as a task name. If no task names are
-        specified, the "default" task will be executed.
+        specified, the ${$t('default')} task will be executed.
 
-    ${$blu}${$und}Watch Mode:${$rst}
+    ${$bnd('Watch Mode:')}
 
-        The "-w" option can be specified multiple times, and each single directory
-        specified will be watched for changes. Please note that Plug's own watch
-        mode is incredibly basic, for more complex scenarios use something more
-        advanced like nodemon (https://www.npmjs.com/package/nodemon).
+        The ${$wnd('--watch')} option can be specified multiple times, and each single
+        directory specified will be watched for changes. Note that Plug's own
+        watch mode is incredibly basic, for more complex scenarios use something
+        more advanced like nodemon ${$gry('(')}${$gnd('https://www.npmjs.com/package/nodemon')}${$gry(')')}.
 
-    ${$blu}${$und}TypeScript module format:${$rst}
+    ${$bnd('TypeScript module format:')}
 
-        Normally our TypeScript loader will transpile ".ts" files to the "type"
-        specified in "package.json", either "commonjs" (the default) or "module".
+        Normally our TypeScript loader will transpile ${$wnd('.ts')} files to the type
+        specified in ${$wnd('package.json')}, either ${$wnd('commonjs')} (the default) or ${$wnd('module')}.
 
-        To force a specific module format we can use one of the following flags:
+        To force a specific module format use one of the following flags:
 
-        ${$wht}--force-esm  ${$rst}   Force transpilation of ".ts" files to EcmaScript modules
-        ${$wht}--force-cjs  ${$rst}   Force transpilation of ".ts" files to CommonJS modules
-    `)
+        ${$wht('--force-esm')}    Force transpilation of ${$wnd('.ts')} files to EcmaScript modules
+        ${$wht('--force-cjs')}    Force transpilation of ${$wnd('.ts')} files to CommonJS modules
+      `)
     process.exit(0)
   }
 
@@ -218,13 +215,14 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
    * ======================================================================== */
 
   /* Find our build file */
+  const cwd = getCurrentWorkingDirectory()
   const exts = [ 'ts', 'mts', 'mjs', 'js', 'mjs', 'cjs' ]
 
-  let buildFile: string | undefined = undefined
+  let buildFile: AbsolutePath | undefined = undefined
 
   if (file) {
-    const absolute = _path.resolve(file)
-    if (! isFile(absolute)) {
+    const absolute = resolveFile(cwd, file)
+    if (! absolute) {
       console.log(`Specified build file "${file}" was not found`)
       process.exit(1)
     } else {
@@ -232,8 +230,8 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
     }
   } else {
     for (const ext of exts) {
-      const absolute = _path.resolve(`build.${ext}`)
-      if (! isFile(absolute)) continue
+      const absolute = resolveFile(cwd, `build.${ext}`)
+      if (! absolute) continue
       buildFile = absolute
       break
     }
@@ -241,7 +239,7 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
 
   /* Final check */
   if (! buildFile) {
-    console.log(`Unable to find build file "./build.[${exts.join('|')}]`)
+    console.log(`${$red('Unable to find build file')} ${$wht(`./build.[${exts.join('|')}]`)}`)
     process.exit(1)
   }
 
@@ -250,8 +248,8 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
    * ======================================================================== */
 
   watchDirs.forEach((watchDir) => {
-    const absolute = _path.resolve(watchDir)
-    if (! isDirectory(absolute)) {
+    const absolute = resolveDirectory(cwd, watchDir)
+    if (! absolute) {
       console.log(`Specified watch directory "${watchDir}" was not found`)
       process.exit(1)
     } else {
@@ -303,13 +301,13 @@ main(import.meta.url, async (args: string[]): Promise<void> => {
 
   // We _need_ a build
   if (! isBuild(maybeBuild)) {
-    console.log('Build file did not export a proper build')
+    console.log($red('Build file did not export a proper build'))
     console.log()
     console.log('- If using CommonJS export your build as "module.exports"')
-    console.log('  e.g.: module.exports = build({ ... })')
+    console.log(`  e.g.: ${$wht('module.exports = build({ ... })')}`)
     console.log()
     console.log('- If using ESM modules export your build as "default"')
-    console.log('  e.g.: export default build({ ... })')
+    console.log(`  e.g.: ${$wht('export default build({ ... })')}`)
     console.log()
     process.exit(1)
   }
@@ -325,20 +323,18 @@ main(import.meta.url, async (args: string[]): Promise<void> => {
       (typeof value === 'string' ? propNames : taskNames).push(key)
     }
 
-    const buildFileName = _path.relative(process.cwd(), buildFile)
-
-    console.log(`\n${$gry}Outline of ${$wht}${buildFileName}${$rst}`)
+    console.log(`\n${$gry('Outline of')} ${$p(buildFile)}`)
 
     console.log('\nKnown tasks:\n')
     for (const taskName of taskNames.sort()) {
-      console.log(` ${$gry}\u25a0${$tsk} ${taskName}${$rst}`)
+      console.log(` ${$gry('\u25a0')} ${$t(taskName)}`)
     }
 
     console.log('\nKnown properties:\n')
     for (const propName of propNames.sort()) {
       const value = build[propName] ?
-        ` ${$gry}(default "${$rst}${$und}${build[propName]}${$gry})` : ''
-      console.log(` ${$gry}\u25a1${$blu} ${propName}${value}${$rst}`)
+        ` ${$gry('(default')} ${$und(build[propName])}${$gry(')')}` : ''
+      console.log(` ${$gry('\u25a1')} ${$blu(propName)}${value}`)
     }
 
     console.log()
@@ -357,10 +353,10 @@ main(import.meta.url, async (args: string[]): Promise<void> => {
       const runme = (): void => {
         build[buildMarker](tasks, props)
             .then(() => {
-              console.log(`\n${$gry}Watching for files change...${$rst}\n`)
+              console.log(`\n${$gry('Watching for files change...')}\n`)
             }, (error) => {
               if (isBuildFailure(error)) {
-                console.log(`\n${$gry}Watching for files change...${$rst}\n`)
+                console.log(`\n${$gry('Watching for files change...')}\n`)
               } else {
                 watchers.forEach((watcher) => watcher.close())
                 reject(error)
