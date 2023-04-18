@@ -4,15 +4,25 @@
 import _fs from 'node:fs'
 import _path from 'node:path'
 
-import _yargs from 'yargs-parser'
+import {
+  $blu,
+  $gry,
+  $rst,
+  $tsk,
+  $und,
+  $wht,
+  isDirectory,
+  isFile,
+  main,
+  yargsParser,
+} from '@plugjs/tsrun'
 
-import { $blu, $gry, $rst, $tsk, $und, $wht, isDirectory, isFile, main } from './utils.js'
+import type { BuildFailure } from './asserts'
+import type { Build } from './index.js'
 
-import type { BuildFailure } from '../src/asserts.js'
-import type { Build } from '../src/index.js'
-
-/** Version injected by esbuild */
-declare const __version: string
+/** Version injected by esbuild, defaulted in case of dynamic transpilation */
+const version = typeof __version === 'string' ? __version : '0.0.0-dev'
+declare const __version: string | undefined
 
 /* ========================================================================== *
  * ========================================================================== *
@@ -57,7 +67,7 @@ interface CommandLineOptions {
 /** Parse `perocess.argv` and return our normalised command line options */
 export function parseCommandLine(args: string[]): CommandLineOptions {
   /* Yargs-parse our arguments */
-  const parsed = _yargs(args, {
+  const parsed = yargsParser(args, {
     configuration: {
       'camel-case-expansion': false,
       'strip-aliased': true,
@@ -126,7 +136,7 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
         help = !! value
         break
       case 'version':
-        console.log(`v${__version}`)
+        console.log(`v${version}`)
         process.exit(0)
         break
       default:
@@ -154,7 +164,7 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
         ${$wht}-c --colors${$rst}     Force colorful output (use "--no-colors" to force plain text)
         ${$wht}-l --list${$rst}       Only list the tasks defined by the build, nothing more!
         ${$wht}-h --help${$rst}       Help! You're reading it now!
-        ${$wht}   --version${$rst}    Version! This one: ${__version}!
+        ${$wht}   --version${$rst}    Version! This one: ${version}!
 
     ${$blu}${$und}Properties:${$rst}
 
@@ -271,7 +281,7 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
 /* eslint-disable no-console */
 
 /* We have everyhing we need to start our asynchronous main! */
-main(async (args: string[]): Promise<void> => {
+main(import.meta.url, async (args: string[]): Promise<void> => {
   // Parse and destructure command line
   const {
     buildFile,
