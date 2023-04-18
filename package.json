@@ -13,17 +13,17 @@
     "workspaces/zip"
   ],
   "scripts": {
-    "prepare": "./bootstrap.sh",
-    "clean": "./bootstrap/plug.mjs clean",
-    "dev": "ls -1d workspaces/*/src workspaces/*/test | sed 's|^|-w |g' | xargs ./bootstrap/plug.mjs dev",
-    "build": "./bootstrap/plug.mjs",
-    "lint": "./bootstrap/plug.mjs lint",
-    "test": "./bootstrap/plug.mjs transpile test",
-    "transpile": "./bootstrap/plug.mjs transpile",
+    "clean": "tsrun ./workspaces/plug/src/cli.mts clean",
+    "dev": "ls -1d workspaces/*/src workspaces/*/test | sed 's|^|-w |g' | xargs tsrun ./workspaces/plug/src/cli.mts dev",
+    "build": "tsrun ./workspaces/plug/src/cli.mts",
+    "lint": "tsrun ./workspaces/plug/src/cli.mts lint",
+    "test": "tsrun ./workspaces/plug/src/cli.mts transpile test",
+    "transpile": "tsrun ./workspaces/plug/src/cli.mts transpile",
     "updates": "check-updates package.json workspaces/*/package.json"
   },
   "devDependencies": {
     "@plugjs/eslint-plugin": "^0.1.5",
+    "@plugjs/tsrun": "^0.4.0",
     "@types/node": "<19",
     "typescript": "^5.0.4"
   },
