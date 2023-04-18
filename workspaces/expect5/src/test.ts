@@ -5,6 +5,7 @@ import { AssertionError } from 'node:assert'
 
 import { BuildFailure } from '@plugjs/plug'
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, log, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
+import { assert } from '@plugjs/plug/asserts'
 
 import { skip, Suite } from './execution/executable'
 import { runSuite } from './execution/executor'
@@ -30,6 +31,8 @@ export class Test implements Plug<void> {
   constructor(private readonly _options: TestOptions = {}) {}
 
   async pipe(files: Files, context: Context): Promise<void> {
+    assert(files.length, 'No files available for running tests')
+
     const {
       globals = true,
       genericErrorDiffs = true,
@@ -64,6 +67,16 @@ export class Test implements Plug<void> {
       for (const file of files.absolutePaths()) await import(file)
     })
 
+    // Setup our suite counts
+    await suite.setup()
+
+    const snum = suite.specs
+    const fnum = files.length
+    const smsg = snum === 1 ? 'spec' : 'specs'
+    const fmsg = fnum === 1 ? 'file' : 'files'
+
+    assert(snum, 'No specs configured by test files')
+
     // Run our suite and setup listeners
     const execution = runSuite(suite)
 
@@ -75,10 +88,6 @@ export class Test implements Plug<void> {
       } else if (current.parent) {
         context.log.enter(NOTICE, `${$blu(_details)} ${$wht(current.name)}`)
       } else {
-        const snum = current.specs
-        const fnum = files.length
-        const smsg = snum === 1 ? 'spec' : 'specs'
-        const fmsg = fnum === 1 ? 'file' : 'files'
         context.log.notice(`Running ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}`)
         if (suite.flag === 'only') context.log.notice('')
       }
@@ -108,8 +117,7 @@ export class Test implements Plug<void> {
     })
 
     execution.on('hook:fail', (hook, ms, { number }) => {
-      context.log.error(ERROR,
-          `${$red(_failure)} Hook "${hook.name}" ${$ms(ms)} ` +
+      context.log.error(`${$red(_failure)} Hook "${hook.name}" ${$ms(ms)} ` +
           `${$gry('[')}${$red('failed')}${$gry('|')}${$red(`${number}`)}${$gry(']')}`)
     })
 
@@ -119,6 +127,7 @@ export class Test implements Plug<void> {
     // Dump all (or a limited number of) failures
     const limit = Math.min(failures.length, maxFailures)
     for (let i = 0; i < limit; i ++) {
+      if (i === 0) context.log.error('')
       const { source, error, number } = failures[i]!
 
       const names: string[] = [ '' ]
@@ -127,39 +136,29 @@ export class Test implements Plug<void> {
       }
       const details = names.join(` ${$gry(_details)} `) + $wht(source.name)
 
-      context.log.notice('')
       context.log.enter(ERROR, `${$gry('[')}${$red(number)}${$gry(']:')} ${details}`)
       dumpError(context.log, error, genericErrorDiffs)
       context.log.leave()
     }
 
     // Epilogue
-    const snum = suite.specs
-    const fnum = files.length
-    const smsg = snum === 1 ? 'spec' : 'specs'
-    const fmsg = fnum === 1 ? 'file' : 'files'
-
-    const summary: string[] = []
-    if (failed) summary.push(`${failed} ${$gry('failed')}`)
+    const summary: string[] = [ `${passed} ${$gry('passed')}` ]
     if (skipped) summary.push(`${skipped} ${$gry('skipped')}`)
-    if (passed) summary.push(`${passed} ${$gry('passed')}`)
+    if (failed) summary.push(`${failed} ${$gry('failed')}`)
+    if (failures.length) summary.push(`${failures.length} ${$gry('total failures')}`)
 
-    const epilogue = summary.length ? ` ${$gry('(')}${summary.join($gry(', '))}${$gry(')')}` : ''
+    const epilogue = ` ${$gry('(')}${summary.join($gry(', '))}${$gry(')')}`
     const message = `Ran ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}${epilogue} ${$ms(time)}`
 
-    if (failed) {
-      context.log.error('')
+    if (failures.length) {
       context.log.error(message)
       throw new BuildFailure()
     } else if (suite.flag === 'only') {
-      context.log.error('')
       context.log.error(message)
       throw new BuildFailure('Suite running in focus ("only") mode')
     } else if (skipped) {
-      context.log.warn('')
       context.log.warn(message)
     } else {
-      context.log.notice('')
       context.log.notice(message)
     }
   }
@@ -177,6 +176,7 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
       dumpStack(log, error)
       if (error.diff) printDiff(log, error.diff)
     } finally {
+      log.error('')
       log.leave()
     }
 
@@ -198,6 +198,7 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
         for (const line of lines) log.error(' ', line)
       }
     } finally {
+      log.error('')
       log.leave()
     }
 
@@ -214,17 +215,20 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
         printDiff(log, diff((error as any).actual, (error as any).expected))
       }
     } finally {
+      log.error('')
       log.leave()
     }
 
   // Anthing else just gets dumped out...
-  } else {
+  } else /* coverage ignore next */ {
+    // This should never happen, as executor converts evertything to errors...
     log.error($gry('Uknown error:'), error)
   }
 }
 
 function dumpStack(log: Logger, error: Error): void {
-  (error.stack || '')
+  if (! error.stack) return log.error('<no stack trace>')
+  error.stack
       .split('\n')
       .filter((line) => line.match(/^\s+at\s+/))
       .map((line) => line.trim())
