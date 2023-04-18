@@ -154,11 +154,14 @@ export class Test implements Plug<void> {
       context.log.error(message)
       throw new BuildFailure()
     } else if (suite.flag === 'only') {
+      context.log.error('')
       context.log.error(message)
       throw new BuildFailure('Suite running in focus ("only") mode')
     } else if (skipped) {
+      context.log.warn('')
       context.log.warn(message)
     } else {
+      context.log.notice('')
       context.log.notice(message)
     }
   }
