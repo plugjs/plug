@@ -28,6 +28,7 @@ export interface Pipe extends Promise<Files> {
 
 // Submodule exports (our package.json exports)
 export * as asserts from './asserts'
+export * as async from './async'
 export * as files from './files'
 export * as fork from './fork'
 export * as fs from './fs'
