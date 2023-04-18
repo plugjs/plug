@@ -254,7 +254,7 @@ export default build({
     await rmrf(coverageDir)
   },
 
-  /** Gnerate coverage report */
+  /** Generate coverage report */
   async coverage(): Promise<void> {
     banner('Test Coverage')
 
@@ -264,10 +264,12 @@ export default build({
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
 
     const sources = merge(selection.map((workspace) => {
-      return find('src/**/*.([cm])?ts', { directory: workspace })
-    })).filter('**/*.*', { directory: '.' })
+      return find('src/**/*.([cm])?ts', {
+        directory: workspace,
+        ignore: '**/cli.mts',
+      })
+    }))
 
-    // @ts-ignore
     await sources.plug(new Coverage(coverageDir, {
       reportDir: 'coverage',
       optimalCoverage: 100,
