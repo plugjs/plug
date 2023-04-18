@@ -198,10 +198,12 @@ export default build({
   async check(): Promise<void> {
     banner('Cheking TypeScript for Tests')
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
+    const globals = find('globals.ts', { directory: 'workspaces/expect5/src' })
 
     await Promise.all(selection.map((workspace) => {
       log.notice(`Checking test types in ${$p(resolve(workspace))}`)
-      return find('**/*.test.([cm])?ts', { directory: `${workspace}/test` })
+      const specs = find('**/*.test.([cm])?ts', { directory: `${workspace}/test` })
+      return merge([ specs, globals ])
           .plug(new ForkingTsc(`${workspace}/test/tsconfig.json`, {
             rootDir: '.',
             noEmit: true,
