@@ -120,6 +120,8 @@ export default build({
 
   /** Transpile to CJS */
   async transpile_cjs(): Promise<Files> {
+    const version = JSON.stringify(parseJson('package.json').version)
+
     return merge(workspaces.map((workspace) => {
       log.notice(`Transpiling sources to CJS from ${$p(resolve(workspace))}`)
       return find('**/*.(c)?ts', { directory: `${workspace}/src` })
@@ -128,12 +130,15 @@ export default build({
             format: 'cjs',
             outdir: `${workspace}/dist`,
             outExtension: { '.js': '.cjs' },
+            define: { '__version': version },
           })
     }))
   },
 
   /** Transpile to ESM */
   async transpile_esm(): Promise<Files> {
+    const version = JSON.stringify(parseJson('package.json').version)
+
     return merge(workspaces.map((workspace) => {
       log.notice(`Transpiling sources to ESM from ${$p(resolve(workspace))}`)
       return find('**/*.(m)?ts', { directory: `${workspace}/src` })
@@ -142,39 +147,9 @@ export default build({
             format: 'esm',
             outdir: `${workspace}/dist`,
             outExtension: { '.js': '.mjs' },
+            define: { '__version': version },
           })
     }))
-  },
-
-  /** Transpile CLI */
-  async transpile_cli(): Promise<Files> {
-    const version = parseJson('package.json').version
-
-    // then we *only check* the types for "workspaces/plug/extra"
-    log.notice(`Checking extras types sanity in ${$p(resolve('workspaces/plug/extra'))}`)
-    await find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
-        .plug(new ForkingTsc('workspaces/plug/tsconfig-base.json', {
-          noEmit: true,
-          declaration: false,
-          emitDeclarationOnly: false,
-          rootDir: 'workspaces/plug',
-          extraTypesDir: 'workspaces/plug/types',
-        }))
-
-    log.notice(`Transpiling extras for CLI from ${$p(resolve('workspaces/plug/extra'))}`)
-    return find('**/*.mts', { directory: 'workspaces/plug/extra' })
-        .esbuild({
-          bundle: true,
-          format: 'esm',
-          target: 'node18',
-          platform: 'node',
-          sourcemap: 'inline',
-          sourcesContent: false,
-          external: [ 'esbuild' ],
-          outExtension: { '.js': '.mjs' },
-          define: { '__version': JSON.stringify(version) },
-          outdir: 'workspaces/plug/cli',
-        })
   },
 
   /** Generate all Typescript definition files */
@@ -212,7 +187,6 @@ export default build({
 
     await this.transpile_cjs()
     await this.transpile_esm()
-    await this.transpile_cli()
     await this.transpile_dts()
   },
 
