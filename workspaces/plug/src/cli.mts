@@ -5,12 +5,12 @@ import _fs from 'node:fs'
 
 import { main, yargsParser } from '@plugjs/tsrun'
 
-import { getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
-import { $blu, $gry, $p, $red, $t, $und, $wht } from './logging/colors'
 import { BuildFailure } from './asserts'
+import { invokeTasks, isBuild } from './build'
+import { $blu, $gry, $p, $red, $t, $und, $wht } from './logging/colors'
+import { getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
 
 import type { AbsolutePath } from './paths'
-import type { Build } from './types'
 
 /* Extra colors */
 const $bnd = (s: string): string => $blu($und(s))
@@ -20,21 +20,6 @@ const $wnd = (s: string): string => $wht($und(s))
 /** Version injected by esbuild, defaulted in case of dynamic transpilation */
 const version = typeof __version === 'string' ? __version : '0.0.0-dev'
 declare const __version: string | undefined
-
-/* ========================================================================== *
- * BUILD INSPECTION                                                           *
- * ========================================================================== */
-
-/** Symbol indicating that an object is a Build */
-const buildMarker = Symbol.for('plugjs:isBuild')
-
-/** Check if the specified build is actually a {@link Build} */
-function isBuild(build: any): build is Build<Record<string, any>> & {
-  [buildMarker]: (tasks: string[], props?: Record<string, string | undefined>) => Promise<void>
-} {
-  return build && typeof build[buildMarker] === 'function'
-}
-
 
 /* ========================================================================== *
  * PARSE COMMAND LINE ARGUMENTS                                               *
@@ -328,7 +313,7 @@ main(import.meta.url, async (args: string[]): Promise<void> => {
 
       // our runner executed by the timeout
       const runme = (): void => {
-        build[buildMarker](tasks, props)
+        invokeTasks(build, tasks, props)
             .then(() => {
               console.log(`\n${$gry('Watching for files change...')}\n`)
             }, (error) => {
@@ -358,7 +343,7 @@ main(import.meta.url, async (args: string[]): Promise<void> => {
 
   // Normal build (no list, no watchers)
   try {
-    await build[buildMarker](tasks, props)
+    await invokeTasks(build, tasks, props)
   } catch (error) {
     if (!(error instanceof BuildFailure)) console.log(error)
     process.exitCode = 1

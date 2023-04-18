@@ -196,13 +196,32 @@ export function build<
   }
 
   /* Create our build, the collection of all props and tasks */
-  const compiled = Object.assign({}, props, tasks) as Build<D>
+  const compiled = Object.assign(Object.create(null), props, tasks) as Build<D>
 
   /* Sneak our "call" function in the build, for the CLI and "call" below */
   Object.defineProperty(compiled, buildMarker, { value: invoke })
 
   /* All done! */
   return compiled
+}
+
+/** Check if the specified build is actually a {@link Build} */
+export function isBuild(build: any): build is Build<Record<string, any>> {
+  return build && typeof build[buildMarker] === 'function'
+}
+
+/** Invoke a number of tasks in a {@link Build} */
+export function invokeTasks(
+    build: Build,
+    tasks: string[],
+    props?: Record<string, string>,
+): Promise<void> {
+  if (build && (typeof build === 'object') &&
+     (buildMarker in build) && (typeof build[buildMarker] === 'function')) {
+    return build[buildMarker](tasks, props)
+  } else {
+    throw new TypeError('Invalid build instance')
+  }
 }
 
 /* ========================================================================== *
