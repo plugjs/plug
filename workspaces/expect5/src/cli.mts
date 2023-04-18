@@ -28,19 +28,20 @@ function help(): void {
 
   ${$bnd('Options:')}
 
-      ${$wht('-r --report ')} ${$gnd('dir')}    The directory where tests are to be found
-      ${$wht('-m --minimum')} ${$gnd('num')}    The maximum number of failures to report
-      ${$wht('-o --optimal')} ${$gnd('num')}    The maximum number of failures to report
-      ${$wht('-h --help   ')}        Help! You're reading it now!
-      ${$wht('   --version')}        Version! This one: ${version}!
+      ${$wht('-r --directory')} ${$gnd('dir')}    The directory where tests are to be found
+      ${$wht('-m --minimum  ')} ${$gnd('num')}    The maximum number of failures to report
+      ${$wht('-o --optimal  ')} ${$gnd('num')}    The maximum number of failures to report
+      ${$wht('-h --help     ')}        Help! You're reading it now!
+      ${$wht('   --version  ')}        Version! This one: ${version}!
 
   ${$bnd('Globs:')}
 
       Other arguments will be treated as globs, used to match test files in
       the specified directory (defaults to the current directory).
 
-      If no globs are specified, the default will be ${$wnd('**/*.test.([cm])?([jt])s')}
-      matching all JavaScript and TypeScript files with a ".test" prefix.
+      If no globs are specified, the default will be to find all JavaScript
+      and TypeScript files in the ${$wnd('./test')} directory, prefixed by the ${$wnd('.test')}
+      extension ${$gry('(for example')} ${$und('foobar.test.ts')}${$gry(')')}.
 
   ${$bnd('Environment Variables:')}
 
@@ -115,7 +116,7 @@ main(import.meta.url, async (args): Promise<void> => {
   }
 
   // Default glob is "'**/*.test.ts'"
-  if (globs.length === 0) globs.push('**/*.test.([cm])?([jt])s')
+  if (globs.length === 0) globs.push('test/**/*.test.([cm])?([jt])s')
 
   // Find all the test files to pass to Expect5
   const builder = files.Files.builder(directory)
