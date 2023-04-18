@@ -54,9 +54,9 @@ function help(): void {
 
       To force a specific module format use one of the following flags:
 
-      ${$wht('--force-esm')}    Force transpilation of ".ts" files to EcmaScript modules
-      ${$wht('--force-cjs')}    Force transpilation of ".ts" files to CommonJS modules
-  `)
+      ${$wht('--force-esm')}    Force transpilation of ${$wnd('.ts')} files to EcmaScript modules
+      ${$wht('--force-cjs')}    Force transpilation of ${$wnd('.ts')} files to CommonJS modules
+`)
   process.exit(0)
 }
 
