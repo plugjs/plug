@@ -65,6 +65,8 @@ function help(): void {
 
 /** Parse command line and run tests */
 main(import.meta.url, async (args): Promise<void> => {
+  logging.logOptions.spinner = false
+
   const filename = paths.requireFilename(import.meta.url) // self, for context
   const context = new pipe.Context(filename, '') // context for pipes
   let directory = '.' // default directory to CWD
