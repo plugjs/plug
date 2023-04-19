@@ -97,7 +97,7 @@ describe('Executor', () => {
 
   /* ======================================================================== */
 
-  fit('should inherit "beforeEach" and "afterEach" hooks from parent suites', async () => {
+  it('should inherit "beforeEach" and "afterEach" hooks from parent suites', async () => {
     const calls: any[][] = []
 
     const suite = new Suite(undefined, 'suite 0', () => {
