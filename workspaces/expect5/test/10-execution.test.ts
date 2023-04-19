@@ -122,7 +122,6 @@ describe('Executor', () => {
     setupListeners(execution, calls)
 
     const result = await execution.result
-    console.log('CALLS', calls)
 
     expect(calls as any).toEqual([
       // root suite, execute:
