@@ -1,9 +1,6 @@
 import { BuildFailure } from '../src/asserts'
 import { currentContext, requireContext, runningTasks } from '../src/async'
-import { build, hookAfter, hookBefore } from '../src/build'
-
-// internal invocation marker
-const buildMarker = Symbol.for('plugjs:isBuild')
+import { build, hookAfter, hookBefore, invokeTasks, isBuild } from '../src/build'
 
 describe('Build Invocation', () => {
   it('should invoke a build', async () => {
@@ -16,7 +13,8 @@ describe('Build Invocation', () => {
       },
     })
 
-    await (<any> tasks)[buildMarker]([ '_myTask' ])
+    expect(isBuild(tasks)).toStrictlyEqual(true)
+    await invokeTasks(tasks, [ '_myTask' ])
     expect(propValue).toStrictlyEqual('this is the default')
 
     // task as a function
@@ -35,7 +33,7 @@ describe('Build Invocation', () => {
       },
     })
 
-    await (<any> tasks)[buildMarker]([ '_myTask' ], { myProp: 'this is overridden' })
+    await invokeTasks(tasks, [ '_myTask' ], { myProp: 'this is overridden' })
     expect(propValue).toStrictlyEqual('this is overridden')
 
     // task as a function
@@ -150,14 +148,14 @@ describe('Build Invocation', () => {
   it('should fail with an invalid task name', async () => {
     const tasks = build({ myTask: () => void 0 })
 
-    await expect((<any> tasks)[buildMarker]([ 'wrongTask' as any ]))
+    await expect(invokeTasks(tasks, [ 'wrongTask' as any ]))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
   it('should fail when a task fails', async () => {
     const tasks = build({ myTask: () => Promise.reject(new Error('Foo!')) })
 
-    await expect((<any> tasks)[buildMarker]([ 'myTask' ]))
+    await expect(invokeTasks(tasks, [ 'myTask' ]))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
@@ -174,7 +172,7 @@ describe('Build Invocation', () => {
       },
     })
 
-    await expect((<any> tasks)[buildMarker]([ 'task1' ]))
+    await expect(invokeTasks(tasks, [ 'task1' ]))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
@@ -249,5 +247,11 @@ describe('Build Invocation', () => {
     const context2 = requireContext()
     expect(context1).toStrictlyEqual(context2)
     expect(runningTasks()).toInclude([ context2.taskName ])
+  })
+
+  it('should fail invoking when the build is not a build', () => {
+    expect(isBuild({})).toStrictlyEqual(false)
+    expect(() => invokeTasks({}, [ '_myTask' ]))
+        .toThrowError(TypeError, 'Invalid build instance')
   })
 })
