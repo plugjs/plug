@@ -175,6 +175,14 @@ describe('Diff Printer', () => {
       print(diff(123, 321))
     })
 
+    it('should print the difference between two different strings', () => {
+      print(diff('hello', 'world'))
+    })
+
+    it('should print the difference between two different multiline strings', () => {
+      print(diff('one\ntwo\nthree', '1\ntwo\n3'))
+    })
+
     it('should print the difference between a primitive and an object (1)', () => {
       print(diff(123, { foo: 'bar' }))
     })
@@ -211,6 +219,10 @@ describe('Diff Printer', () => {
 
     it('should print the difference between two different objects (4)', () => {
       print({ diff: true, value: map({ foo: 'bar' }), expected: new Set([ 1 ]) }) // edge case
+    })
+
+    it('should print the difference between two different objects (5)', () => {
+      print(diff(map({ foo: 'bar' }), new Set([ 1 ])))
     })
 
     it('should print the difference between two different arrays', () => {
