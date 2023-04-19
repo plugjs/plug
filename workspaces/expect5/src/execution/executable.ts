@@ -6,7 +6,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
  *
  * When the timeout configured is reached, the passed `signal` will be aborted.
  */
-export type Call = (signal: AbortSignal) => void | Promise<void>
+export type Call = (this: undefined, signal: AbortSignal) => void | Promise<void>
 
 /** Flag types for an {@link Executable} */
 export type Flag = 'skip' | 'only' | undefined
@@ -45,7 +45,7 @@ function execute(
     /* Use a secondary promise to wrap the (possibly async) call */
     void Promise.resolve().then(async () => {
       try {
-        await call(abort.signal)
+        await call.call(undefined, abort.signal)
         resolve(undefined)
         resolved = true
       } catch (cause: any) {
@@ -63,8 +63,36 @@ function execute(
 
 /* ========================================================================== */
 
-const suiteStorage = new AsyncLocalStorage<Suite>()
-const skipStorage = new AsyncLocalStorage<{ skipped: boolean }>()
+/*
+ * Suite and skip storages must be unique _per process_. We might get called
+ * from two (or three) different versions of this file: the .cjs transpiled one,
+ * the .mjs transpiled one (or the .ts dynamically transpiled by ts-loader).
+ * In all these cases, we must return the _same_ object, so we store those as
+ * a global variables associated with a couple of global symbols
+ */
+const suiteKey = Symbol.for('plugjs.expect5.async.suiteStorage')
+const skipKey = Symbol.for('plugjs.expect5.async.skipStorage')
+
+function getSuiteStorage(): AsyncLocalStorage<Suite> {
+  let storage: AsyncLocalStorage<Suite> = (<any> globalThis)[suiteKey]
+  if (! storage) {
+    storage = new AsyncLocalStorage<Suite>()
+    ;(<any> globalThis)[suiteKey] = storage
+  }
+  return storage
+}
+
+function getSkipStorage(): AsyncLocalStorage<{ skipped: boolean }> {
+  let storage: AsyncLocalStorage<{ skipped: boolean }> = (<any> globalThis)[skipKey]
+  if (! storage) {
+    storage = new AsyncLocalStorage<{ skipped: boolean }>()
+    ;(<any> globalThis)[skipKey] = storage
+  }
+  return storage
+}
+
+const suiteStorage = getSuiteStorage()
+const skipStorage = getSkipStorage()
 
 export function getCurrentSuite(): Suite {
   const suite = suiteStorage.getStore()
@@ -79,6 +107,9 @@ export function skip(): void {
 }
 
 /* ========================================================================== */
+
+/** A symbol marking {@link Suite} instances */
+const suiteMarker = Symbol.for('plugjs:expect5:marker:Suite')
 
 /** Our {@link Suite} implementation */
 export class Suite {
@@ -98,6 +129,14 @@ export class Suite {
       public readonly timeout: number = 5000,
       public flag: Flag = undefined,
   ) {}
+
+  static {
+    (this.prototype as any)[suiteMarker] = suiteMarker
+  }
+
+  static [Symbol.hasInstance](instance: any): boolean {
+    return instance && instance[suiteMarker] === suiteMarker
+  }
 
   get specs(): number {
     return this._suites.reduce((n, s) => n + s.specs, 0) + this._specs.length
@@ -231,6 +270,9 @@ export class Suite {
 
 /* ========================================================================== */
 
+/** A symbol marking {@link Spec} instances */
+const specMarker = Symbol.for('plugjs:expect5:marker:Spec')
+
 /** Our {@link Spec} implementation */
 export class Spec {
   public before: Hook[] = []
@@ -243,6 +285,14 @@ export class Spec {
       public readonly timeout: number = 5000,
       public flag: Flag = undefined,
   ) {}
+
+  static {
+    (this.prototype as any)[specMarker] = specMarker
+  }
+
+  static [Symbol.hasInstance](instance: any): boolean {
+    return instance && instance[specMarker] === specMarker
+  }
 
   /** Execute this spec */
   async execute(executor: Executor, skip: boolean = false): Promise<void> {
@@ -271,7 +321,10 @@ export class Spec {
 
 /* ========================================================================== */
 
-/** Our {@link Spec} implementation */
+/** A symbol marking {@link Hook} instances */
+const hookMarker = Symbol.for('plugjs:expect5:marker:Hook')
+
+/** Our {@link Hook} implementation */
 export class Hook {
   constructor(
       public readonly parent: Suite | Spec,
@@ -280,6 +333,14 @@ export class Hook {
       public readonly timeout: number = 5000,
       public readonly flag: Exclude<Flag, 'only'> = undefined,
   ) {}
+
+  static {
+    (this.prototype as any)[hookMarker] = hookMarker
+  }
+
+  static [Symbol.hasInstance](instance: any): boolean {
+    return instance && instance[hookMarker] === hookMarker
+  }
 
   /** Execute this hook */
   async execute(executor: Executor): Promise<boolean> {
