@@ -103,11 +103,13 @@ export class Coverage implements Plug<Files | undefined> {
     }
 
     if (fileErrors) {
+      /* coverage ignore next */
       const f = fileErrors === 1 ? 'file does' : 'files do'
       const message = `${$red(fileErrors)} ${f} not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`
       _report.add({ level: ERROR, message })
     }
     if (fileWarnings) {
+      /* coverage ignore next */
       const f = fileErrors === 1 ? 'file does' : 'files do'
       const message = `${$ylw(fileWarnings)} ${f} not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`
       _report.add({ level: WARN, message })
