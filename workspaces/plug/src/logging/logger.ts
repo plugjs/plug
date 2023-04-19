@@ -1,3 +1,5 @@
+import { formatWithOptions } from 'node:util'
+
 import { BuildFailure } from '../asserts'
 import { emitColor, emitPlain } from './emit'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
@@ -212,5 +214,43 @@ class LoggerImpl implements Logger {
       this._emitter({ ...options, indent, prefix }, args)
     }
     return new ReportImpl(title, this._task, emitter)
+  }
+}
+
+/* ========================================================================== */
+
+/** Pattern to match ANSI expressions */
+const ansiPattern = '[\\u001b\\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]'
+/** Regular expression matching ANSI */
+const ansiRegExp = new RegExp(ansiPattern, 'g')
+
+/** A test logger, writing to a buffer always _without_ colors */
+export class TestLogger extends LoggerImpl {
+  private _lines: string[] = []
+
+  constructor() {
+    super('', (options: LogEmitterOptions, args: any[]): void => {
+      const { prefix = '', indent = 0 } = options
+      const linePrefix = ''.padStart(indent * 2) + prefix
+
+      /* Now for the normal logging of all our parameters */
+      formatWithOptions({ colors: false, breakLength: 120 }, ...args)
+          .split('\n').forEach((line) => {
+            const stripped = line.replaceAll(ansiRegExp, '')
+            this._lines.push(`${linePrefix}${stripped}`)
+          })
+    })
+  }
+
+  /** Return the _current_ buffer for this instance */
+  get buffer(): string {
+    return this._lines.join('\n')
+  }
+
+  /** Reset the buffer and return any previously buffered text */
+  reset(): string {
+    const buffer = this.buffer
+    this._lines = []
+    return buffer
   }
 }
