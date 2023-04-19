@@ -160,6 +160,7 @@ main(import.meta.url, async (args): Promise<void> => {
 
   // Default glob (all JS/TS in the 'src' directory)
   const glob = globs.shift() || '**/*.([cm])?[jt]s'
+  const ignore = '**/*.d.([cm])?ts' // ignore .d.ts!
 
   // Simply create the Test plug and pass everything to it
   try {
@@ -182,7 +183,7 @@ main(import.meta.url, async (args): Promise<void> => {
           await utils.execChild(cmd, args, { coverageDir, env }, context)
         }
 
-        await find(glob, ...globs, { directory: sourceDir || 'src' })
+        await find(glob, ...globs, { directory: sourceDir || 'src', ignore })
             .plug(new Coverage(coverageDir, {
               reportDir: reportDir as string,
               minimumCoverage,
