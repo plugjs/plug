@@ -1,8 +1,9 @@
-import { $grn, $gry, $red, $und, $wht, $ylw, type Logger } from '@plugjs/plug/logging'
+import { $grn, $gry, $red, $und, $wht, $ylw } from '@plugjs/plug/logging'
 
 import { stringifyValue } from './types'
 
 import type { Diff, ExtraValueDiff, MissingValueDiff, ObjectDiff, ExpectedDiff } from './diff'
+import type { Logger } from '@plugjs/plug/logging'
 
 /* ========================================================================== *
  * CONSTANT LABELS FOR PRINTING                                               *
@@ -130,46 +131,58 @@ function printObjectDiff(
 
   // arrays or sets
   if (diff.values) {
-    log.warn(`${line}${_opnSqr}`)
-    log.enter()
-    try {
-      for (const subdiff of diff.values) {
-        printBaseDiff(log, subdiff, '', false, true)
+    if (diff.values.length === 0) {
+      line = `${line}${_squares}`
+    } else {
+      log.warn(`${line}${_opnSqr}`)
+      log.enter()
+      try {
+        for (const subdiff of diff.values) {
+          printBaseDiff(log, subdiff, '', false, true)
+        }
+      } finally {
+        log.leave()
       }
-    } finally {
-      log.leave()
+      line = _clsSqr
     }
-    line = _clsSqr
     marked = true
 
-  // values and mappings (arrays/sets/maps) are mutually exclusive
+  // values and mappings (arrays/sets and maps) are mutually exclusive
   } else if (diff.mappings) {
-    log.warn(`${line}${_opnCrl}`)
-    log.enter()
-    try {
-      for (const [ key, subdiff ] of diff.mappings) {
-        printBaseDiff(log, subdiff, stringifyValue(key), true, true)
+    if (Object.keys(diff.mappings).length === 0) {
+      line = `${line}${_curls}`
+    } else {
+      log.warn(`${line}${_opnCrl}`)
+      log.enter()
+      try {
+        for (const [ key, subdiff ] of diff.mappings) {
+          printBaseDiff(log, subdiff, stringifyValue(key), true, true)
+        }
+      } finally {
+        log.leave()
       }
-    } finally {
-      log.leave()
+      line = _clsCrl
     }
-    line = _clsCrl
     marked = true
   }
 
   // extra properties
   if (diff.props) {
     if (marked) line = `${line} ${_extraProps} `
-    log.warn(`${line}${_opnCrl}`)
-    log.enter()
-    try {
-      for (const [ prop, subdiff ] of Object.entries(diff.props)) {
-        printBaseDiff(log, subdiff, prop, false, true)
+    if (Object.keys(diff.props).length === 0) {
+      line = `${line}${_curls}`
+    } else {
+      log.warn(`${line}${_opnCrl}`)
+      log.enter()
+      try {
+        for (const [ prop, subdiff ] of Object.entries(diff.props)) {
+          printBaseDiff(log, subdiff, prop, false, true)
+        }
+      } finally {
+        log.leave()
       }
-    } finally {
-      log.leave()
+      line = _clsCrl
     }
-    line = _clsCrl
     marked = true
   }
 
