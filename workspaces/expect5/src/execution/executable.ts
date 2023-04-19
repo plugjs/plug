@@ -199,17 +199,21 @@ export class Suite {
       if (error) throw error
     })
 
+    /* Copy before and after hooks from parent */
+    if (this.parent) {
+      this._beforeEach.unshift(...this.parent._beforeEach.map((h) => h.clone(this)))
+      this._afterEach.push(...this.parent._afterEach.map((h) => h.clone(this)))
+    }
+
     /* Setup all sub-suites of this instance */
-    for (const suite of this._suites) await suite.setup()
+    for (const suite of this._suites) {
+      await suite.setup()
+    }
 
     /* Setup all before/after hooks in the spec */
     for (const spec of this._specs) {
-      for (const hook of this._beforeEach) {
-        spec.before.push(new Hook(spec, hook.name, hook.call, hook.timeout, hook.flag))
-      }
-      for (const hook of this._afterEach) {
-        spec.after.push(new Hook(spec, hook.name, hook.call, hook.timeout, hook.flag))
-      }
+      spec.before.push(...this._beforeEach.map((h) => h.clone(spec)))
+      spec.after.push(...this._afterEach.map((h) => h.clone(spec)))
     }
 
     /* If _any_ of this suite's children is marked as "only", then all children
@@ -351,5 +355,10 @@ export class Hook {
     const error = await skipStorage.run(skipState, () => execute(this.call, this.timeout, notify))
     done(skipState.skipped)
     return !! error
+  }
+
+  /** Clone this associating it with a new {@link Suite} or {@link Spec} */
+  clone(parent: Suite | Spec): Hook {
+    return new Hook(parent, this.name, this.call, this.timeout, this.flag)
   }
 }

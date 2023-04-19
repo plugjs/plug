@@ -97,6 +97,119 @@ describe('Executor', () => {
 
   /* ======================================================================== */
 
+  fit('should inherit "beforeEach" and "afterEach" hooks from parent suites', async () => {
+    const calls: any[][] = []
+
+    const suite = new Suite(undefined, 'suite 0', () => {
+      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach 0' ]))
+      afterEach(() => void calls.push([ 'hook:exec', 'afterEach 0' ]))
+      it('spec 0', () => void calls.push([ 'spec:exec', 'spec 0' ]))
+
+      describe('suite 1', () => {
+        beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach 1' ]))
+        afterEach(() => void calls.push([ 'hook:exec', 'afterEach 1' ]))
+        it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
+
+        describe('suite 2', () => {
+          beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach 2' ]))
+          afterEach(() => void calls.push([ 'hook:exec', 'afterEach 2' ]))
+          it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+        })
+      })
+    })
+
+    const execution = runSuite(suite)
+    setupListeners(execution, calls)
+
+    const result = await execution.result
+    console.log('CALLS', calls)
+
+    expect(calls as any).toEqual([
+      // root suite, execute:
+      // "beforeEach 0"
+      // -> spec
+      // "afterEach 0"
+      [ 'suite:start', 'suite 0' ],
+      [ 'spec:start', 'spec 0' ],
+      [ 'hook:start', 'beforeEach' ],
+      [ 'hook:exec', 'beforeEach 0' ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'spec:exec', 'spec 0' ],
+      [ 'hook:start', 'afterEach' ],
+      [ 'hook:exec', 'afterEach 0' ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 0', expect.toBeA('number') ],
+
+      // child suite, execute:
+      // "beforeEach 0"
+      // "beforeEach 1"
+      // -> spec
+      // "afterEach 1"
+      // "afterEach 0"
+      [ 'suite:start', 'suite 1' ],
+      [ 'spec:start', 'spec 1' ],
+      [ 'hook:start', 'beforeEach' ],
+      [ 'hook:exec', 'beforeEach 0' ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:start', 'beforeEach' ],
+      [ 'hook:exec', 'beforeEach 1' ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'spec:exec', 'spec 1' ],
+      [ 'hook:start', 'afterEach' ],
+      [ 'hook:exec', 'afterEach 1' ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'hook:start', 'afterEach' ],
+      [ 'hook:exec', 'afterEach 0' ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
+
+      // sub-child suite, execute:
+      // "beforeEach 0"
+      // "beforeEach 1"
+      // "beforeEach 2"
+      // -> spec
+      // "afterEach 2"
+      // "afterEach 1"
+      // "afterEach 0"
+      [ 'suite:start', 'suite 2' ],
+      [ 'spec:start', 'spec 2' ],
+      [ 'hook:start', 'beforeEach' ],
+      [ 'hook:exec', 'beforeEach 0' ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:start', 'beforeEach' ],
+      [ 'hook:exec', 'beforeEach 1' ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:start', 'beforeEach' ],
+      [ 'hook:exec', 'beforeEach 2' ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'spec:exec', 'spec 2' ],
+      [ 'hook:start', 'afterEach' ],
+      [ 'hook:exec', 'afterEach 2' ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'hook:start', 'afterEach' ],
+      [ 'hook:exec', 'afterEach 1' ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'hook:start', 'afterEach' ],
+      [ 'hook:exec', 'afterEach 0' ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
+
+      [ 'suite:done', 'suite 2', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 1', expect.toBeA('number') ],
+      [ 'suite:done', 'suite 0', expect.toBeA('number') ],
+    ])
+
+    expect(result as any).toEqual({
+      time: expect.toBeA('number'),
+      passed: 3,
+      failed: 0,
+      skipped: 0,
+      failures: [],
+    })
+  })
+
+  /* ======================================================================== */
+
   it('should should skip a suite when a "beforeAll" hook fails', async () => {
     const error = new Error('Fail now!')
     const calls: any[][] = []
