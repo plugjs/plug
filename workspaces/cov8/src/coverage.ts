@@ -59,8 +59,6 @@ export class Coverage implements Plug<Files | undefined> {
       optimalFileCoverage = Math.round((100 + minimumFileCoverage) / 2),
     } = this._options
 
-    console.log(minimumCoverage, optimalCoverage)
-
     let max = 0
     for (const file in report) {
       if (file.length > max) max = file.length
