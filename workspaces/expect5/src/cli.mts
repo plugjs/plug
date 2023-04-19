@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-import { async, files, paths, pipe, utils, logging } from '@plugjs/plug'
+import { async, find, paths, pipe, logging } from '@plugjs/plug'
 import { main, yargsParser } from '@plugjs/tsrun'
 
 import { Test } from './test'
@@ -28,9 +28,7 @@ function help(): void {
 
   ${$bnd('Options:')}
 
-      ${$wht('-r --directory')} ${$gnd('dir')}    The directory where tests are to be found
-      ${$wht('-m --minimum  ')} ${$gnd('num')}    The maximum number of failures to report
-      ${$wht('-o --optimal  ')} ${$gnd('num')}    The maximum number of failures to report
+      ${$wht('-d --directory')} ${$gnd('dir')}    Directory where tests are to be found
       ${$wht('-h --help     ')}        Help! You're reading it now!
       ${$wht('   --version  ')}        Version! This one: ${version}!
 
@@ -45,7 +43,7 @@ function help(): void {
 
   ${$bnd('Environment Variables:')}
 
-      ${$wht('LOG_LEVEL$      ')}    The default ${$wnd('notice')}, or ${$gnd('debug')}, ${$gnd('info')}, ${$gnd('warn')} or ${$gnd('error')}.
+      ${$wht('LOG_LEVEL       ')}    The default ${$wnd('notice')}, or ${$gnd('debug')}, ${$gnd('info')}, ${$gnd('warn')} or ${$gnd('error')}.
       ${$wht('NODE_V8_COVERAGE')}    The directory where Node will write coverage data to.
 
   ${$bnd('TypeScript module format:')}
@@ -69,8 +67,7 @@ function help(): void {
 main(import.meta.url, async (args): Promise<void> => {
   const filename = paths.requireFilename(import.meta.url) // self, for context
   const context = new pipe.Context(filename, '') // context for pipes
-  let directory = context.resolve('.') // default directory to CWD
-  let maxFailures: number = Infinity // no max failures
+  let directory = '.' // default directory to CWD
   const globs: string[] = [] // empty globs list
 
   const parsed = yargsParser(args, {
@@ -82,12 +79,10 @@ main(import.meta.url, async (args): Promise<void> => {
 
     alias: {
       'directory': [ 'd' ],
-      'max-failures': [ 'f' ],
       'help': [ 'h' ],
     },
 
     string: [ 'directory' ],
-    number: [ 'max-failures' ],
     boolean: [ 'help', 'version' ],
   })
 
@@ -98,9 +93,6 @@ main(import.meta.url, async (args): Promise<void> => {
         break
       case 'directory':
         directory = context.resolve(value)
-        break
-      case 'max-failures':
-        maxFailures = value
         break
       case 'help':
         return help()
@@ -115,18 +107,14 @@ main(import.meta.url, async (args): Promise<void> => {
     }
   }
 
-  // Default glob is "'**/*.test.ts'"
-  if (globs.length === 0) globs.push('test/**/*.test.([cm])?([jt])s')
-
-  // Find all the test files to pass to Expect5
-  const builder = files.Files.builder(directory)
-  for await (const file of utils.walk(directory, globs)) builder.add(file)
+  // Default glob (all .test.xx files in the test directory)
+  const glob = globs.shift() || 'test/**/*.test.([cm])?[jt]s'
 
   // Simply create the Test plug and pass everything to it
   try {
     process.exitCode = 0
     await async.runAsync(context, '', () => {
-      return new Test({ maxFailures }).pipe(builder.build(), context)
+      return find(glob, ...globs, { directory }).plug(new Test())
     })
   } catch (error) {
     context.log.error(error)
