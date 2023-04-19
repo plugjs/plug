@@ -5,6 +5,9 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "plug": "./dist/cli.mjs"
+  },
   "exports": {
     ".": {
       "require": {
@@ -96,9 +99,6 @@
         "default": "./dist/utils.mjs"
       }
     }
-  },
-  "bin": {
-    "plug": "./dist/cli.mjs"
   },
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
