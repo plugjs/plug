@@ -136,11 +136,23 @@ describe('Diff Printer', () => {
     })
 
     it('should print the difference between two empty objects', () => {
-      print({ diff: false, value: {} }) // edge case
+      print({ diff: false, value: {} } satisfies Diff) // edge case
     })
 
     it('should print the difference without known changes', () => {
-      print({ diff: true, value: { foo: 'bar' } }) // edge case
+      print({ diff: true, value: { foo: 'bar' } } satisfies Diff) // edge case
+    })
+
+    it('should print the difference with empty values', () => {
+      print({ diff: false, value: { foo: 'bar' }, values: [] } satisfies Diff)
+    })
+
+    it('should print the difference with empty mappings', () => {
+      print({ diff: false, value: { foo: 'bar' }, mappings: [] } satisfies Diff)
+    })
+
+    it('should print the difference with empty properties', () => {
+      print({ diff: false, value: { foo: 'bar' }, props: {} } satisfies Diff)
     })
 
     it('should print the difference between two equal arrays with extra properties', () => {
