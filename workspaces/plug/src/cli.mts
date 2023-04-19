@@ -8,7 +8,7 @@ import { main, yargsParser } from '@plugjs/tsrun'
 import { BuildFailure } from './asserts'
 import { invokeTasks, isBuild } from './build'
 import { $blu, $gry, $p, $red, $t, $und, $wht } from './logging/colors'
-import { getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
+import { getCurrentWorkingDirectory, resolveDirectory, resolveFile, resolveAbsolutePath } from './paths'
 
 import type { AbsolutePath } from './paths'
 
@@ -21,6 +21,55 @@ const $wnd = (s: string): string => $wht($und(s))
 const version = typeof __version === 'string' ? __version : '0.0.0-dev'
 declare const __version: string | undefined
 
+/* ========================================================================== *
+ * HELP SCREEN                                                                *
+ * ========================================================================== */
+
+/** Show help screen */
+function help(): void {
+  console.log(`${$bnd('Usage:')}
+
+  ${$wht('plugjs')} ${$gry('[')}--options${$gry('] [... ')}prop=val${$gry(' ...] [... ')}task${$gry(' ...]')}
+
+  ${$bnd('Options:')}
+
+      ${$wht(`-f --file ${$gnd('file')}`)}  Specify the build file to use (default ${$wnd('./build.ts')})
+      ${$wht(`-w --watch ${$gnd('dir')}`)}  Watch for changes on the specified directory and run
+      ${$wht('-v --verbose')}    Increase logging verbosity
+      ${$wht('-q --quiet')}      Decrease logging verbosity
+      ${$wht('-c --colors')}     Force colorful output (use ${$wnd('--no-colors')} to force plain text)
+      ${$wht('-l --list')}       Only list the tasks defined by the build, nothing more!
+      ${$wht('-h --help')}       Help! You're reading it now!
+      ${$wht('   --version')}    Version! This one: ${version}!
+
+  ${$bnd('Properties:')}
+
+      Any argument in the format ${$wnd('key=value')} will be interpeted as a property to
+      be injected in the build process (e.g. ${$wnd('mode=production')}).
+
+  ${$bnd('Tasks:')}
+
+      Any other argument will be treated as a task name. If no task names are
+      specified, the ${$t('default')} task will be executed.
+
+  ${$bnd('Watch Mode:')}
+
+      The ${$wnd('--watch')} option can be specified multiple times, and each single
+      directory specified will be watched for changes. Note that Plug's own
+      watch mode is incredibly basic, for more complex scenarios use something
+      more advanced like nodemon ${$gry('(')}${$gnd('https://www.npmjs.com/package/nodemon')}${$gry(')')}.
+
+  ${$bnd('TypeScript module format:')}
+
+      Normally our TypeScript loader will transpile ${$wnd('.ts')} files to the type
+      specified in ${$wnd('package.json')}, either ${$wnd('commonjs')} (the default) or ${$wnd('module')}.
+
+      To force a specific module format use one of the following flags:
+
+      ${$wht('--force-esm')}    Force transpilation of ${$wnd('.ts')} files to EcmaScript modules
+      ${$wht('--force-cjs')}    Force transpilation of ${$wnd('.ts')} files to CommonJS modules
+    `)
+}
 /* ========================================================================== *
  * PARSE COMMAND LINE ARGUMENTS                                               *
  * ========================================================================== */
@@ -71,7 +120,6 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
   let colors: boolean | undefined = undefined
   let file: string | undefined = undefined
   let listOnly = false
-  let help = false
 
   /* Switcharoo on arguments */
   for (const [ key, value ] of Object.entries(parsed)) {
@@ -103,67 +151,17 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
         listOnly = !! value
         break
       case 'help':
-        help = !! value
+        help()
+        process.exit(0)
         break
       case 'version':
-        console.log(`v${version}`)
+        console.log(`PlugJS ${$gry('ver.')} ${$wnd(version)}`)
         process.exit(0)
         break
       default:
-        console.log(`Unsupported option "${key}" (try "--help")`)
+        console.log(`Unsupported option ${$wnd(key)} (try ${$wnd('--help')})`)
         process.exit(1)
     }
-  }
-
-  /* ======================================================================== *
-   * HELP OR NOT                                                              *
-   * ======================================================================== */
-
-  /* If help, end here! */
-  if (help) {
-    console.log(`${$bnd('Usage:')}
-
-    ${$wht('plugjs')} ${$gry('[')}--options${$gry('] [... ')}prop=val${$gry(' ...] [... ')}task${$gry(' ...]')}
-
-    ${$bnd('Options:')}
-
-        ${$wht(`-f --file ${$gnd('file')}`)}  Specify the build file to use (default ${$wnd('./build.ts')})
-        ${$wht(`-w --watch ${$gnd('dir')}`)}  Watch for changes on the specified directory and run
-        ${$wht('-v --verbose')}    Increase logging verbosity
-        ${$wht('-q --quiet')}      Decrease logging verbosity
-        ${$wht('-c --colors')}     Force colorful output (use ${$wnd('--no-colors')} to force plain text)
-        ${$wht('-l --list')}       Only list the tasks defined by the build, nothing more!
-        ${$wht('-h --help')}       Help! You're reading it now!
-        ${$wht('   --version')}    Version! This one: ${version}!
-
-    ${$bnd('Properties:')}
-
-        Any argument in the format ${$wnd('key=value')} will be interpeted as a property to
-        be injected in the build process (e.g. ${$wnd('mode=production')}).
-
-    ${$bnd('Tasks:')}
-
-        Any other argument will be treated as a task name. If no task names are
-        specified, the ${$t('default')} task will be executed.
-
-    ${$bnd('Watch Mode:')}
-
-        The ${$wnd('--watch')} option can be specified multiple times, and each single
-        directory specified will be watched for changes. Note that Plug's own
-        watch mode is incredibly basic, for more complex scenarios use something
-        more advanced like nodemon ${$gry('(')}${$gnd('https://www.npmjs.com/package/nodemon')}${$gry(')')}.
-
-    ${$bnd('TypeScript module format:')}
-
-        Normally our TypeScript loader will transpile ${$wnd('.ts')} files to the type
-        specified in ${$wnd('package.json')}, either ${$wnd('commonjs')} (the default) or ${$wnd('module')}.
-
-        To force a specific module format use one of the following flags:
-
-        ${$wht('--force-esm')}    Force transpilation of ${$wnd('.ts')} files to EcmaScript modules
-        ${$wht('--force-cjs')}    Force transpilation of ${$wnd('.ts')} files to CommonJS modules
-      `)
-    process.exit(0)
   }
 
   /* ======================================================================== *
@@ -223,7 +221,8 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
   watchDirs.forEach((watchDir) => {
     const absolute = resolveDirectory(cwd, watchDir)
     if (! absolute) {
-      console.log(`Specified watch directory "${watchDir}" was not found`)
+      const path = resolveAbsolutePath(cwd, watchDir)
+      console.log(`Specified watch directory "${$p(path)}" was not found`)
       process.exit(1)
     } else {
       watchDir = absolute

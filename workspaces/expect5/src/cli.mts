@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable no-console */
 
 import { async, find, paths, pipe, logging } from '@plugjs/plug'
 import { main, yargsParser } from '@plugjs/tsrun'
@@ -22,6 +21,7 @@ declare const __version: string | undefined
 
 /** Show help screen */
 function help(): void {
+  // eslint-disable-next-line no-console
   console.log(`${$blu($und('Usage:'))}
 
   ${$wht('expect5')} ${$gry('[')}--options${$gry('] [...')}globs${$gry('...]')}
@@ -98,13 +98,10 @@ main(import.meta.url, async (args): Promise<void> => {
         break
       case 'help':
         return help()
-        break
       case 'version':
-        console.log(`v${version}`)
-        process.exit(0)
-        break
+        return context.log.notice(`Expect5 ${$gry('ver.')} ${$wnd(version)}`)
       default:
-        console.log(`Unsupported option "${key}" (try "--help")`)
+        context.log.error(`Unsupported option ${$wnd(key)} (try ${$wnd('--help')})`)
         process.exit(1)
     }
   }

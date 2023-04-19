@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable no-console */
 
 import { async, find, paths, pipe, logging, mkdtemp, rmrf, utils } from '@plugjs/plug'
 import { main, yargsParser } from '@plugjs/tsrun'
@@ -22,12 +21,13 @@ declare const __version: string | undefined
 
 /** Show help screen */
 function help(): void {
+  // eslint-disable-next-line no-console
   console.log(`${$blu($und('Usage:'))}
 
   ${$wht('cov8')} ${$gry('[')}--options${$gry('] [--] [...')}command${$gry('...]')}
 
   ${$bnd('Options:')}
-                                                                               |
+
       ${$wht('-c --coverage-dir')} ${$gnd('dir')}    The directory containing all coverage data files
       ${$wht('-r --report-dir')} ${$gnd('dir')}      Write an HTML report to this directory
       ${$wht('-d --source-dir')} ${$gnd('dir')}      The directory where source files are located
@@ -36,7 +36,7 @@ function help(): void {
       ${$wht('-o --optimal')} ${$gnd('num')}         The desired optimal coverage level to achieve
       ${$wht('-h --help   ')}             Help! You're reading it now!
       ${$wht('   --version')}             Version! This one: ${version}!
-                                                                               |
+
 
   ${$bnd('Usave:')}
 
@@ -143,20 +143,17 @@ main(import.meta.url, async (args): Promise<void> => {
         break
       case 'help':
         return help()
-        break
       case 'version':
-        console.log(`v${version}`)
-        process.exit(0)
-        break
+        return context.log.notice(`Cov8 ${$gry('ver.')} ${$wnd(version)}`)
       default:
-        console.log(`Unsupported option "${key}" (try "--help")`)
+        context.log.error(`Unsupported option ${$wnd(key)} (try ${$wnd('--help')})`)
         process.exit(1)
     }
   }
 
   // Extra check for command or coverage dir requirement
   if ((command.length === 0) && (! coverageDir)) {
-    console.log('Either "--coverage-dir" or a command must me specified')
+    context.log.error(`Either ${$wnd('--coverage-dir')} or a command must me specified`)
     process.exit(1)
   }
 
