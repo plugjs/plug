@@ -28,6 +28,7 @@ export interface Pipe extends Promise<Files> {
 
 // Submodule exports (our package.json exports)
 export * as asserts from './asserts'
+export * as async from './async'
 export * as files from './files'
 export * as fork from './fork'
 export * as fs from './fs'
@@ -37,7 +38,7 @@ export * as pipe from './pipe'
 export * as utils from './utils'
 
 // Individual utilities
-export { log, $ms, $p, $t, $blu, $cyn, $grn, $gry, $mgt, $red, $und, $wht, $ylw } from './logging'
+export { banner, log, $ms, $p, $t, $blu, $cyn, $grn, $gry, $mgt, $red, $und, $wht, $ylw } from './logging'
 export { assert, fail, BuildFailure } from './asserts'
 
 // Our minimal exports

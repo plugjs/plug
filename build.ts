@@ -1,13 +1,12 @@
 import {
   $gry,
   $p,
-  $wht,
+  banner,
   build,
-  exec,
-  fail,
   find,
   fixExtensions,
   fork,
+  invokeBuild,
   log,
   logging,
   merge,
@@ -17,13 +16,10 @@ import {
   rmrf,
 } from './workspaces/plug/src/index'
 
-import type {
-  AbsolutePath,
-  ESBuildOptions,
-  Files,
-} from './workspaces/plug/src/index'
-import type { Tsc } from './workspaces/typescript/src/typescript'
 import type { ESLint } from './workspaces/eslint/src/eslint'
+import type { Test } from './workspaces/expect5/src/test'
+import type { ESBuildOptions, Files } from './workspaces/plug/src/index'
+import type { Tsc } from './workspaces/typescript/src/typescript'
 
 logging.logOptions.githubAnnotations = false
 
@@ -36,8 +32,7 @@ const workspaces = [
   'workspaces/plug', // this _must_ be the first
   'workspaces/cov8',
   'workspaces/eslint',
-  'workspaces/jasmine',
-  'workspaces/mocha',
+  'workspaces/expect5',
   'workspaces/tsd',
   'workspaces/typescript',
   'workspaces/zip',
@@ -58,8 +53,7 @@ const workspaceExports: Record<typeof workspaces[number], [ string, ...string[] 
   ],
   'workspaces/cov8': [ 'index.*', 'coverage.*' ],
   'workspaces/eslint': [ 'index.*', 'eslint.*' ],
-  'workspaces/jasmine': [ 'index.*', 'jasmine.*' ],
-  'workspaces/mocha': [ 'index.*', 'mocha.*' ],
+  'workspaces/expect5': [ 'index.*', 'globals.*', 'test.*' ],
   'workspaces/tsd': [ 'index.*', 'tsd.*' ],
   'workspaces/typescript': [ 'index.*', 'typescript.*' ],
   'workspaces/zip': [ 'index.*', 'zip.*' ],
@@ -69,6 +63,9 @@ const workspaceExports: Record<typeof workspaces[number], [ string, ...string[] 
  * SHARED CONSTANTS (DEFAULTS) AND FUNCTIONS                                  *
  * ========================================================================== */
 
+/** Coverage Data Directory */
+const coverageDir = '.coverage-data'
+
 /** Shared ESBuild options */
 const esbuildOptions: ESBuildOptions = {
   platform: 'node',
@@ -76,17 +73,6 @@ const esbuildOptions: ESBuildOptions = {
   sourcemap: 'linked',
   sourcesContent: false,
   plugins: [ fixExtensions() ],
-}
-
-/** Niceties... */
-function banner(message: string): void {
-  log.notice([
-    '',
-    $gry(`\u2554${''.padStart(60, '\u2550')}\u2557`),
-    `${$gry('\u2551')} ${$wht(message.padEnd(58, ' '))} ${$gry('\u2551')}`,
-    $gry(`\u255A${''.padStart(60, '\u2550')}\u255D`),
-    '',
-  ].join('\n'))
 }
 
 /* ========================================================================== *
@@ -98,17 +84,24 @@ function banner(message: string): void {
  * only be read and executed once the plug is instantiated!                   *
  * ========================================================================== */
 
-const ForkingTsc = class extends fork.ForkingPlug {
-  constructor(...args: ConstructorParameters<typeof Tsc>) {
-    const scriptFile = paths.requireResolve(__fileurl, './workspaces/typescript/src/typescript')
-    super(scriptFile, args, 'Tsc')
-  }
-}
-
 const ForkingESLint = class extends fork.ForkingPlug {
   constructor(...args: ConstructorParameters<typeof ESLint>) {
     const scriptFile = paths.requireResolve(__fileurl, './workspaces/eslint/src/eslint')
     super(scriptFile, args, 'ESLint')
+  }
+}
+
+const ForkingTest = class extends fork.ForkingPlug {
+  constructor(...args: ConstructorParameters<typeof Test>) {
+    const scriptFile = paths.requireResolve(__fileurl, './workspaces/expect5/src/test')
+    super(scriptFile, args, 'Test')
+  }
+}
+
+const ForkingTsc = class extends fork.ForkingPlug {
+  constructor(...args: ConstructorParameters<typeof Tsc>) {
+    const scriptFile = paths.requireResolve(__fileurl, './workspaces/typescript/src/typescript')
+    super(scriptFile, args, 'Tsc')
   }
 }
 
@@ -127,61 +120,36 @@ export default build({
 
   /** Transpile to CJS */
   async transpile_cjs(): Promise<Files> {
+    const version = JSON.stringify(parseJson('package.json').version)
+
     return merge(workspaces.map((workspace) => {
       log.notice(`Transpiling sources to CJS from ${$p(resolve(workspace))}`)
-      return find('**/*.([cm])?ts', { directory: `${workspace}/src` })
+      return find('**/*.(c)?ts', { directory: `${workspace}/src` })
           .esbuild({
             ...esbuildOptions,
             format: 'cjs',
             outdir: `${workspace}/dist`,
             outExtension: { '.js': '.cjs' },
+            define: { '__version': version },
           })
     }))
   },
 
   /** Transpile to ESM */
   async transpile_esm(): Promise<Files> {
+    const version = JSON.stringify(parseJson('package.json').version)
+
     return merge(workspaces.map((workspace) => {
       log.notice(`Transpiling sources to ESM from ${$p(resolve(workspace))}`)
-      return find('**/*.([cm])?ts', { directory: `${workspace}/src` })
+      return find('**/*.(m)?ts', { directory: `${workspace}/src` })
           .esbuild({
             ...esbuildOptions,
             format: 'esm',
             outdir: `${workspace}/dist`,
             outExtension: { '.js': '.mjs' },
+            define: { '__version': version },
           })
     }))
-  },
-
-  /** Transpile CLI */
-  async transpile_cli(): Promise<Files> {
-    const version = parseJson('package.json').version
-
-    // then we *only check* the types for "workspaces/plug/extra"
-    log.notice(`Checking extras types sanity in ${$p(resolve('workspaces/plug/extra'))}`)
-    await find('**/*.([cm])?ts', { directory: 'workspaces/plug/extra' })
-        .plug(new ForkingTsc('workspaces/plug/tsconfig-base.json', {
-          noEmit: true,
-          declaration: false,
-          emitDeclarationOnly: false,
-          rootDir: 'workspaces/plug',
-          extraTypesDir: 'workspaces/plug/types',
-        }))
-
-    log.notice(`Transpiling extras for CLI from ${$p(resolve('workspaces/plug/extra'))}`)
-    return find('**/*.mts', { directory: 'workspaces/plug/extra' })
-        .esbuild({
-          bundle: true,
-          format: 'esm',
-          target: 'node18',
-          platform: 'node',
-          sourcemap: 'inline',
-          sourcesContent: false,
-          external: [ 'esbuild' ],
-          outExtension: { '.js': '.mjs' },
-          define: { '__version': JSON.stringify(version) },
-          outdir: 'workspaces/plug/cli',
-        })
   },
 
   /** Generate all Typescript definition files */
@@ -215,9 +183,10 @@ export default build({
   async transpile(): Promise<void> {
     banner('Transpiling')
 
+    await Promise.all(workspaces.map((workspace) => rmrf(`${workspace}/dist`)))
+
     await this.transpile_cjs()
     await this.transpile_esm()
-    await this.transpile_cli()
     await this.transpile_dts()
   },
 
@@ -229,10 +198,12 @@ export default build({
   async check(): Promise<void> {
     banner('Cheking TypeScript for Tests')
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
+    const globals = find('globals.ts', { directory: 'workspaces/expect5/src' })
 
     await Promise.all(selection.map((workspace) => {
       log.notice(`Checking test types in ${$p(resolve(workspace))}`)
-      return find('**/*.test.([cm])?ts', { directory: `${workspace}/test` })
+      const specs = find('**/*.test.([cm])?ts', { directory: `${workspace}/test` })
+      return merge([ specs, globals ])
           .plug(new ForkingTsc(`${workspace}/test/tsconfig.json`, {
             rootDir: '.',
             noEmit: true,
@@ -243,34 +214,38 @@ export default build({
   },
 
   /** Run tests in CJS mode */
-  async test(): Promise<void> {
+  async test_cjs(): Promise<void> {
+    banner('Running Tests (CommonJS)')
+
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
 
-    for (const mode of [ 'cjs', 'esm' ] as const) {
-      const errors: AbsolutePath[] = []
-      for (const workspace of selection) {
-        const buildFile = resolve(workspace, 'test', 'build.ts')
-        try {
-          banner(`${mode.toUpperCase()} Tests (${workspace})`)
+    await merge(selection.map((workspace) => {
+      return find('test.ts', { directory: `${workspace}/test` })
+    })).plug(new ForkingTest({
+      forceModule: 'commonjs',
+      coverageDir,
+    }))
+  },
 
-          await exec(resolve('@/bootstrap/plug.mjs'), `--force-${mode}`, '-f', buildFile, 'test', {
-            coverageDir: '.coverage-data',
-            fork: true,
-          })
-        } catch (error: any) {
-          log.error(error)
-          errors.push(buildFile)
-        }
-      }
+  /** Run tests in ESM mode */
+  async test_esm(): Promise<void> {
+    banner('Running Tests (ES Modules)')
 
-      if (errors.length === 0) continue
+    const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
 
-      banner('Tests failed')
-      log.error(`Found test errors in ${errors.length} subprojects`)
-      errors.forEach((file) => log.error('*', $p(file)))
-      log.error('')
-      fail('')
-    }
+    await merge(selection.map((workspace) => {
+      return find('test.ts', { directory: `${workspace}/test` })
+    })).plug(new ForkingTest({
+      forceModule: 'module',
+      coverageDir,
+    }))
+  },
+
+  /** Run all tests */
+  async test(): Promise<void> {
+    await this.check()
+    await this.test_cjs()
+    await this.test_esm()
   },
 
   /* ======================================================================== *
@@ -278,11 +253,10 @@ export default build({
    * ======================================================================== */
 
   async clean_coverage(): Promise<void> {
-    await rmrf('.coverage-data')
-    await rmrf('.coverage-test-data')
+    await rmrf(coverageDir)
   },
 
-  /** Gnerate coverage report */
+  /** Generate coverage report */
   async coverage(): Promise<void> {
     banner('Test Coverage')
 
@@ -292,11 +266,13 @@ export default build({
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
 
     const sources = merge(selection.map((workspace) => {
-      return find('src/**/*.([cm])?ts', { directory: workspace })
-    })).filter('**/*.*', { directory: '.' })
+      return find('src/**/*.([cm])?ts', {
+        directory: workspace,
+        ignore: '**/cli.mts',
+      })
+    }))
 
-    // @ts-ignore
-    await sources.plug(new Coverage('.coverage-data', {
+    await sources.plug(new Coverage(coverageDir, {
       reportDir: 'coverage',
       optimalCoverage: 100,
       minimumCoverage: 80,
@@ -351,9 +327,7 @@ export default build({
 
   /* Cleanup generated files */
   async clean(): Promise<void> {
-    await rmrf('.coverage-data')
-    await rmrf('.coverage-test-data')
-    await rmrf('workspaces/plug/cli')
+    await rmrf(coverageDir)
     await Promise.all( workspaces.map((workspace) => rmrf(`${workspace}/dist`)))
   },
 
@@ -363,7 +337,7 @@ export default build({
 
     await this.clean_coverage()
     await this.transpile()
-    await this.check()
+    await this.check() // dev mode, run checks _before_ tests
     try {
       await this.test()
     } catch (err) {
@@ -379,30 +353,19 @@ export default build({
   async build(): Promise<void> {
     await this.clean_coverage()
     await this.transpile()
-    await this.check()
     await this.test()
     await this.lint()
   },
 
   /* Run all tasks (sequentially) */
   async default(): Promise<void> {
-    let error: any = undefined
-    try {
-      log.notice('Forking to collect self coverage')
-      const args = [ 'build' ]
-      if (this.workspace) args.push(`workspace=${this.workspace}`)
-      await exec(resolve('@/bootstrap/plug.mjs'), ...args, {
-        coverageDir: '.coverage-data',
-        fork: true,
-      })
-    } catch (err) {
-      error = err
-    } finally {
-      await this.coverage().then(() => {
-        if (error) throw error
-      }, (err) => {
-        throw error || err
-      })
-    }
+    log.notice('Forking to collect self coverage')
+
+    await invokeBuild('./build.ts', 'build', {
+      workspace: this.workspace,
+      coverageDir,
+    })
+
+    await this.coverage()
   },
 })

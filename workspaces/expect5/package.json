@@ -1,0 +1,57 @@
+{
+  "name": "@plugjs/expect5",
+  "version": "0.4.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "expect5": "./dist/cli.mjs"
+  },
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      }
+    },
+    "./globals": {
+      "require": {
+        "types": "./dist/globals.d.ts",
+        "default": "./dist/globals.cjs"
+      },
+      "import": {
+        "types": "./dist/globals.d.ts",
+        "default": "./dist/globals.mjs"
+      }
+    },
+    "./test": {
+      "require": {
+        "types": "./dist/test.d.ts",
+        "default": "./dist/test.cjs"
+      },
+      "import": {
+        "types": "./dist/test.d.ts",
+        "default": "./dist/test.mjs"
+      }
+    }
+  },
+  "author": "Juit Developers <developers@juit.com>",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/chai": "^4.3.4",
+    "chai": "^4.3.7"
+  },
+  "peerDependencies": {
+    "@plugjs/plug": "0.4.0"
+  },
+  "files": [
+    "*.md",
+    "dist/",
+    "src/"
+  ]
+}

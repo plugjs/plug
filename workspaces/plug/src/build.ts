@@ -1,6 +1,6 @@
 import { assert } from './asserts'
 import { runAsync } from './async'
-import { $ms, $p, $t, getLogger, logOptions } from './logging'
+import { $gry, $ms, $p, $t, getLogger, logOptions } from './logging'
 import { Context, ContextPromises, PipeImpl } from './pipe'
 import { findCaller } from './utils/caller'
 
@@ -51,7 +51,8 @@ function makeTask(
     const tasks: Record<string, Task> = Object.assign({}, task.tasks, state.tasks)
     const stack = [ ...state.stack, task ]
     const cache = state.cache
-    state = { stack, cache, tasks, props }
+    const fails = state.fails
+    state = { stack, cache, fails, tasks, props }
 
     /* Create run context and build */
     const context = new Context(task.buildFile, taskName)
@@ -86,6 +87,7 @@ function makeTask(
       context.log[level](`Success ${$ms(Date.now() - now)}`)
       return result
     }).catch((error) => {
+      fails.add(task)
       throw context.log.fail(`Failure ${$ms(Date.now() - now)}`, error)
     }).finally(async () => {
       await ContextPromises.wait(context)
@@ -105,6 +107,7 @@ function makeTask(
       cache: new Map<Task, Promise<Result>>(),
       stack: [] as Task[],
       props: Object.assign({}, props, overrideProps),
+      fails: new Set<Task>,
       tasks: tasks,
     }
     return invoke(state, _name)
@@ -163,8 +166,9 @@ export function build<
     const logger = getLogger()
     const state = {
       cache: new Map<Task, Promise<Result>>(),
-      stack: [] as Task[],
       props: Object.assign({}, props, overrideProps),
+      fails: new Set<Task>(),
+      stack: [] as Task[],
       tasks: tasks,
     }
 
@@ -181,18 +185,43 @@ export function build<
       }
       logger.notice(`Build successful ${$ms(Date.now() - now)}`)
     } catch (error) {
+      if (state.fails.size) {
+        logger.error('')
+        logger.error(state.fails.size, state.fails.size === 1 ? 'task' : 'tasks', 'failed:')
+        state.fails.forEach((task) => logger.error($gry('*'), $t(task.name)))
+        logger.error('')
+      }
       throw logger.fail(`Build failed ${$ms(Date.now() - now)}`, error)
     }
   }
 
   /* Create our build, the collection of all props and tasks */
-  const compiled = Object.assign({}, props, tasks) as Build<D>
+  const compiled = Object.assign(Object.create(null), props, tasks) as Build<D>
 
   /* Sneak our "call" function in the build, for the CLI and "call" below */
   Object.defineProperty(compiled, buildMarker, { value: invoke })
 
   /* All done! */
   return compiled
+}
+
+/** Check if the specified build is actually a {@link Build} */
+export function isBuild(build: any): build is Build<Record<string, any>> {
+  return build && typeof build[buildMarker] === 'function'
+}
+
+/** Invoke a number of tasks in a {@link Build} */
+export function invokeTasks(
+    build: Build,
+    tasks: string[],
+    props?: Record<string, string>,
+): Promise<void> {
+  if (build && (typeof build === 'object') &&
+     (buildMarker in build) && (typeof build[buildMarker] === 'function')) {
+    return build[buildMarker](tasks, props)
+  } else {
+    throw new TypeError('Invalid build instance')
+  }
 }
 
 /* ========================================================================== *

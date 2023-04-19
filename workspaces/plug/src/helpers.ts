@@ -7,14 +7,23 @@ import { requireContext } from './async'
 import { Files } from './files'
 import { rm } from './fs'
 import { $p, log } from './logging'
-import { commonPath, getCurrentWorkingDirectory, resolveDirectory, resolveFile } from './paths'
+import {
+  commonPath,
+  getAbsoluteParent,
+  getCurrentWorkingDirectory,
+  resolveDirectory,
+  resolveFile,
+} from './paths'
 import { PipeImpl } from './pipe'
+import { RunBuild } from './plugs/build'
 import { execChild } from './utils/exec'
 import { parseOptions } from './utils/options'
 import { walk } from './utils/walk'
 
+import type { ForkOptions } from './fork'
 import type { Pipe } from './index'
 import type { AbsolutePath } from './paths'
+import type { Context } from './pipe'
 import type { ExecChildOptions } from './utils/exec'
 import type { ParseOptions } from './utils/options'
 import type { WalkOptions } from './utils/walk'
@@ -27,6 +36,11 @@ import type { WalkOptions } from './utils/walk'
 export interface FindOptions extends WalkOptions {
   /** The directory where to start looking for files. */
   directory?: string
+}
+
+/** Return the current execution {@link Context} */
+export function context(): Context {
+  return requireContext()
 }
 
 /** Find files in the current directory using the specified _glob_. */
@@ -54,6 +68,44 @@ export function find(...args: ParseOptions<FindOptions>): Pipe {
 
     return builder.build()
   }))
+}
+
+export type InvokeBuildOptions = ForkOptions & Record<string, string>
+export type InvokeBuildTasks = string | [ string, ...string[] ]
+
+export function invokeBuild(buildFile: string): Promise<void>
+export function invokeBuild(buildFile: string, task: string): Promise<void>
+export function invokeBuild(buildFile: string, task: string, options: InvokeBuildOptions): Promise<void>
+export function invokeBuild(buildFile: string, tasks: [ string, ...string[] ]): Promise<void>
+export function invokeBuild(buildFile: string, tasks: [ string, ...string[] ], options: InvokeBuildOptions): Promise<void>
+export function invokeBuild(buildFile: string, options: InvokeBuildOptions): Promise<void>
+export async function invokeBuild(
+    buildFile: string,
+    tasksOrOptions?: string | [ string, ...string[] ] | InvokeBuildOptions,
+    maybeOptions?: InvokeBuildOptions,
+): Promise<void> {
+  const [ tasks, options = {} ] =
+      typeof tasksOrOptions === 'string' ?
+          [ [ tasksOrOptions ], maybeOptions ] :
+      Array.isArray(tasksOrOptions) ?
+          [ tasksOrOptions, maybeOptions ] :
+      typeof tasksOrOptions === 'object' ?
+          [ [ 'default' ], tasksOrOptions ] :
+      [ [ 'default' ], {} ]
+
+  if (tasks.length === 0) tasks.push('default')
+
+  const { coverageDir, forceModule, ...props } = options
+  const forkOptions = { coverageDir, forceModule }
+
+  const context = requireContext()
+  const file = context.resolve(buildFile)
+  const dir = getAbsoluteParent(file)
+  const files = Files.builder(dir).add(file).build()
+
+  return new RunBuild(tasks, props, forkOptions)
+      .pipe(files, context)
+      .then(() => void 0)
 }
 
 /**

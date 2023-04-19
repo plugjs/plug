@@ -70,14 +70,14 @@ describe('Emit', () => {
           .replaceAll(/^\s+/gm, '')
           .split('\n')
       expect(lines).toEqual([
-        '"test" \u25a1 trace 123 { foo: \'bar\' }',
-        '"test" \u25a0 debug 123 { foo: \'bar\' }',
-        '"test" \u25a0 info 123 { foo: \'bar\' }',
-        '"test" \u25a0 notice 123 { foo: \'bar\' }',
-        '"test" \u25a0 warn 123 { foo: \'bar\' }',
-        '"test" \u25a0 error 123 { foo: \'bar\' }',
-        '"test" \u25a0         indented',
-        '"test" \u25a0 {prefix}prefixed',
+        `"${taskName}" \u25a1 trace 123 { foo: 'bar' }`,
+        `"${taskName}" \u25a0 debug 123 { foo: 'bar' }`,
+        `"${taskName}" \u25a0 info 123 { foo: 'bar' }`,
+        `"${taskName}" \u25a0 notice 123 { foo: 'bar' }`,
+        `"${taskName}" \u25a0 warn 123 { foo: 'bar' }`,
+        `"${taskName}" \u25a0 error 123 { foo: 'bar' }`,
+        `"${taskName}" \u25a0         indented`,
+        `"${taskName}" \u25a0 {prefix}prefixed`,
         '', // last newline
       ])
     } finally {
@@ -123,14 +123,14 @@ describe('Emit', () => {
           .split('\n')
 
       expect(lines).toEqual([
-        'test │  trace │ trace 123 { foo: \'bar\' }',
-        'test │  debug │ debug 123 { foo: \'bar\' }',
-        'test │   info │ info 123 { foo: \'bar\' }',
-        'test │ notice │ notice 123 { foo: \'bar\' }',
-        'test │   warn │ warn 123 { foo: \'bar\' }',
-        'test │  error │ error 123 { foo: \'bar\' }',
-        'test │  error │         indented',
-        'test │  error │ {prefix}prefixed',
+        `${taskName} │  trace │ trace 123 { foo: 'bar' }`,
+        `${taskName} │  debug │ debug 123 { foo: 'bar' }`,
+        `${taskName} │   info │ info 123 { foo: 'bar' }`,
+        `${taskName} │ notice │ notice 123 { foo: 'bar' }`,
+        `${taskName} │   warn │ warn 123 { foo: 'bar' }`,
+        `${taskName} │  error │ error 123 { foo: 'bar' }`,
+        `${taskName} │  error │         indented`,
+        `${taskName} │  error │ {prefix}prefixed`,
         '', // last newline
       ])
     } finally {

@@ -1,9 +1,6 @@
 import { BuildFailure } from '../src/asserts'
 import { currentContext, requireContext, runningTasks } from '../src/async'
-import { build, hookAfter, hookBefore } from '../src/build'
-
-// internal invocation marker
-const buildMarker = Symbol.for('plugjs:isBuild')
+import { build, hookAfter, hookBefore, invokeTasks, isBuild } from '../src/build'
 
 describe('Build Invocation', () => {
   it('should invoke a build', async () => {
@@ -16,13 +13,14 @@ describe('Build Invocation', () => {
       },
     })
 
-    await (<any> tasks)[buildMarker]([ '_myTask' ])
-    expect(propValue).toBe('this is the default')
+    expect(isBuild(tasks)).toStrictlyEqual(true)
+    await invokeTasks(tasks, [ '_myTask' ])
+    expect(propValue).toStrictlyEqual('this is the default')
 
     // task as a function
     propValue = 'wrong'
     await tasks._myTask()
-    expect(propValue).toBe('this is the default')
+    expect(propValue).toStrictlyEqual('this is the default')
   })
 
   it('should invoke a build overriding its properties', async () => {
@@ -35,13 +33,13 @@ describe('Build Invocation', () => {
       },
     })
 
-    await (<any> tasks)[buildMarker]([ '_myTask' ], { myProp: 'this is overridden' })
-    expect(propValue).toBe('this is overridden')
+    await invokeTasks(tasks, [ '_myTask' ], { myProp: 'this is overridden' })
+    expect(propValue).toStrictlyEqual('this is overridden')
 
     // task as a function
     propValue = 'wrong'
     await tasks._myTask({ myProp: 'this is overridden' })
-    expect(propValue).toBe('this is overridden')
+    expect(propValue).toStrictlyEqual('this is overridden')
   })
 
   it('should cache the output of a task', async () => {
@@ -136,7 +134,7 @@ describe('Build Invocation', () => {
     expect(after2Calls).toEqual(1)
     expect(after3Calls).toEqual(1)
 
-    expect(calls).toEqual(jasmine.arrayWithExactContents([
+    expect(calls).toEqual([
       '_before1',
       '_before2',
       '_before3',
@@ -144,20 +142,20 @@ describe('Build Invocation', () => {
       '_after1',
       '_after2',
       '_after3',
-    ]))
+    ])
   })
 
   it('should fail with an invalid task name', async () => {
     const tasks = build({ myTask: () => void 0 })
 
-    await expectAsync((<any> tasks)[buildMarker]([ 'wrongTask' as any ]))
+    await expect(invokeTasks(tasks, [ 'wrongTask' as any ]))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
   it('should fail when a task fails', async () => {
     const tasks = build({ myTask: () => Promise.reject(new Error('Foo!')) })
 
-    await expectAsync((<any> tasks)[buildMarker]([ 'myTask' ]))
+    await expect(invokeTasks(tasks, [ 'myTask' ]))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
@@ -174,7 +172,7 @@ describe('Build Invocation', () => {
       },
     })
 
-    await expectAsync((<any> tasks)[buildMarker]([ 'task1' ]))
+    await expect(invokeTasks(tasks, [ 'task1' ]))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
@@ -188,7 +186,7 @@ describe('Build Invocation', () => {
 
     hookBefore(tasks, 'task', [ 'hook' ])
 
-    await expectAsync(tasks.task())
+    await expect(tasks.task())
         .toBeRejectedWithError(BuildFailure)
     expect(taskCalls).toEqual(0)
   })
@@ -208,7 +206,7 @@ describe('Build Invocation', () => {
 
     hookAfter(tasks, 'task', [ 'hook' ])
 
-    await expectAsync(tasks.default())
+    await expect(tasks.default())
         .toBeRejectedWithError(BuildFailure)
     expect(taskCalls).toEqual(1)
     expect(defaultCalls).toEqual(0)
@@ -225,7 +223,7 @@ describe('Build Invocation', () => {
     hookBefore(tasks, '_task2', [ '_task3' ])
     hookBefore(tasks, '_task3', [ '_task1' ])
 
-    await expectAsync(tasks._task1())
+    await expect(tasks._task1())
         .toBeRejectedWithError(BuildFailure, /Recursion detected/)
   })
 
@@ -240,14 +238,20 @@ describe('Build Invocation', () => {
     hookAfter(tasks, '_task2', [ '_task3' ])
     hookAfter(tasks, '_task3', [ '_task1' ])
 
-    await expectAsync(tasks._task1())
+    await expect(tasks._task1())
         .toBeRejectedWithError(BuildFailure, /Recursion detected/)
   })
 
   it('should get the current task context', () => {
     const context1 = currentContext()
     const context2 = requireContext()
-    expect(context1).toBe(context2)
-    expect(runningTasks()).toContain(context2.taskName)
+    expect(context1).toStrictlyEqual(context2)
+    expect(runningTasks()).toInclude([ context2.taskName ])
+  })
+
+  it('should fail invoking when the build is not a build', () => {
+    expect(isBuild({})).toStrictlyEqual(false)
+    expect(() => invokeTasks({}, [ '_myTask' ]))
+        .toThrowError(TypeError, 'Invalid build instance')
   })
 })

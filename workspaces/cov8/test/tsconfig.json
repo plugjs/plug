@@ -1,7 +1,9 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": [ "jasmine", "node" ],
+    "types": [ "node" ], // do not include "@plugjs/expect5/globals" here...
   },
-  "include": [ "." ],
+  // but include "../../expect5/src/globals.ts" here, so that when recompiling
+  // vscode doesn't go nuts and reports all sorts of missing defs!
+  "include": [ ".", "../../expect5/src/globals.ts" ],
 }

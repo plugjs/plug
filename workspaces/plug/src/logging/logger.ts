@@ -1,12 +1,16 @@
-import { BuildFailure, isBuildFailure } from '../asserts'
+import { formatWithOptions } from 'node:util'
+
+import { BuildFailure } from '../asserts'
 import { emitColor, emitPlain } from './emit'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
 import { ReportImpl } from './report'
+import { $gry } from './colors'
 
-import type { LogEmitter } from './emit'
+import type { LogEmitter, LogEmitterOptions } from './emit'
 import type { LogLevel } from './levels'
 import type { Report } from './report'
+
 
 /* ========================================================================== */
 
@@ -26,8 +30,6 @@ logOptions.on('changed', ({ defaultTaskName, colors, level }) => {
 
 /** The basic interface giving access to log facilities. */
 export interface Log {
-  /** The current {@link Logger} */
-  readonly logger: Logger
   /** Log a `TRACE` message */
   trace(...args: [ any, ...any ]): void
   /** Log a `DEBUG` message */
@@ -45,7 +47,7 @@ export interface Log {
 }
 
 /** A {@link Logger} extends the basic {@link Log} adding some state. */
-export interface Logger extends Omit<Log, 'logger'> {
+export interface Logger extends Log {
   /** The current level for logging. */
   level: LogLevel,
 
@@ -95,7 +97,7 @@ class LoggerImpl implements Logger {
 
     // The `BuildFailure` is a bit special case
     const params = args.filter((arg) => {
-      if (isBuildFailure(arg)) {
+      if (arg instanceof BuildFailure) {
         // Filter out any previously logged build failure and mark
         if (_loggedFailures.has(arg)) return false
         _loggedFailures.add(arg)
@@ -198,6 +200,57 @@ class LoggerImpl implements Logger {
   }
 
   report(title: string): Report {
-    return new ReportImpl(title, this._task, this._emitter)
+    const emitter: LogEmitter = (options: LogEmitterOptions, args: any) => {
+      if (this._stack.length) {
+        for (const { message, ...extras } of this._stack) {
+          this._emitter({ ...options, ...extras }, [ message ])
+        }
+        this._stack.splice(0)
+      }
+
+      let { indent = 0, prefix = '' } = options
+      prefix = this._indent ? $gry('| ') + prefix : prefix
+      indent += this._indent
+      this._emitter({ ...options, indent, prefix }, args)
+    }
+    return new ReportImpl(title, this._task, emitter)
+  }
+}
+
+/* ========================================================================== */
+
+/** Pattern to match ANSI expressions */
+const ansiPattern = '[\\u001b\\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]'
+/** Regular expression matching ANSI */
+const ansiRegExp = new RegExp(ansiPattern, 'g')
+
+/** A test logger, writing to a buffer always _without_ colors */
+export class TestLogger extends LoggerImpl {
+  private _lines: string[] = []
+
+  constructor() {
+    super('', (options: LogEmitterOptions, args: any[]): void => {
+      const { prefix = '', indent = 0 } = options
+      const linePrefix = ''.padStart(indent * 2) + prefix
+
+      /* Now for the normal logging of all our parameters */
+      formatWithOptions({ colors: false, breakLength: 120 }, ...args)
+          .split('\n').forEach((line) => {
+            const stripped = line.replaceAll(ansiRegExp, '')
+            this._lines.push(`${linePrefix}${stripped}`)
+          })
+    })
+  }
+
+  /** Return the _current_ buffer for this instance */
+  get buffer(): string {
+    return this._lines.join('\n')
+  }
+
+  /** Reset the buffer and return any previously buffered text */
+  reset(): string {
+    const buffer = this.buffer
+    this._lines = []
+    return buffer
   }
 }

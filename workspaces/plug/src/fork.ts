@@ -3,12 +3,23 @@ import { fork } from 'node:child_process'
 import { assert, BuildFailure } from './asserts'
 import { runAsync } from './async'
 import { Files } from './files'
-import { $gry, $p, logOptions } from './logging'
+import { $gry, $p, $red, logOptions } from './logging'
 import { requireFilename, resolveFile } from './paths'
 import { Context, install } from './pipe'
 
 import type { AbsolutePath } from './paths'
 import type { Plug, PlugName, PlugResult } from './pipe'
+
+/**
+ * Options accepted by {@link ForkingPlug}'s instrumenting how the process
+ * will be spawned (environment variables to be passed to the child process).
+ */
+export interface ForkOptions {
+  /** The directory where coverage data will be saved */
+  coverageDir?: string,
+  /** Force the specified module type when dynamically transpiling TypeScript */
+  forceModule?: 'commonjs' | 'module'
+}
 
 /** Fork data, from parent to child process */
 export interface ForkData {
@@ -75,6 +86,10 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
           const dir = env.NODE_V8_COVERAGE = context.resolve(this._arguments[i].coverageDir)
           context.log.debug('Forked process will produce coverage in', $p(dir))
         }
+        if (typeof this._arguments[i].forceModule === 'string') {
+          const force = env.__TS_LOADER_FORCE_TYPE = this._arguments[i].forceModule
+          context.log.debug('Forked process will force module type as', $p(force))
+        }
       }
     }
 
@@ -97,24 +112,24 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
       let response: ForkResult | undefined = undefined
 
       child.on('error', (error) => {
-        context.log.error('Child process error', error)
+        context.log.error('Forked plug process error', error)
         return done || reject(BuildFailure.fail())
       })
 
       child.on('message', (message: ForkResult) => {
-        context.log.debug('Message from child process with PID', child.pid, message)
+        context.log.debug('Message from forked plug process with PID', child.pid, message)
         response = message
       })
 
       child.on('exit', (code, signal) => {
         if (signal) {
-          context.log.error(`Child process exited with signal ${signal}`, $gry(`(pid=${child.pid})`))
+          context.log.error(`Forked plug process exited with signal ${signal}`, $gry(`(pid=${child.pid})`))
           return done || reject(BuildFailure.fail())
         } else if (code !== 0) {
-          context.log.error(`Child process exited with code ${code}`, $gry(`(pid=${child.pid})`))
+          context.log.error(`Forked plug process exited with code ${code}`, $gry(`(pid=${child.pid})`))
           return done || reject(BuildFailure.fail())
         } else if (! response) {
-          context.log.error('Child process exited with no result', $gry(`(pid=${child.pid})`))
+          context.log.error('Forked plug process exited with no result', $gry(`(pid=${child.pid})`))
           return done || reject(BuildFailure.fail())
         } else if (response.failed) {
           // definitely logged on the child side
@@ -131,16 +146,16 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
       try {
         const result = child.send(request, (error) => {
           if (error) {
-            context.log.error('Error sending message to child process (callback failure)', error)
+            context.log.error('Error sending message to forked plug process (callback failure)', error)
             reject(BuildFailure.fail())
           }
         })
         if (! result) {
-          context.log.error('Error sending message to child process (send returned false)')
+          context.log.error('Error sending message to forked plug process (send returned false)')
           reject(BuildFailure.fail())
         }
       } catch (error) {
-        context.log.error('Error sending message to child process (exception caught)', error)
+        context.log.error('Error sending message to forked plug process (exception caught)', error)
         reject(BuildFailure.fail())
       }
     }).finally(() => done = true)
@@ -158,6 +173,16 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
  * for the message and respond once the plug returns _something_!
  */
 if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
+  /* Unhandled exceptions and graceful termination */
+  process.on('uncaughtException', (error, origin) => {
+    // eslint-disable-next-line no-console
+    console.error(
+        $red('\n= UNCAUGHT EXCEPTION ========================================='),
+        `\nError (${origin}):`, error,
+        `\nNode.js ${process.version} (pid=${process.pid})\n`)
+    process.nextTick(() => process.exit(3))
+  })
+
   /* If we haven't processed our message in 5 seconds, fail _badly_ */
   const timeout = setTimeout(() => {
     // eslint-disable-next-line no-console
@@ -228,6 +253,14 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
     promise.then(() => {
       context.log.debug('Forked plug exiting')
       process.disconnect()
+      process.exitCode = 0
+    }, (error) => {
+      // eslint-disable-next-line no-console
+      console.log('\n\nError sending message back to parent process', error)
+      process.exitCode = 1
+    }).finally(() => {
+      /* Flush and end our log output */
+      logOptions.output.end()
 
       /* Set a timeout _forcefully_ killing the process in 5 seconds */
       setTimeout(() => {
@@ -235,13 +268,6 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
         console.log('\n\nProcess %d for %s did not exit in 5 seconds', process.pid, exportName)
         process.exit(2)
       }, 5000).unref()
-
-      /* Set the process exit code and let node exit gracefully */
-      process.exitCode = 0
-    }, (error) => {
-      // eslint-disable-next-line no-console
-      console.log('\n\nError sending message back to parent process', error)
-      process.exit(1)
     })
   })
 }

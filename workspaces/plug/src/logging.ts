@@ -1,8 +1,9 @@
 import { currentContext } from './async'
+import { $gry, $wht } from './logging/colors'
 import { getLogger } from './logging/logger'
 import { setupSpinner } from './logging/spinner'
 
-import type { Logger, Log } from './logging/logger'
+import type { Log, Logger } from './logging/logger'
 
 export * from './logging/colors'
 export * from './logging/github'
@@ -32,10 +33,6 @@ export const log: LogFunction = ((): LogFunction => {
 
   /* Create a Logger wrapping the current logger */
   const wrapper: Log = {
-    get logger() {
-      return logger()
-    },
-
     trace(...args: [ any, ...any ]): void {
       logger().trace(...args)
     },
@@ -71,3 +68,21 @@ export const log: LogFunction = ((): LogFunction => {
   /* Return our function, with added Logger implementation */
   return Object.assign(log, wrapper)
 })()
+
+/* ========================================================================== *
+ * BANNER                                                                     *
+ * ========================================================================== */
+
+/** Print a nice _banner_ message on the log */
+export function banner(message: string): void {
+  const padMessage = message.length > 60 ? message.length : 60
+  const padLines = padMessage + 2
+
+  log.notice([
+    '',
+    $gry(`\u2554${''.padStart(padLines, '\u2550')}\u2557`),
+    `${$gry('\u2551')} ${$wht(message.padEnd(padMessage, ' '))} ${$gry('\u2551')}`,
+    $gry(`\u255A${''.padStart(padLines, '\u2550')}\u255D`),
+    '',
+  ].join('\n'))
+}

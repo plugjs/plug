@@ -1,9 +1,9 @@
+import { spawn } from 'node:child_process'
 import path from 'node:path'
 import readline from 'node:readline'
-import { fork as forkProcess, spawn as spawnProcess } from 'node:child_process'
 
 import { assert, BuildFailure } from '../asserts'
-import { $p, logOptions } from '../logging'
+import { $p } from '../logging'
 import { getCurrentWorkingDirectory, resolveDirectory } from '../paths'
 
 import type { SpawnOptions } from 'node:child_process'
@@ -16,8 +16,6 @@ export interface ExecChildOptions {
   coverageDir?: string,
   /** Extra environment variables, or overrides for existing ones */
   env?: Record<string, any>,
-  /** Whether to _fork_ the process (argument is a javascript file) or not */
-  fork?: boolean,
   /** Whether to run the command in a shell (optionally name the shell) */
   shell?: string | boolean,
   /** The current working directory of the process to execute. */
@@ -32,7 +30,6 @@ export async function execChild(
 ): Promise<void> {
   const {
     env = {}, // default empty environment
-    fork = false, // by default do not fork
     shell = false, // by default do not use a shell
     cwd = undefined, // by default use "process.cwd()"
     coverageDir, // default "undefined" (pass throug from env)
@@ -41,9 +38,6 @@ export async function execChild(
 
   const childCwd = cwd ? context.resolve(cwd) : getCurrentWorkingDirectory()
   assert(resolveDirectory(childCwd), `Current working directory ${$p(childCwd)} does not exist`)
-
-  // Check for wrong fork/shell combination
-  assert(!(fork && shell), 'Options "fork" and "shell" can not coexist')
 
   // Figure out the PATH environment variable
   const childPaths: AbsolutePath[] = []
@@ -62,8 +56,7 @@ export async function execChild(
 
   // Build our environment variables record
   const PATH = childPaths.join(path.delimiter)
-  const logForkEnv = logOptions.forkEnv(context.taskName, 4)
-  const childEnv: Record<string, string> = { ...process.env, ...env, ...logForkEnv, PATH }
+  const childEnv: Record<string, string> = { ...process.env, ...env, PATH }
 
   // Instrument coverage directory if needed
   if (coverageDir) childEnv.NODE_V8_COVERAGE = context.resolve(coverageDir)
@@ -71,19 +64,17 @@ export async function execChild(
   // Prepare the options for calling `spawn`
   const childOptions: SpawnOptions = {
     ...extraOptions,
-    stdio: [ 'ignore', 'pipe', 'pipe', 'ipc', 'pipe' ],
+    stdio: [ 'ignore', 'pipe', 'pipe' ],
     cwd: childCwd,
     env: childEnv,
     shell,
   }
 
   // Spawn our subprocess and monitor its stdout/stderr
-  context.log.info(fork ? 'Forking' : 'Executing', [ cmd, ...args ])
+  context.log.info('Executing', [ cmd, ...args ])
   context.log.debug('Child process options', childOptions)
 
-  const child = fork ?
-    forkProcess(cmd, args, childOptions) :
-    spawnProcess(cmd, args, childOptions)
+  const child = spawn(cmd, args, childOptions)
 
   try {
     context.log.info('Child process PID', child.pid)
@@ -98,11 +89,6 @@ export async function execChild(
     if (child.stderr) {
       const err = readline.createInterface(child.stderr)
       err.on('line', (line) => context.log.warn(line ||'\u00a0'))
-    }
-
-    // Log output bypass
-    if (child.stdio[4]) {
-      child.stdio[4].on('data', (data) => logOptions.output.write(data))
     }
   } catch (error) {
     // If something happens before returning our promise, kill the child...

@@ -1,8 +1,11 @@
 import { installForking } from '@plugjs/plug/fork'
 import { requireResolve } from '@plugjs/plug/paths'
 
+/** Options for the {@link Tsd} plug */
 export interface TsdOptions {
+  /** Current working directory of the project to retrieve the diagnostics for */
   cwd?: string,
+  /** Path to the type definition file you want to test */
   typingsFile?: string,
 }
 

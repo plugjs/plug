@@ -9,7 +9,7 @@ describe('Myers Diff Algorithm', function() {
           'the quick red fox swam',
       )
 
-      expect(changes.length).toBe(2)
+      expect(changes.length).toStrictlyEqual(2)
       const [ first, second ] = changes
 
       expect(first).toEqual({
@@ -33,7 +33,7 @@ describe('Myers Diff Algorithm', function() {
           'The quick red fox jumped',
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -50,7 +50,7 @@ describe('Myers Diff Algorithm', function() {
           'the quick red fox Jumped',
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -67,7 +67,7 @@ describe('Myers Diff Algorithm', function() {
           'the quick RED fox jumped',
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -84,7 +84,7 @@ describe('Myers Diff Algorithm', function() {
           '*the quick red fox jumped',
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -101,7 +101,7 @@ describe('Myers Diff Algorithm', function() {
           'the quick red fox jumped*',
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -118,7 +118,7 @@ describe('Myers Diff Algorithm', function() {
           'the quick red fox jumped',
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -135,7 +135,7 @@ describe('Myers Diff Algorithm', function() {
           'the quick red fox jumped',
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -152,7 +152,7 @@ describe('Myers Diff Algorithm', function() {
           'the quick orange fox jumped',
       )
 
-      expect(changes.length).toBe(4)
+      expect(changes.length).toStrictlyEqual(4)
       const [ first, second, third, fourth ] = changes
 
       expect(first).toEqual({
@@ -190,7 +190,7 @@ describe('Myers Diff Algorithm', function() {
           'the quick red fox jumped',
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -207,7 +207,7 @@ describe('Myers Diff Algorithm', function() {
           '',
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -224,7 +224,7 @@ describe('Myers Diff Algorithm', function() {
           'the quick red fox jumped',
       )
 
-      expect(changes.length).toBe(0)
+      expect(changes.length).toStrictlyEqual(0)
     })
   })
 
@@ -235,7 +235,7 @@ describe('Myers Diff Algorithm', function() {
           [ ],
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -252,7 +252,7 @@ describe('Myers Diff Algorithm', function() {
           [ { foo: 'bar' }, { baz: 12345 }, { hello: 'world' } ],
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -269,7 +269,7 @@ describe('Myers Diff Algorithm', function() {
           [ { foo: 'bar' }, { baz: 12345 }, { hello: 'world' } ],
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -286,7 +286,7 @@ describe('Myers Diff Algorithm', function() {
           [ { foo: 'bar' }, { hello: 'world' } ],
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -303,7 +303,7 @@ describe('Myers Diff Algorithm', function() {
           [ { foo: 'bar' }, { baz: 54321 }, { hello: 'world' } ],
       )
 
-      expect(changes.length).toBe(1)
+      expect(changes.length).toStrictlyEqual(1)
       const [ change ] = changes
 
       expect(change).toEqual({
@@ -320,7 +320,7 @@ describe('Myers Diff Algorithm', function() {
           [ { foo: 'bar' }, { baz: 12345 }, { baz: 12345 }, null ],
       )
 
-      expect(changes.length).toBe(2)
+      expect(changes.length).toStrictlyEqual(2)
       const [ first, second ] = changes
 
       expect(first).toEqual({
@@ -344,7 +344,7 @@ describe('Myers Diff Algorithm', function() {
           [ { foo: 'bar' }, { baz: 12345 }, { hello: 'world' } ],
       )
 
-      expect(changes.length).toBe(0)
+      expect(changes.length).toStrictlyEqual(0)
     })
   })
 })
@@ -355,7 +355,7 @@ describe('Textual diff', () => {
     try {
       logOptions.colors = true
       expect(textDiff([ 'hello' ], [ 'world' ]))
-          .toBe([
+          .toStrictlyEqual([
             '[',
             $red('  \'hello\''),
             $grn('  \'world\''),
@@ -371,7 +371,7 @@ describe('Textual diff', () => {
     try {
       logOptions.colors = false
       expect(textDiff([ 'hello' ], [ 'world' ]))
-          .toBe([
+          .toStrictlyEqual([
             '  [',
             '-   \'hello\'',
             '+   \'world\'',
@@ -388,7 +388,7 @@ describe('Textual diff', () => {
     const not = (s: string): string => `=${s}`
 
     expect(textDiff({ a: 1, b: 2, c: 3 }, { c: 1, b: 2, a: 3 }, add, del, not))
-        .toBe([
+        .toStrictlyEqual([
           '={',
           '-  a: 1,',
           '+  a: 3,',
@@ -405,7 +405,7 @@ describe('Textual diff', () => {
     const not = (s: string): string => `=${s}`
 
     expect(textDiff('foo1\nfoo2\nbar\nbaz', 'baz\nbar\nfoo1\nfoo2', add, del, not))
-        .toBe([
+        .toStrictlyEqual([
           '+baz',
           '+bar',
           '=foo1',
@@ -420,13 +420,13 @@ describe('Textual diff', () => {
     const del = (s: string): string => `-${s}`
     const not = (s: string): string => `=${s}`
 
-    expect(textDiff('foo', undefined, add, del, not)).toBe('-\'foo\'\n+undefined')
-    expect(textDiff(undefined, 'foo', add, del, not)).toBe('-undefined\n+\'foo\'')
+    expect(textDiff('foo', undefined, add, del, not)).toStrictlyEqual('-\'foo\'\n+undefined')
+    expect(textDiff(undefined, 'foo', add, del, not)).toStrictlyEqual('-undefined\n+\'foo\'')
   })
 
   it('should return an empty string when there are no differences', () => {
-    expect(textDiff('foo', 'foo')).toBe('')
-    expect(textDiff([ 123 ], [ 123 ])).toBe('')
-    expect(textDiff({ foo: 'bar' }, { foo: 'bar' })).toBe('')
+    expect(textDiff('foo', 'foo')).toStrictlyEqual('')
+    expect(textDiff([ 123 ], [ 123 ])).toStrictlyEqual('')
+    expect(textDiff({ foo: 'bar' }, { foo: 'bar' })).toStrictlyEqual('')
   })
 })
