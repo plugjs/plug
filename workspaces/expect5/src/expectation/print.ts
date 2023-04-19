@@ -1,4 +1,5 @@
 import { $grn, $gry, $red, $und, $wht, $ylw } from '@plugjs/plug/logging'
+import { textDiff } from '@plugjs/plug/utils'
 
 import { stringifyValue } from './types'
 
@@ -22,7 +23,10 @@ const _squares = $gry('[]')
 
 const _slash = $gry('/')
 const _tilde = $gry('~')
+const _hellip = $gry('\u2026')
 
+const _error = `${_opnPar}${$gry($und('error'))}${_clsPar}`
+const _string = `${_opnPar}${$gry($und('string'))}${_clsPar}`
 const _extraProps = $gry('\u2026 extra props \u2026')
 const _diffHeader = `${$wht('Differences')} ${_opnPar}${$red('actual')}${_slash}${$grn('expected')}${_slash}${$ylw('errors')}${_clsPar}:`
 
@@ -63,16 +67,30 @@ function printExpectedDiff(
     mapping: boolean,
     comma: boolean,
 ): void {
-  if ((diff.value === null) || (typeof diff.value !== 'object')) {
+  // two different strings get a special treatment: a proper "diff"
+  if ((typeof diff.value === 'string') && (typeof diff.expected === 'string')) {
+    const { prefix, suffix } = fixups(prop, mapping, false, diff.error)
+
+    log.warn(`${prefix}${_string}${suffix}`)
+    textDiff(diff.value, diff.expected).split('\n').forEach((line) => {
+      log.warn(`  ${_hellip} ${line}`)
+    })
+
+  // if "value" is not an object (can fit on one line) we use it as prefix
+  } else if ((diff.value === null) || (typeof diff.value !== 'object')) {
     const { prefix, suffix } = fixups(prop, mapping, comma, diff.error)
 
     const joined = `${prefix}${$red(stringify(diff.value))} ${_tilde} `
     dump(log, diff.expected, joined, suffix, $grn)
+
+  // if "expected" is not an object (can fit on one line) we use it as suffix
   } else if ((diff.expected === null) || (typeof diff.expected !== 'object')) {
     const { prefix, suffix } = fixups(prop, mapping, comma, diff.error)
 
     const joined = ` ${_tilde} ${$grn(stringify(diff.expected))}${suffix}`
     dump(log, diff.value, prefix, joined, $red)
+
+  // both "value" and "expected" are objects, so, we join them with a ~
   } else {
     // here the error _only_ goes on the last line...
     const { prefix, suffix: suffix1 } = fixups(prop, mapping, false, '')
@@ -176,7 +194,7 @@ function printObjectDiff(
       log.enter()
       try {
         for (const [ prop, subdiff ] of Object.entries(diff.props)) {
-          printBaseDiff(log, subdiff, prop, false, true)
+          printBaseDiff(log, subdiff, stringifyValue(prop), false, true)
         }
       } finally {
         log.leave()
@@ -219,7 +237,7 @@ function fixups(
       label ?
           `${$gry(lbl)}` :
           ''
-  error = error ? ` ${_opnPar}${$gry($und('error'))}${_clsPar} ${$ylw(error)}` : ''
+  error = error ? ` ${_error} ${$ylw(error)}` : ''
   const suffix = `${comma ? $gry(',') : ''}${error}`
   return { prefix, suffix }
 }
