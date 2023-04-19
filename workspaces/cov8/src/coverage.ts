@@ -59,6 +59,8 @@ export class Coverage implements Plug<Files | undefined> {
       optimalFileCoverage = Math.round((100 + minimumFileCoverage) / 2),
     } = this._options
 
+    console.log(minimumCoverage, optimalCoverage)
+
     let max = 0
     for (const file in report) {
       if (file.length > max) max = file.length
@@ -103,11 +105,13 @@ export class Coverage implements Plug<Files | undefined> {
     }
 
     if (fileErrors) {
-      const message = `${$red(fileErrors)} files do not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`
+      const f = fileErrors === 1 ? 'file does' : 'files do'
+      const message = `${$red(fileErrors)} ${f} not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`
       _report.add({ level: ERROR, message })
     }
     if (fileWarnings) {
-      const message = `${$ylw(fileWarnings)} files do not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`
+      const f = fileErrors === 1 ? 'file does' : 'files do'
+      const message = `${$ylw(fileWarnings)} ${f} not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`
       _report.add({ level: WARN, message })
     }
 
