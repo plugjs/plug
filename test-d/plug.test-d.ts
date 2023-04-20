@@ -58,7 +58,7 @@ expectType<Promise<Files>>(tasks.task_b())
 expectType<Promise<Files>>(tasks.task_c())
 
 expectType<(
-tasks: string[],
+tasks: readonly string[],
 props?: Record<string, string | undefined> | undefined,
 ) => Promise<void>>(tasks[buildMarker])
 
