@@ -1,4 +1,4 @@
-import { $gry, $p, $und, $ylw } from '../logging'
+import { $gry, $und, $ylw } from '../logging'
 import { install } from '../pipe'
 
 import type { Files } from '../files'
@@ -26,14 +26,15 @@ install('debug', class Debug implements Plug<Files> {
 
   async pipe(files: Files, context: Context): Promise<Files> {
     context.log.notice(this._title, `${$gry('(')}${$ylw(files.length)} ${$gry('files)')}`)
-    context.log.notice('-        base dir:', $p(context.resolve('@')))
-    context.log.notice('-  build file dir:', $p(context.resolve('.')))
-    context.log.notice('-       files dir:', $p(files.directory))
-    if (files.length) {
-      const [ path, ...paths ] = files
-      context.log.notice('-  relative paths:', $und($gry(path)))
-      for (const p of paths) context.log.notice('-                :', $und($gry(p)))
-    }
+    context.log.notice('- build file dir:', $gry($und(context.resolve('@'))))
+    context.log.notice('-    current dir:', $gry($und(context.resolve('.'))))
+    context.log.notice('-      files dir:', $gry($und(files.directory)))
+
+    const paths = [ ...files ]
+    const path = paths.shift()
+    context.log.notice('- relative paths:', $und($gry(path)))
+    paths.forEach((p) => context.log.notice('-               :', $und($gry(p))))
+
     return files
   }
 })
