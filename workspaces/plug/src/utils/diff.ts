@@ -3,7 +3,6 @@ import { inspect, isDeepStrictEqual } from 'node:util'
 
 import { assert } from '../asserts'
 import { $grn, $red, logOptions } from '../logging'
-import { getTypeOf } from './types'
 
 import type { InspectOptions } from 'node:util'
 
@@ -326,13 +325,9 @@ export function textDiff(
   let lhsLines: string[]
   let rhsLines: string[]
 
-  // Get the _real_ types of both arguments
-  const lhsType = getTypeOf(lhs)
-  const rhsType = getTypeOf(rhs)
-
   // If _both_ arguments are strings, then just split and compare, otherwise
   // we nuse NodeJS' inspect to prep their string version
-  if ((lhsType === 'string') && (rhsType === 'string')) {
+  if ((typeof lhs === 'string') && (typeof rhs === 'string')) {
     lhsLines = lhs.split('\n')
     rhsLines = rhs.split('\n')
   } else {
