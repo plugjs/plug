@@ -3,7 +3,7 @@ import { inspect } from 'node:util'
 import { Files } from '../src/files'
 import { readFile } from '../src/fs'
 import { mkdtemp, rmrf } from '../src/index'
-import { resolveAbsolutePath } from '../src/paths'
+import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../src/paths'
 
 import type { AbsolutePath } from '../src/paths'
 
@@ -14,12 +14,33 @@ describe('Files Collection', () => {
   afterAll(() => rmrf(tempdir))
 
   it('should create an empty Files instance', () => {
-    const files = new Files(tempdir)
-    expect(files.length).toStrictlyEqual(0)
-    expect(files.directory).toStrictlyEqual(tempdir)
-    expect([ ...files ]).toEqual([])
-    expect([ ...files.absolutePaths() ]).toEqual([])
-    expect([ ...files.pathMappings() ]).toEqual([])
+    const files1 = new Files()
+    expect(files1.length).toStrictlyEqual(0)
+    expect(files1.directory).toStrictlyEqual(getCurrentWorkingDirectory())
+    expect([ ...files1 ]).toEqual([])
+    expect([ ...files1.absolutePaths() ]).toEqual([])
+    expect([ ...files1.pathMappings() ]).toEqual([])
+
+    const files2 = new Files(tempdir)
+    expect(files2.length).toStrictlyEqual(0)
+    expect(files2.directory).toStrictlyEqual(tempdir)
+    expect([ ...files2 ]).toEqual([])
+    expect([ ...files2.absolutePaths() ]).toEqual([])
+    expect([ ...files2.pathMappings() ]).toEqual([])
+
+    const files3 = Files.builder().build()
+    expect(files3.length).toStrictlyEqual(0)
+    expect(files3.directory).toStrictlyEqual(getCurrentWorkingDirectory())
+    expect([ ...files3 ]).toEqual([])
+    expect([ ...files3.absolutePaths() ]).toEqual([])
+    expect([ ...files3.pathMappings() ]).toEqual([])
+
+    const files4 = Files.builder(tempdir).build()
+    expect(files4.length).toStrictlyEqual(0)
+    expect(files4.directory).toStrictlyEqual(tempdir)
+    expect([ ...files4 ]).toEqual([])
+    expect([ ...files4.absolutePaths() ]).toEqual([])
+    expect([ ...files4.pathMappings() ]).toEqual([])
   })
 
   it('should use a builder to create a Files instance', () => {

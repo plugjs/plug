@@ -1,6 +1,11 @@
 import { assert } from './asserts'
 import { mkdir, writeFile } from './fs'
-import { assertRelativeChildPath, getAbsoluteParent, resolveAbsolutePath } from './paths'
+import {
+  assertRelativeChildPath,
+  getAbsoluteParent,
+  getCurrentWorkingDirectory,
+  resolveAbsolutePath,
+} from './paths'
 
 import type { AbsolutePath } from './paths'
 
@@ -38,8 +43,8 @@ export class Files {
    * Create a new {@link Files} instance rooted in the specified `directory`
    * relative to the specified {@link Run}'s directory.
    */
-  constructor(directory: AbsolutePath) {
-    this._directory = directory
+  constructor(directory?: AbsolutePath) {
+    this._directory = directory || getCurrentWorkingDirectory()
     this._files = []
 
     // Nicety for "console.log" / "util.inspect"...
@@ -76,9 +81,11 @@ export class Files {
   }
 
   /** Create a new {@link FilesBuilder} creating {@link Files} instances. */
+  static builder(): FilesBuilder
   static builder(files: Files): FilesBuilder
   static builder(directory: AbsolutePath): FilesBuilder
-  static builder(arg: Files | AbsolutePath): FilesBuilder {
+  static builder(arg?: Files | AbsolutePath): FilesBuilder {
+    if (! arg) arg = getCurrentWorkingDirectory()
     const directory = typeof arg === 'string' ? arg : arg.directory
     const set = typeof arg === 'string' ? new Set<string>() : new Set(arg._files)
 

@@ -150,14 +150,14 @@ export function merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
   const context = requireContext()
   return new PipeImpl(context, Promise.resolve().then(async () => {
     // No pipes? Just send off an empty pipe...
-    if (pipes.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
+    if (pipes.length === 0) return new Files()
 
     // Await for all pipes / files / files promises
     const awaited = await assertPromises<Files>(pipes)
     const results = awaited.filter((result) => result.length)
 
     // No files in anything to be merged? Again send off an empty pipe...
-    if (results.length === 0) return Files.builder(getCurrentWorkingDirectory()).build()
+    if (results.length === 0) return new Files()
 
     // Find the common directory between all the Files instances
     const [ firstDir, ...otherDirs ] = results.map((f) => f.directory)
@@ -184,8 +184,7 @@ export function merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
  */
 export function noop(): Pipe {
   const context = requireContext()
-  const files = new Files(getCurrentWorkingDirectory())
-  return new PipeImpl(context, Promise.resolve(files))
+  return new PipeImpl(context, Promise.resolve(new Files()))
 }
 
 /**
