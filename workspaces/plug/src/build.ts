@@ -3,77 +3,124 @@ import { runAsync } from './async'
 import { $gry, $ms, $p, $t, getLogger, logOptions } from './logging'
 import { Context, ContextPromises, PipeImpl } from './pipe'
 import { findCaller } from './utils/caller'
+import { getSingleton } from './utils/singleton'
+import { buildMarker } from './types'
 
 import type { Pipe } from './index'
 import type { AbsolutePath } from './paths'
 import type {
   Build,
+  BuildProps,
   BuildDef,
-  Props,
   Result,
   State,
   Task,
   TaskDef,
-  Tasks,
   ThisBuild,
+  Props,
+  TaskCall,
+  BuildTasks,
+  Tasks,
 } from './types'
 
 /* ========================================================================== *
- * TASK                                                                       *
+ * INTERNAL UTILITIES                                                         *
  * ========================================================================== */
 
-/** Symbol indicating that an object is a {@link Task} */
+/** Symbol indicating that an object is a {@link TaskCall} */
 const taskMarker = Symbol.for('plugjs:isTask')
 
-/** Type guard for {@link Tasks} */
-function isTask(something: any): something is Task {
-  return something[taskMarker] === true
+/** Type guard for {@link TaskCall}s */
+function isTaskCall(something: any): something is TaskCall {
+  return something[taskMarker] === taskMarker
 }
 
-/** Create a new {@link Task} instance */
-function makeTask(
-    buildFile: AbsolutePath,
-    tasks: Tasks,
-    props: Props,
-    _def: TaskDef,
-    _name: string,
-): Task {
-  /* Invoke the task, checking call stack, caches, and merging builds */
-  async function invoke(state: State, taskName: string): Promise<Result> {
-    assert(! state.stack.includes(task), `Recursion detected calling ${$t(taskName)}`)
+/** Shallow merge two records */
+function merge<A, B>(a: A, b: B): A & B {
+  return Object.assign(Object.create(null), a, b)
+}
+
+/** Create a {@link State} from its components */
+function makeState(state: {
+  cache?: Map<Task, Promise<Result>>
+  stack?: Task[],
+  tasks?: Record<string, Task>
+  props?: Record<string, string>
+  fails?: Set<Task>
+}): State {
+  const {
+    cache = new Map(),
+    fails = new Set(),
+    stack = [],
+    tasks = {},
+    props = {},
+  } = state
+
+  return { cache, fails, stack, tasks, props } as State
+}
+
+/* ========================================================================== *
+ * TASK IMPLEMENTATION                                                        *
+ * ========================================================================== */
+
+const lastIdKey = Symbol.for('plugjs.plug.async.storage')
+const lastId = getSingleton(lastIdKey, () => ({ id: 0 }))
+
+class TaskImpl<R extends Result> implements Task<R> {
+  public readonly before: Task<Result>[] = []
+  public readonly after: Task<Result>[] = []
+  public readonly id: number = ++ lastId.id
+
+  props: Props<BuildDef>
+  tasks: Tasks<BuildDef>
+
+  constructor(
+      public readonly name: string,
+      public readonly buildFile: AbsolutePath,
+      private readonly _def: TaskDef,
+      _tasks: Record<string, Task>,
+      _props: Record<string, string>,
+  ) {
+    this.tasks = _tasks as Tasks
+    this.props = _props as Props
+  }
+
+  async invoke(state: State, taskName: string): Promise<R> {
+    assert(! state.stack.includes(this), `Recursion detected calling ${$t(taskName)}`)
 
     /* Check cache */
-    const cached = state.cache.get(task)
-    if (cached) return cached
+    const cached = state.cache.get(this)
+    if (cached) return cached as Promise<R>
 
     /* Create new substate merging sibling tasks/props and adding this to the stack */
-    const props: Record<string, string> = Object.assign({}, task.props, state.props)
-    const tasks: Record<string, Task> = Object.assign({}, task.tasks, state.tasks)
-    const stack = [ ...state.stack, task ]
-    const cache = state.cache
-    const fails = state.fails
-    state = { stack, cache, fails, tasks, props }
+    state = makeState({
+      props: merge(this.props, state.props),
+      tasks: merge(this.tasks, state.tasks),
+      stack: [ ...state.stack, this ],
+      cache: state.cache,
+      fails: state.fails,
+    })
 
     /* Create run context and build */
-    const context = new Context(task.buildFile, taskName)
+    const context = new Context(this.buildFile, taskName)
 
     /* The build (the `this` value calling the definition) is a proxy */
     const build = new Proxy({}, {
-      get(_: any, name: string): void | string | (() => Pipe) {
+      get: (_: any, name: string): void | string | (() => Pipe) => {
         // Tasks first, props might come also from environment
-        if (name in tasks) {
+        if (name in state.tasks) {
           return (): Pipe => {
-            const promise = tasks[name]!.invoke(state, name)
+            const promise = (state as any).tasks[name]!.invoke(state, name)
             return new PipeImpl(context, promise)
           }
-        } else if (name in props) {
-          return props[name]
+        } else if (name in state.props) {
+          return (state as any).props[name]
         }
       },
     })
 
     /* Run all tasks hooked _before_ this one */
-    for (const before of task.before) await before.invoke(state, before.name)
+    for (const before of this.before) await before.invoke(state, before.name)
 
     /* Some logging */
     context.log.info('Running...')
@@ -81,55 +128,30 @@ function makeTask(
 
     /* Run asynchronously in an asynchronous context */
     const promise = runAsync(context, taskName, async () => {
-      return await _def.call(build) || undefined
+      return await this._def.call(build) || undefined
     }).then(async (result) => {
       const level = taskName.startsWith('_') ? 'info' : 'notice'
       context.log[level](`Success ${$ms(Date.now() - now)}`)
       return result
     }).catch((error) => {
-      fails.add(task)
+      state.fails.add(this)
       throw context.log.fail(`Failure ${$ms(Date.now() - now)}`, error)
     }).finally(async () => {
       await ContextPromises.wait(context)
     }).then(async (result) => {
-      for (const after of task.after) await after.invoke(state, after.name)
+      for (const after of this.after) await after.invoke(state, after.name)
       return result
     })
 
     /* Cache the resulting promise and return it */
-    cache.set(task, promise)
-    return promise
+    state.cache.set(this, promise)
+    return promise as Promise<R>
   }
-
-  /* Create the new Task. The function will simply create an empty state */
-  const task: Task = Object.assign((overrideProps: Props = {}) => {
-    const state: State = {
-      cache: new Map<Task, Promise<Result>>(),
-      stack: [] as Task[],
-      props: Object.assign({}, props, overrideProps),
-      fails: new Set<Task>,
-      tasks: tasks,
-    }
-    return invoke(state, _name)
-  }, { buildFile, tasks, props, invoke, before: [], after: [] })
-
-  /* Assign the task's marker and name and return it */
-  Object.defineProperty(task, taskMarker, { value: true })
-  Object.defineProperty(task, 'name', { value: _name })
-  return task
 }
 
 /* ========================================================================== *
  * BUILD COMPILER                                                             *
  * ========================================================================== */
-
-/**
- * Symbol indicating that an object is a {@link Build}.
- *
- * In a compiled {@link Build} this symbol will be associated with a function
- * taking an array of strings (task names) and record of props to override
- */
-const buildMarker = Symbol.for('plugjs:isBuild')
 
 /** Compile a {@link BuildDef | build definition} into a {@link Build} */
 export function build<
@@ -142,13 +164,14 @@ export function build<
   /* Iterate through all definition extracting properties and tasks */
   for (const [ key, val ] of Object.entries(def)) {
     let len = 0
-    if (isTask(val)) { // this goes first, tasks _are_ functions!
-      tasks[key] = val
+    if (isTaskCall(val)) { // this goes first, tasks calls _are_ functions!
+      tasks[key] = val.task
       len = key.length
     } else if (typeof val === 'string') {
       props[key] = val
     } else if (typeof val === 'function') {
-      tasks[key] = makeTask(buildFile, tasks, props, val, key)
+      tasks[key] = new TaskImpl(key, buildFile, val, tasks, props)
+      // tasks[key] = makeTask(buildFile, tasks, props, val, key)
       len = key.length
     }
 
@@ -157,20 +180,14 @@ export function build<
     if (len > logOptions.taskLength) logOptions.taskLength = len
   }
 
-  /* Create the "call" function for this build */
+  /* Create the "invoke" function for this build */
   const invoke = async function invoke(
       taskNames: string[],
       overrideProps: Record<string, string | undefined> = {},
   ): Promise<void> {
     /* Our "root" logger and initial (empty) state */
+    const state = makeState({ tasks, props: merge(props, overrideProps) })
     const logger = getLogger()
-    const state = {
-      cache: new Map<Task, Promise<Result>>(),
-      props: Object.assign({}, props, overrideProps),
-      fails: new Set<Task>(),
-      stack: [] as Task[],
-      tasks: tasks,
-    }
 
     /* Let's go down to business */
     logger.notice('Starting...')
@@ -195,14 +212,20 @@ export function build<
     }
   }
 
-  /* Create our build, the collection of all props and tasks */
-  const compiled = Object.assign(Object.create(null), props, tasks) as Build<D>
+  /* Convert our Tasks into TaskCalls */
+  const callables: Record<string, TaskCall> = {}
+  for (const [ key, value ] of Object.entries(tasks)) {
+    const callable = (props?: Record<string, string>): any => invoke([ key ], props)
+    Object.defineProperty(callable, taskMarker, { value: taskMarker })
+    Object.defineProperty(callable, 'name', { value: key })
+    callable.task = value
+    callables[key] = callable
+  }
 
-  /* Sneak our "call" function in the build, for the CLI and "call" below */
+  /* Create and return our build */
+  const compiled = merge(props, callables)
   Object.defineProperty(compiled, buildMarker, { value: invoke })
-
-  /* All done! */
-  return compiled
+  return compiled as Build<D>
 }
 
 /** Check if the specified build is actually a {@link Build} */
@@ -211,13 +234,12 @@ export function isBuild(build: any): build is Build<Record<string, any>> {
 }
 
 /** Invoke a number of tasks in a {@link Build} */
-export function invokeTasks(
-    build: Build,
-    tasks: string[],
-    props?: Record<string, string>,
+export function invokeTasks<B extends Build>(
+    build: B,
+    tasks: BuildTasks<B>[],
+    props?: BuildProps<B>,
 ): Promise<void> {
-  if (build && (typeof build === 'object') &&
-     (buildMarker in build) && (typeof build[buildMarker] === 'function')) {
+  if (isBuild(build)) {
     return build[buildMarker](tasks, props)
   } else {
     throw new TypeError('Invalid build instance')
@@ -228,38 +250,36 @@ export function invokeTasks(
  * HOOKS                                                                      *
  * ========================================================================== */
 
-type TaskNames<B extends Build> = keyof {
-  [ name in keyof B as B[name] extends Task ? name : never ] : any
-}
-
+/** Make sure that the specified hooks run _before_ the given tasks */
 export function hookBefore<B extends Build, T extends keyof B>(
     build: B,
-    taskName: string & T & TaskNames<B>,
-    hooks: (string & Exclude<TaskNames<B>, T>)[],
+    taskName: string & T & BuildTasks<B>,
+    hooks: (string & Exclude<BuildTasks<B>, T>)[],
 ): void {
-  const task = build[taskName]
-  assert(isTask(task), `Task "${$t(taskName)}" not found in build`)
+  const taskCall = build[taskName]
+  assert(isTaskCall(taskCall), `Task "${$t(taskName)}" not found in build`)
 
   for (const hook of hooks) {
     const beforeHook = build[hook]
-    assert(isTask(beforeHook), `Task "${$t(hook)}" to hook before "${$t(taskName)}" not found in build`)
-    if (task.before.includes(beforeHook)) continue
-    task.before.push(beforeHook)
+    assert(isTaskCall(beforeHook), `Task "${$t(hook)}" to hook before "${$t(taskName)}" not found in build`)
+    if (taskCall.task.before.includes(beforeHook.task)) continue
+    taskCall.task.before.push(beforeHook.task)
   }
 }
 
+/** Make sure that the specified hooks run _after_ the given tasks */
 export function hookAfter<B extends Build, T extends keyof B>(
     build: B,
-    taskName: string & T & TaskNames<B>,
-    hooks: (string & Exclude<TaskNames<B>, T>)[],
+    taskName: string & T & BuildTasks<B>,
+    hooks: (string & Exclude<BuildTasks<B>, T>)[],
 ): void {
-  const task = build[taskName]
-  assert(isTask(task), `Task "${$t(taskName)}" not found in build`)
+  const taskCall = build[taskName]
+  assert(isTaskCall(taskCall), `Task "${$t(taskName)}" not found in build`)
 
   for (const hook of hooks) {
     const afterHook = build[hook]
-    assert(isTask(afterHook), `Task "${$t(hook)}" to hook after "${$t(taskName)}" not found in build`)
-    if (task.after.includes(afterHook)) continue
-    task.after.push(afterHook)
+    assert(isTaskCall(afterHook), `Task "${$t(hook)}" to hook after "${$t(taskName)}" not found in build`)
+    if (taskCall.task.after.includes(afterHook.task)) continue
+    taskCall.task.after.push(afterHook.task)
   }
 }
