@@ -97,6 +97,43 @@ describe('Build Invocation', () => {
     ])
   })
 
+  it('should override a task', async () => {
+    const calls: string[] = []
+
+    const tasks1 = build({
+      async _caller() {
+        calls.push('from the caller invoking the callee')
+        await this._callee()
+      },
+      _callee() {
+        void calls.push('from the callee')
+      },
+    })
+
+    const tasks2 = build({
+      ...tasks1,
+      async _callee() {
+        void calls.push('from the overridden callee')
+      },
+      async _master() {
+        // void calls.push('from the overridden callee')
+      },
+    })
+
+    await invokeTasks(tasks2, [ '_caller' ])
+    expect(calls).toEqual([
+      'from the caller invoking the callee',
+      'from the overridden callee',
+    ])
+
+    calls.splice(0)
+    await tasks2._caller()
+    expect(calls).toEqual([
+      'from the caller invoking the callee',
+      'from the overridden callee',
+    ])
+  })
+
   it('should hook tasks before and after one another', async () => {
     const calls: string[] = []
     let taskCalls = 0
@@ -224,7 +261,7 @@ describe('Build Invocation', () => {
     hookBefore(tasks, '_task3', [ '_task1' ])
 
     await expect(tasks._task1())
-        .toBeRejectedWithError(BuildFailure, /Recursion detected/)
+        .toBeRejectedWithError(BuildFailure, '')
   })
 
   it('should detect recursion between after hooks', async () => {
@@ -239,7 +276,7 @@ describe('Build Invocation', () => {
     hookAfter(tasks, '_task3', [ '_task1' ])
 
     await expect(tasks._task1())
-        .toBeRejectedWithError(BuildFailure, /Recursion detected/)
+        .toBeRejectedWithError(BuildFailure, '')
   })
 
   it('should get the current task context', () => {
@@ -251,7 +288,7 @@ describe('Build Invocation', () => {
 
   it('should fail invoking when the build is not a build', () => {
     expect(isBuild({})).toStrictlyEqual(false)
-    expect(() => invokeTasks({}, [ '_myTask' ]))
+    expect(() => invokeTasks({} as any, [ '_myTask' ]))
         .toThrowError(TypeError, 'Invalid build instance')
   })
 })
