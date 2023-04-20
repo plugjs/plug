@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 
 import { assert } from './asserts'
+import { getSingleton } from './utils/singleton'
 
 import type { Context } from './pipe'
 
@@ -56,33 +57,9 @@ export function runningTasks(): string[] {
  * INTERNALS                                                                  *
  * ========================================================================== */
 
-/*
- * Storage and task names must be unique _per process_. We might get called
- * from two (or three) different versions of this file: the .cjs transpiled one,
- * the .mjs transpiled one (or the .ts dynamically transpiled by ts-loader).
- * In all these cases, we must return the _same_ object, so we store those as
- * a global variables associated with a couple of global symbols
- */
+/* Storage and task names must be unique _per process_ */
 const storageKey = Symbol.for('plugjs.plug.async.storage')
 const tasksKey = Symbol.for('plugjs.plug.async.tasks')
 
-function getStorage(): AsyncLocalStorage<Context> {
-  let storage: AsyncLocalStorage<Context> = (<any> globalThis)[storageKey]
-  if (! storage) {
-    storage = new AsyncLocalStorage<Context>()
-    ;(<any> globalThis)[storageKey] = storage
-  }
-  return storage
-}
-
-function getTasks(): Set<string> {
-  let tasks: Set<string> = (<any> globalThis)[tasksKey]
-  if (! tasks) {
-    tasks = new Set<string>
-    ;(<any> globalThis)[tasksKey] = tasks
-  }
-  return tasks
-}
-
-const storage = getStorage()
-const tasks = getTasks()
+const storage = getSingleton(storageKey, () => new AsyncLocalStorage<Context>())
+const tasks = getSingleton(tasksKey, () => new Set<string>())

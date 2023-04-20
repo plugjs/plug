@@ -1,6 +1,8 @@
 import assert from 'node:assert'
 import { AsyncLocalStorage } from 'node:async_hooks'
 
+import { getSingleton } from '@plugjs/plug/utils'
+
 /**
  * A _callable_ (possibly async) function.
  *
@@ -63,36 +65,12 @@ function execute(
 
 /* ========================================================================== */
 
-/*
- * Suite and skip storages must be unique _per process_. We might get called
- * from two (or three) different versions of this file: the .cjs transpiled one,
- * the .mjs transpiled one (or the .ts dynamically transpiled by ts-loader).
- * In all these cases, we must return the _same_ object, so we store those as
- * a global variables associated with a couple of global symbols
- */
+/* Suite and skip storages must be unique _per process_ */
 const suiteKey = Symbol.for('plugjs.expect5.async.suiteStorage')
 const skipKey = Symbol.for('plugjs.expect5.async.skipStorage')
 
-function getSuiteStorage(): AsyncLocalStorage<Suite> {
-  let storage: AsyncLocalStorage<Suite> = (<any> globalThis)[suiteKey]
-  if (! storage) {
-    storage = new AsyncLocalStorage<Suite>()
-    ;(<any> globalThis)[suiteKey] = storage
-  }
-  return storage
-}
-
-function getSkipStorage(): AsyncLocalStorage<{ skipped: boolean }> {
-  let storage: AsyncLocalStorage<{ skipped: boolean }> = (<any> globalThis)[skipKey]
-  if (! storage) {
-    storage = new AsyncLocalStorage<{ skipped: boolean }>()
-    ;(<any> globalThis)[skipKey] = storage
-  }
-  return storage
-}
-
-const suiteStorage = getSuiteStorage()
-const skipStorage = getSkipStorage()
+const suiteStorage = getSingleton(suiteKey, () => new AsyncLocalStorage<Suite>())
+const skipStorage = getSingleton(skipKey, () => new AsyncLocalStorage<{ skipped: boolean }>())
 
 export function getCurrentSuite(): Suite {
   const suite = suiteStorage.getStore()
