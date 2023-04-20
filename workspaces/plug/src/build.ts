@@ -180,27 +180,21 @@ export function build<
     if (len > logOptions.taskLength) logOptions.taskLength = len
   }
 
-  /* Create the "invoke" function for this build */
-  const invoke = async function invoke(
-      taskNames: string[],
+  /* A function _starting_ a build */
+  const start = async function start<R>(
+      callback: (state: State) => Promise<R>,
       overrideProps: Record<string, string | undefined> = {},
-  ): Promise<void> {
-    /* Our "root" logger and initial (empty) state */
+  ): Promise<R> {
+    /* Let's go down to business */
     const state = makeState({ tasks, props: merge(props, overrideProps) })
     const logger = getLogger()
-
-    /* Let's go down to business */
     logger.notice('Starting...')
     const now = Date.now()
 
     try {
-      /* Run tasks _serially_ */
-      for (const name of taskNames) {
-        const task = tasks[name]
-        assert(task, `Task ${$t(name)} not found in build ${$p(buildFile)}`)
-        await task.invoke(state, name)
-      }
+      const result = await callback(state)
       logger.notice(`Build successful ${$ms(Date.now() - now)}`)
+      return result
     } catch (error) {
       if (state.fails.size) {
         logger.error('')
@@ -212,14 +206,34 @@ export function build<
     }
   }
 
+  /* Create the "invoke" function for this build */
+  const invoke = async function invoke(
+      taskNames: string[],
+      overrideProps: Record<string, string | undefined> = {},
+  ): Promise<void> {
+    await start(async (state: State): Promise<void> => {
+      for (const name of taskNames) {
+        const task = tasks[name]
+        assert(task, `Task ${$t(name)} not found in build ${$p(buildFile)}`)
+        await task.invoke(state, name)
+      }
+    }, overrideProps)
+  }
+
   /* Convert our Tasks into TaskCalls */
   const callables: Record<string, TaskCall> = {}
-  for (const [ key, value ] of Object.entries(tasks)) {
-    const callable = (props?: Record<string, string>): any => invoke([ key ], props)
-    Object.defineProperty(callable, taskMarker, { value: taskMarker })
-    Object.defineProperty(callable, 'name', { value: key })
-    callable.task = value
-    callables[key] = callable
+  for (const [ name, task ] of Object.entries(tasks)) {
+    /** The callable function, using "start" */
+    const callable = async (overrideProps?: Record<string, string>): Promise<Result> =>
+      start(async (state: State): Promise<Result> =>
+        task.invoke(state, name), overrideProps)
+
+    /* Extra properties for our callable: marker, task and name */
+    callables[name] = Object.defineProperties(callable, {
+      [taskMarker]: { value: taskMarker },
+      'task': { value: task },
+      'name': { value: name },
+    }) as TaskCall
   }
 
   /* Create and return our build */
