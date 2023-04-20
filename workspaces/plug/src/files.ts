@@ -1,3 +1,5 @@
+import { inspect } from 'node:util'
+
 import { assert } from './asserts'
 import { mkdir, writeFile } from './fs'
 import {
@@ -48,8 +50,7 @@ export class Files {
     this._files = []
 
     // Nicety for "console.log" / "util.inspect"...
-    const inspect = Symbol.for('nodejs.util.inspect.custom')
-    Object.defineProperty(this, inspect, { value: () => ({
+    Object.defineProperty(this, inspect.custom, { value: () => ({
       directory: this._directory,
       files: [ ...this._files ],
     }) })

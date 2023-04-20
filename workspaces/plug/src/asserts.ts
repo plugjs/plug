@@ -5,7 +5,7 @@
 import { githubAnnotation } from './logging/github'
 
 /** A symbol marking {@link BuildFailure} instances */
-const buildFailure = Symbol.for('plugjs:buildFailure')
+const buildFailure = Symbol.for('plugjs:plug:types:BuildFailure')
 
 /** A {@link BuildFailure} represents an error _already logged_ in our build. */
 export class BuildFailure extends Error {

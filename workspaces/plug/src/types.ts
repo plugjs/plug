@@ -129,7 +129,7 @@ export type ThisBuild<D extends BuildDef> = {
  * In a compiled {@link Build} this symbol will be associated with a function
  * taking an array of strings (task names) and record of props to override
  */
-export const buildMarker = Symbol.for('plugjs:isBuild')
+export const buildMarker = Symbol.for('plugjs:plug:types:Build')
 
 /**
  * The {@link Build} type represents the collection of {@link Task}s
@@ -137,7 +137,7 @@ export const buildMarker = Symbol.for('plugjs:isBuild')
  */
 export type Build<D extends BuildDef = BuildDef> = Props<D> & Tasks<D> & {
   readonly [buildMarker]: (
-    tasks: string[],
+    tasks: readonly string[],
     props?: Record<string, string | undefined>,
   ) => Promise<void>
 }

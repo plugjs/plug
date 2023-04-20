@@ -28,11 +28,11 @@ import type {
  * ========================================================================== */
 
 /** Symbol indicating that an object is a {@link TaskCall} */
-const taskMarker = Symbol.for('plugjs:isTask')
+const taskCallMarker = Symbol.for('plugjs:plug:types:TaskCall')
 
 /** Type guard for {@link TaskCall}s */
 function isTaskCall(something: any): something is TaskCall {
-  return something[taskMarker] === taskMarker
+  return something[taskCallMarker] === taskCallMarker
 }
 
 /** Shallow merge two records */
@@ -63,13 +63,13 @@ function makeState(state: {
  * TASK IMPLEMENTATION                                                        *
  * ========================================================================== */
 
-const lastIdKey = Symbol.for('plugjs.plug.async.storage')
-const lastId = getSingleton(lastIdKey, () => ({ id: 0 }))
+const lastIdKey = Symbol.for('plugjs:plug:singleton:taskId')
+const taskId = getSingleton(lastIdKey, () => ({ id: 0 }))
 
 class TaskImpl<R extends Result> implements Task<R> {
   public readonly before: Task<Result>[] = []
   public readonly after: Task<Result>[] = []
-  public readonly id: number = ++ lastId.id
+  public readonly id: number = ++ taskId.id
 
   props: Props<BuildDef>
   tasks: Tasks<BuildDef>
@@ -208,7 +208,7 @@ export function build<
 
   /* Create the "invoke" function for this build */
   const invoke = async function invoke(
-      taskNames: string[],
+      taskNames: readonly string[],
       overrideProps: Record<string, string | undefined> = {},
   ): Promise<void> {
     await start(async (state: State): Promise<void> => {
@@ -230,7 +230,7 @@ export function build<
 
     /* Extra properties for our callable: marker, task and name */
     callables[name] = Object.defineProperties(callable, {
-      [taskMarker]: { value: taskMarker },
+      [taskCallMarker]: { value: taskCallMarker },
       'task': { value: task },
       'name': { value: name },
     }) as TaskCall
@@ -250,7 +250,7 @@ export function isBuild(build: any): build is Build<Record<string, any>> {
 /** Invoke a number of tasks in a {@link Build} */
 export function invokeTasks<B extends Build>(
     build: B,
-    tasks: BuildTasks<B>[],
+    tasks: readonly BuildTasks<B>[],
     props?: BuildProps<B>,
 ): Promise<void> {
   if (isBuild(build)) {
@@ -268,7 +268,7 @@ export function invokeTasks<B extends Build>(
 export function hookBefore<B extends Build, T extends keyof B>(
     build: B,
     taskName: string & T & BuildTasks<B>,
-    hooks: (string & Exclude<BuildTasks<B>, T>)[],
+    hooks: readonly (string & Exclude<BuildTasks<B>, T>)[],
 ): void {
   const taskCall = build[taskName]
   assert(isTaskCall(taskCall), `Task "${$t(taskName)}" not found in build`)
@@ -285,7 +285,7 @@ export function hookBefore<B extends Build, T extends keyof B>(
 export function hookAfter<B extends Build, T extends keyof B>(
     build: B,
     taskName: string & T & BuildTasks<B>,
-    hooks: (string & Exclude<BuildTasks<B>, T>)[],
+    hooks: readonly (string & Exclude<BuildTasks<B>, T>)[],
 ): void {
   const taskCall = build[taskName]
   assert(isTaskCall(taskCall), `Task "${$t(taskName)}" not found in build`)

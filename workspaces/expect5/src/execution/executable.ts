@@ -66,8 +66,8 @@ function execute(
 /* ========================================================================== */
 
 /* Suite and skip storages must be unique _per process_ */
-const suiteKey = Symbol.for('plugjs.expect5.async.suiteStorage')
-const skipKey = Symbol.for('plugjs.expect5.async.skipStorage')
+const suiteKey = Symbol.for('plugjs:expect5:singleton:suiteStorage')
+const skipKey = Symbol.for('plugjs:expect5:singleton:skipStorage')
 
 const suiteStorage = getSingleton(suiteKey, () => new AsyncLocalStorage<Suite>())
 const skipStorage = getSingleton(skipKey, () => new AsyncLocalStorage<{ skipped: boolean }>())
@@ -87,7 +87,7 @@ export function skip(): void {
 /* ========================================================================== */
 
 /** A symbol marking {@link Suite} instances */
-const suiteMarker = Symbol.for('plugjs:expect5:marker:Suite')
+const suiteMarker = Symbol.for('plugjs:expect5:types:Suite')
 
 /** Our {@link Suite} implementation */
 export class Suite {
@@ -253,7 +253,7 @@ export class Suite {
 /* ========================================================================== */
 
 /** A symbol marking {@link Spec} instances */
-const specMarker = Symbol.for('plugjs:expect5:marker:Spec')
+const specMarker = Symbol.for('plugjs:expect5:types:Spec')
 
 /** Our {@link Spec} implementation */
 export class Spec {
@@ -304,7 +304,7 @@ export class Spec {
 /* ========================================================================== */
 
 /** A symbol marking {@link Hook} instances */
-const hookMarker = Symbol.for('plugjs:expect5:marker:Hook')
+const hookMarker = Symbol.for('plugjs:expect5:types:Hook')
 
 /** Our {@link Hook} implementation */
 export class Hook {

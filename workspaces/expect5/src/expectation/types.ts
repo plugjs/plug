@@ -213,7 +213,7 @@ export function prefixType(type: TypeName): string {
  * EXPECTATIONS MATCHERS MARKER                                               *
  * ========================================================================== */
 
-export const matcherMarker = Symbol.for('expect5.matcher')
+export const matcherMarker = Symbol.for('plugjs:expect5:types:ExpectationsMatcher')
 
 export function isMatcher(what: any): what is ExpectationsMatcher {
   return what && what[matcherMarker] === matcherMarker

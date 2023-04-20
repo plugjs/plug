@@ -58,8 +58,8 @@ export function runningTasks(): string[] {
  * ========================================================================== */
 
 /* Storage and task names must be unique _per process_ */
-const storageKey = Symbol.for('plugjs.plug.async.storage')
-const tasksKey = Symbol.for('plugjs.plug.async.tasks')
+const storageKey = Symbol.for('plugjs:plug:singleton:contextStorage')
+const tasksKey = Symbol.for('plugjs:plug:singleton:runningTasksStorage')
 
 const storage = getSingleton(storageKey, () => new AsyncLocalStorage<Context>())
 const tasks = getSingleton(tasksKey, () => new Set<string>())
