@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events'
 import { Socket } from 'node:net'
 
 import { getLevelNumber, NOTICE } from './levels'
+import { getSingleton } from '../utils/singleton'
 
 import type { Writable } from 'node:stream'
 import type { InspectOptions } from 'node:util'
@@ -232,18 +233,8 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   }
 }
 
-/* Unique symbol to share `LogOptions` per process */
-const optionsKey = Symbol.for('plugjs.plug.logging.logOptions')
-
-/** Get the shared _per process_ instance of our {@link LogOptions}. */
-function getLogOptions(): LogOptions {
-  let options: LogOptions = (<any> globalThis)[optionsKey]
-  if (! options) {
-    options = new LogOptionsImpl()
-    ;(<any> globalThis)[optionsKey] = options
-  }
-  return options
-}
+/** Singleton key for {@link LogOptions} instance. */
+const optionsKey = Symbol.for('plugjs:plug:types:LogOptions')
 
 /** Shared instance of our {@link LogOptions}. */
-export const logOptions = getLogOptions()
+export const logOptions = getSingleton(optionsKey, () => new LogOptionsImpl())
