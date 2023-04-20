@@ -20,6 +20,7 @@ import type { ESLint } from './workspaces/eslint/src/eslint'
 import type { Test } from './workspaces/expect5/src/test'
 import type { ESBuildOptions, Files } from './workspaces/plug/src/index'
 import type { Tsc } from './workspaces/typescript/src/typescript'
+import type { Tsd } from './workspaces/tsd/src/tsd'
 
 logging.logOptions.githubAnnotations = false
 
@@ -102,6 +103,13 @@ const ForkingTsc = class extends fork.ForkingPlug {
   constructor(...args: ConstructorParameters<typeof Tsc>) {
     const scriptFile = paths.requireResolve(__fileurl, './workspaces/typescript/src/typescript')
     super(scriptFile, args, 'Tsc')
+  }
+}
+
+const ForkingTsd = class extends fork.ForkingPlug {
+  constructor(...args: ConstructorParameters<typeof Tsd>) {
+    const scriptFile = paths.requireResolve(__fileurl, './workspaces/tsd/src/tsd')
+    super(scriptFile, args, 'Tsd')
   }
 }
 
@@ -195,7 +203,7 @@ export default build({
    * ======================================================================== */
 
   /** Check types of tests */
-  async check(): Promise<void> {
+  async check_tests(): Promise<void> {
     banner('Cheking TypeScript for Tests')
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
     const globals = find('globals.ts', { directory: 'workspaces/expect5/src' })
@@ -211,6 +219,17 @@ export default build({
             emitDeclarationOnly: false,
           }))
     }))
+  },
+
+  /** Run TSD on our types tests */
+  async check_types(): Promise<void> {
+    banner('Cheking TypeScript (TSD checks)')
+
+    await find('**/*.test-d.ts', { directory: 'test-d' })
+        .plug(new ForkingTsd({
+          cwd: 'test-d',
+          // typingsFile: './workspaces/plug/src/index.ts',
+        }))
   },
 
   /** Run tests in CJS mode */
@@ -243,7 +262,7 @@ export default build({
 
   /** Run all tests */
   async test(): Promise<void> {
-    await this.check()
+    await this.check_tests()
     await this.test_cjs()
     await this.test_esm()
   },
@@ -337,7 +356,6 @@ export default build({
 
     await this.clean_coverage()
     await this.transpile()
-    await this.check() // dev mode, run checks _before_ tests
     try {
       await this.test()
     } catch (err) {
@@ -355,6 +373,7 @@ export default build({
     await this.transpile()
     await this.test()
     await this.lint()
+    await this.check_types()
   },
 
   /* Run all tasks (sequentially) */

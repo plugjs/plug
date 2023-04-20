@@ -8,6 +8,7 @@ module.exports = {
   parserOptions: {
     project: [
       './tsconfig.json',
+      './test-d/tsconfig.json',
       './workspaces/cov8/tsconfig.json',
       './workspaces/cov8/test/tsconfig.json',
       './workspaces/eslint/tsconfig.json',
