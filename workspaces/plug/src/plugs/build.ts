@@ -1,10 +1,10 @@
 import { $p } from '../logging/colors'
 import { ForkingPlug, type ForkOptions } from '../fork'
 import { requireFilename } from '../paths'
+import { invokeTasks, isBuild } from '../build'
 
 import type { Files } from '../files'
 import type { Context, Plug } from '../pipe'
-import type { Build } from '../types'
 
 /** Writes some info about the current {@link Files} being passed around. */
 export class RunBuildInternal implements Plug<void> {
@@ -28,23 +28,10 @@ export class RunBuildInternal implements Plug<void> {
       if (! isBuild(maybeBuild)) {
         context.log.fail(`File ${$p(file)} did not export a proper build`)
       } else {
-        await maybeBuild[buildMarker](tasks, this._props)
+        await invokeTasks(maybeBuild, tasks, this._props)
       }
     }
   }
-}
-
-/** Symbol indicating that an object is a {@link Build}. */
-const buildMarker = Symbol.for('plugjs:isBuild')
-
-/** Check if the specified build is actually a {@link Build} */
-function isBuild(build: any): build is Build<Record<string, any>> & {
-  [buildMarker]: (
-    tasks: readonly string[],
-    props?: Record<string, string | undefined>,
-  ) => Promise<void>
-} {
-  return build && typeof build[buildMarker] === 'function'
 }
 
 export class RunBuild extends ForkingPlug {
