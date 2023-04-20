@@ -1,3 +1,5 @@
+import { Files } from '@plugjs/plug'
+
 import { BuildFailure } from '../src/asserts'
 import { currentContext, requireContext, runningTasks } from '../src/async'
 import { build, hookAfter, hookBefore, invokeTasks, isBuild } from '../src/build'
@@ -40,6 +42,19 @@ describe('Build Invocation', () => {
     propValue = 'wrong'
     await tasks._myTask({ myProp: 'this is overridden' })
     expect(propValue).toStrictlyEqual('this is overridden')
+  })
+
+  it('should return the correct types invoking tasks', async () => {
+    const tasks = build({
+      _void: () => void 0,
+      _files: () => new Files(),
+    })
+
+    expect(await invokeTasks(tasks, [ '_files', '_void' ])).toBeUndefined()
+    expect(await invokeTasks(tasks, [ '_void' ])).toBeUndefined()
+    expect(await invokeTasks(tasks, [ '_files' ])).toBeUndefined()
+    expect(await tasks._void()).toBeUndefined()
+    expect(await tasks._files()).toBeInstanceOf(Files)
   })
 
   it('should cache the output of a task', async () => {
