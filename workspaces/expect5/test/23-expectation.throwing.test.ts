@@ -14,7 +14,7 @@ describe('Throwing Expectations', () => {
     expectFail(() => expect(() => {}).toThrow(), 'Expected <function> to throw')
 
     let asserted: any = undefined
-    expectPass(() => expect(throwing).toThrow((e) => asserted = e.value))
+    expectPass(() => expect(throwing).toThrow((e) => void (asserted = e.value)))
     assert.strictEqual(asserted, error)
   })
 
@@ -83,7 +83,7 @@ describe('Throwing Expectations', () => {
     expectFail(() => expect(throwing).not.toThrowError(), 'Expected <function throwing> not to throw')
 
     let asserted: any = undefined
-    expectPass(() => expect(() => {}).not.toThrow((e) => asserted = e.value))
+    expectPass(() => expect(() => {}).not.toThrow((e) => void (asserted = e.value)))
     assert.strictEqual(asserted, undefined)
   })
 
