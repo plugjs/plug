@@ -289,7 +289,7 @@ function toHaveProperty(
     throw new ExpectationError(this, this._negative, `to have property "${String(prop)}"`)
   } else if (match && assert) {
     try {
-      assert(this.forProperty(prop))
+      assert(this.forProperty(prop)._expectations)
     } catch (error) {
       // any caught error difference gets remapped as a property diff
       if ((error instanceof ExpectationError) && (error.diff)) {

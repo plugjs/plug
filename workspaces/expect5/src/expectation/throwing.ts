@@ -35,7 +35,7 @@ function toThrow(
   if (thrown === this._negative) {
     throw new ExpectationError(this, this._negative, 'to throw')
   } else if (thrown && assert) {
-    assert(this.forValue(error))
+    assert(this.forValue(error)._expectations)
   }
 
   return this._expectations

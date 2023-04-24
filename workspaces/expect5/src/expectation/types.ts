@@ -227,12 +227,12 @@ export class ExpectationError extends Error {
 
     // if we're not root...
     let preamble = stringifyValue(value)
-    if (context.parent) {
+    if (context._parent) {
       const properties: any[] = []
 
-      while (context.parent) {
-        properties.push(`[${stringifyValue(context.parent.prop)}]`)
-        context = context.parent.context
+      while (context._parent) {
+        properties.push(`[${stringifyValue(context._parent.prop)}]`)
+        context = context._parent.context
       }
 
       preamble = properties.reverse().join('')
