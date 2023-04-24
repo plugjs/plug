@@ -121,7 +121,7 @@ function toBeRejectedWithError(
       .toBeRejected((assert) => assert.toBeError(...args))
 }
 
-/* ========================================================================== */
+/* === EXPORTS ============================================================== */
 
 /* coverage ignore next */
 export { toBeResolved, toBeRejected, toBeRejectedWithError }
