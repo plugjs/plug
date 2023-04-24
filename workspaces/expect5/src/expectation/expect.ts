@@ -1,118 +1,122 @@
 import { ExpectationError, matcherMarker } from './types'
 import {
-  ToBeA,
-  ToBeCloseTo,
-  ToBeError,
-  ToBeGreaterThan,
-  ToBeGreaterThanOrEqual,
-  ToBeInstanceOf,
-  ToBeLessThan,
-  ToBeLessThanOrEqual,
-  ToBeWithinRange,
-  ToEqual,
-  ToHaveLength,
-  ToHaveProperty,
-  ToHaveSize,
-  ToMatch,
-  ToStrictlyEqual,
+  toBeA,
+  toBeCloseTo,
+  toBeError,
+  toBeGreaterThan,
+  toBeGreaterThanOrEqual,
+  toBeInstanceOf,
+  toBeLessThan,
+  toBeLessThanOrEqual,
+  toBeWithinRange,
+  toEqual,
+  toHaveLength,
+  toHaveProperty,
+  toHaveSize,
+  toMatch,
+  toStrictlyEqual,
 } from './basic'
 import {
-  ToInclude, ToMatchContents,
+  toInclude,
+  toMatchContents,
 } from './include'
 import {
-  ToThrow,
-  ToThrowError,
+  toThrow,
+  toThrowError,
 } from './throwing'
 import {
-  ToBeDefined,
-  ToBeFalse,
-  ToBeFalsy,
-  ToBeNaN,
-  ToBeNegativeInfinity,
-  ToBeNull,
-  ToBePositiveInfinity,
-  ToBeTrue,
-  ToBeTruthy,
-  ToBeUndefined,
-} from './void'
-
-import type { Constructor, StringMatcher } from './types'
+  toBeDefined,
+  toBeFalse,
+  toBeFalsy,
+  toBeNaN,
+  toBeNegativeInfinity,
+  toBeNull,
+  toBePositiveInfinity,
+  toBeTrue,
+  toBeTruthy,
+  toBeUndefined,
+} from './trivial'
+import {
+  toBeResolved,
+  toBeRejected,
+  toBeRejectedWithError,
+} from './async'
 
 /* ========================================================================== *
  * IMPORT AND PREPARE EXTERNAL EXPECTATIONS                                   *
  * ========================================================================== */
 
-/** Singleton with all imported (known) expectations */
-const expectations = {
-  // basic expectations
-  toBeA: new ToBeA(),
-  toBeCloseTo: new ToBeCloseTo(),
-  toBeError: new ToBeError(),
-  toBeGreaterThan: new ToBeGreaterThan(),
-  toBeGreaterThanOrEqual: new ToBeGreaterThanOrEqual(),
-  toBeInstanceOf: new ToBeInstanceOf(),
-  toBeLessThan: new ToBeLessThan(),
-  toBeLessThanOrEqual: new ToBeLessThanOrEqual(),
-  toBeWithinRange: new ToBeWithinRange(),
-  toEqual: new ToEqual(),
-  toHaveLength: new ToHaveLength(),
-  toHaveProperty: new ToHaveProperty(),
-  toHaveSize: new ToHaveSize(),
-  toMatch: new ToMatch(),
-  toStrictlyEqual: new ToStrictlyEqual(),
+const expectationsFunctions = {
+  // async
+  toBeResolved,
+  toBeRejected,
+  toBeRejectedWithError,
+
+  // basic
+  toBeA,
+  toBeCloseTo,
+  toBeError,
+  toBeGreaterThan,
+  toBeGreaterThanOrEqual,
+  toBeInstanceOf,
+  toBeLessThan,
+  toBeLessThanOrEqual,
+  toBeWithinRange,
+  toEqual,
+  toHaveLength,
+  toHaveProperty,
+  toHaveSize,
+  toMatch,
+  toStrictlyEqual,
 
   // include
-  toInclude: new ToInclude(),
-  toMatchContents: new ToMatchContents(),
+  toInclude,
+  toMatchContents,
 
   // throwing
-  toThrow: new ToThrow(),
-  toThrowError: new ToThrowError(),
+  toThrow,
+  toThrowError,
 
-  // void expectations
-  toBeDefined: new ToBeDefined(),
-  toBeFalse: new ToBeFalse(),
-  toBeFalsy: new ToBeFalsy(),
-  toBeNaN: new ToBeNaN(),
-  toBeNegativeInfinity: new ToBeNegativeInfinity(),
-  toBeNull: new ToBeNull(),
-  toBePositiveInfinity: new ToBePositiveInfinity(),
-  toBeTrue: new ToBeTrue(),
-  toBeTruthy: new ToBeTruthy(),
-  toBeUndefined: new ToBeUndefined(),
-} as const
-
-/** The type of our imported expectations */
-type ExpectationsByName = typeof expectations
-
-/** Infer expectations parameter from {@link Expectation} type */
-type ExpectationParameters<E> =
-  E extends Expectation ?
-    Parameters<E['expect']> extends [ any, any, ...infer P ] ? P : never :
-  never
-
-/** Infer return parameter from {@link Expectation} type */
-type ExpectationReturn<E, T> = E extends Expectation ? Expectations<T> : never
-
-/** Infer expectation functions from imported {@link Expectation} instances */
-type ImportedExpectations<T = unknown> = {
-  [ k in keyof ExpectationsByName ]: (
-    ...args: ExpectationParameters<ExpectationsByName[k]>
-  ) => ExpectationReturn<ExpectationsByName[k], T>
+  // trivial
+  toBeDefined,
+  toBeFalse,
+  toBeFalsy,
+  toBeNaN,
+  toBeNegativeInfinity,
+  toBeNull,
+  toBePositiveInfinity,
+  toBeTrue,
+  toBeTruthy,
+  toBeUndefined,
 }
+
+type ExpectationsFunctions = typeof expectationsFunctions
 
 /* ========================================================================== *
  * EXPECTATIONS DEFINITION                                                    *
  * ========================================================================== */
 
-/** An interface describing all expectations returned by `expect(...)` */
-export interface Expectations<T = unknown> extends ImportedExpectations<T> {
-  /**
-   * The parent of this instance, if and only if this is a child derived from
-   * a property of the parent instance's value.
-   */
-  parent?: ExpectationsParent
+export interface ExpectationsContext<T = unknown> {
+  readonly value: T,
+  readonly parent?: ExpectationsParent
+  readonly _negative: boolean,
+  readonly _expectations: Expectations<T>
 
+  negated(negated: boolean): Expectations<T>,
+  forValue<V>(value: V): Expectations<V>,
+  forProperty(prop: string | number | symbol): Expectations
+}
+
+export type JoinExpectations<E, T2> =
+  E extends Expectations<infer T1> ? Expectations<T1 & T2> : Expectations<T2>
+
+export type AssertionFunction<T = unknown> = (assert: Expectations<T>) => void | Expectations
+
+export type AssertedType<F extends AssertionFunction<any>, R = ReturnType<F>> =
+  R extends Expectations<infer T> ? T : unknown
+
+/** An interface describing all expectations returned by `expect(...)` */
+export interface Expectations<T = unknown> extends ExpectationsFunctions {
   /** The value this {@link Expectations} instance operates on */
   value: T
 
@@ -124,59 +128,17 @@ export interface Expectations<T = unknown> extends ImportedExpectations<T> {
    * for the value wrapped by this instance.
    */
   negated(negative: boolean): Expectations<T>
-
-  /** Create an {@link Expectations} associated with a property of this value */
-  forProperty(prop: string | number | symbol): Expectations
-
-  /** Create a new {@link Expectations} instance for the specified value */
-  forValue<T = unknown>(value: T): Expectations<T>
-
-  /* == ASYNCHRONOUS EXPECTATIONS =========================================== */
-
-  /** Expect the value to be a _resolved_ {@link Promise} */
-  toBeResolved(): Promise<ExpectationsImpl<T>>
-  /**
-   * Expect the value to be a _resolved_ {@link Promise}, and assert the
-   * resolved result with the specified callback
-   */
-  toBeResolved(assert: (resultExpectations: Expectations) => void): Promise<ExpectationsImpl<T>>
-
-  /** Expect the value to be a _rejected_ {@link Promise} */
-  toBeRejected(): Promise<ExpectationsImpl<T>>
-  /**
-   * Expect the value to be a _rejected_ {@link Promise}, and assert the
-   * rejected reason with the specified callback
-   */
-  toBeRejected(assert?: (rejectionExpectations: Expectations) => void): Promise<ExpectationsImpl<T>>
-
-  /** Expect the value to be a {@link Promise} _rejected_ by an {@link Error} */
-  toBeRejectedWithError(): Promise<Expectations<T>>
-  /**
-   * Expect the value to be a {@link Promise} _rejected_ by an {@link Error}
-   * with the specified _message_
-   */
-  toBeRejectedWithError(message: StringMatcher): Promise<Expectations<T>>
-  /**
-   * Expect the value to be a {@link Promise} _rejected_ by an {@link Error}
-   * of the specified _type_
-   */
-  toBeRejectedWithError(constructor: Constructor<Error>): Promise<Expectations<T>>
-  /**
-   * Expect the value to be a {@link Promise} _rejected_ by an {@link Error}
-   * of the specified _type_ and with the specified _message_
-   */
-  toBeRejectedWithError(constructor: Constructor<Error>, message: StringMatcher): Promise<Expectations<T>>
 }
 
 /** Parent expectations */
 export interface ExpectationsParent {
-  context: Expectations,
+  context: ExpectationsContext,
   prop: string | number | symbol,
 }
 
 /** Basic definition of an {@link Expectation} as an object */
 export interface Expectation {
-  expect(context: Expectations, negative: boolean, ...args: any[]): void
+  expect(context: Expectations, negative: boolean, ...args: any[]): unknown
 }
 
 /* ========================================================================== *
@@ -187,10 +149,12 @@ export interface Expectation {
 interface ExpectationsImpl<T = unknown> extends Expectations<T> {}
 
 /** Implementation of our {@link Expectations} interface */
-class ExpectationsImpl<T = unknown> implements Expectations<T> {
+class ExpectationsImpl<T = unknown> implements Expectations<T>, ExpectationsContext<T> {
   private readonly _positiveExpectations: ExpectationsImpl<T>
   private readonly _negativeExpectations: ExpectationsImpl<T>
-  private readonly _negative: boolean
+  readonly _expectations: ExpectationsImpl<T>
+  readonly _negative: boolean
+  parent?: ExpectationsParent
 
   constructor(
       public readonly value: T,
@@ -205,6 +169,7 @@ class ExpectationsImpl<T = unknown> implements Expectations<T> {
       this._positiveExpectations = this
       this._negativeExpectations = new ExpectationsImpl(value, this)
     }
+    this._expectations = this._positiveExpectations
   }
 
   /* == NEW EXPECTATIONS ==================================================== */
@@ -231,64 +196,15 @@ class ExpectationsImpl<T = unknown> implements Expectations<T> {
     return this._negative ? this._positiveExpectations : this._negativeExpectations
   }
 
-  /* == ASYNCHRONOUS EXPECTATIONS =========================================== */
-
-  toBeResolved(assert?: (resultExpectations: Expectations) => void): Promise<ExpectationsImpl<T>> {
-    return Promise.resolve()
-        .then(() => {
-          this._positiveExpectations.toHaveProperty('then', (a) => a.toBeA('function'))
-          return Promise.allSettled([ Promise.resolve(this.value) ])
-        })
-        .then(([ settlement ]) => {
-          if (settlement.status === 'fulfilled') {
-            if (this._negative) throw new ExpectationError(this, true, 'to be resolved')
-            if (assert) assert(new ExpectationsImpl(settlement.value))
-          } else if (! this._negative) {
-            throw new ExpectationError(this, false, 'to be resolved')
-          }
-
-          return this._positiveExpectations
-        })
-  }
-
-  toBeRejected(assert?: (reasonExpectations: Expectations) => void): Promise<ExpectationsImpl<T>> {
-    return Promise.resolve()
-        .then(() => {
-          this._positiveExpectations.toHaveProperty('then', (a) => a.toBeA('function'))
-          return Promise.allSettled([ Promise.resolve(this.value) ])
-        })
-        .then(([ settlement ]) => {
-          if (settlement.status === 'rejected') {
-            if (this._negative) throw new ExpectationError(this, true, 'to be rejected')
-            if (assert) assert(new ExpectationsImpl(settlement.reason))
-          } else if (! this._negative) {
-            throw new ExpectationError(this, false, 'to be rejected')
-          }
-
-          return this._positiveExpectations
-        })
-  }
-
-  toBeRejectedWithError(
-      ...args:
-      | []
-      | [ message: StringMatcher ]
-      | [ constructor: Constructor<Error> ]
-      | [ constructor: Constructor<Error>, message: StringMatcher ]
-  ): Promise<ExpectationsImpl<T>> {
-    return this.toBeRejected((assert) => assert.toBeError(...args))
-  }
-
   /* == STATIC INITALIZER =================================================== */
 
   static {
-    for (const [ key, value ] of Object.entries(expectations)) {
-      const expectation = value as Expectation
+    for (const [ key, value ] of Object.entries(expectationsFunctions)) {
+      const expectation = value as (this: ExpectationsContext, ...args: any[]) => any
 
       const fn = function(this: ExpectationsImpl, ...args: any[]): any {
         try {
-          expectation.expect(this._positiveExpectations, this._negative, ...args)
-          return this._positiveExpectations
+          return expectation.call(this, ...args)
         } catch (error) {
           if (error instanceof ExpectationError) Error.captureStackTrace(error, fn)
           throw error
@@ -305,22 +221,60 @@ class ExpectationsImpl<T = unknown> implements Expectations<T> {
  * EXPECTATIONS MATCHERS                                                      *
  * ========================================================================== */
 
-/** Infer return parameter from {@link Expectation} type */
-type MatcherReturn<E> = E extends Expectation ? ExpectationsMatcher : never
+type MatchersArguments<T> =
+  T extends readonly [ infer T, ...infer Rest ] ?
+    [ T, ...MatchersArguments<Rest> ] :
+  T extends readonly [] ? [] :
+  T extends readonly (infer T)[] ?
+    unknown extends T ? never :
+    T extends undefined ? [] :
+    [ T ] :
+  never
 
-/** Infer expectation functions from imported {@link Expectation} instances */
-type ImportedMatchers = {
-  [ k in keyof ExpectationsByName ]: (
-    ...args: ExpectationParameters<ExpectationsByName[k]>
-  ) => MatcherReturn<ExpectationsByName[k]>
+type MatchersFunctions = {
+  [ k in keyof ExpectationsFunctions ]:
+    ExpectationsFunctions[k] extends {
+      (...args: infer A0): Expectations
+      (...args: infer A1): Expectations
+      (...args: infer A2): Expectations
+      (...args: infer A3): Expectations
+      (...args: infer A4): Expectations
+      (...args: infer A5): Expectations
+    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3 | A4 | A5>) => ExpectationsMatcher :
+    ExpectationsFunctions[k] extends {
+      (...args: infer A0): Expectations
+      (...args: infer A1): Expectations
+      (...args: infer A2): Expectations
+      (...args: infer A3): Expectations
+      (...args: infer A4): Expectations
+    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3 | A4>) => ExpectationsMatcher :
+    ExpectationsFunctions[k] extends {
+      (...args: infer A0): Expectations
+      (...args: infer A1): Expectations
+      (...args: infer A2): Expectations
+      (...args: infer A3): Expectations
+    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3>) => ExpectationsMatcher :
+    ExpectationsFunctions[k] extends {
+      (...args: infer A0): Expectations
+      (...args: infer A1): Expectations
+      (...args: infer A2): Expectations
+    } ? (...args: MatchersArguments<A0 | A1 | A2>) => ExpectationsMatcher :
+    ExpectationsFunctions[k] extends {
+      (...args: infer A0): Expectations
+      (...args: infer A1): Expectations
+    } ? (...args: MatchersArguments<A0 | A1>) => ExpectationsMatcher :
+    ExpectationsFunctions[k] extends {
+      (...args: infer A0): Expectations
+    } ? (...args: MatchersArguments<A0>) => ExpectationsMatcher :
+    never
 }
 
 /** An interface describing all expectations returned by `expect(...)` */
-export interface ExpectationsMatcher extends ImportedMatchers {
+export interface ExpectationsMatcher extends MatchersFunctions {
   not: ExpectationsMatcher
+  /* The assertion here will trigger */
   expect(value: unknown): void
 }
-
 
 interface ExpectationsMatcherImpl extends ExpectationsMatcher {}
 
@@ -364,7 +318,7 @@ class ExpectationsMatcherImpl {
     Object.defineProperty(this.prototype, matcherMarker, { value: matcherMarker })
 
     // all our matchers
-    for (const key in expectations) {
+    for (const key in expectationsFunctions) {
       Object.defineProperty(this.prototype, key, {
         value: function(this: ExpectationsMatcherImpl, ...args: any[]): any {
           return new ExpectationsMatcherImpl([
@@ -390,8 +344,8 @@ Object.defineProperty(expect, 'not', {
   get: () => new ExpectationsMatcherImpl([]).not,
 })
 
-// Create a matcher for each expectation
-for (const name in expectations) {
+// Create a matcher for each expectation function
+for (const name in expectationsFunctions) {
   Object.defineProperty(expect, name, {
     value: function(...args: any[]): ExpectationsMatcher {
       const builder = new ExpectationsMatcherImpl([])
