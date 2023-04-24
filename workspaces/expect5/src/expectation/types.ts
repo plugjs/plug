@@ -1,5 +1,5 @@
 import type { Diff } from './diff'
-import type { Expectations, ExpectationsMatcher } from './expect'
+import type { Expectations, ExpectationsContext, ExpectationsMatcher } from './expect'
 
 /** A type identifying any constructor */
 export type Constructor<T = any> = new (...args: any[]) => T
@@ -83,7 +83,17 @@ export function typeOf(value: unknown): TypeName {
 
 /** Determines if the specified `value` is of the specified _expanded_ `type` */
 export function isType<T extends keyof TypeMappings>(
-    context: Expectations,
+  context: Expectations,
+  type: T,
+): context is Expectations<TypeMappings[T]>
+
+export function isType<T extends keyof TypeMappings>(
+  context: ExpectationsContext,
+  type: T,
+): context is ExpectationsContext<TypeMappings[T]>
+
+export function isType<T extends keyof TypeMappings>(
+    context: Expectations | ExpectationsContext,
     type: T,
 ): context is Expectations<TypeMappings[T]> {
   return typeOf(context.value) === type
@@ -91,7 +101,7 @@ export function isType<T extends keyof TypeMappings>(
 
 /** Asserts that the specified `value` is of the specified _expanded_ `type` */
 export function assertType<T extends keyof TypeMappings>(
-    context: Expectations,
+    context: Expectations | ExpectationsContext,
     type: T,
 ): asserts context is Expectations<TypeMappings[T]> {
   const { value } = context
@@ -227,7 +237,7 @@ export class ExpectationError extends Error {
   diff?: Diff | undefined
 
   constructor(
-      context: Expectations,
+      context: Expectations | ExpectationsContext,
       negative: boolean,
       details: string,
       diff?: Diff,
