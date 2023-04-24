@@ -101,8 +101,9 @@ export interface ExpectationsContext<T = unknown> {
   readonly parent?: ExpectationsParent
   readonly _negative: boolean,
   readonly _expectations: Expectations<T>
+  readonly _negated: Expectations<T>
 
-  negated(negated: boolean): Expectations<T>,
+  // negated(negated: boolean): Expectations<T>,
   forValue<V>(value: V): Expectations<V>,
   forProperty(prop: string | number | symbol): Expectations
 }
@@ -122,12 +123,6 @@ export interface Expectations<T = unknown> extends ExpectationsFunctions {
 
   /** The _negated_ expectations of _this_ {@link Expectations} instance. */
   not: Expectations<T>
-
-  /**
-   * Programmatically return _positive_ or _negative_ {@link Expectations}
-   * for the value wrapped by this instance.
-   */
-  negated(negative: boolean): Expectations<T>
 }
 
 /** Parent expectations */
@@ -154,6 +149,7 @@ class ExpectationsImpl<T = unknown> implements Expectations<T>, ExpectationsCont
   private readonly _negativeExpectations: ExpectationsImpl<T>
   readonly _expectations: ExpectationsImpl<T>
   readonly _negative: boolean
+  readonly _negated: ExpectationsImpl<T>
   parent?: ExpectationsParent
 
   constructor(
@@ -170,6 +166,7 @@ class ExpectationsImpl<T = unknown> implements Expectations<T>, ExpectationsCont
       this._negativeExpectations = new ExpectationsImpl(value, this)
     }
     this._expectations = this._positiveExpectations
+    this._negated = this._negative ? this._negativeExpectations : this._positiveExpectations
   }
 
   /* == NEW EXPECTATIONS ==================================================== */
@@ -187,10 +184,6 @@ class ExpectationsImpl<T = unknown> implements Expectations<T>, ExpectationsCont
   }
 
   /* == NEGATION ============================================================ */
-
-  negated(negative: boolean): ExpectationsImpl<T> {
-    return negative ? this._negativeExpectations : this._positiveExpectations
-  }
 
   get not(): ExpectationsImpl<T> {
     return this._negative ? this._positiveExpectations : this._negativeExpectations
@@ -307,7 +300,8 @@ class ExpectationsMatcherImpl {
   expect(value: unknown): void {
     const expectations = new ExpectationsImpl(value)
     for (const [ expectation, negative, args ] of this._matchers) {
-      (expectations.negated(negative) as any)[expectation](...args)
+      const expect = negative ? expectations.not : expectations
+      ;(expect as any)[expectation](...args) // TODO: context!
     }
   }
 

@@ -87,7 +87,7 @@ function toThrowError(
     | [ Constructor<Error>, string ]
     | [ Constructor<Error>, RegExp ]
 ): Expectations {
-  return this.negated(this._negative)
+  return this._negated
       // @ts-ignore // can't reconcile the types with overloads...
       .toThrow((assert) => assert.toBeError(...args))
 }

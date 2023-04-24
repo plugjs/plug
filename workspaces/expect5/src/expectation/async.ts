@@ -116,7 +116,7 @@ function toBeRejectedWithError(
     | [ Constructor<Error>, string ]
     | [ Constructor<Error>, RegExp ]
 ): Promise<Expectations> {
-  return this.negated(this._negative)
+  return this._negated
       // @ts-ignore // can't reconcile the types with overloads...
       .toBeRejected((assert) => assert.toBeError(...args))
 }

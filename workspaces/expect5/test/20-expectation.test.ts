@@ -13,12 +13,6 @@ describe('Expectations Core', () => {
     assert.strictEqual(negative.not.not, negative)
     assert.strictEqual(positive.not, negative)
     assert.strictEqual(positive.not.not, positive)
-
-    // negated programmatically
-    assert.strictEqual(negative.negated(false), positive)
-    assert.strictEqual(positive.negated(false), positive)
-    assert.strictEqual(negative.negated(true), negative)
-    assert.strictEqual(positive.negated(true), negative)
   })
 })
 

@@ -52,7 +52,7 @@ function toBeCloseTo(
 ): Expectations {
   const min = (value as number) - (delta as number)
   const max = (value as number) + (delta as number)
-  return this.negated(this._negative).toBeWithinRange(min, max)
+  return this._negated.toBeWithinRange(min, max)
 }
 
 /* === TO BE ERROR ========================================================== */
@@ -98,7 +98,7 @@ function toBeError(
       [ args[0], args[1] ] :
       [ Error, args[0] ]
 
-  this.negated(this._negative).toBeInstanceOf(constructor)
+  this._negated.toBeInstanceOf(constructor)
 
   // if "not.toBeError" ignore the message
   if (this._negative || (message === undefined)) return this._expectations
