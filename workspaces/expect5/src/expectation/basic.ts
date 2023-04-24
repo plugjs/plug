@@ -104,9 +104,10 @@ function toBeError(
   if (this._negative || (message === undefined)) return this._expectations
 
   return this._expectations.toHaveProperty('message', (assert) => {
-    assertType(assert, 'string')
-    if (typeof message === 'string') assert.toStrictlyEqual(message)
-    else assert.toMatch(message)
+    assert.toBeA('string')
+    return typeof message === 'string' ?
+        assert.toStrictlyEqual(message) :
+        assert.toMatch(message)
   })
 }
 
