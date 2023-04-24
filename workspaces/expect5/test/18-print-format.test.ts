@@ -566,6 +566,31 @@ describe('Diff Printer Format', () => {
       ])
     })
 
+    it('should print the difference between two different objects with an extra key mapped to undefined', () => {
+      print(diff(
+          { foo: 123, extra: undefined },
+          { foo: 123 },
+      ), [
+        '{',
+        '  "foo": 123,',
+        '  (extra) "extra": <undefined>,',
+        '}',
+      ])
+    })
+
+    it('should print the difference between two different objects with a missing key mapped to undefined', () => {
+      print(diff(
+          { foo: 123 },
+          { foo: 123, missing: undefined },
+      ), [
+        '{',
+        '  "foo": 123,',
+        '  (missing) "missing": <undefined>,',
+        '}',
+      ])
+    })
+
+
     it('should print the difference between two different maps', () => {
       print(diff(
           map({ foo: 123, bar: true, extra: { hello: 'planet' } }),
