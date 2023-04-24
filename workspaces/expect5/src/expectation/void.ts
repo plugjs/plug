@@ -1,80 +1,82 @@
 import { ExpectationError, stringifyValue } from './types'
 
-import type { Expectation, Expectations } from './expect'
+import type { Expectations, ExpectationsContext } from './expect'
 
-/** A simple {@link Expectation} performing a basic true/false check */
-abstract class VoidExpectation implements Expectation {
-  constructor(
-      private _details: string,
-      private _check: (value: unknown) => boolean,
-  ) {}
-
-  expect(context: Expectations, negative: boolean): void {
-    const check = this._check(context.value)
-    if (check === negative) {
-      throw new ExpectationError(context, negative, this._details)
-    }
+function check(
+    context: ExpectationsContext,
+    details: string,
+    cb: (value: unknown) => boolean,
+): Expectations {
+  const match = cb(context.value)
+  if (match === context._negative) {
+    throw new ExpectationError(context, context._negative, details)
+  } else {
+    return context._expectations
   }
 }
 
 /* ========================================================================== */
 
-export class ToBeDefined extends VoidExpectation {
-  constructor() {
-    super('to be defined', (value) => (value !== null) && (value !== undefined))
-  }
+function toBeDefined<T>(this: T): T
+function toBeDefined(this: ExpectationsContext): Expectations {
+  return check(this, 'to be defined', (value) => (value !== null) && (value !== undefined))
 }
 
-export class ToBeFalse extends VoidExpectation {
-  constructor() {
-    super(`to be ${stringifyValue(false)}`, (value) => value === false)
-  }
+function toBeFalse(): Expectations<false>
+function toBeFalse(this: ExpectationsContext): Expectations {
+  return check(this, `to be ${stringifyValue(false)}`, (value) => value === false)
 }
 
-export class ToBeFalsy extends VoidExpectation {
-  constructor() {
-    super('to be falsy', (value) => ! value)
-  }
+function toBeFalsy<T>(this: T): T
+function toBeFalsy(this: ExpectationsContext): Expectations {
+  return check(this, 'to be falsy', (value) => ! value)
 }
 
-export class ToBeNaN extends VoidExpectation {
-  constructor() {
-    super(`to be ${stringifyValue(NaN)}`, (value) => (typeof value === 'number') && isNaN(value))
-  }
+function toBeNaN(): Expectations<number>
+function toBeNaN(this: ExpectationsContext): Expectations {
+  return check(this, `to be ${stringifyValue(NaN)}`, (value) => (typeof value === 'number') && isNaN(value))
 }
 
-export class ToBeNegativeInfinity extends VoidExpectation {
-  constructor() {
-    super(`to equal ${stringifyValue(Number.NEGATIVE_INFINITY)}`, (value) => value === Number.NEGATIVE_INFINITY)
-  }
+function toBeNegativeInfinity(): Expectations<number>
+function toBeNegativeInfinity(this: ExpectationsContext): Expectations {
+  return check(this, `to equal ${stringifyValue(Number.NEGATIVE_INFINITY)}`, (value) => value === Number.NEGATIVE_INFINITY)
 }
 
-export class ToBeNull extends VoidExpectation {
-  constructor() {
-    super(`to be ${stringifyValue(null)}`, (value) => value === null)
-  }
+function toBeNull(): Expectations<null>
+function toBeNull(this: ExpectationsContext): Expectations {
+  return check(this, `to be ${stringifyValue(null)}`, (value) => value === null)
 }
 
-export class ToBePositiveInfinity extends VoidExpectation {
-  constructor() {
-    super(`to equal ${stringifyValue(Number.POSITIVE_INFINITY)}`, (value) => value === Number.POSITIVE_INFINITY)
-  }
+function toBePositiveInfinity(): Expectations<number>
+function toBePositiveInfinity(this: ExpectationsContext): Expectations {
+  return check(this, `to equal ${stringifyValue(Number.POSITIVE_INFINITY)}`, (value) => value === Number.POSITIVE_INFINITY)
 }
 
-export class ToBeTrue extends VoidExpectation {
-  constructor() {
-    super(`to be ${stringifyValue(true)}`, (value) => value === true)
-  }
+function toBeTrue(): Expectations<true>
+function toBeTrue(this: ExpectationsContext): Expectations {
+  return check(this, `to be ${stringifyValue(true)}`, (value) => value === true)
 }
 
-export class ToBeTruthy extends VoidExpectation {
-  constructor() {
-    super('to be truthy', (value) => !! value)
-  }
+function toBeTruthy<T>(this: T): T
+function toBeTruthy(this:ExpectationsContext): Expectations {
+  return check(this, 'to be truthy', (value) => !! value)
 }
 
-export class ToBeUndefined extends VoidExpectation {
-  constructor() {
-    super(`to be ${stringifyValue(undefined)}`, (value) => value === undefined)
-  }
+function toBeUndefined(): Expectations<undefined>
+function toBeUndefined(this: ExpectationsContext): Expectations {
+  return check(this, `to be ${stringifyValue(undefined)}`, (value) => value === undefined)
+}
+
+/* coverage ignore next */
+export {
+  toBeDefined,
+  toBeFalse,
+  toBeFalsy,
+  toBeNaN,
+  toBeNegativeInfinity,
+  toBeNull,
+  toBePositiveInfinity,
+  toBeTrue,
+  toBeTruthy,
+  toBeUndefined,
 }
