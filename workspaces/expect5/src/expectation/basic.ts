@@ -5,10 +5,18 @@ import type { Constructor, TypeName, StringMatcher } from './types'
 import type { Expectation, Expectations } from './expect'
 
 export class ToBeA implements Expectation {
-  expect(context: Expectations, negative: boolean, type: TypeName): void {
+  expect(
+      context: Expectations,
+      negative: boolean,
+      type: TypeName,
+      assert?: (valueExpectations: Expectations) => void,
+  ): void {
     const match = isType(context, type)
-    if (match !== negative) return
-    throw new ExpectationError(context, negative, `to be ${prefixType(type)}`)
+    if (match === negative) {
+      throw new ExpectationError(context, negative, `to be ${prefixType(type)}`)
+    } else if (assert) {
+      assert(context)
+    }
   }
 }
 
