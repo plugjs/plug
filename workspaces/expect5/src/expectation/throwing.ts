@@ -1,45 +1,101 @@
 import { ExpectationError, assertType } from './types'
 
-import type { Expectation, Expectations } from './expect'
-import type { Constructor, StringMatcher } from './types'
+import type { AssertionFunction, Expectations, ExpectationsContext, JoinExpectations } from './expect'
+import type { Constructor } from './types'
 
-export class ToThrow implements Expectation {
-  expect(
-      context: Expectations,
-      negative: boolean,
-      assert?: (errorExpectations: Expectations) => void,
-  ): void {
-    assertType(context, 'function')
+/* === TO THROW ============================================================= */
 
-    let thrown: boolean
-    let error: unknown
-    try {
-      context.value()
-      thrown = false
-      error = undefined
-    } catch (caught) {
-      thrown = true
-      error = caught
-    }
+/** Expects the value to be a `function` throwing _anything_. */
+function toThrow<T>(this: T): JoinExpectations<T, Function>
 
-    if (thrown === negative) {
-      throw new ExpectationError(context, negative, 'to throw')
-    } else if (thrown && assert) {
-      assert(context.forValue(error))
-    }
+/**
+ * Expects the value to be a `function` throwing, and asserts the
+ * thrown value with the specified callback.
+ */
+function toThrow<T>(this: T, assert: AssertionFunction): JoinExpectations<T, Function>
+
+/* Overloaded function implementation */
+function toThrow(
+    this: ExpectationsContext,
+    assert?: AssertionFunction,
+): Expectations {
+  assertType(this, 'function')
+
+  let thrown: boolean
+  let error: unknown
+  try {
+    this.value()
+    thrown = false
+    error = undefined
+  } catch (caught) {
+    thrown = true
+    error = caught
   }
+
+  if (thrown === this._negative) {
+    throw new ExpectationError(this, this._negative, 'to throw')
+  } else if (thrown && assert) {
+    assert(this.forValue(error))
+  }
+
+  return this._expectations
 }
 
-export class ToThrowError implements Expectation {
-  expect(
-      context: Expectations,
-      negative: boolean,
-      ...args:
-      | []
-      | [ message: StringMatcher ]
-      | [ constructor: Constructor<Error> ]
-      | [ constructor: Constructor<Error>, message: StringMatcher ]
-  ): void {
-    context.negated(negative).toThrow((assert) => assert.toBeError(...args))
-  }
+/* === TO THROW ERROR ======================================================= */
+
+/** Expects the value to be a `function` throwing an {@link Error}. */
+function toThrowError<T>(this: T): JoinExpectations<T, Function>
+
+/**
+ * Expects the value to be a `function` throwing an {@link Error} with the
+ * specified _message_.
+ */
+function toThrowError<T>(this: T, message: string): JoinExpectations<T, Function>
+
+/**
+ * Expects the value to be a `function` throwing an {@link Error} with its
+ * _message_ matching the specified {@link RegExp}.
+ */
+function toThrowError<T>(this: T, expession: RegExp): JoinExpectations<T, Function>
+
+/**
+ * Expects the value to be a `function` throwing an {@link Error} of the
+ * specified _type_.
+ */
+function toThrowError<T>(this: T, constructor: Constructor<Error>): JoinExpectations<T, Function>
+
+/**
+ * Expects the value to be a `function` throwing an {@link Error} of the
+ * specified _type_ with the specified _message_.
+ */
+function toThrowError<T>(this: T, constructor: Constructor<Error>, message: string): JoinExpectations<T, Function>
+
+/**
+ * Expects the value to be a `function` throwing an {@link Error} of the
+ * specified _type_ with its _message_ matching the specified {@link RegExp}.
+ */
+function toThrowError<T>(this: T, constructor: Constructor<Error>, expression: RegExp): JoinExpectations<T, Function>
+
+/* Overloaded function implementation */
+function toThrowError(
+    this: ExpectationsContext,
+    ...args:
+    | []
+    | [ string ]
+    | [ RegExp ]
+    | [ Constructor<Error> ]
+    | [ Constructor<Error>, string ]
+    | [ Constructor<Error>, RegExp ]
+): Expectations {
+  return this.negated(this._negative)
+      // @ts-ignore // can't reconcile the types with overloads...
+      .toThrow((assert) => assert.toBeError(...args))
+}
+
+/* === EXPORTS ============================================================== */
+
+/* coverage ignore next */
+export {
+  toThrow,
+  toThrowError,
 }
