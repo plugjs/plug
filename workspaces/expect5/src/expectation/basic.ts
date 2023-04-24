@@ -1,5 +1,5 @@
 import { diff } from './diff'
-import { assertType, ExpectationError, isType, prefixType, stringifyConstructor, stringifyValue } from './types'
+import { assertContextType, ExpectationError, prefixType, stringifyConstructor, stringifyValue, typeOf } from './types'
 
 import type { AssertedType, AssertionFunction, Expectations, ExpectationsContext, JoinExpectations } from './expect'
 import type { Constructor, TypeName, TypeMappings } from './types'
@@ -21,7 +21,7 @@ function toBeA<T extends TypeName>(
     type: T,
     assert?: (valueExpectations: Expectations) => void,
 ): Expectations {
-  const match = isType(this, type)
+  const match = typeOf(this.value) === type
   if (match === this._negative) {
     throw new ExpectationError(this, this._negative, `to be ${prefixType(type)}`)
   } else if (assert) {
@@ -124,7 +124,7 @@ function toBeGreaterThan(
     this: ExpectationsContext,
     value: number | bigint,
 ): Expectations {
-  assertType(this, typeof value as 'number' | 'bigint')
+  assertContextType(this, typeof value as 'number' | 'bigint')
   if ((this.value > value) !== this._negative) return this._expectations
   throw new ExpectationError(this, this._negative, `to be greater than ${stringifyValue(value)}`)
 }
@@ -141,7 +141,7 @@ function toBeGreaterThanOrEqual(
     this: ExpectationsContext,
     value: number | bigint,
 ): Expectations {
-  assertType(this, typeof value as 'number' | 'bigint')
+  assertContextType(this, typeof value as 'number' | 'bigint')
   if ((this.value >= value) !== this._negative) return this._expectations
   throw new ExpectationError(this, this._negative, `to be greater than or equal to ${stringifyValue(value)}`)
 }
@@ -173,7 +173,7 @@ function toBeLessThan(
     this: ExpectationsContext,
     value: number | bigint,
 ): Expectations {
-  assertType(this, typeof value as 'number' | 'bigint')
+  assertContextType(this, typeof value as 'number' | 'bigint')
   if ((this.value < value) !== this._negative) return this._expectations
   throw new ExpectationError(this, this._negative, `to be less than ${stringifyValue(value)}`)
 }
@@ -190,7 +190,7 @@ function toBeLessThanOrEqual(
     this: ExpectationsContext,
     value: number | bigint,
 ): Expectations {
-  assertType(this, typeof value as 'number' | 'bigint')
+  assertContextType(this, typeof value as 'number' | 'bigint')
   if ((this.value <= value) !== this._negative) return this._expectations
   throw new ExpectationError(this, this._negative, `to be less than or equal to ${stringifyValue(value)}`)
 }
@@ -214,7 +214,7 @@ function toBeWithinRange(
     min = num
   }
 
-  assertType(this, typeof min as 'number' | 'bigint')
+  assertContextType(this, typeof min as 'number' | 'bigint')
   if (((this.value >= min) && (this.value <= max)) !== this._negative) return this._expectations
   throw new ExpectationError(this, this._negative, `to be within ${stringifyValue(min)}...${stringifyValue(max)}`)
 }
@@ -341,7 +341,7 @@ function toMatch(
     this: ExpectationsContext,
     expr: string | RegExp,
 ): Expectations {
-  assertType(this, 'string')
+  assertContextType(this, 'string')
 
   const match = !! this.value.match(expr)
   if (match !== this._negative) return this._expectations

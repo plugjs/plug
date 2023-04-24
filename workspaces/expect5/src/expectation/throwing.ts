@@ -1,4 +1,4 @@
-import { ExpectationError, assertType } from './types'
+import { ExpectationError, assertContextType } from './types'
 
 import type { AssertionFunction, Expectations, ExpectationsContext, JoinExpectations } from './expect'
 import type { Constructor } from './types'
@@ -19,7 +19,7 @@ function toThrow(
     this: ExpectationsContext,
     assert?: AssertionFunction,
 ): Expectations {
-  assertType(this, 'function')
+  assertContextType(this, 'function')
 
   let thrown: boolean
   let error: unknown

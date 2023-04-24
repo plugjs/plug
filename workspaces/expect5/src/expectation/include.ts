@@ -4,6 +4,8 @@ import { ExpectationError, stringifyObjectType, stringifyValue } from './types'
 import type { Diff } from './diff'
 import type { Expectations, ExpectationsContext, JoinExpectations } from './expect'
 
+/* === TO INCLUDE =========================================================== */
+
 function toInclude<T, P extends Record<string, any>>(this: T, properties: P): JoinExpectations<T, P>
 function toInclude<T>(this: T, mappings: Map<any, any>): T
 function toInclude<T>(this: T, entries: Set<any>): T
@@ -23,6 +25,8 @@ function toInclude(
   if (expected instanceof Object) return includesProps(this, this._negative, expected)
   throw new TypeError(`Invalid type for "toInclude(...)": ${stringifyValue(expected)}`)
 }
+
+/* === TO MATCH CONTENTS ==================================================== */
 
 function toMatchContents<T>(this: T, contents: any[]): T
 function toMatchContents<T>(this: T, contents: Set<any>): T
@@ -48,6 +52,8 @@ function toMatchContents(
       `to match contents of ${stringifyObjectType(contents)}`,
       { ...result, value: this.value })
 }
+
+/* === EXPORTS ============================================================== */
 
 export {
   toInclude,

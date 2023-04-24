@@ -81,22 +81,12 @@ export function typeOf(value: unknown): TypeName {
   return 'object'
 }
 
-/** Determines if the specified `value` is of the specified _expanded_ `type` */
-export function isType<T extends keyof TypeMappings>(
-    context: ExpectationsContext,
-    type: T,
-): context is ExpectationsContext<TypeMappings[T]> {
-  return typeOf(context.value) === type
-}
-
 /** Asserts that the specified `value` is of the specified _expanded_ `type` */
-export function assertType<T extends keyof TypeMappings>(
+export function assertContextType<T extends keyof TypeMappings>(
     context: ExpectationsContext,
     type: T,
 ): asserts context is ExpectationsContext<TypeMappings[T]> {
-  const { value } = context
-
-  if (typeOf(value) === type) return
+  if (typeOf(context.value) === type) return
 
   throw new ExpectationError(context, false, `to be ${prefixType(type)}`)
 }
