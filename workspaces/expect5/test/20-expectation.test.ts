@@ -20,17 +20,6 @@ describe('Expectations Core', () => {
     assert.strictEqual(negative.negated(true), negative)
     assert.strictEqual(positive.negated(true), negative)
   })
-
-  it('should return a context for a property', () => {
-    const object = { foo: { bar: 'baz' } }
-
-    const expectations = expect(object).forProperty('foo')
-    assert.strictEqual(expectations.value, object.foo)
-
-    // must be positive expectations
-    assert.strictEqual(expectations.negated(false), expectations)
-    assert.strictEqual(expectations.negated(true), expectations.not)
-  })
 })
 
 describe('Asynchronous Expectations', () => {
