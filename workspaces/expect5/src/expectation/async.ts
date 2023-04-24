@@ -1,7 +1,7 @@
 import { ExpectationError } from './types'
 
 import type { AssertedType, AssertionFunction, Expectations, ExpectationsContext } from './expect'
-import type { Constructor, StringMatcher } from './types'
+import type { Constructor } from './types'
 
 /* === TO BE RESOLVED ======================================================= */
 
@@ -97,19 +97,27 @@ function toBeRejectedWithError(constructor: Constructor<Error>): Promise<Expecta
  * Expect the value to be a {@link Promise} _rejected_ by an {@link Error}
  * of the specified _type_ and with the specified _message_.
  */
-function toBeRejectedWithError(constructor: Constructor<Error>, message: StringMatcher): Promise<Expectations<Promise<unknown>>>
+function toBeRejectedWithError(constructor: Constructor<Error>, message: string): Promise<Expectations<Promise<unknown>>>
+
+/**
+ * Expect the value to be a {@link Promise} _rejected_ by an {@link Error}
+ * of the specified _type_ and with the specified _message_.
+ */
+function toBeRejectedWithError(constructor: Constructor<Error>, message: RegExp): Promise<Expectations<Promise<unknown>>>
 
 /* Overloaded function implementation */
 function toBeRejectedWithError(
     this: ExpectationsContext,
     ...args:
     | []
-    | [ message: StringMatcher ]
-    | [ constructor: Constructor<Error> ]
-    | [ constructor: Constructor<Error>, message: StringMatcher ]
+    | [ string ]
+    | [ RegExp ]
+    | [ Constructor<Error> ]
+    | [ Constructor<Error>, string ]
+    | [ Constructor<Error>, RegExp ]
 ): Promise<Expectations> {
   return this.negated(this._negative)
-      // @ts-ignore
+      // @ts-ignore // can't reconcile the types with overloads...
       .toBeRejected((assert) => assert.toBeError(...args))
 }
 
