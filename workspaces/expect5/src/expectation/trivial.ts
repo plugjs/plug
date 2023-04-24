@@ -2,21 +2,6 @@ import { ExpectationError, stringifyValue } from './types'
 
 import type { Expectations, ExpectationsContext } from './expect'
 
-function check(
-    context: ExpectationsContext,
-    details: string,
-    cb: (value: unknown) => boolean,
-): Expectations {
-  const match = cb(context.value)
-  if (match === context._negative) {
-    throw new ExpectationError(context, context._negative, details)
-  } else {
-    return context._expectations
-  }
-}
-
-/* ========================================================================== */
-
 function toBeDefined<T>(this: T): T
 function toBeDefined(this: ExpectationsContext): Expectations {
   return check(this, 'to be defined', (value) => (value !== null) && (value !== undefined))
@@ -67,6 +52,8 @@ function toBeUndefined(this: ExpectationsContext): Expectations {
   return check(this, `to be ${stringifyValue(undefined)}`, (value) => value === undefined)
 }
 
+/* === EXPORTS ============================================================== */
+
 /* coverage ignore next */
 export {
   toBeDefined,
@@ -79,4 +66,21 @@ export {
   toBeTrue,
   toBeTruthy,
   toBeUndefined,
+}
+
+/* ========================================================================== *
+ * INTERNALS                                                                  *
+ * ========================================================================== */
+
+function check(
+    context: ExpectationsContext,
+    details: string,
+    cb: (value: unknown) => boolean,
+): Expectations {
+  const match = cb(context.value)
+  if (match === context._negative) {
+    throw new ExpectationError(context, context._negative, details)
+  } else {
+    return context._expectations
+  }
 }
