@@ -40,7 +40,7 @@ function toBeNull(this: ExpectationsContext): Expectations {
 }
 
 /* Expects the value to strictly equal to `null` or `undefined`. */
-function toBeNullable(): Expectations<null>
+function toBeNullable(): Expectations<null | undefined>
 function toBeNullable(this: ExpectationsContext): Expectations {
   return check(
       this,
