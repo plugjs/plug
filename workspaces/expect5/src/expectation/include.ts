@@ -66,7 +66,7 @@ function toMatchContents(
 
   const result = diff(actual, expected)
   delete result.error // remove extra error message about size differences...
-  if (result.diff === this._negative) return this._expectations
+  if (result.diff === this.negative) return this.expects
   throw new ExpectationError(this,
       `to match contents of ${stringifyObjectType(contents)}`,
       { ...result, value: this.value })
@@ -90,14 +90,14 @@ function includesProps(context: ExpectationsContext, expected: Record<string, an
   }
 
   // we really need an object as actual
-  context._expectations.toBeInstanceOf(Object)
+  context.expects.toBeInstanceOf(Object)
   const actual: Record<string, any> = context.value as any
 
   // get expected key set and process...
   const keys = new Set(Object.keys(expected))
   const props: Record<string, Diff> = {}
 
-  if (context._negative) {
+  if (context.negative) {
     // only consider keys... if they exist, fail!
     for (const key of keys) {
       if ((actual[key] !== undefined) || (key in actual)) {
@@ -122,7 +122,7 @@ function includesProps(context: ExpectationsContext, expected: Record<string, an
   }
 
   const count = Object.keys(props).length
-  if (count === 0) return context._expectations // no props? no errors!
+  if (count === 0) return context.expects // no props? no errors!
 
   const type = count === 1 ? 'property' : 'properties'
   throw new ExpectationError(context, `to include ${count} ${type}`, {
@@ -134,7 +134,7 @@ function includesProps(context: ExpectationsContext, expected: Record<string, an
 
 function includesValues(context: ExpectationsContext, expected: Set<any>): Expectations {
   // we really need an _iterable_ object as actual
-  context._expectations.toBeInstanceOf(Object)
+  context.expects.toBeInstanceOf(Object)
   if (typeof (context.value as any)[Symbol.iterator] !== 'function') {
     throw new ExpectationError(context, 'to be an iterable object', false)
   }
@@ -142,7 +142,7 @@ function includesValues(context: ExpectationsContext, expected: Set<any>): Expec
 
   // iterate through all the values and see what we can find
   const values: Diff[] = []
-  if (context._negative) {
+  if (context.negative) {
     for (const exp of expected) {
       for (const act of actual) {
         const result = diff(act, exp)
@@ -170,7 +170,7 @@ function includesValues(context: ExpectationsContext, expected: Set<any>): Expec
   }
 
   const count = values.length
-  if (count === 0) return context._expectations // no values? no errors!
+  if (count === 0) return context.expects // no values? no errors!
 
   const type = count === 1 ? 'value' : 'values'
   throw new ExpectationError(context, `to include ${count} ${type}`, {
@@ -181,14 +181,14 @@ function includesValues(context: ExpectationsContext, expected: Set<any>): Expec
 }
 
 function includesMappings(context: ExpectationsContext, expected: Map<any, any>): Expectations {
-  context._expectations.toBeInstanceOf(Map)
+  context.expects.toBeInstanceOf(Map)
   const actual: Map<any, any> = context.value as any
 
   // Get expected key set and process...
   const keys = new Set(expected.keys())
   const mappings: [ string, Diff ][] = []
 
-  if (context._negative) {
+  if (context.negative) {
     // only consider keys... if they exist, fail!
     for (const key of keys) {
       if (actual.has(key)) {
@@ -207,7 +207,7 @@ function includesMappings(context: ExpectationsContext, expected: Map<any, any>)
   }
 
   const count = mappings.length
-  if (count === 0) return context._expectations // no mappings? no errors!
+  if (count === 0) return context.expects // no mappings? no errors!
 
   const type = count === 1 ? 'mapping' : 'mappings'
   throw new ExpectationError(context, `to include ${count} ${type}`, {

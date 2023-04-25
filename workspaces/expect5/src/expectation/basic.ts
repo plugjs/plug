@@ -37,12 +37,12 @@ function toBeA<T extends TypeName>(
     assert?: (valueExpectations: Expectations) => void,
 ): Expectations {
   const match = typeOf(this.value) === type
-  if (match === this._negative) {
+  if (match === this.negative) {
     throw new ExpectationError(this, `to be ${prefixType(type)}`)
   } else if (assert) {
-    assert(this._expectations)
+    assert(this.expects)
   }
-  return this._expectations
+  return this.expects
 }
 
 /* === TO BE CLOSE TO ======================================================= */
@@ -67,7 +67,7 @@ function toBeCloseTo(
 ): Expectations {
   const min = (value as number) - (delta as number)
   const max = (value as number) + (delta as number)
-  return this._negated.toBeWithinRange(min, max)
+  return this.negated.toBeWithinRange(min, max)
 }
 
 /* === TO BE ERROR ========================================================== */
@@ -113,12 +113,12 @@ function toBeError(
       [ args[0], args[1] ] :
       [ Error, args[0] ]
 
-  this._negated.toBeInstanceOf(constructor)
+  this.negated.toBeInstanceOf(constructor)
 
   // if "not.toBeError" ignore the message
-  if (this._negative || (message === undefined)) return this._expectations
+  if (this.negative || (message === undefined)) return this.expects
 
-  return this._expectations.toHaveProperty('message', (assert) => {
+  return this.expects.toHaveProperty('message', (assert) => {
     assert.toBeA('string')
     return typeof message === 'string' ?
         assert.toStrictlyEqual(message) :
@@ -140,7 +140,7 @@ function toBeGreaterThan(
     value: number | bigint,
 ): Expectations {
   assertContextType(this, typeof value as 'number' | 'bigint')
-  if ((this.value > value) !== this._negative) return this._expectations
+  if ((this.value > value) !== this.negative) return this.expects
   throw new ExpectationError(this, `to be greater than ${stringifyValue(value)}`)
 }
 
@@ -157,7 +157,7 @@ function toBeGreaterThanOrEqual(
     value: number | bigint,
 ): Expectations {
   assertContextType(this, typeof value as 'number' | 'bigint')
-  if ((this.value >= value) !== this._negative) return this._expectations
+  if ((this.value >= value) !== this.negative) return this.expects
   throw new ExpectationError(this, `to be greater than or equal to ${stringifyValue(value)}`)
 }
 
@@ -172,7 +172,7 @@ function toBeInstanceOf(
     value: Constructor,
 ): Expectations {
   const match = this.value instanceof value
-  if (match !== this._negative) return this._expectations
+  if (match !== this.negative) return this.expects
   throw new ExpectationError(this, `to be an instance of ${stringifyConstructor(value)}`)
 }
 
@@ -189,7 +189,7 @@ function toBeLessThan(
     value: number | bigint,
 ): Expectations {
   assertContextType(this, typeof value as 'number' | 'bigint')
-  if ((this.value < value) !== this._negative) return this._expectations
+  if ((this.value < value) !== this.negative) return this.expects
   throw new ExpectationError(this, `to be less than ${stringifyValue(value)}`)
 }
 
@@ -206,7 +206,7 @@ function toBeLessThanOrEqual(
     value: number | bigint,
 ): Expectations {
   assertContextType(this, typeof value as 'number' | 'bigint')
-  if ((this.value <= value) !== this._negative) return this._expectations
+  if ((this.value <= value) !== this.negative) return this.expects
   throw new ExpectationError(this, `to be less than or equal to ${stringifyValue(value)}`)
 }
 
@@ -230,7 +230,7 @@ function toBeWithinRange(
   }
 
   assertContextType(this, typeof min as 'number' | 'bigint')
-  if (((this.value >= min) && (this.value <= max)) !== this._negative) return this._expectations
+  if (((this.value >= min) && (this.value <= max)) !== this.negative) return this.expects
   throw new ExpectationError(this, `to be within ${stringifyValue(min)}...${stringifyValue(max)}`)
 }
 
@@ -245,7 +245,7 @@ function toEqual(
     expected: any,
 ): Expectations {
   const result = diff(this.value, expected)
-  if (result.diff === this._negative) return this._expectations
+  if (result.diff === this.negative) return this.expects
   throw new ExpectationError(this, `to equal ${stringifyValue(expected)}`, result)
 }
 
@@ -259,18 +259,18 @@ function toHaveLength(
     this: ExpectationsContext,
     length: number,
 ): Expectations {
-  this._expectations.toBeDefined()
+  this.expects.toBeDefined()
 
   const actualLength = (this.value as any).length
   if (typeof actualLength !== 'number') {
     throw new ExpectationError(this, 'to have a numeric "length" property', false)
   }
 
-  if ((actualLength === length) === this._negative) {
+  if ((actualLength === length) === this.negative) {
     throw new ExpectationError(this, `to have length ${stringifyValue(length)}`)
   }
 
-  return this._expectations
+  return this.expects
 }
 
 /* === TO HAVE PROPERTY ===================================================== */
@@ -297,10 +297,10 @@ function toHaveProperty(
     prop: string | symbol | number,
     assert?: AssertionFunction,
 ): Expectations {
-  this._expectations.toBeDefined()
+  this.expects.toBeDefined()
 
   const match = (this.value as any)[prop] !== undefined
-  if (match === this._negative) {
+  if (match === this.negative) {
     throw new ExpectationError(this, `to have property "${String(prop)}"`)
   } else if (match && assert) {
     try {
@@ -320,7 +320,7 @@ function toHaveProperty(
     }
   }
 
-  return this._expectations
+  return this.expects
 }
 
 
@@ -334,18 +334,18 @@ function toHaveSize(
     this: ExpectationsContext,
     size: number,
 ): Expectations {
-  this._expectations.toBeDefined()
+  this.expects.toBeDefined()
 
   const actualSize = (this.value as any).size
   if (typeof actualSize !== 'number') {
     throw new ExpectationError(this, 'to have a numeric "size" property', false)
   }
 
-  if ((actualSize === size) === this._negative) {
+  if ((actualSize === size) === this.negative) {
     throw new ExpectationError(this, `to have size ${stringifyValue(size)}`)
   }
 
-  return this._expectations
+  return this.expects
 }
 
 /* === TO MATCH ============================================================= */
@@ -363,7 +363,7 @@ function toMatch(
   assertContextType(this, 'string')
 
   const match = !! this.value.match(expr)
-  if (match !== this._negative) return this._expectations
+  if (match !== this.negative) return this.expects
 
   throw new ExpectationError(this, `to match ${stringifyValue(expr)}`)
 }
@@ -381,9 +381,9 @@ function toStrictlyEqual(
 ): Expectations {
   // const value = context.value
   const match = this.value === expected
-  if (match !== this._negative) return this._expectations
+  if (match !== this.negative) return this.expects
 
-  const diff = this._negative ? undefined : { diff: true, value: this.value, expected }
+  const diff = this.negative ? undefined : { diff: true, value: this.value, expected }
   throw new ExpectationError(this, `to strictly equal ${stringifyValue(expected)}`, diff)
 }
 

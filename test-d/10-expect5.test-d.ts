@@ -1,7 +1,7 @@
 import { expect, type Expectations } from '@plugjs/expect5'
 import { expectError, expectType, printType } from 'tsd'
 
-import type { ExpectationsMatcher } from '@plugjs/expect5/expectation/expect'
+import type { Matchers } from '@plugjs/expect5/expectation/expect'
 import type { AssertionFunction, Constructor, TypeName } from '@plugjs/expect5/expectation/types'
 
 printType('__file_marker__')
@@ -216,12 +216,12 @@ expectType<Expectations<boolean>>(expect(true).not.toBeUndefined())
 expectType<{(...args:
 | [TypeName]
 | [TypeName, AssertionFunction ]
-): ExpectationsMatcher}>(expect.toBeA)
+): Matchers}>(expect.toBeA)
 
 expectType<{(...args:
 | [number, number]
 | [bigint, bigint ]
-): ExpectationsMatcher}>(expect.toBeCloseTo)
+): Matchers}>(expect.toBeCloseTo)
 
 expectType<{(...args:
 | []
@@ -230,62 +230,62 @@ expectType<{(...args:
 | [Constructor<Error>]
 | [Constructor<Error>, string]
 | [Constructor<Error>, RegExp]
-): ExpectationsMatcher}>(expect.toBeError)
+): Matchers}>(expect.toBeError)
 
 expectType<{(...args:
 | [number]
 | [bigint]
-): ExpectationsMatcher}>(expect.toBeGreaterThan)
+): Matchers}>(expect.toBeGreaterThan)
 
 expectType<{(...args:
 | [number]
 | [bigint]
-): ExpectationsMatcher}>(expect.toBeGreaterThanOrEqual)
+): Matchers}>(expect.toBeGreaterThanOrEqual)
 
 expectType<{(...args:
 | [Constructor]
-): ExpectationsMatcher}>(expect.toBeInstanceOf)
+): Matchers}>(expect.toBeInstanceOf)
 
 expectType<{(...args:
 | [number]
 | [bigint]
-): ExpectationsMatcher}>(expect.toBeLessThan)
+): Matchers}>(expect.toBeLessThan)
 
 expectType<{(...args:
 | [number]
 | [bigint]
-): ExpectationsMatcher}>(expect.toBeLessThanOrEqual)
+): Matchers}>(expect.toBeLessThanOrEqual)
 
 expectType<{(...args:
 | [number, number]
 | [bigint, bigint ]
-): ExpectationsMatcher}>(expect.toBeWithinRange)
+): Matchers}>(expect.toBeWithinRange)
 
 expectType<{(...args:
 | [unknown] // generic...
-): ExpectationsMatcher}>(expect.toEqual)
+): Matchers}>(expect.toEqual)
 
 expectType<{(...args:
 | [number]
-): ExpectationsMatcher}>(expect.toHaveLength)
+): Matchers}>(expect.toHaveLength)
 
 expectType<{(...args:
 | [string | symbol | number]
 | [string | symbol | number, AssertionFunction ]
-): ExpectationsMatcher}>(expect.toHaveProperty)
+): Matchers}>(expect.toHaveProperty)
 
 expectType<{(...args:
 | [number]
-): ExpectationsMatcher}>(expect.toHaveSize)
+): Matchers}>(expect.toHaveSize)
 
 expectType<{(...args:
 | [string]
 | [RegExp]
-): ExpectationsMatcher}>(expect.toMatch)
+): Matchers}>(expect.toMatch)
 
 expectType<{(...args:
 | [unknown] // any becomes unknown, as it's generic
-): ExpectationsMatcher}>(expect.toStrictlyEqual)
+): Matchers}>(expect.toStrictlyEqual)
 
 // include expectations
 
@@ -294,19 +294,19 @@ expectType<{(...args:
 | [Record<string, any>]
 | [Map<any, any>]
 | [Set<any>]
-): ExpectationsMatcher}>(expect.toInclude)
+): Matchers}>(expect.toInclude)
 
 expectType<{(...args:
 | [Set<any>]
 | [any[]]
-): ExpectationsMatcher}>(expect.toMatchContents)
+): Matchers}>(expect.toMatchContents)
 
 // throwing expectations
 
 expectType<{(...args:
 | []
 | [AssertionFunction]
-): ExpectationsMatcher}>(expect.toThrow)
+): Matchers}>(expect.toThrow)
 
 expectType<{(...args:
 | []
@@ -315,21 +315,21 @@ expectType<{(...args:
 | [Constructor<Error>]
 | [Constructor<Error>, string]
 | [Constructor<Error>, RegExp]
-): ExpectationsMatcher}>(expect.toThrowError)
+): Matchers}>(expect.toThrowError)
 
 // trivial expectations
 
-expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeDefined)
-expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeFalse)
-expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeFalsy)
-expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeNaN)
-expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeNegativeInfinity)
-expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeNull)
-expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeNullable)
-expectType<{(...args: []): ExpectationsMatcher}>(expect.toBePositiveInfinity)
-expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeTrue)
-expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeTruthy)
-expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeUndefined)
+expectType<{(...args: []): Matchers}>(expect.toBeDefined)
+expectType<{(...args: []): Matchers}>(expect.toBeFalse)
+expectType<{(...args: []): Matchers}>(expect.toBeFalsy)
+expectType<{(...args: []): Matchers}>(expect.toBeNaN)
+expectType<{(...args: []): Matchers}>(expect.toBeNegativeInfinity)
+expectType<{(...args: []): Matchers}>(expect.toBeNull)
+expectType<{(...args: []): Matchers}>(expect.toBeNullable)
+expectType<{(...args: []): Matchers}>(expect.toBePositiveInfinity)
+expectType<{(...args: []): Matchers}>(expect.toBeTrue)
+expectType<{(...args: []): Matchers}>(expect.toBeTruthy)
+expectType<{(...args: []): Matchers}>(expect.toBeUndefined)
 
 /* === KEYS ================================================================= */
 

@@ -27,18 +27,18 @@ function toBeResolved(
   void assert
   return Promise.resolve()
       .then(() => {
-        this._expectations.toHaveProperty('then', (a) => a.toBeA('function'))
+        this.expects.toHaveProperty('then', (a) => a.toBeA('function'))
         return Promise.allSettled([ Promise.resolve(this.value) ])
       })
       .then(([ settlement ]) => {
         if (settlement.status === 'fulfilled') {
-          if (this._negative) throw new ExpectationError(this, 'to be resolved')
+          if (this.negative) throw new ExpectationError(this, 'to be resolved')
           if (assert) assert(this.forValue(settlement.value))
-        } else if (! this._negative) {
+        } else if (! this.negative) {
           throw new ExpectationError(this, 'to be resolved')
         }
 
-        return this._expectations
+        return this.expects
       })
 }
 
@@ -60,18 +60,18 @@ function toBeRejected(
 ): Promise<Expectations> {
   return Promise.resolve()
       .then(() => {
-        this._expectations.toHaveProperty('then', (a) => a.toBeA('function'))
+        this.expects.toHaveProperty('then', (a) => a.toBeA('function'))
         return Promise.allSettled([ Promise.resolve(this.value) ])
       })
       .then(([ settlement ]) => {
         if (settlement.status === 'rejected') {
-          if (this._negative) throw new ExpectationError(this, 'to be rejected')
+          if (this.negative) throw new ExpectationError(this, 'to be rejected')
           if (assert) assert(this.forValue(settlement.reason))
-        } else if (! this._negative) {
+        } else if (! this.negative) {
           throw new ExpectationError(this, 'to be rejected')
         }
 
-        return this._expectations
+        return this.expects
       })
 }
 
@@ -121,7 +121,7 @@ function toBeRejectedWithError(
     | [ Constructor<Error>, string ]
     | [ Constructor<Error>, RegExp ]
 ): Promise<Expectations> {
-  return this._negated.toBeRejected((assert) =>
+  return this.negated.toBeRejected((assert) =>
     // @ts-ignore // can't reconcile the types with overloads...
     assert.toBeError(...args))
 }

@@ -37,13 +37,13 @@ function toThrow(
     error = caught
   }
 
-  if (thrown === this._negative) {
+  if (thrown === this.negative) {
     throw new ExpectationError(this, 'to throw')
   } else if (thrown && assert) {
     assert(this.forValue(error))
   }
 
-  return this._expectations
+  return this.expects
 }
 
 /* === TO THROW ERROR ======================================================= */
@@ -92,7 +92,7 @@ function toThrowError(
     | [ Constructor<Error>, string ]
     | [ Constructor<Error>, RegExp ]
 ): Expectations {
-  return this._negated.toThrow((assert) =>
+  return this.negated.toThrow((assert) =>
     // @ts-ignore // can't reconcile the types with overloads...
     assert.toBeError(...args))
 }

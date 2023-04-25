@@ -26,9 +26,9 @@ describe('Expectations Core', () => {
   describe('expectations error constructor', () => {
     const mock: ExpectationsContext = {
       value: undefined,
-      _negative: false,
-      _expectations: null as any,
-      _negated: null as any,
+      negative: false,
+      expects: null as any,
+      negated: null as any,
       forValue: function <V>(): Expectations<V> {
         throw new Error('Function not implemented.')
       },
@@ -45,13 +45,13 @@ describe('Expectations Core', () => {
     const context1: ExpectationsContext = {
       ...mock,
       value: 'another value',
-      _parent: { context: context0, prop: 'the prop' },
+      parent: { context: context0, prop: 'the prop' },
     }
 
     const context2: ExpectationsContext = {
       ...mock,
       value: 'yet another value',
-      _parent: { context: context1, prop: 'another prop' },
+      parent: { context: context1, prop: 'another prop' },
     }
 
     const contexta: ExpectationsContext = {
@@ -62,7 +62,7 @@ describe('Expectations Core', () => {
     const contextb: ExpectationsContext = {
       ...mock,
       value: 'value b',
-      _parent: { context: contexta, prop: 'prop' },
+      parent: { context: contexta, prop: 'prop' },
     }
 
     it('should construct a simple expectation error', () => {
@@ -72,10 +72,10 @@ describe('Expectations Core', () => {
       const error1 = new ExpectationError(context0, 'to be testing', true)
       assert.strictEqual(error1.message, 'Expected /the value/ not to be testing')
 
-      const error2 = new ExpectationError({ ...context0, _negative: true }, 'to be testing')
+      const error2 = new ExpectationError({ ...context0, negative: true }, 'to be testing')
       assert.strictEqual(error2.message, 'Expected /the value/ not to be testing')
 
-      const error3 = new ExpectationError({ ...context0, _negative: true }, 'to be testing', false)
+      const error3 = new ExpectationError({ ...context0, negative: true }, 'to be testing', false)
       assert.strictEqual(error3.message, 'Expected /the value/ to be testing')
     })
 

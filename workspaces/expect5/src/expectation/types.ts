@@ -1,5 +1,5 @@
 import type { Diff } from './diff'
-import type { Expectations, ExpectationsMatcher, ExpectationFunctions } from './expect'
+import type { Expectations, Matchers, ExpectationFunctions } from './expect'
 
 /* ========================================================================== *
  * INTERNAL TYPES FOR EXPECTATIONS                                            *
@@ -60,16 +60,16 @@ export interface ExpectationsContext<T = unknown> {
   /** The value being expected */
   readonly value: T,
   /** Whether this is a negative or positive expectation */
-  readonly _negative: boolean,
+  readonly negative: boolean,
   /** The optional parent of this instance, when constructed for a property */
-  readonly _parent?: ExpectationsParent
+  readonly parent?: ExpectationsParent
   /** The current _positive_ {@link Expectations} for the value */
-  readonly _expectations: Expectations<T>
+  readonly expects: Expectations<T>
   /**
-   * If _negative_, the _negative_ {@link Expectations} for the value,
+   * If _negative_, the _negative_ {@link ExpectationFunctions} for the value,
    * otherwise the _positive_ ones (basically, follow the `not` of `expect`).
    */
-  readonly _negated: ExpectationFunctions<T>
+  readonly negated: ExpectationFunctions<T>
 
   /** Create an {@link Expectation} instance for the specified value */
   forValue<V>(value: V): Expectations<V>,
@@ -243,7 +243,7 @@ export function prefixType(type: TypeName): string {
 
 export const matcherMarker = Symbol.for('plugjs:expect5:types:ExpectationsMatcher')
 
-export function isMatcher(what: any): what is ExpectationsMatcher {
+export function isMatcher(what: any): what is Matchers {
   return what && what[matcherMarker] === matcherMarker
 }
 
@@ -287,19 +287,19 @@ export class ExpectationError extends Error {
     const negative =
       typeof diffOrForcedNegative === 'boolean' ? diffOrForcedNegative :
       typeof maybeForcedNegative === 'boolean' ? maybeForcedNegative :
-      context._negative
+      context.negative
 
     const { value } = context
     const not = negative ? ' not' : ''
 
     // if we're not root...
     let preamble = stringifyValue(value)
-    if (context._parent) {
+    if (context.parent) {
       const properties: any[] = []
 
-      while (context._parent) {
-        properties.push(`[${stringifyValue(context._parent.prop)}]`)
-        context = context._parent.context
+      while (context.parent) {
+        properties.push(`[${stringifyValue(context.parent.prop)}]`)
+        context = context.parent.context
       }
 
       preamble = properties.reverse().join('')

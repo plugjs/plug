@@ -198,38 +198,25 @@ export interface Expectations<T = unknown> extends AllExpectations {
   readonly not: ExpectationFunctions<T>
 }
 
-
 /* ========================================================================== *
  * EXPECTATIONS IMPLEMENTATION                                                *
  * ========================================================================== */
 
 class ExpectationsContextImpl<T = unknown> implements ExpectationsContext<T> {
-  readonly value: T
-  readonly _negative: boolean
-  readonly _expectations: Expectations<T>
-  readonly _negated: ExpectationFunctions<T>
-  readonly _parent?: ExpectationsParent
-
   constructor(
-      value: T,
-      negative: boolean,
-      expectations: Expectations<T>,
-      negated: ExpectationFunctions<T>,
-      parent?: ExpectationsParent,
-  ) {
-    this.value = value
-    this._negative = negative
-    this._expectations = expectations
-    this._negated = negated
-    this._parent = parent
-  }
+      readonly value: T,
+      readonly negative: boolean,
+      readonly expects: Expectations<T>,
+      readonly negated: ExpectationFunctions<T>,
+      readonly parent?: ExpectationsParent,
+  ) {}
 
   forValue<V>(value: V): Expectations<V> {
     return new ExpectationsImpl(value)
   }
 
   forProperty(prop: string | number | symbol): Expectations<unknown> {
-    this._expectations.toBeDefined()
+    this.expects.toBeDefined()
 
     const value = (this.value as any)[prop]
     const parent = { context: this, prop }
@@ -299,13 +286,13 @@ class ExpectationsImpl<T = unknown> implements Expectations<T> {
  * ========================================================================== */
 
 /** An interface describing all expectations returned by `expect(...)` */
-export interface ExpectationsMatcher extends OverloadFunctions<SyncExpectations, ExpectationsMatcher> {
-  not: ExpectationsMatcher
+export interface Matchers extends OverloadFunctions<SyncExpectations, Matchers> {
+  not: Matchers
   /* The assertion here will trigger */
   expect(value: unknown): void
 }
 
-interface ExpectationsMatcherImpl extends ExpectationsMatcher {}
+interface ExpectationsMatcherImpl extends Matchers {}
 
 class ExpectationsMatcherImpl {
   private readonly _matchers: readonly [ string, boolean, any[] ][]
@@ -367,7 +354,7 @@ class ExpectationsMatcherImpl {
 /** The `expect` function exposing expectations and matchers */
 export const expect = (<T = unknown>(value: T): Expectations<T> => {
   return new ExpectationsImpl(value)
-}) as ExpectationsMatcher & (<T = unknown>(value: T) => Expectations<T>)
+}) as Matchers & (<T = unknown>(value: T) => Expectations<T>)
 
 // Instrument a getter for negative matchers
 Object.defineProperty(expect, 'not', {
@@ -377,7 +364,7 @@ Object.defineProperty(expect, 'not', {
 // Create a matcher for each expectation function
 for (const name in syncExpectations) {
   Object.defineProperty(expect, name, {
-    value: function(...args: any[]): ExpectationsMatcher {
+    value: function(...args: any[]): Matchers {
       const builder = new ExpectationsMatcherImpl([])
       return (builder as any)[name](...args)
     },

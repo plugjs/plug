@@ -99,9 +99,9 @@ function check(
     cb: (value: unknown) => boolean,
 ): Expectations {
   const match = cb(context.value)
-  if (match === context._negative) {
+  if (match === context.negative) {
     throw new ExpectationError(context, details)
   } else {
-    return context._expectations
+    return context.expects
   }
 }
