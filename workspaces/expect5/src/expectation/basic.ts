@@ -22,19 +22,23 @@ import type {
 /* === TO BE A ============================================================== */
 
 /** Expects the value to be of the specified {@link TypeName type}. */
-function toBeA<T extends TypeName>(type: T): Expectations<TypeMappings[T]>
+function toBeA<N extends TypeName>(type: N): Expectations<TypeMappings[N]>
 
 /**
  * Expects the value to be of the specified {@link TypeName type}, and further
  * asserts it with the specified callback.
  */
-function toBeA<T extends TypeName>(type: T, assert: (valueExpectations: Expectations) => void): Expectations<TypeMappings[T]>
+function toBeA<T, N extends TypeName, A extends AssertionFunction<TypeMappings[N]>>(
+  this: T,
+  type: N,
+  assert: A,
+): Expectations<TypeMappings[N] & AssertedType<A>>
 
 /* Overloaded function implementation */
-function toBeA<T extends TypeName>(
+function toBeA(
     this: ExpectationsContext,
-    type: T,
-    assert?: (valueExpectations: Expectations) => void,
+    type: TypeName,
+    assert?: AssertionFunction,
 ): Expectations {
   const match = typeOf(this.value) === type
   if (match === this.negative) {
@@ -276,10 +280,10 @@ function toHaveLength(
 /* === TO HAVE PROPERTY ===================================================== */
 
 /** Expects the value to have a property. */
-function toHaveProperty<T, P extends string | number | symbol, A extends AssertionFunction>(
+function toHaveProperty<T, P extends string | number | symbol>(
   this: T,
   prop: P,
-): JoinExpectations<T, { [key in P]: AssertedType<A> }>
+): JoinExpectations<T, { [key in P]: unknown }>
 
 /**
  * Expects the value to have a property, and further asserts the property

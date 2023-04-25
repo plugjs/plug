@@ -2,7 +2,7 @@ import { expect, type Expectations } from '@plugjs/expect5'
 import { expectError, expectType, printType } from 'tsd'
 
 import type { Matchers } from '@plugjs/expect5/expectation/expect'
-import type { AssertionFunction, Constructor, TypeName } from '@plugjs/expect5/expectation/types'
+import type { AssertionFunction, Constructor, TypeMappings, TypeName } from '@plugjs/expect5/expectation/types'
 
 printType('__file_marker__')
 
@@ -44,6 +44,17 @@ expectType<Promise<Expectations<PromiseLike<string>>>>(expect('foo').not.toBeRej
 
 expectType<Expectations<string>>(expect(123).toBeA('string'))
 expectType<Expectations<number>>(expect(123).toBeA('number'))
+// this is a bit complex...
+expectType<Expectations<string & { foo: string }>>(
+    expect(123) // this is <number>
+        .toBeA(
+            'string', // here we'd get <string>
+            (assert) => { // but we do a further assert...
+              expectType<Expectations<string>>(assert) // yep, it's <string>
+              return assert.toEqual({ foo: 'bar' }) // asserts it's also <{ foo: string }>
+            })) // so we override <number> with the joint <string & { foo: string }>
+// forget <number> and combine <string & number> which is... <never> :-)
+expectType<Expectations<never>>(expect(123).toBeA('string', (assert) => assert.toBeA('number')))
 expectError<Expectations<number>>(expect(123).toBeA('string'))
 expectError<Expectations<string>>(expect(123).toBeA('number'))
 expectError(expect(123).toBeA('foobar'))
@@ -221,7 +232,7 @@ expectType<Expectations<boolean>>(expect(true).not.toBeUndefined())
 
 expectType<{(...args:
 | [TypeName]
-| [TypeName, AssertionFunction ]
+| [TypeName, AssertionFunction<TypeMappings[TypeName]> ]
 ): Matchers}>(expect.toBeA)
 
 expectType<{(...args:
