@@ -17,9 +17,8 @@ export function expectFail(expectation: () => void, message: string, diff?: Diff
   assert.throws(expectation, (thrown) => {
     assert(thrown instanceof ExpectationError, 'Error type')
     assert.strictEqual(thrown.message, message)
-    if (diff && (! thrown.diff)) assert.fail('Error had diff, but none provided to check')
-    if ((! diff) && thrown.diff) assert.fail('Expected diff, error had none')
-
+    if (diff && (! thrown.diff)) assert.fail('Expected diff, error had none')
+    if ((! diff) && thrown.diff) assert.fail('Error had diff, but none provided to check')
     if (diff && thrown.diff) assert.deepEqual(thrown.diff, diff)
     return true
   })

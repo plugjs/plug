@@ -16,6 +16,8 @@ export {
 export { skip } from './execution/executable'
 export { expect } from './expectation/expect'
 
+export type { Expectations } from './expectation/expect'
+
 /* ========================================================================== *
  * EXPORTED OPTIONS TYPE AND PLUG DEFINITION                                  *
  * ========================================================================== */

@@ -6,10 +6,26 @@ import { expectFail, expectPass } from './utils'
 describe('Basic Expectations', () => {
   it('should expect "toBeA(...)"', () => {
     expectPass(() => expect('foo').toBeA('string'))
+    expectPass(() => expect('foo').toBeA('string', (assert) => assert.toStrictlyEqual('foo')))
     expectFail(() => expect('foo').toBeA('number'), 'Expected "foo" to be a <number>')
+    expectFail(() => expect('foo').toBeA('string', (assert) => assert.toStrictlyEqual('bar')),
+        'Expected "foo" to strictly equal "bar"', {
+          diff: true,
+          value: 'foo',
+          expected: 'bar',
+        })
 
     expectPass(() => expect('foo').not.toBeA('number'))
     expectFail(() => expect('foo').not.toBeA('string'), 'Expected "foo" not to be a <string>')
+
+    expectFail(() => expect('foo').not.toBeA('number', (assert) => assert.toStrictlyEqual('bar')),
+        'Expected "foo" to strictly equal "bar"', { // not a number, and not equalling to "bar"
+          diff: true,
+          value: 'foo',
+          expected: 'bar',
+        })
+    expectFail(() => expect('foo').not.toBeA('string', (assert) => assert.toStrictlyEqual('bar')),
+        'Expected "foo" not to be a <string>')
   })
 
   it('should expect "toBeCloseTo(...)"', () => {
@@ -273,11 +289,11 @@ describe('Basic Expectations', () => {
 
     const object = { foo: { bar: 'baz' } }
     let value: any = undefined
-    expectPass(() => expect(object).toHaveProperty('foo', (assert) => value = assert.value))
+    expectPass(() => expect(object).toHaveProperty('foo', (assert) => void (value = assert.value)))
     assert.strictEqual(value, object.foo)
 
     value = undefined
-    expectPass(() => expect(object).not.toHaveProperty('bar', () => value = 'called'))
+    expectPass(() => expect(object).not.toHaveProperty('bar', () => void (value = 'called')))
     assert.strictEqual(value, undefined)
   })
 

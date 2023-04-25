@@ -260,6 +260,54 @@ describe('Differences', () => {
       })
     })
 
+    it('should diff two objects with an extra key with undefined value', () => {
+      const act = { a: true, b: 123, c: undefined }
+      const exp = { a: true, b: 123 }
+
+      deepEqual(diff(act, exp), {
+        diff: true,
+        value: act,
+        props: {
+          a: {
+            diff: false,
+            value: true,
+          },
+          b: {
+            diff: false,
+            value: 123,
+          },
+          c: {
+            diff: true,
+            extra: undefined,
+          },
+        },
+      })
+    })
+
+    it('should diff two objects with a missing key with undefined value', () => {
+      const act = { a: true, b: 123 }
+      const exp = { a: true, b: 123, c: undefined }
+
+      deepEqual(diff(act, exp), {
+        diff: true,
+        value: act,
+        props: {
+          a: {
+            diff: false,
+            value: true,
+          },
+          b: {
+            diff: false,
+            value: 123,
+          },
+          c: {
+            diff: true,
+            missing: undefined,
+          },
+        },
+      })
+    })
+
     it('should diff two cyclical objects with different properties', () => {
       const act = { a: true, b: 123, c: 'foo', cycle: {} }
       const exp = { a: null, b: 321, c: false, cycle: {} }

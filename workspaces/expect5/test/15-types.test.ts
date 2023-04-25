@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 
-import { assertType, isType, prefixType, stringifyConstructor, stringifyValue, typeOf } from '../src/expectation/types'
+import { assertContextType, prefixType, stringifyConstructor, stringifyValue, typeOf } from '../src/expectation/types'
 import { expectPass, expectFail } from './utils'
 
 /* eslint-disable no-new-wrappers */
@@ -30,49 +30,9 @@ describe('Type Utilities', () => {
     assert.strictEqual(typeOf(new class Foo {}), 'object')
   })
 
-  it('should correctly guard for the type of a value', () => {
-    assert.strictEqual(isType({ value: null } as any, 'null'), true)
-    assert.strictEqual(isType({ value: 123n } as any, 'bigint'), true)
-    assert.strictEqual(isType({ value: true } as any, 'boolean'), true)
-    assert.strictEqual(isType({ value: () => {} } as any, 'function'), true)
-    assert.strictEqual(isType({ value: 12345678 } as any, 'number'), true)
-    assert.strictEqual(isType({ value: 'foobar' } as any, 'string'), true)
-    assert.strictEqual(isType({ value: Symbol() } as any, 'symbol'), true)
-    assert.strictEqual(isType({ value: undefined } as any, 'undefined'), true)
-    assert.strictEqual(isType({ value: [] } as any, 'array'), true)
-    assert.strictEqual(isType({ value: Promise.resolve() } as any, 'promise'), true)
-    assert.strictEqual(isType({ value: { then: () => {} } } as any, 'promise'), true)
-    assert.strictEqual(isType({ value: Buffer.from('x') } as any, 'buffer'), true)
-    assert.strictEqual(isType({ value: /abc/ } as any, 'regexp'), true)
-    assert.strictEqual(isType({ value: new Map() } as any, 'map'), true)
-    assert.strictEqual(isType({ value: new Set() } as any, 'set'), true)
-    assert.strictEqual(isType({ value: {} } as any, 'object'), true)
-    assert.strictEqual(isType({ value: new class {} } as any, 'object'), true)
-    assert.strictEqual(isType({ value: new class Foo {} } as any, 'object'), true)
-
-    assert.strictEqual(isType({ value: null } as any, 'object'), false)
-    assert.strictEqual(isType({ value: 123n } as any, 'null'), false)
-    assert.strictEqual(isType({ value: true } as any, 'bigint'), false)
-    assert.strictEqual(isType({ value: () => {} } as any, 'boolean'), false)
-    assert.strictEqual(isType({ value: 12345678 } as any, 'function'), false)
-    assert.strictEqual(isType({ value: 'foobar' } as any, 'number'), false)
-    assert.strictEqual(isType({ value: Symbol() } as any, 'string'), false)
-    assert.strictEqual(isType({ value: undefined } as any, 'symbol'), false)
-    assert.strictEqual(isType({ value: [] } as any, 'undefined'), false)
-    assert.strictEqual(isType({ value: Promise.resolve() } as any, 'array'), false)
-    assert.strictEqual(isType({ value: { then: () => {} } } as any, 'array'), false)
-    assert.strictEqual(isType({ value: Buffer.from('x') } as any, 'promise'), false)
-    assert.strictEqual(isType({ value: /abc/ } as any, 'buffer'), false)
-    assert.strictEqual(isType({ value: new Map() } as any, 'regexp'), false)
-    assert.strictEqual(isType({ value: new Set() } as any, 'map'), false)
-    assert.strictEqual(isType({ value: {} } as any, 'set'), false)
-    assert.strictEqual(isType({ value: new class {} } as any, 'set'), false)
-    assert.strictEqual(isType({ value: new class Foo {} } as any, 'set'), false)
-  })
-
   it('should correctly assert the type of a value', () => {
-    expectPass(() => assertType({ value: null } as any, 'null'))
-    expectFail(() => assertType({ value: null } as any, 'object'), 'Expected <null> to be an <object>')
+    expectPass(() => assertContextType({ value: null } as any, 'null'))
+    expectFail(() => assertContextType({ value: null } as any, 'object'), 'Expected <null> to be an <object>')
   })
 
   it('should stringify a constructor', () => {

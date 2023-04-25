@@ -77,15 +77,14 @@ function objectDiff<T extends Record<string, any>>(
     const act = actual[key]
     const exp = expected[key]
 
-    let result = diffValues(act, exp, remarks)
-
-    // if there is a difference, we _might_ have a missing/extra property
-    if (result.diff) {
-      if ((act === undefined) && (key in expected)) {
-        result = { diff: true, missing: exp }
-      } else if ((exp === undefined) && (key in actual)) {
-        result = { diff: true, extra: act }
-      }
+    // check for missing/extra property or differences
+    let result: Diff
+    if ((key in expected) && (!(key in actual))) {
+      result = { diff: true, missing: exp }
+    } else if ((key in actual) && (!(key in expected))) {
+      result = { diff: true, extra: act }
+    } else {
+      result = diffValues(act, exp, remarks)
     }
 
     props[key] = result
