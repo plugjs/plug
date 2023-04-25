@@ -56,15 +56,13 @@ function toMatchContents(
     actual = new Set(this.value as any)
     expected = new Set(contents)
   } catch (error) {
-    throw new ExpectationError(this, false, 'to be an iterable object')
+    throw new ExpectationError(this, 'to be an iterable object', false)
   }
 
   const result = diff(actual, expected)
   delete result.error // remove extra error message about size differences...
   if (result.diff === this._negative) return this._expectations
-  throw new ExpectationError(
-      this,
-      this._negative,
+  throw new ExpectationError(this,
       `to match contents of ${stringifyObjectType(contents)}`,
       { ...result, value: this.value })
 }
@@ -122,7 +120,7 @@ function includesProps(context: ExpectationsContext, expected: Record<string, an
   if (count === 0) return context._expectations // no props? no errors!
 
   const type = count === 1 ? 'property' : 'properties'
-  throw new ExpectationError(context, context._negative, `to include ${count} ${type}`, {
+  throw new ExpectationError(context, `to include ${count} ${type}`, {
     diff: true,
     value: actual,
     props,
@@ -133,7 +131,7 @@ function includesValues(context: ExpectationsContext, expected: Set<any>): Expec
   // we really need an _iterable_ object as actual
   context._expectations.toBeInstanceOf(Object)
   if (typeof (context.value as any)[Symbol.iterator] !== 'function') {
-    throw new ExpectationError(context, false, 'to be an iterable object')
+    throw new ExpectationError(context, 'to be an iterable object', false)
   }
   const actual = new Set(context.value as Iterable<any>)
 
@@ -170,7 +168,7 @@ function includesValues(context: ExpectationsContext, expected: Set<any>): Expec
   if (count === 0) return context._expectations // no values? no errors!
 
   const type = count === 1 ? 'value' : 'values'
-  throw new ExpectationError(context, context._negative, `to include ${count} ${type}`, {
+  throw new ExpectationError(context, `to include ${count} ${type}`, {
     diff: true,
     value: context.value,
     values,
@@ -207,7 +205,7 @@ function includesMappings(context: ExpectationsContext, expected: Map<any, any>)
   if (count === 0) return context._expectations // no mappings? no errors!
 
   const type = count === 1 ? 'mapping' : 'mappings'
-  throw new ExpectationError(context, context._negative, `to include ${count} ${type}`, {
+  throw new ExpectationError(context, `to include ${count} ${type}`, {
     diff: true,
     value: context.value,
     mappings,

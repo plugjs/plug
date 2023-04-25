@@ -27,10 +27,10 @@ function toBeResolved(
       })
       .then(([ settlement ]) => {
         if (settlement.status === 'fulfilled') {
-          if (this._negative) throw new ExpectationError(this, true, 'to be resolved')
+          if (this._negative) throw new ExpectationError(this, 'to be resolved')
           if (assert) assert(this.forValue(settlement.value))
         } else if (! this._negative) {
-          throw new ExpectationError(this, false, 'to be resolved')
+          throw new ExpectationError(this, 'to be resolved')
         }
 
         return this._expectations
@@ -60,10 +60,10 @@ function toBeRejected(
       })
       .then(([ settlement ]) => {
         if (settlement.status === 'rejected') {
-          if (this._negative) throw new ExpectationError(this, true, 'to be rejected')
+          if (this._negative) throw new ExpectationError(this, 'to be rejected')
           if (assert) assert(this.forValue(settlement.reason))
         } else if (! this._negative) {
-          throw new ExpectationError(this, false, 'to be rejected')
+          throw new ExpectationError(this, 'to be rejected')
         }
 
         return this._expectations

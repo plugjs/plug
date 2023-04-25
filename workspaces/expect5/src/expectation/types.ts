@@ -83,7 +83,7 @@ export function assertContextType<T extends keyof TypeMappings>(
 ): asserts context is ExpectationsContext<TypeMappings[T]> {
   if (typeOf(context.value) === type) return
 
-  throw new ExpectationError(context, false, `to be ${prefixType(type)}`)
+  throw new ExpectationError(context, `to be ${prefixType(type)}`, false)
 }
 
 /* ========================================================================== *
@@ -211,12 +211,41 @@ export function isMatcher(what: any): what is ExpectationsMatcher {
 export class ExpectationError extends Error {
   diff?: Diff | undefined
 
+  /** Create an {@link ExpectationError} from a context and details message */
+  constructor(context: ExpectationsContext, details: string)
+
+  /**
+   * Create an {@link ExpectationError} from a context and details message,
+   * including an optional {@link Diff}
+   */
+  constructor(context: ExpectationsContext, details: string, diff?: Diff)
+
+  /**
+   * Create an {@link ExpectationError} from a context and details message,
+   * optionally forcing _negation_ to be as specified.
+   */
+  constructor(context: ExpectationsContext, details: string, forcedNegative?: boolean)
+
+  /**
+   * Create an {@link ExpectationError} from a context and details message,
+   * including an optional {@link Diff} and forcing _negation_ to be as
+   * specified.
+   */
+  constructor(context: ExpectationsContext, details: string, diff?: Diff, forcedNegative?: boolean)
+
+  /* Overloaded constructor implementation */
   constructor(
       context: ExpectationsContext,
-      negative: boolean,
       details: string,
-      diff?: Diff,
+      diffOrForcedNegative?: Diff | boolean,
+      maybeForcedNegative?: boolean,
   ) {
+    const diff = typeof diffOrForcedNegative === 'object' ? diffOrForcedNegative : null
+    const negative =
+      typeof diffOrForcedNegative === 'boolean' ? diffOrForcedNegative :
+      typeof maybeForcedNegative === 'boolean' ? maybeForcedNegative :
+      context._negative
+
     const { value } = context
     const not = negative ? ' not' : ''
 

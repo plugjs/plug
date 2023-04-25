@@ -99,7 +99,7 @@ function check(
 ): Expectations {
   const match = cb(context.value)
   if (match === context._negative) {
-    throw new ExpectationError(context, context._negative, details)
+    throw new ExpectationError(context, details)
   } else {
     return context._expectations
   }
