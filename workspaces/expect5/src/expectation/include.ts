@@ -7,12 +7,12 @@ import {
 
 import type { Diff } from './diff'
 import type { Expectations } from './expect'
-import type { ExpectationsContext, JoinExpectations } from './types'
+import type { ExpectationsContext } from './types'
 
 /* === TO INCLUDE =========================================================== */
 
 /** Expect the value to include _all_ properties from the specified _object_. */
-function toInclude<T, P extends Record<string, any>>(this: T, properties: P): JoinExpectations<T, P>
+function toInclude<T, P extends Record<string, any>>(this: T, properties: P): T
 /** Expect the value to include _all_ mappings from the specified {@link Map}. */
 function toInclude<T>(this: T, mappings: Map<any, any>): T
 /** Expect the value to include _all_ values from the specified {@link Set}. */
