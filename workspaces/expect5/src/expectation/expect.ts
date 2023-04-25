@@ -113,17 +113,91 @@ const allExpectations = {
 type AllExpectations = SyncExpectations & AsyncExpectations
 
 /* ========================================================================== *
+ * OVERLOADED FUNCTIONS TYPES                                                 *
+ * ========================================================================== */
+
+/** Combine the arguments of a number of overloads (tuples) */
+type OverloadArguments<T> =
+  T extends readonly [ infer T, ...infer Rest ] ?
+    [ T, ...OverloadArguments<Rest> ] :
+  T extends readonly [] ? [] :
+  T extends readonly (infer T)[] ?
+    unknown extends T ? never :
+    T extends undefined ? [] :
+    [ T ] :
+  never
+
+/**
+ * Remap `Functions` (a record of functions) inferring arguments and forcing
+ * return type to `Result`
+ */
+type OverloadFunctions<Functions, Result> = {
+  [ k in keyof Functions ]:
+    Functions[k] extends {
+      (...args: infer A0): any
+      (...args: infer A1): any
+      (...args: infer A2): any
+      (...args: infer A3): any
+      (...args: infer A4): any
+      (...args: infer A5): any
+    } ? (...args: OverloadArguments<A0 | A1 | A2 | A3 | A4 | A5>) => Result :
+    Functions[k] extends {
+      (...args: infer A0): any
+      (...args: infer A1): any
+      (...args: infer A2): any
+      (...args: infer A3): any
+      (...args: infer A4): any
+    } ? (...args: OverloadArguments<A0 | A1 | A2 | A3 | A4>) => Result :
+    Functions[k] extends {
+      (...args: infer A0): any
+      (...args: infer A1): any
+      (...args: infer A2): any
+      (...args: infer A3): any
+    } ? (...args: OverloadArguments<A0 | A1 | A2 | A3>) => Result :
+    Functions[k] extends {
+      (...args: infer A0): any
+      (...args: infer A1): any
+      (...args: infer A2): any
+    } ? (...args: OverloadArguments<A0 | A1 | A2>) => Result :
+    Functions[k] extends {
+      (...args: infer A0): any
+      (...args: infer A1): any
+    } ? (...args: OverloadArguments<A0 | A1>) => Result :
+    Functions[k] extends {
+      (...args: infer A0): any
+    } ? (...args: OverloadArguments<A0>) => Result :
+    never
+}
+
+/* ========================================================================== *
  * EXPECTATIONS DEFINITION                                                    *
  * ========================================================================== */
 
-/** An interface describing all expectations returned by `expect(...)` */
+/**
+ * Expectation functions simply check a _value_, but do not alter the type
+ * returned by each expectation.
+ */
+export interface ExpectationFunctions<T> extends
+  OverloadFunctions<AsyncExpectations, Promise<Expectations<T>>>,
+  OverloadFunctions<SyncExpectations, Expectations<T>> {
+  // empty interface, specifically without `value` or `not` so that
+  // in no way this can be confused with the full `Expectations<T>`.
+}
+
+/**
+ * An interface describing all expectations returned by `expect(...)`.
+ *
+ * Each function, upon checking, might return an expectation bound to a
+ * different _type_ (for example `.toBeNull()` returns always
+ * `Expectations<null>`, inferring that `value` is indeed `null`).
+ */
 export interface Expectations<T = unknown> extends AllExpectations {
   /** The value this {@link Expectations} instance operates on */
   readonly value: T
-
   /** The _negated_ expectations of _this_ {@link Expectations} instance. */
-  readonly not: Expectations<T>
+  readonly not: ExpectationFunctions<T>
 }
+
 
 /* ========================================================================== *
  * EXPECTATIONS IMPLEMENTATION                                                *
@@ -133,14 +207,14 @@ class ExpectationsContextImpl<T = unknown> implements ExpectationsContext<T> {
   readonly value: T
   readonly _negative: boolean
   readonly _expectations: Expectations<T>
-  readonly _negated: Expectations<T>
+  readonly _negated: ExpectationFunctions<T>
   readonly _parent?: ExpectationsParent
 
   constructor(
       value: T,
       negative: boolean,
       expectations: Expectations<T>,
-      negated: Expectations<T>,
+      negated: ExpectationFunctions<T>,
       parent?: ExpectationsParent,
   ) {
     this.value = value
@@ -170,21 +244,32 @@ interface ExpectationsImpl<T = unknown> extends Expectations<T> {}
 class ExpectationsImpl<T = unknown> implements Expectations<T> {
   private readonly _context: ExpectationsContext<T>
 
-  readonly not: Expectations<T>
+  readonly value: T
+  readonly not: ExpectationFunctions<T>
 
   constructor(
-      readonly value: T,
+      value: T,
       parent?: ExpectationsParent,
-      positiveExpectations?: Expectations<T>,
+      positives?: Expectations<T>,
   ) {
     this.value = value
 
-    if (positiveExpectations) {
-      this._context = new ExpectationsContextImpl(value, true, positiveExpectations, this, parent)
-      this.not = positiveExpectations
+    if (positives) {
+      this.not = positives as ExpectationFunctions<any>
+      this._context = new ExpectationsContextImpl(
+          value,
+          true,
+          positives,
+          this as ExpectationFunctions<any>,
+          parent)
     } else {
-      this._context = new ExpectationsContextImpl(value, false, this, this, parent)
-      this.not = new ExpectationsImpl(value, parent, this)
+      this._context = new ExpectationsContextImpl(
+          value,
+          false,
+          this,
+          this as ExpectationFunctions<any>,
+          parent)
+      this.not = new ExpectationsImpl(value, parent, this) as ExpectationFunctions<any>
     }
   }
 
@@ -213,56 +298,8 @@ class ExpectationsImpl<T = unknown> implements Expectations<T> {
  * EXPECTATIONS MATCHERS                                                      *
  * ========================================================================== */
 
-type MatchersArguments<T> =
-  T extends readonly [ infer T, ...infer Rest ] ?
-    [ T, ...MatchersArguments<Rest> ] :
-  T extends readonly [] ? [] :
-  T extends readonly (infer T)[] ?
-    unknown extends T ? never :
-    T extends undefined ? [] :
-    [ T ] :
-  never
-
-type MatchersFunctions<Functions, Result> = {
-  [ k in keyof Functions ]:
-    Functions[k] extends {
-      (...args: infer A0): any
-      (...args: infer A1): any
-      (...args: infer A2): any
-      (...args: infer A3): any
-      (...args: infer A4): any
-      (...args: infer A5): any
-    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3 | A4 | A5>) => Result :
-    Functions[k] extends {
-      (...args: infer A0): any
-      (...args: infer A1): any
-      (...args: infer A2): any
-      (...args: infer A3): any
-      (...args: infer A4): any
-    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3 | A4>) => Result :
-    Functions[k] extends {
-      (...args: infer A0): any
-      (...args: infer A1): any
-      (...args: infer A2): any
-      (...args: infer A3): any
-    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3>) => Result :
-    Functions[k] extends {
-      (...args: infer A0): any
-      (...args: infer A1): any
-      (...args: infer A2): any
-    } ? (...args: MatchersArguments<A0 | A1 | A2>) => Result :
-    Functions[k] extends {
-      (...args: infer A0): any
-      (...args: infer A1): any
-    } ? (...args: MatchersArguments<A0 | A1>) => Result :
-    Functions[k] extends {
-      (...args: infer A0): any
-    } ? (...args: MatchersArguments<A0>) => Result :
-    never
-}
-
 /** An interface describing all expectations returned by `expect(...)` */
-export interface ExpectationsMatcher extends MatchersFunctions<SyncExpectations, ExpectationsMatcher> {
+export interface ExpectationsMatcher extends OverloadFunctions<SyncExpectations, ExpectationsMatcher> {
   not: ExpectationsMatcher
   /* The assertion here will trigger */
   expect(value: unknown): void
@@ -299,8 +336,8 @@ class ExpectationsMatcherImpl {
   expect(value: unknown): void {
     const expectations = expect(value)
     for (const [ expectation, negative, args ] of this._matchers) {
-      const expect = negative ? expectations.not : expectations
-      ;(expect as any)[expectation](...args)
+      const expect = negative ? expectations.not as any : expectations as any
+      expect[expectation](...args)
     }
   }
 

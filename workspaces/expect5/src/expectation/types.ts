@@ -1,5 +1,5 @@
 import type { Diff } from './diff'
-import type { Expectations, ExpectationsMatcher } from './expect'
+import type { Expectations, ExpectationsMatcher, ExpectationFunctions } from './expect'
 
 /* ========================================================================== *
  * INTERNAL TYPES FOR EXPECTATIONS                                            *
@@ -69,7 +69,7 @@ export interface ExpectationsContext<T = unknown> {
    * If _negative_, the _negative_ {@link Expectations} for the value,
    * otherwise the _positive_ ones (basically, follow the `not` of `expect`).
    */
-  readonly _negated: Expectations<T>
+  readonly _negated: ExpectationFunctions<T>
 
   /** Create an {@link Expectation} instance for the specified value */
   forValue<V>(value: V): Expectations<V>,
