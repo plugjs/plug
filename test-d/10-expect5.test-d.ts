@@ -6,6 +6,8 @@ import type { AssertionFunction, Constructor, TypeName } from '@plugjs/expect5/e
 
 printType('__file_marker__')
 
+/* === CORE ================================================================= */
+
 // straight expectations
 expectType<Expectations<any>>(expect('' as any))
 expectType<Expectations<unknown>>(expect('' as unknown))
@@ -21,7 +23,19 @@ expectType<number>(expect(12345678).value)
 expectType<RegExp>(expect(/foobar/).value)
 expectType<SyntaxError>(expect(new SyntaxError()).value)
 
-// basic expectations
+/* === ASYNC EXPECTATIONS =================================================== */
+
+expectType<Promise<Expectations<Promise<unknown>>>>(expect('foo').toBeResolved())
+expectType<Promise<Expectations<Promise<string>>>>(expect('foo').toBeResolved((assert) => assert.toBeA('string')))
+expectType<Promise<Expectations<Promise<unknown>>>>(expect('foo').toBeResolved((assert) => void assert.toBeA('string')))
+
+// // async
+// toBeResolved,
+// toBeRejected,
+// toBeRejectedWithError,
+
+/* === BASIC EXPECTATIONS =================================================== */
+
 expectType<Expectations<string>>(expect(123).toBeA('string'))
 expectType<Expectations<number>>(expect(123).toBeA('number'))
 expectError<Expectations<number>>(expect(123).toBeA('string'))
@@ -101,16 +115,52 @@ expectType<Expectations<{ foo: string }>>(expect(true).toStrictlyEqual({ foo: 'b
 expectError<Expectations<string>>(expect(true).toStrictlyEqual(12345678))
 expectError<Expectations<{ foo: string }>>(expect(true).toStrictlyEqual({ foo: 1234 }))
 
-// async expectations
-expectType<Promise<Expectations<Promise<unknown>>>>(expect('foo').toBeResolved())
-expectType<Promise<Expectations<Promise<string>>>>(expect('foo').toBeResolved((assert) => assert.toBeA('string')))
-expectType<Promise<Expectations<Promise<unknown>>>>(expect('foo').toBeResolved((assert) => void assert.toBeA('string')))
+/* === INCLUDE EXPECTATIONS ================================================= */
 
+// we can not infer any extra type in "include" as plain objects can be used
+// to check for mappings in maps, and sets/arrays boil down to an iterable
 
-// TODO: negated expectations
-// expectType<Promise<Expectations<Promise<unknown>>>>(expect('foo').toBeResolved((assert) => assert.not.toBeA('string')))
+expectType<Expectations<boolean>>(expect(true).toInclude({ foo: 'bar', bar: 123 }))
+expectType<Expectations<boolean>>(expect(true).toInclude(new Map<string, number>()))
+expectType<Expectations<boolean>>(expect(true).toInclude(new Set<RegExp>()))
+expectType<Expectations<boolean>>(expect(true).toInclude([ 1, 2, 3 ]))
+expectError(expect(true).toInclude(true))
 
-/* === EXPECTATIONS MATCHERS ================================================ */
+expectType<Expectations<boolean>>(expect(true).toMatchContents(new Set<any>()))
+expectType<Expectations<boolean>>(expect(true).toMatchContents([]))
+expectError(expect(true).toMatchContents(true))
+
+/* === THROWING EXPECTATIONS ================================================ */
+
+expectType<Expectations<boolean & Function>>(expect(true).toThrow())
+expectType<Expectations<boolean & Function>>(expect(true).toThrow((assert) => assert.toBeA('string')))
+expectError(expect(true).toThrow('foobar'))
+
+expectType<Expectations<boolean & Function>>(expect(true).toThrowError())
+expectType<Expectations<boolean & Function>>(expect(true).toThrowError('message'))
+expectType<Expectations<boolean & Function>>(expect(true).toThrowError(/message/))
+expectType<Expectations<boolean & Function>>(expect(true).toThrowError(SyntaxError))
+expectType<Expectations<boolean & Function>>(expect(true).toThrowError(SyntaxError, 'message'))
+expectType<Expectations<boolean & Function>>(expect(true).toThrowError(SyntaxError, /message/))
+expectError(expect(true).toThrowError(Object))
+
+/* === TRIVIAL EXPECTATIONS ================================================= */
+
+expectType<Expectations<unknown>>(expect(true as unknown).toBeDefined())
+expectType<Expectations<false>>(expect(true as unknown).toBeFalse())
+expectType<Expectations<unknown>>(expect(true as unknown).toBeFalsy())
+expectType<Expectations<number>>(expect(true as unknown).toBeNaN())
+expectType<Expectations<number>>(expect(true as unknown).toBeNegativeInfinity())
+expectType<Expectations<null>>(expect(true as unknown).toBeNull())
+expectType<Expectations<null | undefined>>(expect(true as unknown).toBeNullable())
+expectType<Expectations<number>>(expect(true as unknown).toBePositiveInfinity())
+expectType<Expectations<true>>(expect(true as unknown).toBeTrue())
+expectType<Expectations<unknown>>(expect(true as unknown).toBeTruthy())
+expectType<Expectations<undefined>>(expect(true as unknown).toBeUndefined())
+
+/* === EXPECTATIONS MATCHERS (CONSTRUCTOR OVERLOADS) ======================== */
+
+// basic expectations
 
 expectType<{(...args:
 | [TypeName]
@@ -181,3 +231,51 @@ expectType<{(...args:
 | [string]
 | [RegExp]
 ): ExpectationsMatcher}>(expect.toMatch)
+
+expectType<{(...args:
+| [unknown] // any becomes unknown, as it's generic
+): ExpectationsMatcher}>(expect.toStrictlyEqual)
+
+// include expectations
+
+expectType<{(...args:
+| [any[]]
+| [Record<string, any>]
+| [Map<any, any>]
+| [Set<any>]
+): ExpectationsMatcher}>(expect.toInclude)
+
+expectType<{(...args:
+| [Set<any>]
+| [any[]]
+): ExpectationsMatcher}>(expect.toMatchContents)
+
+// throwing expectations
+
+expectType<{(...args:
+| []
+| [AssertionFunction]
+): ExpectationsMatcher}>(expect.toThrow)
+
+expectType<{(...args:
+| []
+| [string]
+| [RegExp]
+| [Constructor<Error>]
+| [Constructor<Error>, string]
+| [Constructor<Error>, RegExp]
+): ExpectationsMatcher}>(expect.toThrowError)
+
+// trivial expectations
+
+expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeDefined)
+expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeFalse)
+expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeFalsy)
+expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeNaN)
+expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeNegativeInfinity)
+expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeNull)
+expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeNullable)
+expectType<{(...args: []): ExpectationsMatcher}>(expect.toBePositiveInfinity)
+expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeTrue)
+expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeTruthy)
+expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeUndefined)
