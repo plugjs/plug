@@ -29,10 +29,10 @@ expectType<Promise<Expectations<Promise<unknown>>>>(expect('foo').toBeResolved()
 expectType<Promise<Expectations<Promise<string>>>>(expect('foo').toBeResolved((assert) => assert.toBeA('string')))
 expectType<Promise<Expectations<Promise<unknown>>>>(expect('foo').toBeResolved((assert) => void assert.toBeA('string')))
 
-// // async
 // toBeResolved,
 // toBeRejected,
 // toBeRejectedWithError,
+// TODO: fix types inferring the awaited promise!
 
 /* === BASIC EXPECTATIONS =================================================== */
 
@@ -42,11 +42,15 @@ expectError<Expectations<number>>(expect(123).toBeA('string'))
 expectError<Expectations<string>>(expect(123).toBeA('number'))
 expectError(expect(123).toBeA('foobar'))
 
+expectType<Expectations<boolean>>(expect(true).not.toBeA('string'))
+
 expectType<Expectations<number>>(expect(true).toBeCloseTo(100, 1))
 expectType<Expectations<bigint>>(expect(true).toBeCloseTo(100n, 1n))
 expectError<Expectations<string>>(expect(true).toBeCloseTo(100, 1))
 expectError(expect(true).toBeCloseTo(100n, 1))
 expectError(expect(true).toBeCloseTo(100, 1n))
+
+expectType<Expectations<boolean>>(expect(true).not.toBeCloseTo(100, 1))
 
 expectType<Expectations<Error>>(expect(true).toBeError())
 expectType<Expectations<Error>>(expect(true).toBeError('message'))
@@ -55,29 +59,41 @@ expectType<Expectations<TypeError>>(expect(true).toBeError(TypeError, 'message')
 expectError<Expectations<RegExp>>(expect(true).toBeError())
 expectError(expect(true).toBeError(RegExp))
 
+expectType<Expectations<boolean>>(expect(true).not.toBeError())
+
 expectType<Expectations<number>>(expect(true).toBeGreaterThan(100))
 expectType<Expectations<bigint>>(expect(true).toBeGreaterThan(100n))
 expectError<Expectations<string>>(expect(true).toBeGreaterThan(100))
 expectError(expect(true).toBeGreaterThan('foo'))
+
+expectType<Expectations<boolean>>(expect(true).not.toBeGreaterThan(100))
 
 expectType<Expectations<number>>(expect(true).toBeGreaterThanOrEqual(100))
 expectType<Expectations<bigint>>(expect(true).toBeGreaterThanOrEqual(100n))
 expectError<Expectations<string>>(expect(true).toBeGreaterThanOrEqual(100))
 expectError(expect(true).toBeGreaterThanOrEqual('foo'))
 
+expectType<Expectations<boolean>>(expect(true).not.toBeGreaterThanOrEqual(100))
+
 expectType<Expectations<RegExp>>(expect(true).toBeInstanceOf(RegExp))
 expectError<Expectations<Error>>(expect(true).toBeInstanceOf(RegExp))
 expectError(expect(true).toBeInstanceOf({}))
+
+expectType<Expectations<boolean>>(expect(true).not.toBeInstanceOf(RegExp))
 
 expectType<Expectations<number>>(expect(true).toBeLessThan(100))
 expectType<Expectations<bigint>>(expect(true).toBeLessThan(100n))
 expectError<Expectations<string>>(expect(true).toBeLessThan(100))
 expectError(expect(true).toBeLessThan('foo'))
 
+expectType<Expectations<boolean>>(expect(true).not.toBeLessThan(100))
+
 expectType<Expectations<number>>(expect(true).toBeLessThanOrEqual(100))
 expectType<Expectations<bigint>>(expect(true).toBeLessThanOrEqual(100n))
 expectError<Expectations<string>>(expect(true).toBeLessThanOrEqual(100))
 expectError(expect(true).toBeLessThanOrEqual('foo'))
+
+expectType<Expectations<boolean>>(expect(true).not.toBeLessThanOrEqual(100))
 
 expectType<Expectations<number>>(expect(true).toBeWithinRange(100, 1))
 expectType<Expectations<bigint>>(expect(true).toBeWithinRange(100n, 1n))
@@ -85,14 +101,20 @@ expectError<Expectations<string>>(expect(true).toBeWithinRange(100, 1))
 expectError(expect(true).toBeWithinRange(100n, 1))
 expectError(expect(true).toBeWithinRange(100, 1n))
 
+expectType<Expectations<boolean>>(expect(true).not.toBeWithinRange(100, 1))
+
 expectType<Expectations<string>>(expect(true).toEqual('foobar'))
 expectType<Expectations<{ foo: string }>>(expect(true).toEqual({ foo: 'bar' }))
 expectError<Expectations<string>>(expect(true).toEqual(12345678))
 expectError<Expectations<{ foo: string }>>(expect(true).toEqual({ foo: 1234 }))
 
+expectType<Expectations<boolean>>(expect(true).not.toEqual(100))
+
 expectType<Expectations<boolean & { length: 12 }>>(expect(true).toHaveLength(12))
 expectError<Expectations<boolean & { length: 0 }>>(expect(true).toHaveLength(12))
 expectError(expect(true).toHaveLength('foo'))
+
+expectType<Expectations<boolean>>(expect(true).not.toHaveLength(100))
 
 expectType<Expectations<boolean & { foo: unknown }>>(expect(true).toHaveProperty('foo'))
 expectType<Expectations<boolean & { foo: string }>>(expect(true).toHaveProperty('foo', (assert) => assert.toBeA('string')))
@@ -101,19 +123,27 @@ expectError<Expectations<boolean & { bar: unknown }>>(expect(true).toHavePropert
 expectError<Expectations<boolean & { foo: number }>>(expect(true).toHaveProperty('foo', (assert) => assert.toBeA('string')))
 expectError(expect(true).toHaveProperty({}))
 
+expectType<Expectations<boolean>>(expect(true).not.toHaveProperty(100))
+
 expectType<Expectations<boolean & { size: 12 }>>(expect(true).toHaveSize(12))
 expectError<Expectations<boolean & { size: 0 }>>(expect(true).toHaveSize(12))
 expectError(expect(true).toHaveSize('foo'))
+
+expectType<Expectations<boolean>>(expect(true).not.toHaveSize(100))
 
 expectType<Expectations<string>>(expect(true).toMatch('foo'))
 expectType<Expectations<string>>(expect(true).toMatch(/foo/))
 expectError<Expectations<number>>(expect(true).toMatch('foo'))
 expectError(expect(true).toMatch(true))
 
+expectType<Expectations<boolean>>(expect(true).not.toMatch(/foo/))
+
 expectType<Expectations<string>>(expect(true).toStrictlyEqual('foobar'))
 expectType<Expectations<{ foo: string }>>(expect(true).toStrictlyEqual({ foo: 'bar' }))
 expectError<Expectations<string>>(expect(true).toStrictlyEqual(12345678))
 expectError<Expectations<{ foo: string }>>(expect(true).toStrictlyEqual({ foo: 1234 }))
+
+expectType<Expectations<boolean>>(expect(true).not.toStrictlyEqual('foobar'))
 
 /* === INCLUDE EXPECTATIONS ================================================= */
 
