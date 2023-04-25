@@ -156,15 +156,22 @@ expectType<Expectations<boolean>>(expect(true).toInclude(new Set<RegExp>()))
 expectType<Expectations<boolean>>(expect(true).toInclude([ 1, 2, 3 ]))
 expectError(expect(true).toInclude(true))
 
+expectType<Expectations<boolean>>(expect(true).not.toInclude([]))
+
 expectType<Expectations<boolean>>(expect(true).toMatchContents(new Set<any>()))
 expectType<Expectations<boolean>>(expect(true).toMatchContents([]))
 expectError(expect(true).toMatchContents(true))
+
+expectType<Expectations<boolean>>(expect(true).not.toMatchContents([]))
+
 
 /* === THROWING EXPECTATIONS ================================================ */
 
 expectType<Expectations<boolean & Function>>(expect(true).toThrow())
 expectType<Expectations<boolean & Function>>(expect(true).toThrow((assert) => assert.toBeA('string')))
 expectError(expect(true).toThrow('foobar'))
+
+expectType<Expectations<boolean>>(expect(true).not.toThrow())
 
 expectType<Expectations<boolean & Function>>(expect(true).toThrowError())
 expectType<Expectations<boolean & Function>>(expect(true).toThrowError('message'))
@@ -173,6 +180,8 @@ expectType<Expectations<boolean & Function>>(expect(true).toThrowError(SyntaxErr
 expectType<Expectations<boolean & Function>>(expect(true).toThrowError(SyntaxError, 'message'))
 expectType<Expectations<boolean & Function>>(expect(true).toThrowError(SyntaxError, /message/))
 expectError(expect(true).toThrowError(Object))
+
+expectType<Expectations<boolean>>(expect(true).not.toThrowError())
 
 /* === TRIVIAL EXPECTATIONS ================================================= */
 
@@ -187,6 +196,18 @@ expectType<Expectations<number>>(expect(true as unknown).toBePositiveInfinity())
 expectType<Expectations<true>>(expect(true as unknown).toBeTrue())
 expectType<Expectations<unknown>>(expect(true as unknown).toBeTruthy())
 expectType<Expectations<undefined>>(expect(true as unknown).toBeUndefined())
+
+expectType<Expectations<boolean>>(expect(true).not.toBeDefined())
+expectType<Expectations<boolean>>(expect(true).not.toBeFalse())
+expectType<Expectations<boolean>>(expect(true).not.toBeFalsy())
+expectType<Expectations<boolean>>(expect(true).not.toBeNaN())
+expectType<Expectations<boolean>>(expect(true).not.toBeNegativeInfinity())
+expectType<Expectations<boolean>>(expect(true).not.toBeNull())
+expectType<Expectations<boolean>>(expect(true).not.toBeNullable())
+expectType<Expectations<boolean>>(expect(true).not.toBePositiveInfinity())
+expectType<Expectations<boolean>>(expect(true).not.toBeTrue())
+expectType<Expectations<boolean>>(expect(true).not.toBeTruthy())
+expectType<Expectations<boolean>>(expect(true).not.toBeUndefined())
 
 /* === EXPECTATIONS MATCHERS (CONSTRUCTOR OVERLOADS) ======================== */
 
