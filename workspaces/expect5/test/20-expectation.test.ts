@@ -7,15 +7,20 @@ import type { Expectations } from '../src/expectation/expect'
 import type { ExpectationsContext } from '../src/expectation/types'
 
 describe('Expectations Core', () => {
-  it('should negate properly', () => {
-    const positive = expect('foo')
+  it('core expectations method', () => {
+    const obj = {} // unique
+    const positive = expect(obj)
     const negative = positive.not
 
-    // check caches and double negation
-    assert.strictEqual(negative.not, positive)
-    assert.strictEqual(negative.not.not, negative)
-    assert.strictEqual(positive.not, negative)
-    assert.strictEqual(positive.not.not, positive)
+    // check the value (.not has no "value" but the impl has it)
+    assert.strictEqual(positive.value, obj)
+    assert.strictEqual((negative as any).value, obj)
+
+    // check double negation (not.not does not exist, but still the impl has it)
+    assert.strictEqual((negative as any).not, positive)
+    assert.strictEqual((negative as any).not.not, negative)
+    assert.strictEqual((positive as any).not, negative)
+    assert.strictEqual((positive as any).not.not, positive)
   })
 
   describe('expectations error constructor', () => {
