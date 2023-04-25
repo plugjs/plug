@@ -27,6 +27,10 @@ describe('Void Expectations', () => {
     toBeNull: [
       [ null, 'Expected <null> not to be <null>' ],
     ],
+    toBeNullable: [
+      [ null, 'Expected <null> not to be <null> or <undefined>' ],
+      [ undefined, 'Expected <undefined> not to be <null> or <undefined>' ],
+    ],
     toBePositiveInfinity: [
       [ Number.POSITIVE_INFINITY, 'Expected +Infinity not to equal +Infinity' ],
     ],
@@ -90,6 +94,10 @@ describe('Void Expectations', () => {
     toBeNull: [
       [ 'foo bar', 'Expected "foo bar" to be <null>' ],
       [ undefined, 'Expected <undefined> to be <null>' ],
+    ],
+    toBeNullable: [
+      [ 'foo bar', 'Expected "foo bar" to be <null> or <undefined>' ],
+      [ 0, 'Expected 0 to be <null> or <undefined>' ],
     ],
     toBePositiveInfinity: [
       [ 123, 'Expected 123 to equal +Infinity' ],
