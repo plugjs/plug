@@ -14,11 +14,6 @@ export type NonArrayObject<T = any> = {
   [c: number]: never
 }
 
-/** A type identifying the parameter of `string.match(...)` */
-export type StringMatcher = string | RegExp | {
-  [Symbol.match](string: string): RegExpMatchArray | null
-}
-
 /** Mappings for our _expanded_ {@link typeOf} implementation */
 export type TypeMappings = {
   // standard types, from "typeof"
