@@ -8,16 +8,35 @@ import type {
   ExpectationsContext,
 } from './types'
 
+/**
+ * A {@link Promise} for an {@link Expectations} instance expecting a
+ * _then-able_ {@link PromiseLike}.
+ *
+ * Long story short: the {@link toBeResolved}, {@link toBeRejectedWithError} and
+ * {@link toBeRejected} expectations are asynchronous, henceforth they return
+ * the first {@link Promise} to an {@link Expectations} instance. They also
+ * ensure that the value being expected is a _then-able_ {@link PromiseLike}.
+ */
+type ExpectationsPromise<E, T2 = unknown> =
+  unknown extends T2 ?
+    E extends Expectations<infer T1> ?
+      Promise<Expectations<PromiseLike<Awaited<T1>>>> :
+      Promise<Expectations<PromiseLike<unknown>>> :
+      Promise<Expectations<PromiseLike<T2>>>
+
 /* === TO BE RESOLVED ======================================================= */
 
-/** Expects the value to be a _resolved_ {@link Promise}. */
-function toBeResolved(): Promise<Expectations<Promise<unknown>>>
+/** Expects the value to be a _resolved_ {@link PromiseLike}. */
+function toBeResolved<T>(this: T): ExpectationsPromise<T>
 
 /**
  * Expects the value to be a _resolved_ {@link Promise}, and asserts the
  * resolved result with the specified callback.
  */
-function toBeResolved<A extends AssertionFunction>(assert: A): Promise<Expectations<Promise<AssertedType<A>>>>
+function toBeResolved<T, A extends AssertionFunction>(
+  this: T,
+  assert: A,
+): ExpectationsPromise<T, AssertedType<A>>
 
 /* Overloaded function implementation */
 function toBeResolved(
@@ -45,13 +64,13 @@ function toBeResolved(
 /* === TO BE REJECTED ======================================================= */
 
 /** Expect the value to be a _rejected_ {@link Promise}. */
-function toBeRejected(): Promise<Expectations<Promise<unknown>>>
+function toBeRejected<T>(this: T): ExpectationsPromise<T>
 
 /**
  * Expect the value to be a _rejected_ {@link Promise}, and asserts the
  * rejection reason with the specified callback.
  */
-function toBeRejected(assert: AssertionFunction): Promise<Expectations<Promise<unknown>>>
+function toBeRejected<T>(this: T, assert: AssertionFunction): ExpectationsPromise<T>
 
 /* Overloaded function implementation */
 function toBeRejected(
@@ -78,37 +97,37 @@ function toBeRejected(
 /* === TO BE REJECTED WITH ERROR ============================================ */
 
 /** Expect the value to be a {@link Promise} _rejected_ by an {@link Error}. */
-function toBeRejectedWithError(): Promise<Expectations<Promise<unknown>>>
+function toBeRejectedWithError<T>(this: T, ): ExpectationsPromise<T>
 
 /**
  * Expect the value to be a {@link Promise} _rejected_ by an {@link Error}
  * with the specified _message_.
  */
-function toBeRejectedWithError(message: string): Promise<Expectations<Promise<unknown>>>
+function toBeRejectedWithError<T>(this: T, message: string): ExpectationsPromise<T>
 
 /**
  * Expect the value to be a {@link Promise} _rejected_ by an {@link Error}
  * with its _message_ matching the specified {@link RegExp}.
  */
-function toBeRejectedWithError(message: RegExp): Promise<Expectations<Promise<unknown>>>
+function toBeRejectedWithError<T>(this: T, message: RegExp): ExpectationsPromise<T>
 
 /**
  * Expect the value to be a {@link Promise} _rejected_ by an {@link Error}
  * of the specified _type_.
  */
-function toBeRejectedWithError(constructor: Constructor<Error>): Promise<Expectations<Promise<unknown>>>
+function toBeRejectedWithError<T>(this: T, constructor: Constructor<Error>): ExpectationsPromise<T>
 
 /**
  * Expect the value to be a {@link Promise} _rejected_ by an {@link Error}
  * of the specified _type_ and with the specified _message_.
  */
-function toBeRejectedWithError(constructor: Constructor<Error>, message: string): Promise<Expectations<Promise<unknown>>>
+function toBeRejectedWithError<T>(this: T, constructor: Constructor<Error>, message: string): ExpectationsPromise<T>
 
 /**
  * Expect the value to be a {@link Promise} _rejected_ by an {@link Error}
  * of the specified _type_ and with the specified _message_.
  */
-function toBeRejectedWithError(constructor: Constructor<Error>, message: RegExp): Promise<Expectations<Promise<unknown>>>
+function toBeRejectedWithError<T>(this: T, constructor: Constructor<Error>, message: RegExp): ExpectationsPromise<T>
 
 /* Overloaded function implementation */
 function toBeRejectedWithError(
