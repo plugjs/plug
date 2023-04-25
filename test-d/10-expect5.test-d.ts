@@ -1,8 +1,8 @@
-import { printType, expectType, expectError } from 'tsd'
-import { type Expectations, expect } from '@plugjs/expect5'
+import { expect, type Expectations } from '@plugjs/expect5'
+import { expectError, expectType, printType } from 'tsd'
 
-import type { ExpectationsMatcher, AssertionFunction } from '@plugjs/expect5/expectation/expect'
-import type { Constructor, TypeName } from '@plugjs/expect5/expectation/types'
+import type { ExpectationsMatcher } from '@plugjs/expect5/expectation/expect'
+import type { AssertionFunction, Constructor, TypeName } from '@plugjs/expect5/expectation/types'
 
 printType('__file_marker__')
 

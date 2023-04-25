@@ -1,7 +1,12 @@
 import { ExpectationError, assertContextType } from './types'
 
-import type { AssertionFunction, Expectations, ExpectationsContext, JoinExpectations } from './expect'
-import type { Constructor } from './types'
+import type { Expectations } from './expect'
+import type {
+  AssertionFunction,
+  Constructor,
+  ExpectationsContext,
+  JoinExpectations,
+} from './types'
 
 /* === TO THROW ============================================================= */
 

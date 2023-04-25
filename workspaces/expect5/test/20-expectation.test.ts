@@ -1,7 +1,10 @@
 import assert from 'node:assert'
 
-import { expect, type Expectations, type ExpectationsContext } from '../src/expectation/expect'
+import { expect } from '../src/expectation/expect'
 import { ExpectationError } from '../src/expectation/types'
+
+import type { Expectations } from '../src/expectation/expect'
+import type { ExpectationsContext } from '../src/expectation/types'
 
 describe('Expectations Core', () => {
   it('should negate properly', () => {

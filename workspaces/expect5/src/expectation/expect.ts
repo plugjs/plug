@@ -1,8 +1,7 @@
-import { ExpectationError, matcherMarker } from './types'
 import {
-  toBeResolved,
   toBeRejected,
   toBeRejectedWithError,
+  toBeResolved,
 } from './async'
 import {
   toBeA,
@@ -42,6 +41,15 @@ import {
   toBeTruthy,
   toBeUndefined,
 } from './trivial'
+import {
+  ExpectationError,
+  matcherMarker,
+} from './types'
+
+import type {
+  ExpectationsContext,
+  ExpectationsParent,
+} from './types'
 
 /* ========================================================================== *
  * IMPORT AND PREPARE EXTERNAL EXPECTATIONS                                   *
@@ -98,14 +106,6 @@ type ExpectationsFunctions = typeof expectationsFunctions
  * EXPECTATIONS DEFINITION                                                    *
  * ========================================================================== */
 
-export type JoinExpectations<E, T2> =
-  E extends Expectations<infer T1> ? Expectations<T1 & T2> : Expectations<T2>
-
-export type AssertionFunction<T = unknown> = (assert: Expectations<T>) => void | Expectations
-
-export type AssertedType<F extends AssertionFunction<any>, R = ReturnType<F>> =
-  R extends Expectations<infer T> ? T : unknown
-
 /** An interface describing all expectations returned by `expect(...)` */
 export interface Expectations<T = unknown> extends ExpectationsFunctions {
   /** The value this {@link Expectations} instance operates on */
@@ -113,24 +113,6 @@ export interface Expectations<T = unknown> extends ExpectationsFunctions {
 
   /** The _negated_ expectations of _this_ {@link Expectations} instance. */
   readonly not: Expectations<T>
-}
-
-export interface ExpectationsContext<T = unknown> {
-  readonly value: T,
-  readonly _negative: boolean,
-  readonly _parent?: ExpectationsParent
-  readonly _expectations: Expectations<T>
-  readonly _negated: Expectations<T>
-
-  forValue<V>(value: V): Expectations<V>,
-  forProperty(prop: string | number | symbol): Expectations
-}
-
-
-/** Parent expectations */
-export interface ExpectationsParent {
-  context: ExpectationsContext,
-  prop: string | number | symbol,
 }
 
 /* ========================================================================== *

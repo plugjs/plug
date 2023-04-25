@@ -1,5 +1,9 @@
 import type { Diff } from './diff'
-import type { ExpectationsContext, ExpectationsMatcher } from './expect'
+import type { Expectations, ExpectationsMatcher } from './expect'
+
+/* ========================================================================== *
+ * INTERNAL TYPES FOR EXPECTATIONS                                            *
+ * ========================================================================== */
 
 /** A type identifying any constructor */
 export type Constructor<T = any> = new (...args: any[]) => T
@@ -39,6 +43,31 @@ export type TypeMappings = {
 
 /** Values returned by our own _expanded_ `{@link typeOf}` */
 export type TypeName = keyof TypeMappings
+
+export type JoinExpectations<E, T2> =
+  E extends Expectations<infer T1> ? Expectations<T1 & T2> : Expectations<T2>
+
+export type AssertionFunction<T = unknown> = (assert: Expectations<T>) => void | Expectations
+
+export type AssertedType<F extends AssertionFunction<any>, R = ReturnType<F>> =
+  R extends Expectations<infer T> ? T : unknown
+
+export interface ExpectationsContext<T = unknown> {
+  readonly value: T,
+  readonly _negative: boolean,
+  readonly _parent?: ExpectationsParent
+  readonly _expectations: Expectations<T>
+  readonly _negated: Expectations<T>
+
+  forValue<V>(value: V): Expectations<V>,
+  forProperty(prop: string | number | symbol): Expectations
+}
+
+/** Parent expectations */
+export interface ExpectationsParent {
+  context: ExpectationsContext,
+  prop: string | number | symbol,
+}
 
 /* ========================================================================== *
  * TYPE INSPECTION, GUARD, AND ASSERTION                                      *

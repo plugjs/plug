@@ -1,8 +1,23 @@
 import { diff } from './diff'
-import { assertContextType, ExpectationError, prefixType, stringifyConstructor, stringifyValue, typeOf } from './types'
+import {
+  assertContextType,
+  ExpectationError,
+  prefixType,
+  stringifyConstructor,
+  stringifyValue,
+  typeOf,
+} from './types'
 
-import type { AssertedType, AssertionFunction, Expectations, ExpectationsContext, JoinExpectations } from './expect'
-import type { Constructor, TypeName, TypeMappings } from './types'
+import type { Expectations } from './expect'
+import type {
+  AssertedType,
+  AssertionFunction,
+  Constructor,
+  ExpectationsContext,
+  JoinExpectations,
+  TypeMappings,
+  TypeName,
+} from './types'
 
 /* === TO BE A ============================================================== */
 

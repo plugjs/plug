@@ -1,6 +1,7 @@
 import { ExpectationError, stringifyValue } from './types'
 
-import type { Expectations, ExpectationsContext } from './expect'
+import type { Expectations } from './expect'
+import type { ExpectationsContext } from './types'
 
 /* Expects the value to be _defined_ (that is not `null` nor `undefined`). */
 function toBeDefined<T>(this: T): T
