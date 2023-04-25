@@ -279,3 +279,95 @@ expectType<{(...args: []): ExpectationsMatcher}>(expect.toBePositiveInfinity)
 expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeTrue)
 expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeTruthy)
 expectType<{(...args: []): ExpectationsMatcher}>(expect.toBeUndefined)
+
+/* === KEYS ================================================================= */
+
+const expectations = expect(true)
+
+expectType<
+// async
+| 'toBeResolved'
+| 'toBeRejected'
+| 'toBeRejectedWithError'
+// basic
+| 'toBeA'
+| 'toBeCloseTo'
+| 'toBeError'
+| 'toBeGreaterThan'
+| 'toBeGreaterThanOrEqual'
+| 'toBeInstanceOf'
+| 'toBeLessThan'
+| 'toBeLessThanOrEqual'
+| 'toBeWithinRange'
+| 'toEqual'
+| 'toHaveLength'
+| 'toHaveProperty'
+| 'toHaveSize'
+| 'toMatch'
+| 'toStrictlyEqual'
+// include
+| 'toInclude'
+| 'toMatchContents'
+// throwing
+| 'toThrow'
+| 'toThrowError'
+// trivial
+| 'toBeDefined'
+| 'toBeFalse'
+| 'toBeFalsy'
+| 'toBeNaN'
+| 'toBeNegativeInfinity'
+| 'toBeNull'
+| 'toBeNullable'
+| 'toBePositiveInfinity'
+| 'toBeTrue'
+| 'toBeTruthy'
+| 'toBeUndefined'
+// expectations specific
+| 'value'
+| 'not'
+>(null as any as keyof typeof expectations)
+
+expectType<
+// async should not produce matchers!!!
+// | 'toBeResolved'
+// | 'toBeRejected'
+// | 'toBeRejectedWithError'
+// basic
+| 'toBeA'
+| 'toBeCloseTo'
+| 'toBeError'
+| 'toBeGreaterThan'
+| 'toBeGreaterThanOrEqual'
+| 'toBeInstanceOf'
+| 'toBeLessThan'
+| 'toBeLessThanOrEqual'
+| 'toBeWithinRange'
+| 'toEqual'
+| 'toHaveLength'
+| 'toHaveProperty'
+| 'toHaveSize'
+| 'toMatch'
+| 'toStrictlyEqual'
+// include
+| 'toInclude'
+| 'toMatchContents'
+// throwing
+| 'toThrow'
+| 'toThrowError'
+// trivial
+| 'toBeDefined'
+| 'toBeFalse'
+| 'toBeFalsy'
+| 'toBeNaN'
+| 'toBeNegativeInfinity'
+| 'toBeNull'
+| 'toBeNullable'
+| 'toBePositiveInfinity'
+| 'toBeTrue'
+| 'toBeTruthy'
+| 'toBeUndefined'
+// matchers specific
+| 'expect'
+| 'not'
+>(null as any as keyof typeof expect)
