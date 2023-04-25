@@ -55,12 +55,15 @@ import type {
  * IMPORT AND PREPARE EXTERNAL EXPECTATIONS                                   *
  * ========================================================================== */
 
-const expectationsFunctions = {
-  // async
+const asyncExpectations = {
   toBeResolved,
   toBeRejected,
   toBeRejectedWithError,
+} as const
 
+type AsyncExpectations = typeof asyncExpectations
+
+const syncExpectations = {
   // basic
   toBeA,
   toBeCloseTo,
@@ -98,16 +101,23 @@ const expectationsFunctions = {
   toBeTrue,
   toBeTruthy,
   toBeUndefined,
+} as const
+
+type SyncExpectations = typeof syncExpectations
+
+const allExpectations = {
+  ...asyncExpectations,
+  ...syncExpectations,
 }
 
-type ExpectationsFunctions = typeof expectationsFunctions
+type AllExpectations = SyncExpectations & AsyncExpectations
 
 /* ========================================================================== *
  * EXPECTATIONS DEFINITION                                                    *
  * ========================================================================== */
 
 /** An interface describing all expectations returned by `expect(...)` */
-export interface Expectations<T = unknown> extends ExpectationsFunctions {
+export interface Expectations<T = unknown> extends AllExpectations {
   /** The value this {@link Expectations} instance operates on */
   readonly value: T
 
@@ -181,7 +191,7 @@ class ExpectationsImpl<T = unknown> implements Expectations<T> {
   /* == STATIC INITALIZER =================================================== */
 
   static {
-    for (const [ key, value ] of Object.entries(expectationsFunctions)) {
+    for (const [ key, value ] of Object.entries(allExpectations)) {
       const expectation = value as (this: ExpectationsContext, ...args: any[]) => any
 
       const fn = function(this: ExpectationsImpl, ...args: any[]): any {
@@ -213,46 +223,46 @@ type MatchersArguments<T> =
     [ T ] :
   never
 
-type MatchersFunctions = {
-  [ k in keyof ExpectationsFunctions ]:
-    ExpectationsFunctions[k] extends {
-      (...args: infer A0): Expectations
-      (...args: infer A1): Expectations
-      (...args: infer A2): Expectations
-      (...args: infer A3): Expectations
-      (...args: infer A4): Expectations
-      (...args: infer A5): Expectations
-    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3 | A4 | A5>) => ExpectationsMatcher :
-    ExpectationsFunctions[k] extends {
-      (...args: infer A0): Expectations
-      (...args: infer A1): Expectations
-      (...args: infer A2): Expectations
-      (...args: infer A3): Expectations
-      (...args: infer A4): Expectations
-    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3 | A4>) => ExpectationsMatcher :
-    ExpectationsFunctions[k] extends {
-      (...args: infer A0): Expectations
-      (...args: infer A1): Expectations
-      (...args: infer A2): Expectations
-      (...args: infer A3): Expectations
-    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3>) => ExpectationsMatcher :
-    ExpectationsFunctions[k] extends {
-      (...args: infer A0): Expectations
-      (...args: infer A1): Expectations
-      (...args: infer A2): Expectations
-    } ? (...args: MatchersArguments<A0 | A1 | A2>) => ExpectationsMatcher :
-    ExpectationsFunctions[k] extends {
-      (...args: infer A0): Expectations
-      (...args: infer A1): Expectations
-    } ? (...args: MatchersArguments<A0 | A1>) => ExpectationsMatcher :
-    ExpectationsFunctions[k] extends {
-      (...args: infer A0): Expectations
-    } ? (...args: MatchersArguments<A0>) => ExpectationsMatcher :
+type MatchersFunctions<Functions, Result> = {
+  [ k in keyof Functions ]:
+    Functions[k] extends {
+      (...args: infer A0): any
+      (...args: infer A1): any
+      (...args: infer A2): any
+      (...args: infer A3): any
+      (...args: infer A4): any
+      (...args: infer A5): any
+    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3 | A4 | A5>) => Result :
+    Functions[k] extends {
+      (...args: infer A0): any
+      (...args: infer A1): any
+      (...args: infer A2): any
+      (...args: infer A3): any
+      (...args: infer A4): any
+    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3 | A4>) => Result :
+    Functions[k] extends {
+      (...args: infer A0): any
+      (...args: infer A1): any
+      (...args: infer A2): any
+      (...args: infer A3): any
+    } ? (...args: MatchersArguments<A0 | A1 | A2 | A3>) => Result :
+    Functions[k] extends {
+      (...args: infer A0): any
+      (...args: infer A1): any
+      (...args: infer A2): any
+    } ? (...args: MatchersArguments<A0 | A1 | A2>) => Result :
+    Functions[k] extends {
+      (...args: infer A0): any
+      (...args: infer A1): any
+    } ? (...args: MatchersArguments<A0 | A1>) => Result :
+    Functions[k] extends {
+      (...args: infer A0): any
+    } ? (...args: MatchersArguments<A0>) => Result :
     never
 }
 
 /** An interface describing all expectations returned by `expect(...)` */
-export interface ExpectationsMatcher extends MatchersFunctions {
+export interface ExpectationsMatcher extends MatchersFunctions<SyncExpectations, ExpectationsMatcher> {
   not: ExpectationsMatcher
   /* The assertion here will trigger */
   expect(value: unknown): void
@@ -301,7 +311,7 @@ class ExpectationsMatcherImpl {
     Object.defineProperty(this.prototype, matcherMarker, { value: matcherMarker })
 
     // all our matchers
-    for (const key in expectationsFunctions) {
+    for (const key in syncExpectations) {
       Object.defineProperty(this.prototype, key, {
         value: function(this: ExpectationsMatcherImpl, ...args: any[]): any {
           return new ExpectationsMatcherImpl([
@@ -328,7 +338,7 @@ Object.defineProperty(expect, 'not', {
 })
 
 // Create a matcher for each expectation function
-for (const name in expectationsFunctions) {
+for (const name in syncExpectations) {
   Object.defineProperty(expect, name, {
     value: function(...args: any[]): ExpectationsMatcher {
       const builder = new ExpectationsMatcherImpl([])
