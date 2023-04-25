@@ -25,14 +25,20 @@ expectType<SyntaxError>(expect(new SyntaxError()).value)
 
 /* === ASYNC EXPECTATIONS =================================================== */
 
-expectType<Promise<Expectations<Promise<unknown>>>>(expect('foo').toBeResolved())
-expectType<Promise<Expectations<Promise<string>>>>(expect('foo').toBeResolved((assert) => assert.toBeA('string')))
-expectType<Promise<Expectations<Promise<unknown>>>>(expect('foo').toBeResolved((assert) => void assert.toBeA('string')))
+expectType<Promise<Expectations<PromiseLike<string>>>>(expect('foo').toBeResolved())
+expectType<Promise<Expectations<PromiseLike<string>>>>(expect(Promise.resolve('foo')).toBeResolved())
+expectType<Promise<Expectations<PromiseLike<unknown>>>>(expect(true as unknown).toBeResolved())
+expectType<Promise<Expectations<PromiseLike<number>>>>(expect(true as unknown).toBeResolved((assert) => assert.toBeA('number')))
+expectType<Promise<Expectations<PromiseLike<number>>>>(expect(true).toBeResolved((assert) => assert.toBeA('number')))
 
-// toBeResolved,
-// toBeRejected,
-// toBeRejectedWithError,
-// TODO: fix types inferring the awaited promise!
+expectType<Promise<Expectations<PromiseLike<string>>>>(expect('foo').not.toBeResolved()) // negative is _also_ a promise!
+
+expectType<Promise<Expectations<PromiseLike<string>>>>(expect('foo').toBeRejected())
+expectType<Promise<Expectations<PromiseLike<string>>>>(expect('foo').toBeRejected((assert) => assert.toBeA('number')))
+expectType<Promise<Expectations<PromiseLike<unknown>>>>(expect('foo' as unknown).toBeRejected((assert) => assert.toBeA('number')))
+
+expectType<Promise<Expectations<PromiseLike<string>>>>(expect('foo').not.toBeRejectedWithError())
+expectType<Promise<Expectations<PromiseLike<string>>>>(expect('foo').not.toBeRejectedWithError())
 
 /* === BASIC EXPECTATIONS =================================================== */
 
@@ -333,14 +339,12 @@ expectType<{(...args: []): Matchers}>(expect.toBeUndefined)
 
 /* === KEYS ================================================================= */
 
-const expectations = expect(true)
-
-expectType<
-// async
+type asyncKeys =
 | 'toBeResolved'
 | 'toBeRejected'
 | 'toBeRejectedWithError'
-// basic
+
+type basicKeys =
 | 'toBeA'
 | 'toBeCloseTo'
 | 'toBeError'
@@ -356,13 +360,16 @@ expectType<
 | 'toHaveSize'
 | 'toMatch'
 | 'toStrictlyEqual'
-// include
+
+type includeKeys =
 | 'toInclude'
 | 'toMatchContents'
-// throwing
+
+type throwingKeys =
 | 'toThrow'
 | 'toThrowError'
-// trivial
+
+type trivialKeys =
 | 'toBeDefined'
 | 'toBeFalse'
 | 'toBeFalsy'
@@ -374,50 +381,38 @@ expectType<
 | 'toBeTrue'
 | 'toBeTruthy'
 | 'toBeUndefined'
+
+
+const expectations = expect(true)
+
+// Expectations
+expectType<
+| asyncKeys
+| basicKeys
+| includeKeys
+| throwingKeys
+| trivialKeys
 // expectations specific
 | 'value'
 | 'not'
 >(null as any as keyof typeof expectations)
 
+// ExpectationFunctions
 expectType<
-// async should not produce matchers!!!
-// | 'toBeResolved'
-// | 'toBeRejected'
-// | 'toBeRejectedWithError'
-// basic
-| 'toBeA'
-| 'toBeCloseTo'
-| 'toBeError'
-| 'toBeGreaterThan'
-| 'toBeGreaterThanOrEqual'
-| 'toBeInstanceOf'
-| 'toBeLessThan'
-| 'toBeLessThanOrEqual'
-| 'toBeWithinRange'
-| 'toEqual'
-| 'toHaveLength'
-| 'toHaveProperty'
-| 'toHaveSize'
-| 'toMatch'
-| 'toStrictlyEqual'
-// include
-| 'toInclude'
-| 'toMatchContents'
-// throwing
-| 'toThrow'
-| 'toThrowError'
-// trivial
-| 'toBeDefined'
-| 'toBeFalse'
-| 'toBeFalsy'
-| 'toBeNaN'
-| 'toBeNegativeInfinity'
-| 'toBeNull'
-| 'toBeNullable'
-| 'toBePositiveInfinity'
-| 'toBeTrue'
-| 'toBeTruthy'
-| 'toBeUndefined'
+| asyncKeys
+| basicKeys
+| includeKeys
+| throwingKeys
+| trivialKeys
+>(null as any as keyof typeof expectations.not)
+
+// Matchers
+expectType<
+// no async!
+| basicKeys
+| includeKeys
+| throwingKeys
+| trivialKeys
 // matchers specific
 | 'expect'
 | 'not'
