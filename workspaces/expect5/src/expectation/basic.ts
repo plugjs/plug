@@ -335,8 +335,12 @@ function toHaveSize(
 
 /* === TO MATCH ============================================================= */
 
+/** Expects the value to be a `string` _matching_ the specified substring. */
 function toMatch(substring: string): Expectations<string>
+/** Expects the value to be a `string` _matching_ the specified {@link RegExp}. */
 function toMatch(expression: RegExp): Expectations<string>
+
+/* Overloaded function implementation */
 function toMatch(
     this: ExpectationsContext,
     expr: string | RegExp,

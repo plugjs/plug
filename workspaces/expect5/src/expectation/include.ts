@@ -6,10 +6,16 @@ import type { Expectations, ExpectationsContext, JoinExpectations } from './expe
 
 /* === TO INCLUDE =========================================================== */
 
+/** Expect the value to include _all_ properties from the specified _object_. */
 function toInclude<T, P extends Record<string, any>>(this: T, properties: P): JoinExpectations<T, P>
+/** Expect the value to include _all_ mappings from the specified {@link Map}. */
 function toInclude<T>(this: T, mappings: Map<any, any>): T
+/** Expect the value to include _all_ values from the specified {@link Set}. */
 function toInclude<T>(this: T, entries: Set<any>): T
+/** Expect the value to include _all_ values in any order from the specified _array_. */
 function toInclude<T>(this: T, values: any[]): T
+
+/* Overloaded function implementation */
 function toInclude(
     this: ExpectationsContext,
     expected:
@@ -28,8 +34,18 @@ function toInclude(
 
 /* === TO MATCH CONTENTS ==================================================== */
 
+/**
+ * Expect the value to include _all_ values (and only those values, in any
+ * order) from the specified _array_.
+ */
 function toMatchContents<T>(this: T, contents: any[]): T
+/**
+ * Expect the value to include _all_ values (and only those values, in any
+ * order) from the specified {@link Set}.
+ */
 function toMatchContents<T>(this: T, contents: Set<any>): T
+
+/* Overloaded function implementation */
 function toMatchContents(
     this: ExpectationsContext,
     contents: any[] | Set<any>,
