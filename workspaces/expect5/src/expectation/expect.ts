@@ -178,7 +178,7 @@ type OverloadFunctions<Functions, Result> = {
  * returned by each expectation.
  */
 export interface ExpectationFunctions<T> extends
-  OverloadFunctions<AsyncExpectations, Promise<Expectations<T>>>,
+  OverloadFunctions<AsyncExpectations, Promise<Expectations<PromiseLike<T>>>>,
   OverloadFunctions<SyncExpectations, Expectations<T>> {
   // empty interface, specifically without `value` or `not` so that
   // in no way this can be confused with the full `Expectations<T>`.
@@ -292,17 +292,17 @@ export interface Matchers extends OverloadFunctions<SyncExpectations, Matchers> 
   expect(value: unknown): void
 }
 
-interface ExpectationsMatcherImpl extends Matchers {}
+interface MatcherImpl extends Matchers {}
 
-class ExpectationsMatcherImpl {
+class MatcherImpl {
   private readonly _matchers: readonly [ string, boolean, any[] ][]
-  private readonly _positiveBuilder: ExpectationsMatcherImpl
-  private readonly _negativeBuilder: ExpectationsMatcherImpl
+  private readonly _positiveBuilder: MatcherImpl
+  private readonly _negativeBuilder: MatcherImpl
   private readonly _negative: boolean
 
   constructor(
       _matchers: readonly [ string, boolean, any[] ][],
-      _positiveBuilder?: ExpectationsMatcherImpl,
+      _positiveBuilder?: MatcherImpl,
   ) {
     this._matchers = _matchers
     if (_positiveBuilder) {
@@ -312,11 +312,11 @@ class ExpectationsMatcherImpl {
     } else {
       this._negative = false
       this._positiveBuilder = this
-      this._negativeBuilder = new ExpectationsMatcherImpl(this._matchers, this)
+      this._negativeBuilder = new MatcherImpl(this._matchers, this)
     }
   }
 
-  get not(): ExpectationsMatcherImpl {
+  get not(): MatcherImpl {
     return this._negative ? this._positiveBuilder : this._negativeBuilder
   }
 
@@ -337,8 +337,8 @@ class ExpectationsMatcherImpl {
     // all our matchers
     for (const key in syncExpectations) {
       Object.defineProperty(this.prototype, key, {
-        value: function(this: ExpectationsMatcherImpl, ...args: any[]): any {
-          return new ExpectationsMatcherImpl([
+        value: function(this: MatcherImpl, ...args: any[]): any {
+          return new MatcherImpl([
             ...this._matchers, [ key, this._negative, args ],
           ])
         },
@@ -358,14 +358,14 @@ export const expect = (<T = unknown>(value: T): Expectations<T> => {
 
 // Instrument a getter for negative matchers
 Object.defineProperty(expect, 'not', {
-  get: () => new ExpectationsMatcherImpl([]).not,
+  get: () => new MatcherImpl([]).not,
 })
 
 // Create a matcher for each expectation function
 for (const name in syncExpectations) {
   Object.defineProperty(expect, name, {
     value: function(...args: any[]): Matchers {
-      const builder = new ExpectationsMatcherImpl([])
+      const builder = new MatcherImpl([])
       return (builder as any)[name](...args)
     },
   })
