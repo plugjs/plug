@@ -28,7 +28,7 @@ function toBeResolved(
       .then(([ settlement ]) => {
         if (settlement.status === 'fulfilled') {
           if (this._negative) throw new ExpectationError(this, true, 'to be resolved')
-          if (assert) assert(this.forValue(settlement.value)._expectations)
+          if (assert) assert(this.forValue(settlement.value))
         } else if (! this._negative) {
           throw new ExpectationError(this, false, 'to be resolved')
         }
@@ -61,7 +61,7 @@ function toBeRejected(
       .then(([ settlement ]) => {
         if (settlement.status === 'rejected') {
           if (this._negative) throw new ExpectationError(this, true, 'to be rejected')
-          if (assert) assert(this.forValue(settlement.reason)._expectations)
+          if (assert) assert(this.forValue(settlement.reason))
         } else if (! this._negative) {
           throw new ExpectationError(this, false, 'to be rejected')
         }
@@ -116,9 +116,9 @@ function toBeRejectedWithError(
     | [ Constructor<Error>, string ]
     | [ Constructor<Error>, RegExp ]
 ): Promise<Expectations> {
-  return this._negated
-      // @ts-ignore // can't reconcile the types with overloads...
-      .toBeRejected((assert) => assert.toBeError(...args))
+  return this._negated.toBeRejected((assert) =>
+    // @ts-ignore // can't reconcile the types with overloads...
+    assert.toBeError(...args))
 }
 
 /* === EXPORTS ============================================================== */

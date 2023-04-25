@@ -120,8 +120,8 @@ export interface ExpectationsContext<T = unknown> {
   readonly _expectations: Expectations<T>
   readonly _negated: Expectations<T>
 
-  forValue<V>(value: V): ExpectationsContext<V>,
-  forProperty(prop: string | number | symbol): ExpectationsContext
+  forValue<V>(value: V): Expectations<V>,
+  forProperty(prop: string | number | symbol): Expectations
 }
 
 
@@ -138,90 +138,61 @@ export interface ExpectationsParent {
 class ExpectationsContextImpl<T = unknown> implements ExpectationsContext<T> {
   readonly value: T
   readonly _negative: boolean
-  readonly _parent?: ExpectationsParent
   readonly _expectations: Expectations<T>
   readonly _negated: Expectations<T>
+  readonly _parent?: ExpectationsParent
 
-  constructor(value: T, negative: boolean, parent?: ExpectationsParent) {
+  constructor(
+      value: T,
+      negative: boolean,
+      expectations: Expectations<T>,
+      negated: Expectations<T>,
+      parent?: ExpectationsParent,
+  ) {
     this.value = value
     this._negative = negative
+    this._expectations = expectations
+    this._negated = negated
     this._parent = parent
-
-    this._expectations = new ExpectationsImpl(value)
-    this._negated = negative ? this._expectations.not : this._expectations
   }
 
-  forValue<V>(value: V): ExpectationsContext<V> {
-    return new ExpectationsContextImpl(value, false)
+  forValue<V>(value: V): Expectations<V> {
+    return new ExpectationsImpl(value)
   }
 
-  forProperty(prop: string | number | symbol): ExpectationsContext<unknown> {
+  forProperty(prop: string | number | symbol): Expectations<unknown> {
     this._expectations.toBeDefined()
 
     const value = (this.value as any)[prop]
     const parent = { context: this, prop }
-    return new ExpectationsImpl(value, undefined, parent)
+    return new ExpectationsImpl(value, parent)
   }
 }
-
-void ExpectationsContextImpl
 
 /** Empty interface: the `class` below won't complain about missing stuff */
 interface ExpectationsImpl<T = unknown> extends Expectations<T> {}
 
 /** Implementation of our {@link Expectations} interface */
 class ExpectationsImpl<T = unknown> implements Expectations<T> {
-  private readonly _positiveExpectations: ExpectationsImpl<T>
-  private readonly _negativeExpectations: ExpectationsImpl<T>
+  private readonly _context: ExpectationsContext<T>
 
-  readonly _expectations: ExpectationsImpl<T>
-  readonly _negative: boolean
-  readonly _negated: ExpectationsImpl<T>
-  readonly _parent?: ExpectationsParent
-
-  readonly not: ExpectationsImpl<T>
+  readonly not: Expectations<T>
 
   constructor(
-      public readonly value: T,
-      _positiveExpectations?: ExpectationsImpl<T>,
-      _parent?: ExpectationsParent,
+      readonly value: T,
+      parent?: ExpectationsParent,
+      positiveExpectations?: Expectations<T>,
   ) {
-    if (_positiveExpectations) {
-      this._negative = true
-      this._positiveExpectations = _positiveExpectations
-      this._negativeExpectations = this
+    this.value = value
+
+    if (positiveExpectations) {
+      this._context = new ExpectationsContextImpl(value, true, positiveExpectations, this, parent)
+      this.not = positiveExpectations
     } else {
-      this._negative = false
-      this._positiveExpectations = this
-      this._negativeExpectations = new ExpectationsImpl(value, this, this._parent)
+      this._context = new ExpectationsContextImpl(value, false, this, this, parent)
+      this.not = new ExpectationsImpl(value, parent, this)
     }
-    this._parent = _parent
-    this._expectations = this._positiveExpectations
-    this._negated = this._negative ? this._negativeExpectations : this._positiveExpectations
-    this.not = this._negative ? this._positiveExpectations : this._negativeExpectations
   }
-
-  /* == NEW EXPECTATIONS ==================================================== */
-
-  forProperty(prop: string | number | symbol): ExpectationsImpl {
-    this.toBeDefined()
-
-    const value = (this.value as any)[prop]
-    const parent = { context: this, prop }
-    return new ExpectationsImpl(value, undefined, parent)
-    // child._parent = { context: this, prop }
-    // return child
-  }
-
-  forValue<T = unknown>(value: T): ExpectationsImpl<T> {
-    return new ExpectationsImpl(value)
-  }
-
-  /* == NEGATION ============================================================ */
-
-  // get not(): ExpectationsImpl<T> {
-  //   return this._negative ? this._positiveExpectations : this._negativeExpectations
-  // }
 
   /* == STATIC INITALIZER =================================================== */
 
@@ -231,7 +202,7 @@ class ExpectationsImpl<T = unknown> implements Expectations<T> {
 
       const fn = function(this: ExpectationsImpl, ...args: any[]): any {
         try {
-          return expectation.call(this, ...args)
+          return expectation.call(this._context, ...args)
         } catch (error) {
           if (error instanceof ExpectationError) Error.captureStackTrace(error, fn)
           throw error
@@ -332,10 +303,10 @@ class ExpectationsMatcherImpl {
   }
 
   expect(value: unknown): void {
-    const expectations = new ExpectationsImpl(value)
+    const expectations = expect(value)
     for (const [ expectation, negative, args ] of this._matchers) {
       const expect = negative ? expectations.not : expectations
-      ;(expect as any)[expectation](...args) // TODO: context!
+      ;(expect as any)[expectation](...args)
     }
   }
 
