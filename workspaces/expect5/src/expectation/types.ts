@@ -44,26 +44,40 @@ export type TypeMappings = {
 /** Values returned by our own _expanded_ `{@link typeOf}` */
 export type TypeName = keyof TypeMappings
 
+/** Join the asserted type of an {@link Expectations} with another type */
 export type JoinExpectations<E, T2> =
   E extends Expectations<infer T1> ? Expectations<T1 & T2> : Expectations<T2>
 
+/** An assertion function, for sub-expectations and value introspection */
 export type AssertionFunction<T = unknown> = (assert: Expectations<T>) => void | Expectations
 
+/** Get the type asserted by an {@link AssertionFunction} */
 export type AssertedType<F extends AssertionFunction<any>, R = ReturnType<F>> =
   R extends Expectations<infer T> ? T : unknown
 
+/** Internal context used by expectations functions to operate */
 export interface ExpectationsContext<T = unknown> {
+  /** The value being expected */
   readonly value: T,
+  /** Whether this is a negative or positive expectation */
   readonly _negative: boolean,
+  /** The optional parent of this instance, when constructed for a property */
   readonly _parent?: ExpectationsParent
+  /** The current _positive_ {@link Expectations} for the value */
   readonly _expectations: Expectations<T>
+  /**
+   * If _negative_, the _negative_ {@link Expectations} for the value,
+   * otherwise the _positive_ ones (basically, follow the `not` of `expect`).
+   */
   readonly _negated: Expectations<T>
 
+  /** Create an {@link Expectation} instance for the specified value */
   forValue<V>(value: V): Expectations<V>,
+  /** Create an {@link Expectation} instance for a property of this value */
   forProperty(prop: string | number | symbol): Expectations
 }
 
-/** Parent expectations */
+/** Parent expectations context (for properties) */
 export interface ExpectationsParent {
   context: ExpectationsContext,
   prop: string | number | symbol,
