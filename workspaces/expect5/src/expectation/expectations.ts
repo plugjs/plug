@@ -1,5 +1,6 @@
 import { diff, type Diff } from './diff'
 import { toInclude, toMatchContents } from './include'
+import { type Matchers } from './matchers'
 import { ExpectationError, isMatcher, prefixType, stringifyConstructor, stringifyValue, typeOf, type Constructor, type TypeMappings, type TypeName } from './types'
 
 /* ========================================================================== *
@@ -16,6 +17,11 @@ export type AssertedType<T, F extends AssertionFunction<any>, R = ReturnType<F>>
       T : // returns Expectations<unknown>, use T
       I : // returns Expectations<something>, use "something"
     T // returns something else (void), use T
+
+type InferMatchers<T> =
+  T extends Matchers<infer V> ? V :
+  T extends Record<any, any> ? { [ k in keyof T ] : InferMatchers<T[k]> } :
+  T
 
 /** Simple wrapper defining the _parent_ instance of an {@link Expectations}. */
 type ExpectationsParent = {
@@ -340,7 +346,7 @@ export class Expectations<T = unknown> {
    *
    * Negation: {@link NegativeExpectations.toEqual `not.toEqual(...)`}
    */
-  toEqual<Type>(expected: Type): Expectations<Type> {
+  toEqual<Type>(expected: Type): Expectations<InferMatchers<Type>> {
     if ((this.value as any) === expected) return this as Expectations<any>
 
     const result = diff(this.value, expected)
