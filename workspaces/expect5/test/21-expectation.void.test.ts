@@ -1,7 +1,7 @@
 import { expect } from '../src/expectation/expect'
 import { expectPass, expectFail } from './utils'
 
-fdescribe('Trivial Expectations', () => {
+describe('Trivial Expectations', () => {
   const positivePassing = {
     toBeDefined: [ '', false, 0 ],
     toBeFalse: [ false ],

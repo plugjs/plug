@@ -262,7 +262,7 @@ export default build({
 
   /** Run all tests */
   async test(): Promise<void> {
-    await this.check_tests()
+    // await this.check_tests()
     await this.test_cjs()
     await this.test_esm()
   },

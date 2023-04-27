@@ -1,6 +1,6 @@
 import { diff, type Diff } from './diff'
 import { toInclude, toMatchContents } from './include'
-import { ExpectationError, prefixType, stringifyConstructor, stringifyValue, typeOf, type Constructor, type TypeMappings, type TypeName } from './types'
+import { ExpectationError, isMatcher, prefixType, stringifyConstructor, stringifyValue, typeOf, type Constructor, type TypeMappings, type TypeName } from './types'
 
 /* ========================================================================== *
  * TYPES SUPPORTING EXPECTATIONS                                              *
@@ -346,7 +346,11 @@ export class Expectations<T = unknown> {
     const result = diff(this.value, expected)
 
     if (result.diff) {
-      this._fail(`to equal ${stringifyValue(expected)}`, result)
+      if (isMatcher(expected)) {
+        this._fail('to satisfy expectation matcher', result)
+      } else {
+        this._fail(`to equal ${stringifyValue(expected)}`, result)
+      }
     } else {
       return this as Expectations<any>
     }
@@ -507,17 +511,10 @@ export class Expectations<T = unknown> {
 
   /**
    * Expect the value to be an {@link Iterable} object includind _all_ values
-   * (and only those values) from the specified _array_, in any order.
+   * (and only those values) from the specified _array_ or {@link Set},
+   * in any order.
    */
-  toMatchContents(contents: any[]): Expectations<T>
-
-  /**
-   * Expect the value to be an {@link Iterable} object includind _all_ values
-   * (and only those values) from the specified {@link Set}, in any order.
-   */
-  toMatchContents(contents: Set<any>): Expectations<T>
-
-  toMatchContents(contents: any[] | Set<any>): Expectations {
+  toMatchContents(contents: any[] | Set<any>): Expectations<T> {
     toMatchContents(this, contents)
     return this
   }
@@ -721,7 +718,7 @@ export class NegativeExpectations<T = unknown> {
 
   /** Throw an {@link ExpectationError} associated with _this_ */
   private _fail(details: string, diff?: Diff): never {
-    throw new ExpectationError(this._expectations, `not ${details}`, diff)
+    throw new ExpectationError(this._expectations, details, diff)
   }
 
   /* ------------------------------------------------------------------------ */
@@ -734,7 +731,7 @@ export class NegativeExpectations<T = unknown> {
    */
   toBeA(type: TypeName): Expectations<T> {
     if (typeOf(this._value) !== type) return this._expectations
-    this._fail(`to be ${prefixType(type)}`)
+    this._fail(`not to be ${prefixType(type)}`)
   }
 
   /* ------------------------------------------------------------------------ */
@@ -766,9 +763,7 @@ export class NegativeExpectations<T = unknown> {
       return this._expectations as Expectations<any>
     }
 
-    throw new ExpectationError(
-        this._expectations,
-        `to be ${stringifyValue(null)} or ${stringifyValue(undefined)}`)
+    this._fail(`to be ${stringifyValue(null)} or ${stringifyValue(undefined)}`)
   }
 
   /* ------------------------------------------------------------------------ */
@@ -781,7 +776,7 @@ export class NegativeExpectations<T = unknown> {
    */
   toBeInstanceOf(constructor: Constructor): Expectations<T> {
     if (this._value instanceof constructor) {
-      this._fail(`to be an instance of ${stringifyConstructor(constructor)}`)
+      this._fail(`not to be an instance of ${stringifyConstructor(constructor)}`)
     }
     return this._expectations
   }
@@ -795,7 +790,7 @@ export class NegativeExpectations<T = unknown> {
    */
   toBeNaN(): Expectations<number> {
     const expectations = this._expectations.toBeA('number')
-    if (isNaN(expectations.value)) this._fail(`to be ${stringifyValue(NaN)}`)
+    if (isNaN(expectations.value)) this._fail(`not to be ${stringifyValue(NaN)}`)
     return expectations
   }
 
@@ -820,7 +815,7 @@ export class NegativeExpectations<T = unknown> {
     this._expectations.toBeA(typeof min)
 
     if (((this._value as any) >= min) && ((this._value as any) <= max)) {
-      this._fail(`to be within ${stringifyValue(min)}...${stringifyValue(max)}`)
+      this._fail(`not to be within ${stringifyValue(min)}...${stringifyValue(max)}`)
     }
 
     return this._expectations as Expectations<any>
@@ -841,7 +836,11 @@ export class NegativeExpectations<T = unknown> {
       if (result.diff) return this._expectations
     }
 
-    this._fail(`to equal ${stringifyValue(expected)}`, result)
+    if (isMatcher(expected)) {
+      this._fail('not to satisfy expectation matcher', result)
+    } else {
+      this._fail(`not to equal ${stringifyValue(expected)}`, result)
+    }
   }
 
   /* ------------------------------------------------------------------------ */
@@ -857,9 +856,9 @@ export class NegativeExpectations<T = unknown> {
 
     const realLength = (this._value as any)['length']
     if (typeof realLength !== 'number') {
-      throw new ExpectationError(this._expectations, 'to have a numeric "length" property')
+      this._fail('to have a numeric "length" property')
     } else if (realLength === length) {
-      this._fail(`to have length ${length}`)
+      this._fail(`not to have length ${length}`)
     }
 
     return this._expectations as Expectations<any>
@@ -877,7 +876,7 @@ export class NegativeExpectations<T = unknown> {
 
     const propertyValue = (this._value as any)[property]
     if (propertyValue === undefined) return this._expectations
-    this._fail(`to have property "${String(property)}"`)
+    this._fail(`not to have property "${String(property)}"`)
   }
 
   /* ------------------------------------------------------------------------ */
@@ -893,9 +892,9 @@ export class NegativeExpectations<T = unknown> {
 
     const realSize = (this._value as any)['size']
     if (typeof realSize !== 'number') {
-      throw new ExpectationError(this._expectations, 'to have a numeric "size" property')
+      this._fail('to have a numeric "size" property')
     } else if (realSize === size) {
-      this._fail(`to have size ${size}`)
+      this._fail(`not to have size ${size}`)
     }
 
     return this._expectations
@@ -958,7 +957,7 @@ export class NegativeExpectations<T = unknown> {
 
     if (! expectations.value.match(matcher)) return expectations
 
-    this._fail(`to match ${stringifyValue(matcher)}`)
+    this._fail(`not to match ${stringifyValue(matcher)}`)
   }
 
   /* ------------------------------------------------------------------------ */
@@ -971,6 +970,6 @@ export class NegativeExpectations<T = unknown> {
    */
   toStrictlyEqual(expected: any): Expectations<T> {
     if (this._value !== expected) return this._expectations
-    this._fail(`to strictly equal ${stringifyValue(expected)}`)
+    this._fail(`not to strictly equal ${stringifyValue(expected)}`)
   }
 }

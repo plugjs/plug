@@ -1,5 +1,5 @@
 /* eslint-disable no-fallthrough */
-import { stringifyConstructor, stringifyValue } from './types'
+import { ExpectationError, isMatcher, stringifyConstructor, stringifyValue } from './types'
 
 import type { Constructor } from './types'
 
@@ -292,22 +292,22 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
     }
   }
 
-  // TODO // matchers!
-  // if (isMatcher(expected)) {
-  //   try {
-  //     expected.expect(actual)
-  //     return { diff: false, value: actual }
-  //   } catch (error) {
-  //     if (error instanceof ExpectationError) {
-  //       // if the error highlights a difference, simply return that
-  //       // otherwise wrap the error into a new ErrorDiff and return it
-  //       const { message, diff } = error
-  //       return diff?.diff ? diff : { diff: true, value: actual, error: message }
-  //     } else {
-  //       throw error
-  //     }
-  //   }
-  // }
+  // matchers!
+  if (isMatcher(expected)) {
+    try {
+      expected.expect(actual)
+      return { diff: false, value: actual }
+    } catch (error) {
+      if (error instanceof ExpectationError) {
+        // if the error highlights a difference, simply return that
+        // otherwise wrap the error into a new ErrorDiff and return it
+        const { message, diff } = error
+        return diff?.diff ? diff : { diff: true, value: actual, error: message }
+      } else {
+        throw error
+      }
+    }
+  }
 
   // inspect types of what to compare
   const actualType = typeof actual

@@ -3,7 +3,7 @@ import assert from 'node:assert'
 import { expect } from '../src/expectation/expect'
 import { expectFail, expectPass } from './utils'
 
-fdescribe('Throwing Expectations', () => {
+describe('Throwing Expectations', () => {
   it('should expect "toThrow(...)"', () => {
     const error = new SyntaxError('Whatever')
     const throwing = (): never => {

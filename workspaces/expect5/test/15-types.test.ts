@@ -3,7 +3,7 @@ import assert from 'node:assert'
 
 import { prefixType, stringifyConstructor, stringifyValue, typeOf } from '../src/expectation/types'
 
-fdescribe('Type Utilities', () => {
+describe('Type Utilities', () => {
   it('should correctly return the extended type of a value', () => {
     assert.strictEqual(typeOf(null), 'null')
 

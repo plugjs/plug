@@ -1,3 +1,5 @@
+import { expect as expect4, expect5 } from '@plugjs/expect5/expectation/expect'
+
 import { assert, assertPromises, BuildFailure, fail } from '../src/asserts'
 
 describe('Assertions', () => {
@@ -10,6 +12,16 @@ describe('Assertions', () => {
     const failure = BuildFailure.withMessage('Hello, world!')
     expect(failure).toBeInstanceOf(BuildFailure)
     expect(failure.message).toStrictlyEqual('Hello, world!')
+
+    const q = expect5('foo').toBeA('array', (a) => a.toBeA('string')).value
+    const w = expect5('foo').not.toBeA()
+
+    expect4('foo').toEqual({
+      bar: expect.toHaveLength(12),
+      foo: expect.toBeA('number', (assert) => {
+        assert
+      }),
+    }).value
   })
 
   it('should create a build failure with root causes', () => {

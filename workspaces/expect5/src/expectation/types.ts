@@ -1,5 +1,6 @@
 import type { Diff } from './diff'
 import type { Expectations } from './expectations'
+import type { Matchers } from './matchers'
 
 /* ========================================================================== *
  * INTERNAL TYPES FOR EXPECTATIONS                                            *
@@ -139,7 +140,6 @@ export function stringifyValue(value: unknown): string {
   }
 
   // specific object types
-  // TODO // if (isMatcher(value)) return '<matcher>'
   if (value instanceof RegExp) return String(value)
   if (value instanceof Date) return `[${constructorName(value)}: ${value.toISOString()}]`
   if (value instanceof Boolean) return `[${constructorName(value)}: ${value.valueOf()}]`
@@ -189,12 +189,12 @@ export function prefixType(type: TypeName): string {
 }
 
 /* ========================================================================== *
- * EXPECTATIONS MATCHERS MARKER                                               *
+ * EXPECTATIONS MATCHERS MARKER // avoids import loops                        *
  * ========================================================================== */
 
-export const matcherMarker = Symbol.for('plugjs:expect5:types:ExpectationsMatcher')
+export const matcherMarker = Symbol.for('plugjs:expect5:types:Matcher')
 
-export function isMatcher(what: any): what is any { // TODO // } Matchers {
+export function isMatcher(what: any): what is Matchers {
   return what && what[matcherMarker] === matcherMarker
 }
 

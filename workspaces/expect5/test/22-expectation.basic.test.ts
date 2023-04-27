@@ -3,7 +3,7 @@ import assert from 'node:assert'
 import { expect } from '../src/expectation/expect'
 import { expectFail, expectPass } from './utils'
 
-fdescribe('Basic Expectations', () => {
+describe('Basic Expectations', () => {
   it('should expect "toBeA(...)"', () => {
     expectPass(() => expect('foo').toBeA('string'))
     expectPass(() => expect('foo').toBeA('string', (assert) => assert.toStrictlyEqual('foo')))

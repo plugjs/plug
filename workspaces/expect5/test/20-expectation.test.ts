@@ -3,7 +3,7 @@ import assert from 'node:assert'
 import { expect } from '../src/expectation/expect'
 import { ExpectationError } from '../src/expectation/types'
 
-fdescribe('ExpectationError constructor', () => {
+describe('ExpectationError constructor', () => {
   const expectations0 = expect(/the value/)
 
   const expectations1 = Object.assign(expect('another value'), {
@@ -52,7 +52,7 @@ fdescribe('ExpectationError constructor', () => {
   })
 })
 
-fdescribe('Asynchronous Expectations', () => {
+describe('Asynchronous Expectations', () => {
   it('should expect "toBeResolved(...)"', async () => {
     const expectation = expect(Promise.resolve('foo'))
 

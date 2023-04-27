@@ -3,7 +3,7 @@ import { deepEqual } from 'node:assert'
 
 import { diff } from '../src/expectation/diff'
 
-fdescribe('Differences', () => {
+describe('Differences', () => {
   it('should consider strictly equal values', () => {
     deepEqual(diff('abc', 'abc'), {
       diff: false,
