@@ -393,7 +393,7 @@ export class Expectations<T = unknown> {
   >(
       property: Prop,
       assertion?: Assert,
-  ): Expectations<T & { [keyt in Prop] : AssertedType<T, Assert> }> {
+  ): Expectations<T & { [keyt in Prop] : AssertedType<unknown, Assert> }> {
     this.toBeDefined()
 
     const propertyValue = (this.value as any)[property]
@@ -538,21 +538,21 @@ export class Expectations<T = unknown> {
   /**
    * Expects the value to be a `function` throwing, and (if specified) further
    * asserts the thrown value with an {@link AssertionFunction}.
+   *
+   * Negation: {@link NegativeExpectations.toThrow `not.toThrow()`}
    */
-  toThrow(assert?: AssertionFunction): Expectations<T & (() => any)> {
+  toThrow(assert?: AssertionFunction): Expectations<() => any> {
     const func = this.toBeA('function')
 
-    let passed: boolean = false
-    let thrown: unknown = undefined
+    let passed = false
     try {
       func.value()
       passed = true
-    } catch (caught) {
-      thrown = caught
+    } catch (thrown) {
+      if (assert) assert(new Expectations(thrown))
     }
 
     if (passed) this._fail('to throw')
-    if (assert) assert(new Expectations(thrown))
     return this as Expectations<any>
   }
 
@@ -564,10 +564,12 @@ export class Expectations<T = unknown> {
    * If specified, the {@link Error}'s own message will be further expected to
    * either match the specified {@link RegExp}, or equal to the specified
    * `string`.
+   *
+   * Negation: {@link NegativeExpectations.toThrow `not.toThrow()`}
    */
   toThrowError(
     message?: string | RegExp
-  ): Expectations<T & (() => any)>
+  ): Expectations<() => any>
 
   /**
    * Expects the value to be a `function` throwing an instance of the
@@ -576,11 +578,13 @@ export class Expectations<T = unknown> {
    * If specified, the {@link Error}'s own message will be further expected to
    * either match the specified {@link RegExp}, or equal to the specified
    * `string`.
+   *
+   * Negation: {@link NegativeExpectations.toThrow `not.toThrow()`}
    */
   toThrowError<Class extends Constructor<Error>>(
     constructor: Class,
     message?: string | RegExp,
-  ): Expectations<T & (() => any)>
+  ): Expectations<() => any>
 
   toThrowError(
       constructorOrMessage?: string | RegExp | Constructor,
@@ -958,6 +962,24 @@ export class NegativeExpectations<T = unknown> {
     if (! expectations.value.match(matcher)) return expectations
 
     this._fail(`not to match ${stringifyValue(matcher)}`)
+  }
+
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * Expects the value to be a `function` not throwing anything.
+   *
+   * Negates: {@link Expectations.toThrow `toThrow(...)`}
+   */
+  toThrow(): Expectations<() => any> {
+    const expectations = this._expectations.toBeA('function')
+
+    try {
+      expectations.value()
+      return expectations
+    } catch (caught) {
+      this._fail('not to throw')
+    }
   }
 
   /* ------------------------------------------------------------------------ */

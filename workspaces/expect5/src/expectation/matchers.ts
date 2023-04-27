@@ -311,7 +311,7 @@ export class Matchers<T = unknown> {
   >(
       property: Prop,
       assertion?: Assert,
-  ): Matchers<T & { [keyt in Prop] : AssertedType<T, Assert> }> {
+  ): Matchers<T & { [keyt in Prop] : AssertedType<unknown, Assert> }> {
     return this._push((e) => e.toHaveProperty(property, assertion))
   }
 
