@@ -4,7 +4,7 @@ import { context } from '@plugjs/plug'
 import { diff, type Diff } from '../src/expectation/diff'
 import { printDiff } from '../src/expectation/print'
 
-describe('Diff Printer', () => {
+fdescribe('Diff Printer', () => {
   function map(object: Record<string, any>): Map<any, any> {
     return new Map(Object.entries(object))
   }

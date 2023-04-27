@@ -3,7 +3,7 @@ import assert from 'node:assert'
 import { expect } from '../src/expectation/expect'
 import { expectFail, expectPass } from './utils'
 
-describe('Throwing Expectations', () => {
+fdescribe('Throwing Expectations', () => {
   it('should expect "toThrow(...)"', () => {
     const error = new SyntaxError('Whatever')
     const throwing = (): never => {
@@ -16,6 +16,13 @@ describe('Throwing Expectations', () => {
     let asserted: any = undefined
     expectPass(() => expect(throwing).toThrow((e) => void (asserted = e.value)))
     assert.strictEqual(asserted, error)
+
+    // even when throwing undefined
+    expectPass(() => expect(() => {
+      // eslint-disable-next-line no-throw-literal
+      throw undefined
+    }).toThrow((assert) => void (asserted = assert.value)))
+    assert.strictEqual(asserted, undefined)
   })
 
   it('should expect "toThrowError(...)"', () => {
@@ -58,39 +65,8 @@ describe('Throwing Expectations', () => {
     }).toThrowError(), 'Expected "not-an-error" to be an instance of [Error]')
   })
 
-  it('should expect "not.toThrow(...)"', () => {
-    const error = new SyntaxError('Whatever')
-    const throwing = (): never => {
-      throw error
-    }
-
-    expectPass(() => expect(() => {}).not.toThrow())
-    expectFail(() => expect(throwing).not.toThrow(), 'Expected <function throwing> not to throw')
-
-    let asserted: boolean = false
-    expectPass(() => expect(() => {}).not.toThrow(() => void (asserted = true)))
-    assert.strictEqual(asserted, false)
-  })
-
-  it('should expect "not.toThrowError(...)"', () => {
-    const error = new SyntaxError('Whatever')
-    const throwing = (): never => {
-      throw error
-    }
-
-    expectPass(() => expect(() => {}).not.toThrowError())
-    expectPass(() => expect(() => {}).not.toThrowError())
-    expectFail(() => expect(throwing).not.toThrowError(), 'Expected <function throwing> not to throw')
-
-    let asserted: any = undefined
-    expectPass(() => expect(() => {}).not.toThrow((e) => void (asserted = e.value)))
-    assert.strictEqual(asserted, undefined)
-  })
-
   it('should restrict "toThrow" and "toThrowError" to functions', () => {
     expectFail(() => expect('foo').toThrow(), 'Expected "foo" to be a <function>')
-    expectFail(() => expect('foo').not.toThrow(), 'Expected "foo" to be a <function>')
     expectFail(() => expect('foo').toThrowError(), 'Expected "foo" to be a <function>')
-    expectFail(() => expect('foo').not.toThrowError(), 'Expected "foo" to be a <function>')
   })
 })

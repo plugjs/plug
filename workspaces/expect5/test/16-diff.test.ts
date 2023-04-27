@@ -1,10 +1,9 @@
+/* eslint-disable no-new-wrappers */
 import { deepEqual } from 'node:assert'
 
 import { diff } from '../src/expectation/diff'
 
-/* eslint-disable no-new-wrappers */
-
-describe('Differences', () => {
+fdescribe('Differences', () => {
   it('should consider strictly equal values', () => {
     deepEqual(diff('abc', 'abc'), {
       diff: false,

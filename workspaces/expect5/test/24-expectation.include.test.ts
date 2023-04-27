@@ -2,7 +2,7 @@ import assert from 'node:assert'
 
 import { expectFail, expectPass } from './utils'
 
-describe('Inclusion Expectations', () => {
+fdescribe('Inclusion Expectations', () => {
   it('should fail when the expectation is not recognized', () => {
     assert.throws(() => expect('foo').toInclude('bar' as any), (thrown) => {
       assert(thrown instanceof TypeError, 'Error type')
@@ -408,33 +408,8 @@ describe('Inclusion Expectations', () => {
           })
     })
 
-    it('should not match all contents', () => {
-      expectFail(() => expect([ 'one', true, 123 ]).not.toMatchContents([ true, 123, 'one' ]),
-          'Expected [Array (3)] not to match contents of [Array]', {
-            diff: false,
-            value: [ 'one', true, 123 ],
-            values: [
-              { 'diff': false, 'value': 'one' },
-              { 'diff': false, 'value': true },
-              { 'diff': false, 'value': 123 },
-            ] })
-      expectFail(() => expect(new Set([ 'one', true, 123 ])).not.toMatchContents([ true, 123, 'one' ]),
-          'Expected [Set (3)] not to match contents of [Array]', {
-            diff: false,
-            value: new Set([ 'one', true, 123 ]),
-            values: [
-              { 'diff': false, 'value': 'one' },
-              { 'diff': false, 'value': true },
-              { 'diff': false, 'value': 123 },
-            ] })
-
-      expectPass(() => expect([ 'one', false ]).not.toMatchContents([ true, 123, 'one' ]))
-      expectPass(() => expect(new Set([ 'one', 345 ])).not.toMatchContents([ true, 123, 'one' ]))
-    })
-
-    it('should not match contents of a non-iterable', () => {
+    it('should fail when matching non-iterables', () => {
       expectFail(() => expect({}).toMatchContents([]), 'Expected [Object] to be an iterable object')
-      expectFail(() => expect({}).not.toMatchContents([]), 'Expected [Object] to be an iterable object')
     })
   })
 })

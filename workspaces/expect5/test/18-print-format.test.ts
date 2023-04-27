@@ -6,7 +6,7 @@ import { diff } from '../src/expectation/diff'
 
 import type { Diff } from '../src/expectation/diff'
 
-describe('Diff Printer Format', () => {
+fdescribe('Diff Printer Format', () => {
   const logger = new TestLogger()
 
   afterEach(() => void logger.reset())

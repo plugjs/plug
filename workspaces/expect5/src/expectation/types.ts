@@ -1,5 +1,5 @@
 import type { Diff } from './diff'
-import type { Expectations, Matchers, ExpectationFunctions } from './expect'
+import type { Expectations } from './expectations'
 
 /* ========================================================================== *
  * INTERNAL TYPES FOR EXPECTATIONS                                            *
@@ -44,45 +44,6 @@ export type TypeMappings = {
 /** Values returned by our own _expanded_ `{@link typeOf}` */
 export type TypeName = keyof TypeMappings
 
-/** Join the asserted type of an {@link Expectations} with another type */
-export type JoinExpectations<E, T2> =
-  E extends Expectations<infer T1> ? Expectations<T1 & T2> : Expectations<T2>
-
-/** An assertion function, for sub-expectations and value introspection */
-export type AssertionFunction<T = unknown> = (assert: Expectations<T>) => void | Expectations
-
-/** Get the type asserted by an {@link AssertionFunction} */
-export type AssertedType<F extends AssertionFunction<any>, R = ReturnType<F>> =
-  R extends Expectations<infer T> ? T : unknown
-
-/** Internal context used by expectations functions to operate */
-export interface ExpectationsContext<T = unknown> {
-  /** The value being expected */
-  readonly value: T,
-  /** Whether this is a negative or positive expectation */
-  readonly negative: boolean,
-  /** The optional parent of this instance, when constructed for a property */
-  readonly parent?: ExpectationsParent
-  /** The current _positive_ {@link Expectations} for the value */
-  readonly expects: Expectations<T>
-  /**
-   * If _negative_, the _negative_ {@link ExpectationFunctions} for the value,
-   * otherwise the _positive_ ones (basically, follow the `not` of `expect`).
-   */
-  readonly negated: ExpectationFunctions<T>
-
-  /** Create an {@link Expectation} instance for the specified value */
-  forValue<V>(value: V): Expectations<V>,
-  /** Create an {@link Expectation} instance for a property of this value */
-  forProperty(prop: string | number | symbol): Expectations
-}
-
-/** Parent expectations context (for properties) */
-export interface ExpectationsParent {
-  context: ExpectationsContext,
-  prop: string | number | symbol,
-}
-
 /* ========================================================================== *
  * TYPE INSPECTION, GUARD, AND ASSERTION                                      *
  * ========================================================================== */
@@ -117,16 +78,6 @@ export function typeOf(value: unknown): TypeName {
 
   // anything else is an object
   return 'object'
-}
-
-/** Asserts that the specified `value` is of the specified _expanded_ `type` */
-export function assertContextType<T extends keyof TypeMappings>(
-    context: ExpectationsContext,
-    type: T,
-): asserts context is ExpectationsContext<TypeMappings[T]> {
-  if (typeOf(context.value) === type) return
-
-  throw new ExpectationError(context, `to be ${prefixType(type)}`, false)
 }
 
 /* ========================================================================== *
@@ -188,7 +139,7 @@ export function stringifyValue(value: unknown): string {
   }
 
   // specific object types
-  if (isMatcher(value)) return '<matcher>'
+  // TODO // if (isMatcher(value)) return '<matcher>'
   if (value instanceof RegExp) return String(value)
   if (value instanceof Date) return `[${constructorName(value)}: ${value.toISOString()}]`
   if (value instanceof Boolean) return `[${constructorName(value)}: ${value.valueOf()}]`
@@ -243,7 +194,7 @@ export function prefixType(type: TypeName): string {
 
 export const matcherMarker = Symbol.for('plugjs:expect5:types:ExpectationsMatcher')
 
-export function isMatcher(what: any): what is Matchers {
+export function isMatcher(what: any): what is any { // TODO // } Matchers {
   return what && what[matcherMarker] === matcherMarker
 }
 
@@ -254,43 +205,16 @@ export function isMatcher(what: any): what is Matchers {
 export class ExpectationError extends Error {
   diff?: Diff | undefined
 
-  /** Create an {@link ExpectationError} from a context and details message */
-  constructor(context: ExpectationsContext, details: string)
-
   /**
    * Create an {@link ExpectationError} from a context and details message,
    * including an optional {@link Diff}
    */
-  constructor(context: ExpectationsContext, details: string, diff?: Diff)
-
-  /**
-   * Create an {@link ExpectationError} from a context and details message,
-   * optionally forcing _negation_ to be as specified.
-   */
-  constructor(context: ExpectationsContext, details: string, forcedNegative?: boolean)
-
-  /**
-   * Create an {@link ExpectationError} from a context and details message,
-   * including an optional {@link Diff} and forcing _negation_ to be as
-   * specified.
-   */
-  constructor(context: ExpectationsContext, details: string, diff?: Diff, forcedNegative?: boolean)
-
-  /* Overloaded constructor implementation */
   constructor(
-      context: ExpectationsContext,
+      context: Expectations,
       details: string,
-      diffOrForcedNegative?: Diff | boolean,
-      maybeForcedNegative?: boolean,
+      diff?: Diff,
   ) {
-    const diff = typeof diffOrForcedNegative === 'object' ? diffOrForcedNegative : null
-    const negative =
-      typeof diffOrForcedNegative === 'boolean' ? diffOrForcedNegative :
-      typeof maybeForcedNegative === 'boolean' ? maybeForcedNegative :
-      context.negative
-
     const { value } = context
-    const not = negative ? ' not' : ''
 
     // if we're not root...
     let preamble = stringifyValue(value)
@@ -299,7 +223,7 @@ export class ExpectationError extends Error {
 
       while (context.parent) {
         properties.push(`[${stringifyValue(context.parent.prop)}]`)
-        context = context.parent.context
+        context = context.parent.expectations
       }
 
       preamble = properties.reverse().join('')
@@ -313,7 +237,7 @@ export class ExpectationError extends Error {
       preamble = `property ${preamble} of ${type} (${stringifyValue(value)})`
     }
 
-    super(`Expected ${preamble}${not} ${details}`)
+    super(`Expected ${preamble} ${details}`)
 
     if (diff) this.diff = diff
   }

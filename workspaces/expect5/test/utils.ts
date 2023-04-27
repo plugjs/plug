@@ -8,8 +8,9 @@ export function expectPass(expectation: () => void): void {
   try {
     expectation()
     return
-  } catch (error) {
-    assert.strictEqual(error, undefined)
+  } catch (error: any) {
+    const ctor = Object.getPrototypeOf(error).constructor.name
+    assert.fail(`Passing expectation threw ${ctor}: ${error.message}`)
   }
 }
 

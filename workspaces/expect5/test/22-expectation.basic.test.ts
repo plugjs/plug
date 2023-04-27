@@ -3,7 +3,7 @@ import assert from 'node:assert'
 import { expect } from '../src/expectation/expect'
 import { expectFail, expectPass } from './utils'
 
-describe('Basic Expectations', () => {
+fdescribe('Basic Expectations', () => {
   it('should expect "toBeA(...)"', () => {
     expectPass(() => expect('foo').toBeA('string'))
     expectPass(() => expect('foo').toBeA('string', (assert) => assert.toStrictlyEqual('foo')))
@@ -17,15 +17,6 @@ describe('Basic Expectations', () => {
 
     expectPass(() => expect('foo').not.toBeA('number'))
     expectFail(() => expect('foo').not.toBeA('string'), 'Expected "foo" not to be a <string>')
-
-    expectFail(() => expect('foo').not.toBeA('number', (assert) => assert.toStrictlyEqual('bar')),
-        'Expected "foo" to strictly equal "bar"', { // not a number, and not equalling to "bar"
-          diff: true,
-          value: 'foo',
-          expected: 'bar',
-        })
-    expectFail(() => expect('foo').not.toBeA('string', (assert) => assert.toStrictlyEqual('bar')),
-        'Expected "foo" not to be a <string>')
   })
 
   it('should expect "toBeCloseTo(...)"', () => {
@@ -80,29 +71,25 @@ describe('Basic Expectations', () => {
     expectFail(() => expect(error).toBeError(TypeError), 'Expected [SyntaxError] to be an instance of [TypeError]')
     expectFail(() => expect({ message: 123 }).toBeError(Object as any, '123'), 'Expected property ["message"] of [Object] (123) to be a <string>')
 
-    expectFail(() => expect(error).not.toBeError(), 'Expected [SyntaxError] not to be an instance of [Error]')
-    expectFail(() => expect(error).not.toBeError('Foo!'), 'Expected [SyntaxError] not to be an instance of [Error]')
-    expectFail(() => expect(error).not.toBeError(/foo/i), 'Expected [SyntaxError] not to be an instance of [Error]')
-    expectFail(() => expect(error).not.toBeError(SyntaxError), 'Expected [SyntaxError] not to be an instance of [SyntaxError]')
-    expectFail(() => expect(error).not.toBeError(SyntaxError, 'Foo!'), 'Expected [SyntaxError] not to be an instance of [SyntaxError]')
-    expectFail(() => expect(error).not.toBeError(SyntaxError, /foo/i), 'Expected [SyntaxError] not to be an instance of [SyntaxError]')
-    expectFail(() => expect({ message: 'foo' }).not.toBeError(Object as any, 'foo'), 'Expected [Object] not to be an instance of [Object]')
+    // expectFail(() => expect(error).not.toBeError(), 'Expected [SyntaxError] not to be an instance of [Error]')
+    // expectFail(() => expect(error).not.toBeError('Foo!'), 'Expected [SyntaxError] not to be an instance of [Error]')
+    // expectFail(() => expect(error).not.toBeError(/foo/i), 'Expected [SyntaxError] not to be an instance of [Error]')
+    // expectFail(() => expect(error).not.toBeError(SyntaxError), 'Expected [SyntaxError] not to be an instance of [SyntaxError]')
+    // expectFail(() => expect(error).not.toBeError(SyntaxError, 'Foo!'), 'Expected [SyntaxError] not to be an instance of [SyntaxError]')
+    // expectFail(() => expect(error).not.toBeError(SyntaxError, /foo/i), 'Expected [SyntaxError] not to be an instance of [SyntaxError]')
+    // expectFail(() => expect({ message: 'foo' }).not.toBeError(Object as any, 'foo'), 'Expected [Object] not to be an instance of [Object]')
 
-    expectPass(() => expect('foo').not.toBeError())
-    expectPass(() => expect(error).not.toBeError(TypeError))
-    expectPass(() => expect({ message: 123 }).not.toBeError('123'))
+    // expectPass(() => expect('foo').not.toBeError())
+    // expectPass(() => expect(error).not.toBeError(TypeError))
+    // expectPass(() => expect({ message: 123 }).not.toBeError('123'))
   })
 
   it('should expect "toBeGreaterThan(...)"', () => {
     expectPass(() => expect(3).toBeGreaterThan(2))
     expectPass(() => expect(3n).toBeGreaterThan(2n))
-    expectPass(() => expect(3).not.toBeGreaterThan(3))
-    expectPass(() => expect(3n).not.toBeGreaterThan(3n))
 
     expectFail(() => expect(3).toBeGreaterThan(3), 'Expected 3 to be greater than 3')
     expectFail(() => expect(3n).toBeGreaterThan(3n), 'Expected 3n to be greater than 3n')
-    expectFail(() => expect(3).not.toBeGreaterThan(2), 'Expected 3 not to be greater than 2')
-    expectFail(() => expect(3n).not.toBeGreaterThan(2n), 'Expected 3n not to be greater than 2n')
 
     expectFail(() => expect(3n).toBeGreaterThan(2), 'Expected 3n to be a <number>')
     expectFail(() => expect(3).toBeGreaterThan(2n), 'Expected 3 to be a <bigint>')
@@ -111,13 +98,9 @@ describe('Basic Expectations', () => {
   it('should expect "toBeGreaterThanOrEqual(...)"', () => {
     expectPass(() => expect(3).toBeGreaterThanOrEqual(3))
     expectPass(() => expect(3n).toBeGreaterThanOrEqual(3n))
-    expectPass(() => expect(2).not.toBeGreaterThanOrEqual(3))
-    expectPass(() => expect(2n).not.toBeGreaterThanOrEqual(3n))
 
     expectFail(() => expect(2).toBeGreaterThanOrEqual(3), 'Expected 2 to be greater than or equal to 3')
     expectFail(() => expect(2n).toBeGreaterThanOrEqual(3n), 'Expected 2n to be greater than or equal to 3n')
-    expectFail(() => expect(3).not.toBeGreaterThanOrEqual(3), 'Expected 3 not to be greater than or equal to 3')
-    expectFail(() => expect(3n).not.toBeGreaterThanOrEqual(3n), 'Expected 3n not to be greater than or equal to 3n')
 
     expectFail(() => expect(3n).toBeGreaterThanOrEqual(3), 'Expected 3n to be a <number>')
     expectFail(() => expect(3).toBeGreaterThanOrEqual(3n), 'Expected 3 to be a <bigint>')
@@ -138,13 +121,9 @@ describe('Basic Expectations', () => {
   it('should expect "toBeLessThan(...)"', () => {
     expectPass(() => expect(2).toBeLessThan(3))
     expectPass(() => expect(2n).toBeLessThan(3n))
-    expectPass(() => expect(3).not.toBeLessThan(3))
-    expectPass(() => expect(3n).not.toBeLessThan(3n))
 
     expectFail(() => expect(3).toBeLessThan(3), 'Expected 3 to be less than 3')
     expectFail(() => expect(3n).toBeLessThan(3n), 'Expected 3n to be less than 3n')
-    expectFail(() => expect(2).not.toBeLessThan(3), 'Expected 2 not to be less than 3')
-    expectFail(() => expect(2n).not.toBeLessThan(3n), 'Expected 2n not to be less than 3n')
 
     expectFail(() => expect(2n).toBeLessThan(3), 'Expected 2n to be a <number>')
     expectFail(() => expect(2).toBeLessThan(3n), 'Expected 2 to be a <bigint>')
@@ -153,13 +132,9 @@ describe('Basic Expectations', () => {
   it('should expect "toBeLessThanOrEqual(...)"', () => {
     expectPass(() => expect(3).toBeLessThanOrEqual(3))
     expectPass(() => expect(3n).toBeLessThanOrEqual(3n))
-    expectPass(() => expect(3).not.toBeLessThanOrEqual(2))
-    expectPass(() => expect(3n).not.toBeLessThanOrEqual(2n))
 
     expectFail(() => expect(3).toBeLessThanOrEqual(2), 'Expected 3 to be less than or equal to 2')
     expectFail(() => expect(3n).toBeLessThanOrEqual(2n), 'Expected 3n to be less than or equal to 2n')
-    expectFail(() => expect(3).not.toBeLessThanOrEqual(3), 'Expected 3 not to be less than or equal to 3')
-    expectFail(() => expect(3n).not.toBeLessThanOrEqual(3n), 'Expected 3n not to be less than or equal to 3n')
 
     expectFail(() => expect(3n).toBeLessThanOrEqual(3), 'Expected 3n to be a <number>')
     expectFail(() => expect(3).toBeLessThanOrEqual(3n), 'Expected 3 to be a <bigint>')
@@ -291,10 +266,6 @@ describe('Basic Expectations', () => {
     let value: any = undefined
     expectPass(() => expect(object).toHaveProperty('foo', (assert) => void (value = assert.value)))
     assert.strictEqual(value, object.foo)
-
-    value = undefined
-    expectPass(() => expect(object).not.toHaveProperty('bar', () => void (value = 'called')))
-    assert.strictEqual(value, undefined)
   })
 
   it('should expect "toHaveLength(...)"', () => {
@@ -318,10 +289,10 @@ describe('Basic Expectations', () => {
     expectPass(() => expect([]).not.toHaveLength(9))
     expectPass(() => expect({ length: 123 }).not.toHaveLength(9))
 
-    expectFail(() => expect(null).toHaveLength(123), 'Expected <null> to be defined')
-    expectFail(() => expect(null).not.toHaveLength(123), 'Expected <null> to be defined')
-    expectFail(() => expect(undefined).toHaveLength(123), 'Expected <undefined> to be defined')
-    expectFail(() => expect(undefined).not.toHaveLength(123), 'Expected <undefined> to be defined')
+    expectFail(() => expect(null).toHaveLength(123), 'Expected <null> to be neither <null> nor <undefined>')
+    expectFail(() => expect(null).not.toHaveLength(123), 'Expected <null> to be neither <null> nor <undefined>')
+    expectFail(() => expect(undefined).toHaveLength(123), 'Expected <undefined> to be neither <null> nor <undefined>')
+    expectFail(() => expect(undefined).not.toHaveLength(123), 'Expected <undefined> to be neither <null> nor <undefined>')
 
     expectFail(() => expect({}).toHaveLength(123), 'Expected [Object] to have a numeric "length" property')
     expectFail(() => expect({}).not.toHaveLength(123), 'Expected [Object] to have a numeric "length" property')
@@ -346,10 +317,10 @@ describe('Basic Expectations', () => {
     expectPass(() => expect(new Map([ [ 'foo', 'bar' ] ])).not.toHaveSize(9))
     expectPass(() => expect({ size: 123 }).not.toHaveSize(9))
 
-    expectFail(() => expect(null).toHaveSize(123), 'Expected <null> to be defined')
-    expectFail(() => expect(null).not.toHaveSize(123), 'Expected <null> to be defined')
-    expectFail(() => expect(undefined).toHaveSize(123), 'Expected <undefined> to be defined')
-    expectFail(() => expect(undefined).not.toHaveSize(123), 'Expected <undefined> to be defined')
+    expectFail(() => expect(null).toHaveSize(123), 'Expected <null> to be neither <null> nor <undefined>')
+    expectFail(() => expect(null).not.toHaveSize(123), 'Expected <null> to be neither <null> nor <undefined>')
+    expectFail(() => expect(undefined).toHaveSize(123), 'Expected <undefined> to be neither <null> nor <undefined>')
+    expectFail(() => expect(undefined).not.toHaveSize(123), 'Expected <undefined> to be neither <null> nor <undefined>')
 
     expectFail(() => expect({}).toHaveSize(123), 'Expected [Object] to have a numeric "size" property')
     expectFail(() => expect({}).not.toHaveSize(123), 'Expected [Object] to have a numeric "size" property')

@@ -1,143 +1,111 @@
 import { expect } from '../src/expectation/expect'
 import { expectPass, expectFail } from './utils'
 
-describe('Void Expectations', () => {
-  const positives = {
-    toBeDefined: [
-      [ '', 'Expected "" not to be defined' ],
-      [ false, 'Expected false not to be defined' ],
-      [ 0, 'Expected 0 not to be defined' ],
-    ],
-    toBeFalse: [
-      [ false, 'Expected false not to be false' ],
-    ],
-    toBeFalsy: [
-      [ false, 'Expected false not to be falsy' ],
-      [ 0, 'Expected 0 not to be falsy' ],
-      [ '', 'Expected "" not to be falsy' ],
-      [ null, 'Expected <null> not to be falsy' ],
-      [ undefined, 'Expected <undefined> not to be falsy' ],
-    ],
-    toBeNaN: [
-      [ NaN, 'Expected NaN not to be NaN' ],
-    ],
-    toBeNegativeInfinity: [
-      [ Number.NEGATIVE_INFINITY, 'Expected -Infinity not to equal -Infinity' ],
-    ],
-    toBeNull: [
-      [ null, 'Expected <null> not to be <null>' ],
-    ],
-    toBeNullable: [
-      [ null, 'Expected <null> not to be <null> or <undefined>' ],
-      [ undefined, 'Expected <undefined> not to be <null> or <undefined>' ],
-    ],
-    toBePositiveInfinity: [
-      [ Number.POSITIVE_INFINITY, 'Expected +Infinity not to equal +Infinity' ],
-    ],
-    toBeTrue: [
-      [ true, 'Expected true not to be true' ],
-    ],
-    toBeTruthy: [
-      [ true, 'Expected true not to be truthy' ],
-      [ 1, 'Expected 1 not to be truthy' ],
-      [ 'abc', 'Expected "abc" not to be truthy' ],
-    ],
-    toBeUndefined: [
-      [ undefined, 'Expected <undefined> not to be <undefined>' ],
-    ],
+fdescribe('Trivial Expectations', () => {
+  const positivePassing = {
+    toBeDefined: [ '', false, 0 ],
+    toBeFalse: [ false ],
+    toBeFalsy: [ false, 0, '', null, undefined ],
+    toBeNaN: [ NaN ],
+    toBeNull: [ null ],
+    toBeTrue: [ true ],
+    toBeTruthy: [ true, 1, 'abc', {} ],
+    toBeUndefined: [ undefined ],
   } as const
 
-  describe('matches', () => {
-    for (const [ k, values ] of Object.entries(positives)) {
-      const key = k as keyof typeof positives
+  const negativePassing = {
+    toBeDefined: [ null, undefined ],
+    toBeNaN: [ 123 ],
+  } as const
+
+  describe('passing', () => {
+    for (const [ k, values ] of Object.entries(positivePassing)) {
+      const key = k as keyof typeof positivePassing
       it(`should expect "${key}()"`, () => {
-        for (const [ value ] of values) {
+        for (const value of values) {
           expectPass(() => expect(value)[key]())
         }
       })
     }
-  })
 
-  describe('negated matches', () => {
-    for (const [ k, values ] of Object.entries(positives)) {
-      const key = k as keyof typeof positives
+    for (const [ k, values ] of Object.entries(negativePassing)) {
+      const key = k as keyof typeof negativePassing
       it(`should expect "not.${key}()"`, () => {
-        for (const [ value, message ] of values) {
-          expectFail(() => expect(value).not[key](), message)
+        for (const value of values) {
+          expectPass(() => expect(value).not[key]())
         }
       })
     }
   })
 
-  const negatives = {
+  const positiveFailing= {
     toBeDefined: [
-      [ null, 'Expected <null> to be defined' ],
-      [ undefined, 'Expected <undefined> to be defined' ],
+      { message: 'Expected <null> to be neither <null> nor <undefined>', value: null },
+      { message: 'Expected <undefined> to be neither <null> nor <undefined>', value: undefined },
     ],
     toBeFalse: [
-      [ true, 'Expected true to be false' ],
-      [ 123n, 'Expected 123n to be false' ],
-      [ 'xy', 'Expected "xy" to be false' ],
+      { message: 'Expected true to strictly equal false', value: true, diff: { expected: false } },
+      { message: 'Expected "xy" to strictly equal false', value: 'xy', diff: { expected: false } },
     ],
     toBeFalsy: [
-      [ {}, 'Expected [Object] to be falsy' ],
-      [ Symbol(), 'Expected <symbol> to be falsy' ],
+      { message: 'Expected true to be falsy', value: true },
+      { message: 'Expected 1234 to be falsy', value: 1234 },
+      { message: 'Expected "xy" to be falsy', value: 'xy' },
+      { message: 'Expected [Object] to be falsy', value: {} },
     ],
     toBeNaN: [
-      [ 123, 'Expected 123 to be NaN' ],
-      [ 'x', 'Expected "x" to be NaN' ],
-    ],
-    toBeNegativeInfinity: [
-      [ 123, 'Expected 123 to equal -Infinity' ],
-      [ 'x', 'Expected "x" to equal -Infinity' ],
+      { message: 'Expected 123 to be NaN', value: 123 },
+      { message: 'Expected "" to be a <number>', value: '' },
     ],
     toBeNull: [
-      [ 'foo bar', 'Expected "foo bar" to be <null>' ],
-      [ undefined, 'Expected <undefined> to be <null>' ],
-    ],
-    toBeNullable: [
-      [ 'foo bar', 'Expected "foo bar" to be <null> or <undefined>' ],
-      [ 0, 'Expected 0 to be <null> or <undefined>' ],
-    ],
-    toBePositiveInfinity: [
-      [ 123, 'Expected 123 to equal +Infinity' ],
-      [ 'x', 'Expected "x" to equal +Infinity' ],
+      { message: 'Expected <undefined> to strictly equal <null>', value: undefined, diff: { expected: undefined } },
+      { message: 'Expected false to strictly equal <null>', value: false, diff: { expected: undefined } },
     ],
     toBeTrue: [
-      [ false, 'Expected false to be true' ],
-      [ 1234n, 'Expected 1234n to be true' ],
-      [ 'xyz', 'Expected "xyz" to be true' ],
+      { message: 'Expected false to strictly equal true', value: false, diff: { expected: true } },
+      { message: 'Expected "foo" to strictly equal true', value: 'foo', diff: { expected: true } },
     ],
     toBeTruthy: [
-      [ undefined, 'Expected <undefined> to be truthy' ],
-      [ null, 'Expected <null> to be truthy' ],
-      [ '', 'Expected "" to be truthy' ],
-      [ 0n, 'Expected 0n to be truthy' ],
-      [ 0, 'Expected 0 to be truthy' ],
+      { message: 'Expected false to be truthy', value: false },
+      { message: 'Expected 0 to be truthy', value: 0 },
+      { message: 'Expected "" to be truthy', value: '' },
+      { message: 'Expected <null> to be truthy', value: null },
+      { message: 'Expected <undefined> to be truthy', value: undefined },
     ],
     toBeUndefined: [
-      [ 'xy', 'Expected "xy" to be <undefined>' ],
-      [ null, 'Expected <null> to be <undefined>' ],
+      { message: 'Expected <null> to strictly equal <undefined>', value: null, diff: { expected: null } },
+      { message: 'Expected "" to strictly equal <undefined>', value: '', diff: { expected: null } },
     ],
   } as const
 
-  describe('mismatches', () => {
-    for (const [ k, values ] of Object.entries(negatives)) {
-      const key = k as keyof typeof positives
-      it(`should expect "${key}()" (negative test)`, () => {
-        for (const [ value, message ] of values) {
-          expectFail(() => expect(value)[key](), message)
+  const negativeFailing = {
+    toBeDefined: [
+      { message: 'Expected false to be <null> or <undefined>', value: false },
+      { message: 'Expected "" to be <null> or <undefined>', value: '' },
+      { message: 'Expected 0 to be <null> or <undefined>', value: 0 },
+    ],
+    toBeNaN: [
+      { message: 'Expected NaN not to be NaN', value: NaN },
+      { message: 'Expected "" to be a <number>', value: '' },
+    ],
+  } as const
+
+  describe('failing', () => {
+    for (const [ k, tests ] of Object.entries(positiveFailing)) {
+      const key = k as keyof typeof positiveFailing
+      it(`should expect "${key}()"`, () => {
+        for (const { message, value, ...x } of tests) {
+          const diff = 'diff' in x ? { diff: true, value, ...x.diff } : undefined
+          expectFail(() => expect(value)[key](), message, diff)
         }
       })
     }
-  })
 
-  describe('negated mismatches', () => {
-    for (const [ k, values ] of Object.entries(negatives)) {
-      const key = k as keyof typeof positives
-      it(`should expect "not.${key}()" (negative test)`, () => {
-        for (const [ value ] of values) {
-          expectPass(() => expect(value).not[key]())
+    for (const [ k, tests ] of Object.entries(negativeFailing)) {
+      const key = k as keyof typeof negativeFailing
+      it(`should expect "not.${key}()"`, () => {
+        for (const { message, value } of tests) {
+          expectFail(() => expect(value).not[key](), message)
         }
       })
     }

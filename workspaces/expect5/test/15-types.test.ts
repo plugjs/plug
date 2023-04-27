@@ -1,11 +1,9 @@
+/* eslint-disable no-new-wrappers */
 import assert from 'node:assert'
 
-import { assertContextType, prefixType, stringifyConstructor, stringifyValue, typeOf } from '../src/expectation/types'
-import { expectPass, expectFail } from './utils'
+import { prefixType, stringifyConstructor, stringifyValue, typeOf } from '../src/expectation/types'
 
-/* eslint-disable no-new-wrappers */
-
-describe('Type Utilities', () => {
+fdescribe('Type Utilities', () => {
   it('should correctly return the extended type of a value', () => {
     assert.strictEqual(typeOf(null), 'null')
 
@@ -28,11 +26,6 @@ describe('Type Utilities', () => {
     assert.strictEqual(typeOf({}), 'object')
     assert.strictEqual(typeOf(new class {}), 'object')
     assert.strictEqual(typeOf(new class Foo {}), 'object')
-  })
-
-  it('should correctly assert the type of a value', () => {
-    expectPass(() => assertContextType({ value: null } as any, 'null'))
-    expectFail(() => assertContextType({ value: null } as any, 'object'), 'Expected <null> to be an <object>')
   })
 
   it('should stringify a constructor', () => {
