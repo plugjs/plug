@@ -65,8 +65,19 @@ describe('Throwing Expectations', () => {
     }).toThrowError(), 'Expected "not-an-error" to be an instance of [Error]')
   })
 
-  it('should restrict "toThrow" and "toThrowError" to functions', () => {
+  it('should expect "not.toThrow(...)"', () => {
+    const error = new SyntaxError('Whatever')
+    const throwing = (): never => {
+      throw error
+    }
+
+    expectPass(() => expect(() => {}).not.toThrow())
+    expectFail(() => expect(throwing).not.toThrow(), 'Expected <function throwing> not to throw')
+  })
+
+  it('should restrict "toThrow(...)", "toThrowError(...)" and "not.toThrow()" to functions', () => {
     expectFail(() => expect('foo').toThrow(), 'Expected "foo" to be a <function>')
     expectFail(() => expect('foo').toThrowError(), 'Expected "foo" to be a <function>')
+    expectFail(() => expect('foo').not.toThrow(), 'Expected "foo" to be a <function>')
   })
 })
