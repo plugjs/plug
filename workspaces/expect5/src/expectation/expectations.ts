@@ -45,6 +45,7 @@ type ExpectationsParent = {
  * EXPECTATIONS                                                               *
  * ========================================================================== */
 
+/** Main class containing all supported expectations */
 export class Expectations<T = unknown> {
   /** The {@link NegativeExpectations} associated with _this_ */
   readonly not: NegativeExpectations<T>
@@ -66,7 +67,7 @@ export class Expectations<T = unknown> {
   }
 
   /** Throw an {@link ExpectationError} associated with _this_ */
-  private _fail(details: string, diff?: Diff): never {
+  protected _fail(details: string, diff?: Diff): never {
     throw new ExpectationError(this, details, diff)
   }
 
@@ -614,10 +615,29 @@ export class Expectations<T = unknown> {
     return this.toThrow((assert) =>
       assert.toBeError(constructor, message))
   }
+}
 
-  /* ------------------------------------------------------------------------ *
-   * ASYNC EXPECTATIONS                                                       *
-   * ------------------------------------------------------------------------ */
+/* ========================================================================== *
+ * ASYNC EXPECTATIONS                                                         *
+ * ========================================================================== */
+
+/**
+ * Extension to {@link Expectations} adding support for {@link Promise}s.
+ *
+ * These expectations are _separate_ from the main {@link Expectations}, as we
+ * can't use them in {@link AssertionFunction}s, without ending up with
+ * _unhandled rejections_ in the Node.js process.
+ */
+export class AsyncExpectations<T = unknown> extends Expectations<T> {
+  /**
+   * Create an {@link Expectations} instance associated with the specified
+   * value and (optionally) a parent {@link Expectations} instance
+   */
+  constructor(value: T) {
+    super(value)
+  }
+
+  /* ------------------------------------------------------------------------ */
 
   /**
    * Expects the value to be a _rejected_ {@link PromiseLike}, and (if
@@ -721,6 +741,7 @@ export class Expectations<T = unknown> {
  * NEGATIVE EXPECTATIONS                                                      *
  * ========================================================================== */
 
+/** Negative expectations, as a subset of (meaningful) expectations. */
 export class NegativeExpectations<T = unknown> {
   /** For convenience, the value associated with the {@link Expectations} */
   private readonly _value: T
