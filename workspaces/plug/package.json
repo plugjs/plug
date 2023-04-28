@@ -103,7 +103,7 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@plugjs/tsrun": "^0.4.0",
+    "@plugjs/tsrun": "^0.4.1",
     "@types/node": "<19",
     "esbuild": "^0.17.18",
     "picomatch": "^2.3.1"

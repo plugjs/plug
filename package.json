@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@plugjs/eslint-plugin": "^0.1.5",
-    "@plugjs/tsrun": "^0.4.0",
+    "@plugjs/tsrun": "^0.4.1",
     "@types/node": "<19",
     "typescript": "^5.0.4"
   },
