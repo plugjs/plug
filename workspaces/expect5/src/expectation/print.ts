@@ -1,10 +1,14 @@
-import { $grn, $gry, $red, $und, $wht, $ylw } from '@plugjs/plug/logging'
+import { $grn, $gry, $red, $und, $wht, $ylw, type Logger } from '@plugjs/plug/logging'
 import { textDiff } from '@plugjs/plug/utils'
 
+import {
+  type Diff,
+  type ExpectedDiff,
+  type ExtraValueDiff,
+  type MissingValueDiff,
+  type ObjectDiff,
+} from './diff'
 import { stringifyValue } from './types'
-
-import type { Diff, ExtraValueDiff, MissingValueDiff, ObjectDiff, ExpectedDiff } from './diff'
-import type { Logger } from '@plugjs/plug/logging'
 
 /* ========================================================================== *
  * CONSTANT LABELS FOR PRINTING                                               *

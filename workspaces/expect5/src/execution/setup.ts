@@ -1,6 +1,4 @@
-import { getCurrentSuite, Suite, Spec, Hook } from './executable'
-
-import type { Call } from './executable'
+import { Hook, Spec, Suite, getCurrentSuite, type Call } from './executable'
 
 export type SuiteSetup = (name: string, call: Call, timeout?: number) => void
 export type SuiteFunction = SuiteSetup & {

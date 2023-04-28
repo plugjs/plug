@@ -1,7 +1,11 @@
 /* eslint-disable no-fallthrough */
-import { ExpectationError, isMatcher, stringifyConstructor, stringifyValue } from './types'
-
-import type { Constructor } from './types'
+import {
+  ExpectationError,
+  isMatcher,
+  stringifyConstructor,
+  stringifyValue,
+  type Constructor,
+} from './types'
 
 export interface BaseDiff {
   diff: boolean,

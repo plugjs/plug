@@ -1,22 +1,17 @@
-import { installForking } from '@plugjs/plug/fork'
+import { installForking, type ForkOptions } from '@plugjs/plug/fork'
 import { requireResolve } from '@plugjs/plug/paths'
-
-import type { ForkOptions } from '@plugjs/plug/fork'
 
 /* ========================================================================== *
  * EXPORTED VARIABLES (for when globals is false)                             *
  * ========================================================================== */
 
-export {
-  it, fit, xit,
-  describe, fdescribe, xdescribe,
-  afterAll, afterEach, xafterAll, xafterEach,
-  beforeAll, beforeEach, xbeforeAll, xbeforeEach,
-} from './execution/setup'
 export { skip } from './execution/executable'
+export {
+  afterAll, afterEach, beforeAll, beforeEach, describe, fdescribe, fit, it, xafterAll, xafterEach, xbeforeAll, xbeforeEach, xdescribe, xit,
+} from './execution/setup'
 export { expect } from './expectation/expect'
-
 export type { Expectations } from './expectation/expect'
+
 
 /* ========================================================================== *
  * EXPORTED OPTIONS TYPE AND PLUG DEFINITION                                  *

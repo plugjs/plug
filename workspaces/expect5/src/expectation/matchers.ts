@@ -1,7 +1,15 @@
-import { Expectations } from './expectations'
-import { matcherMarker, type Constructor, type TypeMappings, type TypeName } from './types'
-
-import type { AssertionFunction, AssertedType, NegativeExpectations } from './expectations'
+import {
+  Expectations,
+  type AssertedType,
+  type AssertionFunction,
+  type NegativeExpectations,
+} from './expectations'
+import {
+  matcherMarker,
+  type Constructor,
+  type TypeMappings,
+  type TypeName,
+} from './types'
 
 type Matcher = (expectations: Expectations) => Expectations
 type NegativeMatcher = (expectations: NegativeExpectations) => Expectations

@@ -1,7 +1,17 @@
 import { diff, type Diff } from './diff'
 import { toInclude, toMatchContents } from './include'
 import { type Matchers } from './matchers'
-import { ExpectationError, isMatcher, prefixType, stringifyConstructor, stringifyValue, typeOf, type Constructor, type TypeMappings, type TypeName } from './types'
+import {
+  ExpectationError,
+  isMatcher,
+  prefixType,
+  stringifyConstructor,
+  stringifyValue,
+  typeOf,
+  type Constructor,
+  type TypeMappings,
+  type TypeName,
+} from './types'
 
 /* ========================================================================== *
  * TYPES SUPPORTING EXPECTATIONS                                              *

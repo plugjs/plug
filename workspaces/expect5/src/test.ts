@@ -4,21 +4,20 @@
 import { AssertionError } from 'node:assert'
 
 import { BuildFailure } from '@plugjs/plug'
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, log, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import { assert } from '@plugjs/plug/asserts'
+import { type Files } from '@plugjs/plug/files'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN, log, type Logger } from '@plugjs/plug/logging'
+import { type Context, type PipeParameters, type Plug } from '@plugjs/plug/pipe'
 
-import { skip, Suite } from './execution/executable'
-import { runSuite } from './execution/executor'
-import { expect } from './expectation/expect'
-import { ExpectationError, stringifyObjectType } from './expectation/types'
-import { printDiff } from './expectation/print'
-import { diff } from './expectation/diff'
 import * as setup from './execution/setup'
+import { Suite, skip } from './execution/executable'
+import { runSuite } from './execution/executor'
+import { diff } from './expectation/diff'
+import { expect } from './expectation/expect'
+import { printDiff } from './expectation/print'
+import { ExpectationError, stringifyObjectType } from './expectation/types'
 
-import type { Files } from '@plugjs/plug/files'
-import type { Logger } from '@plugjs/plug/logging'
-import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
-import type { TestOptions } from './index'
+import { type TestOptions } from './index'
 
 const _pending = '\u22EF' // middle ellipsis
 const _success = '\u2714' // heavy check mark

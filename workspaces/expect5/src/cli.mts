@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { async, find, paths, pipe, logging } from '@plugjs/plug'
+import { async, find, logging, paths, pipe } from '@plugjs/plug'
 import { main, yargsParser } from '@plugjs/tsrun'
 
 import { Test } from './test'

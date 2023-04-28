@@ -1,6 +1,6 @@
-import type { Diff } from './diff'
-import type { Expectations } from './expectations'
-import type { Matchers } from './matchers'
+import { type Diff } from './diff'
+import { type Expectations } from './expectations'
+import { type Matchers } from './matchers'
 
 /* ========================================================================== *
  * INTERNAL TYPES FOR EXPECTATIONS                                            *
