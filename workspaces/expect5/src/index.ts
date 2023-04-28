@@ -7,10 +7,22 @@ import { requireResolve } from '@plugjs/plug/paths'
 
 export { skip } from './execution/executable'
 export {
-  afterAll, afterEach, beforeAll, beforeEach, describe, fdescribe, fit, it, xafterAll, xafterEach, xbeforeAll, xbeforeEach, xdescribe, xit,
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  fdescribe,
+  fit,
+  it,
+  xafterAll,
+  xafterEach,
+  xbeforeAll,
+  xbeforeEach,
+  xdescribe,
+  xit,
 } from './execution/setup'
-export { expect } from './expectation/expect'
-export type { Expectations } from './expectation/expect'
+export * from './expectation/expect'
 
 
 /* ========================================================================== *
