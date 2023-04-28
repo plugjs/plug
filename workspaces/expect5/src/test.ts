@@ -246,6 +246,7 @@ function dumpProps(log: Logger, pad: number, error: Error): void {
       ].includes(k))
       .forEach((k) => {
         const value = error[k as keyof typeof error]
+        if (value === undefined) return // we can safely ignore those
         if ((k === 'code') && (value === 'ERR_ASSERTION')) return
         const details = typeof value === 'string' ? value : stringifyValue(value)
         log.error($gry(`${k}:`.padStart(pad - 1)), $ylw(details))
