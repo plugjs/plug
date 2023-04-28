@@ -3,6 +3,14 @@ describe('A test suite (errors)', () => {
     throw new Error('Fail me!')
   })
 
+  it('should throw an error with extra properties', () => {
+    const error = new Error('Fail me!') as Error & Record<string, any>
+    error.str = 'test'
+    error.num = 12345
+    error.sym = Symbol.for('foobar')
+    throw error
+  })
+
   it('should throw a string', () => {
     // eslint-disable-next-line no-throw-literal
     throw 'This is not an error!'
