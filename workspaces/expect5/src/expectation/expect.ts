@@ -8,11 +8,13 @@ export { Expectations } from './expectations'
  * ========================================================================== */
 
 type Expect = {
-  <T = unknown>(value: T): AsyncExpectations<T>
+  <T = unknown>(value: T, remarks?: string): AsyncExpectations<T>
 } & Omit<Matchers, 'expect'>
 
 /** The `expect` function exposing expectations and matchers */
-export const expect: Expect = ((value: any) => new AsyncExpectations(value)) as Expect
+export const expect: Expect = ((value: any, remarks?: string) => {
+  return new AsyncExpectations(value, remarks)
+}) as Expect
 
 for (const key of Object.getOwnPropertyNames(Matchers.prototype)) {
   if (! key.startsWith('to')) continue

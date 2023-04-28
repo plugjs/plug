@@ -52,11 +52,15 @@ export class Expectations<T = unknown> {
 
   /**
    * Create an {@link Expectations} instance associated with the specified
-   * value and (optionally) a parent {@link Expectations} instance
+   * value and error remarks.
+   *
+   * Optionally a parent {@link Expectations} instance can be specified.
    */
   constructor(
       /** The value associated with this instance */
       readonly value: T,
+      /** Optional additional _remarks_ to associate with errors */
+      readonly remarks: string | undefined, // required, but migth be undefined
       /**
        * An optional {@link ExpectationsParent} defining _this_ to be a
        * child of another {@link Expectations} instance
@@ -422,7 +426,7 @@ export class Expectations<T = unknown> {
     if (assertion) {
       try {
         const parent: ExpectationsParent = { expectations: this, prop: property }
-        const expectations = new Expectations(propertyValue, parent)
+        const expectations = new Expectations(propertyValue, this.remarks, parent)
         assertion(expectations)
       } catch (error) {
         // any caught error difference gets remapped as a property diff
@@ -566,7 +570,7 @@ export class Expectations<T = unknown> {
       func.value()
       passed = true
     } catch (thrown) {
-      if (assert) assert(new Expectations(thrown))
+      if (assert) assert(new Expectations(thrown, this.remarks))
     }
 
     if (passed) this._fail('to throw')
@@ -630,11 +634,11 @@ export class Expectations<T = unknown> {
  */
 export class AsyncExpectations<T = unknown> extends Expectations<T> {
   /**
-   * Create an {@link Expectations} instance associated with the specified
-   * value and (optionally) a parent {@link Expectations} instance
+   * Create an {@link AsyncExpectations} instance associated with the specified
+   * value and error remarks.
    */
-  constructor(value: T) {
-    super(value)
+  constructor(value: T, remarks: string | undefined) {
+    super(value, remarks)
   }
 
   /* ------------------------------------------------------------------------ */
@@ -656,7 +660,7 @@ export class AsyncExpectations<T = unknown> extends Expectations<T> {
         })
         .then(([ settlement ]) => {
           if (settlement.status === 'rejected') {
-            if (assertion) assertion(new Expectations(settlement.reason))
+            if (assertion) assertion(new Expectations(settlement.reason, this.remarks))
             return this as Expectations<any>
           }
 
@@ -727,7 +731,7 @@ export class AsyncExpectations<T = unknown> extends Expectations<T> {
         })
         .then(([ settlement ]) => {
           if (settlement.status === 'fulfilled') {
-            if (assertion) assertion(new Expectations(settlement.value))
+            if (assertion) assertion(new Expectations(settlement.value, this.remarks))
             return this as Expectations<any>
           }
 

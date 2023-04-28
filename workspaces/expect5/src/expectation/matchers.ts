@@ -29,7 +29,7 @@ export class Matchers<T = unknown> {
   }
 
   expect(value: unknown): T {
-    let expectations = new Expectations(value)
+    let expectations = new Expectations(value, undefined)
     for (const matcher of this._matchers) {
       expectations = matcher(expectations)
     }

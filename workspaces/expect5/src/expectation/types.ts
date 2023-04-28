@@ -203,42 +203,46 @@ export function isMatcher(what: any): what is Matchers {
  * ========================================================================== */
 
 export class ExpectationError extends Error {
+  remarks?: string
   diff?: Diff | undefined
 
   /**
-   * Create an {@link ExpectationError} from a context and details message,
-   * including an optional {@link Diff}
+   * Create an {@link ExpectationError} from a {@link Expectations} instance
+   * and details message, including an optional {@link Diff}
    */
   constructor(
-      context: Expectations,
+      expectations: Expectations,
       details: string,
       diff?: Diff,
   ) {
-    const { value } = context
+    const { value } = expectations
 
     // if we're not root...
     let preamble = stringifyValue(value)
-    if (context.parent) {
+    if (expectations.parent) {
       const properties: any[] = []
 
-      while (context.parent) {
-        properties.push(`[${stringifyValue(context.parent.prop)}]`)
-        context = context.parent.expectations
+      while (expectations.parent) {
+        properties.push(`[${stringifyValue(expectations.parent.prop)}]`)
+        expectations = expectations.parent.expectations
       }
 
       preamble = properties.reverse().join('')
 
       // type of root value is constructor without details
-      const type = typeof context.value === 'object' ?
-          stringifyObjectType(context.value as object) : // parent values can not be null!
-          stringifyValue(context.value)
+      const type = typeof expectations.value === 'object' ?
+          stringifyObjectType(expectations.value as object) : // parent values can not be null!
+          stringifyValue(expectations.value)
 
       // assemble the preamble
       preamble = `property ${preamble} of ${type} (${stringifyValue(value)})`
     }
 
+    // Super constructor!
     super(`Expected ${preamble} ${details}`)
 
+    // Optional instance values
+    if (expectations.remarks) this.remarks = expectations.remarks
     if (diff) this.diff = diff
   }
 }
