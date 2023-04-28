@@ -25,4 +25,8 @@ describe('A test suite (errors)', () => {
   it('should throw an expectation error without a diff', () => {
     expect('foo').toBeA('function')
   })
+
+  it('should throw an expectation error with some remarks', () => {
+    expect({ foo: 'bar' }, 'some remarks').toEqual({ foo: 'baz' })
+  })
 })

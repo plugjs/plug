@@ -45,9 +45,32 @@ describe('ExpectationError constructor', () => {
     const error0 = new ExpectationError(expectations0, 'to be testing')
     assert.strictEqual(error0.message, 'Expected /the value/ to be testing')
     assert.strictEqual(error0.diff, undefined)
+    assert.strictEqual('diff' in error0, false)
 
     const error1 = new ExpectationError(expectations0, 'to be testing', diff)
     assert.strictEqual(error1.message, 'Expected /the value/ to be testing')
     assert.strictEqual(error1.diff, diff)
+  })
+
+  it('should construct with some remarks', () => {
+    const expectationsx = expect(/the value/)
+    assert.strictEqual(expectationsx.remarks, undefined)
+    const errorx = new ExpectationError(expectationsx, 'to be testing')
+    assert.strictEqual(errorx.message, 'Expected /the value/ to be testing')
+    assert.strictEqual(errorx.remarks, undefined)
+    assert.strictEqual('remarks' in errorx, false)
+
+    const expectationsy = expect(/the value/, '') // empty string
+    assert.strictEqual(expectationsy.remarks, '') // empty string preserved
+    const errory = new ExpectationError(expectationsy, 'to be testing')
+    assert.strictEqual(errory.message, 'Expected /the value/ to be testing')
+    assert.strictEqual(errory.remarks, undefined) // empty string stripped
+    assert.strictEqual('remarks' in errory, false)
+
+    const expectationsz = expect(/the value/, 'Hello, world!')
+    assert.strictEqual(expectationsz.remarks, 'Hello, world!')
+    const errorz = new ExpectationError(expectationsz, 'to be testing')
+    assert.strictEqual(errorz.message, 'Expected /the value/ to be testing')
+    assert.strictEqual(errorz.remarks, 'Hello, world!')
   })
 })
