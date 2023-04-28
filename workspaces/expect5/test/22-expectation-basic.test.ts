@@ -70,18 +70,6 @@ describe('Basic Expectations', () => {
     expectFail(() => expect(error).toBeError(/bar/i), 'Expected property ["message"] of [SyntaxError] ("Foo!") to match /bar/i')
     expectFail(() => expect(error).toBeError(TypeError), 'Expected [SyntaxError] to be an instance of [TypeError]')
     expectFail(() => expect({ message: 123 }).toBeError(Object as any, '123'), 'Expected property ["message"] of [Object] (123) to be a <string>')
-
-    // expectFail(() => expect(error).not.toBeError(), 'Expected [SyntaxError] not to be an instance of [Error]')
-    // expectFail(() => expect(error).not.toBeError('Foo!'), 'Expected [SyntaxError] not to be an instance of [Error]')
-    // expectFail(() => expect(error).not.toBeError(/foo/i), 'Expected [SyntaxError] not to be an instance of [Error]')
-    // expectFail(() => expect(error).not.toBeError(SyntaxError), 'Expected [SyntaxError] not to be an instance of [SyntaxError]')
-    // expectFail(() => expect(error).not.toBeError(SyntaxError, 'Foo!'), 'Expected [SyntaxError] not to be an instance of [SyntaxError]')
-    // expectFail(() => expect(error).not.toBeError(SyntaxError, /foo/i), 'Expected [SyntaxError] not to be an instance of [SyntaxError]')
-    // expectFail(() => expect({ message: 'foo' }).not.toBeError(Object as any, 'foo'), 'Expected [Object] not to be an instance of [Object]')
-
-    // expectPass(() => expect('foo').not.toBeError())
-    // expectPass(() => expect(error).not.toBeError(TypeError))
-    // expectPass(() => expect({ message: 123 }).not.toBeError('123'))
   })
 
   it('should expect "toBeGreaterThan(...)"', () => {

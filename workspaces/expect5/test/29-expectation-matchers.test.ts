@@ -4,7 +4,7 @@ import { isMatcher } from '../src/expectation/types'
 import { expect } from '../src/expectation/expect'
 import { expectFail, expectPass } from './utils'
 
-describe('Expectations Matcher', () => {
+describe('Expectation Matchers', () => {
   it('should expect with matchers', () => {
     expectPass(() => expect.toBeA('string').expect('foo'))
     expectPass(() => expect.toBeCloseTo(100, 10).expect(99))
