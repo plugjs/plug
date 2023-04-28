@@ -28,7 +28,7 @@ export type AssertedType<T, F extends AssertionFunction<any>, R = ReturnType<F>>
       I : // returns Expectations<something>, use "something"
     T // returns something else (void), use T
 
-type InferMatchers<T> =
+export type InferMatchers<T> =
   T extends Matchers<infer V> ? V :
   T extends Record<any, any> ? { [ k in keyof T ] : InferMatchers<T[k]> } :
   T
@@ -104,18 +104,25 @@ export class Expectations<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /**
-   * Expects the value to be a `number` or `bigint` within a given +/- _delta_
-   * range of the specified expected value.
+   * Expects the value to be a `number` within a given +/- _delta_ range of the
+   * specified expected value.
    *
    * Negation: {@link NegativeExpectations.toBeCloseTo `not.toBeCloseTo(...)`}
    */
-  toBeCloseTo<Type extends number | bigint>(
-      value: Type,
-      delta: Type,
-  ): Expectations<Type> {
+  toBeCloseTo(value: number, delta: number): Expectations<number>
+
+  /**
+   * Expects the value to be a `bigint` within a given +/- _delta_ range of the
+   * specified expected value.
+   *
+   * Negation: {@link NegativeExpectations.toBeCloseTo `not.toBeCloseTo(...)`}
+   */
+  toBeCloseTo(value: bigint, delta: bigint): Expectations<bigint>
+
+  toBeCloseTo(value: number | bigint, delta: number | bigint): Expectations {
     const min = (value as number) - (delta as number)
     const max = (value as number) + (delta as number)
-    return this.toBeWithinRange(min, max) as Expectations<any>
+    return this.toBeWithinRange(min, max)
   }
 
   /* ------------------------------------------------------------------------ */
@@ -196,32 +203,48 @@ export class Expectations<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /**
-   * Expects the value to be a `number` or `bigint` greater than the specified
-   * expected value.
+   * Expects the value to be a `number` greater than the specified expected
+   * value.
    *
    * Negation: {@link Expectations.toBeLessThanOrEqual `toBeLessThanOrEqual(...)`}
    */
-  toBeGreaterThan<Type extends number | bigint>(
-      value: Type,
-  ): Expectations<Type> {
+  toBeGreaterThan(value: number): Expectations<number>
+
+  /**
+   * Expects the value to be a `bigint` greater than the specified expected
+   * value.
+   *
+   * Negation: {@link Expectations.toBeLessThanOrEqual `toBeLessThanOrEqual(...)`}
+   */
+  toBeGreaterThan(value: bigint): Expectations<bigint>
+
+  toBeGreaterThan(value: number | bigint): Expectations {
     this.toBeA(typeof value)
-    if ((this.value as any) > value) return this as Expectations<any>
+    if ((this.value as any) > value) return this
     this._fail(`to be greater than ${stringifyValue(value)}`)
   }
 
   /* ------------------------------------------------------------------------ */
 
   /**
-   * Expects the value to be a `number` or `bigint` greater than or equal to
-   * the specified expected value.
+   * Expects the value to be a `number`  greater than or equal to the specified
+   * expected value.
    *
    * Negation: {@link Expectations.toBeLessThan `toBeLessThan(...)`}
    */
-  toBeGreaterThanOrEqual<Type extends number | bigint>(
-      value: Type,
-  ): Expectations<Type> {
+  toBeGreaterThanOrEqual(value: number): Expectations<number>
+
+  /**
+   * Expects the value to be a `bigint` greater than or equal to the specified
+   * expected value.
+   *
+   * Negation: {@link Expectations.toBeLessThan `toBeLessThan(...)`}
+   */
+  toBeGreaterThanOrEqual(value: bigint): Expectations<bigint>
+
+  toBeGreaterThanOrEqual(value: number | bigint): Expectations {
     this.toBeA(typeof value)
-    if ((this.value as any) >= value) return this as Expectations<any>
+    if ((this.value as any) >= value) return this
     this._fail(`to be greater than or equal to ${stringifyValue(value)}`)
   }
 
@@ -234,9 +257,8 @@ export class Expectations<T = unknown> {
    * Negation: {@link NegativeExpectations.toBeInstanceOf `not.toInstanceOf(...)`}
    */
   toBeInstanceOf<
-    Instance,
-    Class extends Constructor<Instance>,
-    Assert extends AssertionFunction<Instance>,
+    Class extends Constructor,
+    Assert extends AssertionFunction<InstanceType<Class>>,
   >(
       constructor: Class,
       assertion?: Assert,
@@ -252,32 +274,46 @@ export class Expectations<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /**
-   * Expects the value to be a `number` or `bigint` less than the specified
-   * expected value.
+   * Expects the value to be a `number` less than the specified expected value.
    *
    * Negation: {@link Expectations.toBeGreaterThanOrEqual `toBeGreaterThanOrEqual(...)`}
    */
-  toBeLessThan<Type extends number | bigint>(
-      value: Type,
-  ): Expectations<Type> {
+  toBeLessThan(value: number): Expectations<number>
+
+  /**
+   * Expects the value to be a `bigint` less than the specified expected value.
+   *
+   * Negation: {@link Expectations.toBeGreaterThanOrEqual `toBeGreaterThanOrEqual(...)`}
+   */
+  toBeLessThan(value: bigint): Expectations<bigint>
+
+  toBeLessThan(value: number | bigint): Expectations {
     this.toBeA(typeof value)
-    if ((this.value as any) < value) return this as Expectations<any>
+    if ((this.value as any) < value) return this
     this._fail(`to be less than ${stringifyValue(value)}`)
   }
 
   /* ------------------------------------------------------------------------ */
 
   /**
-   * Expects the value to be a `number` or `bigint` less than or equal to
-   * the specified expected value.
+   * Expects the value to be a `number` less than or equal to the specified
+   * expected value.
    *
    * Negation: {@link Expectations.toBeGreaterThan `toBeGreaterThan(...)`}
    */
-  toBeLessThanOrEqual<Type extends number | bigint>(
-      value: Type,
-  ): Expectations<Type> {
+  toBeLessThanOrEqual(value: number): Expectations<number>
+
+  /**
+   * Expects the value to be a `bigint` less than or equal to the specified
+   * expected value.
+   *
+   * Negation: {@link Expectations.toBeGreaterThan `toBeGreaterThan(...)`}
+   */
+  toBeLessThanOrEqual(value: bigint): Expectations<bigint>
+
+  toBeLessThanOrEqual(value: number | bigint): Expectations {
     this.toBeA(typeof value)
-    if ((this.value as any) <= value) return this as Expectations<any>
+    if ((this.value as any) <= value) return this
     this._fail(`to be less than or equal to ${stringifyValue(value)}`)
   }
 
@@ -330,15 +366,22 @@ export class Expectations<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /**
-   * Expects the value to be a `number` or `bigint` within the specified range
-   * where minimum and maximum values are inclusive.
+   * Expects the value to be a `number` within the specified range where the
+   * minimum and maximum values are inclusive.
    *
    * Negation: {@link NegativeExpectations.toBeWithinRange `not.toBeWithinRange(...)`}
    */
-  toBeWithinRange<Type extends number | bigint>(
-      min: Type,
-      max: Type,
-  ): Expectations<Type> {
+  toBeWithinRange(min: number, max: number): Expectations<number>
+
+  /**
+   * Expects the value to be a `bigint` within the specified range where the
+   * minimum and maximum values are inclusive.
+   *
+   * Negation: {@link NegativeExpectations.toBeWithinRange `not.toBeWithinRange(...)`}
+   */
+  toBeWithinRange(min: bigint, max: bigint): Expectations<bigint>
+
+  toBeWithinRange(min: number | bigint, max: number | bigint): Expectations {
     if (max < min) {
       const num = max
       max = min
@@ -351,7 +394,7 @@ export class Expectations<T = unknown> {
       this._fail(`to be within ${stringifyValue(min)}...${stringifyValue(max)}`)
     }
 
-    return this as Expectations<any>
+    return this
   }
 
   /* ------------------------------------------------------------------------ */
@@ -385,9 +428,7 @@ export class Expectations<T = unknown> {
    *
    * Negation: {@link NegativeExpectations.toHaveLength `not.toHaveLength(...)`}
    */
-  toHaveLength<Length extends number>(
-      length: Length,
-  ): Expectations<T & { length: Length }> {
+  toHaveLength(length: number): Expectations<T & { length: number }> {
     this.toBeDefined()
 
     const realLength = (this.value as any)['length']
@@ -453,9 +494,7 @@ export class Expectations<T = unknown> {
    *
    * Negation: {@link NegativeExpectations.toHaveSize `not.toHaveSize(...)`}
    */
-  toHaveSize<Size extends number>(
-      size: Size,
-  ): Expectations<T & { size: Size }> {
+  toHaveSize(size: number): Expectations<T & { size: number }> {
     this.toBeDefined()
 
     const realSize = (this.value as any)['size']
@@ -622,126 +661,6 @@ export class Expectations<T = unknown> {
 }
 
 /* ========================================================================== *
- * ASYNC EXPECTATIONS                                                         *
- * ========================================================================== */
-
-/**
- * Extension to {@link Expectations} adding support for {@link Promise}s.
- *
- * These expectations are _separate_ from the main {@link Expectations}, as we
- * can't use them in {@link AssertionFunction}s, without ending up with
- * _unhandled rejections_ in the Node.js process.
- */
-export class AsyncExpectations<T = unknown> extends Expectations<T> {
-  /**
-   * Create an {@link AsyncExpectations} instance associated with the specified
-   * value and error remarks.
-   */
-  constructor(value: T, remarks: string | undefined) {
-    super(value, remarks)
-  }
-
-  /* ------------------------------------------------------------------------ */
-
-  /**
-   * Expects the value to be a _rejected_ {@link PromiseLike}, and (if
-   * specified) further asserts the rejection reason with an
-   * {@link AssertionFunction}.
-   *
-   * Negation: {@link Expectations.toBeResolved `toBeResolved(...)`}
-   */
-  toBeRejected(
-      assertion?: AssertionFunction,
-  ): Promise<Expectations<PromiseLike<Awaited<T>>>> {
-    return Promise.resolve()
-        .then(() => {
-          this.toHaveProperty('then', (assert) => assert.toBeA('function'))
-          return Promise.allSettled([ Promise.resolve(this.value) ])
-        })
-        .then(([ settlement ]) => {
-          if (settlement.status === 'rejected') {
-            if (assertion) assertion(new Expectations(settlement.reason, this.remarks))
-            return this as Expectations<any>
-          }
-
-          this._fail('to be rejected')
-        })
-  }
-
-  /* ------------------------------------------------------------------------ */
-
-  /**
-   * Expect the value to be a _rejected_ {@link PromiseLike}, and further
-   * asserts the rejection reason to be an {@link Error}.
-   *
-   * If specified, the {@link Error}'s own message will be further expected to
-   * either match the specified {@link RegExp}, or equal to the specified
-   * `string`.
-   *
-   * Negation: {@link Expectations.toBeResolved `toBeResolved(...)`}
-   */
-  toBeRejectedWithError(
-    message?: string | RegExp
-  ): Promise<Expectations<PromiseLike<Awaited<T>>>>
-
-  /**
-   * Expect the value to be a _rejected_ {@link PromiseLike}, and further
-   * asserts the rejection reason to be an instance of the specifed
-   * {@link Error} {@link Constructor}.
-   *
-   * If specified, the {@link Error}'s own message will be further expected to
-   * either match the specified {@link RegExp}, or equal to the specified
-   * `string`.
-   *
-   * Negation: {@link Expectations.toBeResolved `toBeResolved(...)`}
-   */
-  toBeRejectedWithError(
-    constructor: Constructor<Error>,
-    message?: string | RegExp,
-  ): Promise<Expectations<PromiseLike<T>>>
-
-  toBeRejectedWithError(
-      constructorOrMessage?: string | RegExp | Constructor,
-      maybeMessage?: string | RegExp,
-  ): Promise<Expectations> {
-    const [ constructor, message ] =
-      typeof constructorOrMessage === 'function' ?
-        [ constructorOrMessage, maybeMessage ] :
-        [ Error, constructorOrMessage ]
-
-    return this.toBeRejected((assert) => assert.toBeError(constructor, message))
-  }
-
-  /* ------------------------------------------------------------------------ */
-
-  /**
-   * Expects the value to be a _resolved_ {@link PromiseLike}, and (if
-   * specified) further asserts the resolved result with an
-   * {@link AssertionFunction}.
-   *
-   * Negation: {@link Expectations.toBeRejected `toBeRejected(...)`}
-   */
-  toBeResolved<Assert extends AssertionFunction<Awaited<T>>>(
-      assertion?: Assert,
-  ): Promise<Expectations<PromiseLike<AssertedType<Awaited<T>, Assert>>>> {
-    return Promise.resolve()
-        .then(() => {
-          this.toHaveProperty('then', (assert) => assert.toBeA('function'))
-          return Promise.allSettled([ Promise.resolve(this.value) ])
-        })
-        .then(([ settlement ]) => {
-          if (settlement.status === 'fulfilled') {
-            if (assertion) assertion(new Expectations(settlement.value, this.remarks))
-            return this as Expectations<any>
-          }
-
-          this._fail('to be resolved')
-        })
-  }
-}
-
-
-/* ========================================================================== *
  * NEGATIVE EXPECTATIONS                                                      *
  * ========================================================================== */
 
@@ -782,18 +701,25 @@ export class NegativeExpectations<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /**
-   * Expects the value to be a `number` or `bigint` _**OUTSIDE**_ of the given
-   * +/- _delta_ range of the specified expected value.
+   * Expects the value to be a `number` _**OUTSIDE**_ of the given +/- _delta_
+   * range of the specified expected value.
    *
    * Negates: {@link Expectations.toBeCloseTo `toBeCloseTo(...)`}
    */
-  toBeCloseTo<Type extends number | bigint>(
-      value: Type,
-      delta: Type,
-  ): Expectations<Type> {
+  toBeCloseTo(value: number, delta: number): Expectations<number>
+
+  /**
+   * Expects the value to be a `bigint` _**OUTSIDE**_ of the given +/- _delta_
+   * range of the specified expected value.
+   *
+   * Negates: {@link Expectations.toBeCloseTo `toBeCloseTo(...)`}
+   */
+  toBeCloseTo(value: bigint, delta: bigint): Expectations<bigint>
+
+  toBeCloseTo(value: number | bigint, delta: number | bigint): Expectations {
     const min = (value as number) - (delta as number)
     const max = (value as number) + (delta as number)
-    return this.toBeWithinRange(min, max) as Expectations<Type>
+    return this.toBeWithinRange(min, max)
   }
 
   /* ------------------------------------------------------------------------ */
@@ -842,15 +768,22 @@ export class NegativeExpectations<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /**
-   * Expects the value to be a `number` or `bigint` _**OUTSIDE**_ of the
-   * specified range where minimum and maximum values are inclusive.
+   * Expects the value to be a `number` _**OUTSIDE**_ of the specified range
+   * where minimum and maximum values are inclusive.
    *
    * Negates: {@link Expectations.toBeWithinRange `toBeWithinRange(...)`}
    */
-  toBeWithinRange<Type extends number | bigint>(
-      min: Type,
-      max: Type,
-  ): Expectations<Type> {
+  toBeWithinRange(min: number, max: number): Expectations<number>
+
+  /**
+   * Expects the value to be a `bigint` _**OUTSIDE**_ of the specified range
+   * where minimum and maximum values are inclusive.
+   *
+   * Negates: {@link Expectations.toBeWithinRange `toBeWithinRange(...)`}
+   */
+  toBeWithinRange(min: bigint, max: bigint): Expectations<bigint>
+
+  toBeWithinRange(min: number | bigint, max: number | bigint): Expectations {
     if (max < min) {
       const num = max
       max = min
@@ -863,7 +796,7 @@ export class NegativeExpectations<T = unknown> {
       this._fail(`not to be within ${stringifyValue(min)}...${stringifyValue(max)}`)
     }
 
-    return this._expectations as Expectations<any>
+    return this._expectations
   }
 
   /* ------------------------------------------------------------------------ */
@@ -932,7 +865,7 @@ export class NegativeExpectations<T = unknown> {
    *
    * Negates: {@link Expectations.toHaveSize `toHaveSize(...)`}
    */
-  toHaveSize(size: number): Expectations<T> {
+  toHaveSize(size: number): Expectations<T & { size: number }> {
     this._expectations.toBeDefined()
 
     const realSize = (this._value as any)['size']
@@ -942,7 +875,7 @@ export class NegativeExpectations<T = unknown> {
       this._fail(`not to have size ${size}`)
     }
 
-    return this._expectations
+    return this._expectations as Expectations<any>
   }
 
   /* ------------------------------------------------------------------------ */
