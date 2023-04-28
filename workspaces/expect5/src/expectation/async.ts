@@ -2,6 +2,7 @@ import {
   Expectations,
   type AssertionFunction,
   type AssertedType,
+  type InferMatchers,
 } from './expectations'
 
 import type { Constructor } from './types'
@@ -52,6 +53,20 @@ export class AsyncExpectations<T = unknown> extends Expectations<T> {
   /* ------------------------------------------------------------------------ */
 
   /**
+   * Expects the value to be a {@link PromiseLike} _rejected_ with an
+   * {@link Error} _strictly equal_ to the one specified.
+   *
+   * Negation: {@link Expectations.toBeResolved `toBeResolved(...)`}
+   */
+  toBeRejectedWith(
+      expected: Error,
+  ): Promise<Expectations<PromiseLike<Awaited<T>>>> {
+    return this.toBeRejected((assert) => assert.toStrictlyEqual(expected))
+  }
+
+  /* ------------------------------------------------------------------------ */
+
+  /**
    * Expect the value to be a _rejected_ {@link PromiseLike}, and further
    * asserts the rejection reason to be an {@link Error}.
    *
@@ -79,7 +94,7 @@ export class AsyncExpectations<T = unknown> extends Expectations<T> {
   toBeRejectedWithError(
     constructor: Constructor<Error>,
     message?: string | RegExp,
-  ): Promise<Expectations<PromiseLike<T>>>
+  ): Promise<Expectations<PromiseLike<Awaited<T>>>>
 
   toBeRejectedWithError(
       constructorOrMessage?: string | RegExp | Constructor,
@@ -118,5 +133,19 @@ export class AsyncExpectations<T = unknown> extends Expectations<T> {
 
           this._fail('to be resolved')
         })
+  }
+
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * Expects the value to be a {@link PromiseLike} _resolved_ with a value
+   * _deeply equal_ to the one specified.
+   *
+   * Negation: {@link Expectations.toBeRejected `toBeRejected(...)`}
+   */
+  toBeResolvedWith<Type>(
+      expected: Type,
+  ): Promise<Expectations<PromiseLike<InferMatchers<Type>>>> {
+    return this.toBeResolved((assert) => assert.toEqual(expected)) as any
   }
 }
