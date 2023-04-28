@@ -234,7 +234,7 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
 }
 
 function dumpProps(log: Logger, pad: number, error: Error): void {
-  const keys = Object.keys(error)
+  Object.keys(error)
       .filter((k) => ![
         'diff', // expectations error,
         'actual', // assertion error, chai
@@ -250,7 +250,6 @@ function dumpProps(log: Logger, pad: number, error: Error): void {
         const details = typeof value === 'string' ? value : stringifyValue(value)
         log.error($gry(`${k}:`.padStart(pad - 1)), $ylw(details))
       })
-  log.error('KEYS!!!', keys)
 }
 
 function dumpStack(log: Logger, error: Error): void {
