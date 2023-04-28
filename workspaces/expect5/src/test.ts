@@ -15,7 +15,7 @@ import { runSuite } from './execution/executor'
 import { diff } from './expectation/diff'
 import { expect } from './expectation/expect'
 import { printDiff } from './expectation/print'
-import { ExpectationError, stringifyObjectType } from './expectation/types'
+import { ExpectationError, stringifyObjectType, stringifyValue } from './expectation/types'
 
 import { type TestOptions } from './index'
 
@@ -175,6 +175,7 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
   if (error instanceof ExpectationError) {
     log.enter(ERROR, `${$gry('Expectation Error:')} ${$red(error.message)}`)
     try {
+      dumpProps(log, 17, error)
       dumpStack(log, error)
       if (error.diff) printDiff(log, error.diff)
     } finally {
@@ -187,6 +188,7 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
     const [ message = 'Unknown Error', ...lines ] = error.message.split('\n')
     log.enter(ERROR, `${$gry('Assertion Error:')} ${$red(message)}`)
     try {
+      dumpProps(log, 15, error)
       dumpStack(log, error)
 
       // If we print diffs from generic errors, we take over
@@ -207,9 +209,12 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
   // Any other error also gets printed somewhat nicely
   } else if (error instanceof Error) {
     const message = error.message || 'Unknown Error'
-    const type = stringifyObjectType(error)
+    const string = stringifyObjectType(error)
+    // Chai calls its own assertion errors "AssertionError"
+    const type = string === '[AssertionError]' ? 'Assertion Error' : string
     log.enter(ERROR, `${$gry(type)}: ${$red(message)}`)
     try {
+      dumpProps(log, type.length, error)
       dumpStack(log, error)
 
       // if there are "actual" or "expected" properties on the error, diff!
@@ -226,6 +231,26 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
     // This should never happen, as executor converts evertything to errors...
     log.error($gry('Uknown error:'), error)
   }
+}
+
+function dumpProps(log: Logger, pad: number, error: Error): void {
+  const keys = Object.keys(error)
+      .filter((k) => ![
+        'diff', // expectations error,
+        'actual', // assertion error, chai
+        'expected', // assertion error, chai,
+        'generatedMessage', // assertion error,
+        'message', // error
+        'showDiff', // chai
+        'stack', // error
+      ].includes(k))
+      .forEach((k) => {
+        const value = error[k as keyof typeof error]
+        if ((k === 'code') && (value === 'ERR_ASSERTION')) return
+        const details = typeof value === 'string' ? value : stringifyValue(value)
+        log.error($gry(`${k}:`.padStart(pad - 1)), $ylw(details))
+      })
+  log.error('KEYS!!!', keys)
 }
 
 function dumpStack(log: Logger, error: Error): void {
