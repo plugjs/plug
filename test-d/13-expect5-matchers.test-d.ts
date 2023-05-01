@@ -121,8 +121,16 @@ expectType<Matchers<unknown & { length: number }>>(expect.toHaveLength(123))
 /* === TO HAVE PROPERTY ===================================================== */
 
 expect<Matchers<unknown & { prop: unknown }>>(expect.toHaveProperty('prop'))
+
+// with matchers
+expect<Matchers<unknown & { prop: number }>>(expect.toHaveProperty('prop', expect.toBeA('number')))
+expect<Matchers<unknown & { prop: { foo: string } }>>(expect.toHaveProperty('prop', expect.toEqual({ foo: 'bar' })))
+
+// with assertions
 expect<Matchers<unknown & { prop: number }>>(expect.toHaveProperty('prop', (assert) => assert.toBeA('number')))
 expect<Matchers<unknown & { prop: undefined }>>(expect.toHaveProperty('prop', (assert) => assert.toBeUndefined()))
+
+// with assertion returning "void"
 expect<Matchers<unknown & { prop: unknown }>>(expect.toHaveProperty('prop', (assert) => {
   expectType<Expectations<unknown>>(assert)
   assert.toBeA('number')

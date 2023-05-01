@@ -18,6 +18,8 @@ describe('Expectation Matchers', () => {
     expectPass(() => expect.toEqual({ a: 'foo' }).expect({ a: 'foo' }))
     expectPass(() => expect.toHaveLength(3).expect('foo'))
     expectPass(() => expect.toHaveProperty('a').expect({ a: 'foo' }))
+    expectPass(() => expect.toHaveProperty('a', (a) => a.toBeA('string')).expect({ a: 'foo' }))
+    expectPass(() => expect.toHaveProperty('a', expect.toBeA('string')).expect({ a: 'foo' }))
     expectPass(() => expect.toHaveSize(1).expect(new Set([ 'foo' ])))
     expectPass(() => expect.toMatch(/^foo$/i).expect('FOO'))
     expectPass(() => expect.toStrictlyEqual('foo').expect('foo'))

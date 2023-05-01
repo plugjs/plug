@@ -229,6 +229,7 @@ describe('Basic Expectations', () => {
     const s2 = Symbol()
 
     expectPass(() => expect('foo').toHaveProperty('length'))
+    expectPass(() => expect('foo').toHaveProperty('length', expect.toStrictlyEqual(3)))
     expectPass(() => expect('foo').toHaveProperty('length', (assert) => assert.toEqual(3)))
     expectPass(() => expect([ 0 ]).toHaveProperty(0))
     expectPass(() => expect({ [s]: 'foo' }).toHaveProperty(s))

@@ -445,6 +445,20 @@ export class Expectations<T = unknown> {
 
   /**
    * Expects the value to have the specified _property_ and (if specified)
+   * validates its value with a {@link Matchers}.
+   *
+   * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
+   */
+  toHaveProperty<
+    Prop extends string | number | symbol,
+    Matcher extends Matchers,
+  >(
+    property: Prop,
+    matcher?: Matcher,
+  ): Expectations<T & { [keyt in Prop] : InferMatchers<Matcher> }>
+
+  /**
+   * Expects the value to have the specified _property_ and (if specified)
    * further asserts its value with an {@link AssertionFunction}.
    *
    * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
@@ -453,9 +467,14 @@ export class Expectations<T = unknown> {
     Prop extends string | number | symbol,
     Assert extends AssertionFunction,
   >(
-      property: Prop,
-      assertion?: Assert,
-  ): Expectations<T & { [keyt in Prop] : AssertedType<unknown, Assert> }> {
+    property: Prop,
+    assertion?: Assert,
+  ): Expectations<T & { [keyt in Prop] : AssertedType<unknown, Assert> }>
+
+  toHaveProperty(
+      property: string | number | symbol,
+      assertionOrMatcher?: AssertionFunction | Matchers,
+  ): Expectations {
     this.toBeDefined()
 
     const propertyValue = (this.value as any)[property]
@@ -464,11 +483,13 @@ export class Expectations<T = unknown> {
       this._fail(`to have property "${String(property)}"`)
     }
 
-    if (assertion) {
+    if (isMatcher(assertionOrMatcher)) {
+      assertionOrMatcher.expect(propertyValue)
+    } else if (assertionOrMatcher) {
       try {
         const parent: ExpectationsParent = { expectations: this, prop: property }
         const expectations = new Expectations(propertyValue, this.remarks, parent)
-        assertion(expectations)
+        assertionOrMatcher(expectations)
       } catch (error) {
         // any caught error difference gets remapped as a property diff
         if ((error instanceof ExpectationError) && (error.diff)) {

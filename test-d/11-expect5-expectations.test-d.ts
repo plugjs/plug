@@ -123,8 +123,16 @@ expectType<Expectations<TestType & { length: number }>>(expectations.toHaveLengt
 /* === TO HAVE PROPERTY ===================================================== */
 
 expect<Expectations<TestType & { prop: unknown }>>(expectations.toHaveProperty('prop'))
+
+// with matchers
+expect<Expectations<TestType & { prop: number }>>(expectations.toHaveProperty('prop', expect.toBeA('number')))
+expect<Expectations<TestType & { prop: { foo: string } }>>(expectations.toHaveProperty('prop', expect.toEqual({ foo: 'bar' })))
+
+// with assertions
 expect<Expectations<TestType & { prop: number }>>(expectations.toHaveProperty('prop', (assert) => assert.toBeA('number')))
 expect<Expectations<TestType & { prop: undefined }>>(expectations.toHaveProperty('prop', (assert) => assert.toBeUndefined()))
+
+// with assertion returning "void"
 expect<Expectations<TestType & { prop: unknown }>>(expectations.toHaveProperty('prop', (assert) => {
   expectType<Expectations<unknown>>(assert)
   assert.toBeA('number')

@@ -366,6 +366,20 @@ export class Matchers<T = unknown> {
 
   /**
    * Expects the value to have the specified _property_ and (if specified)
+   * validates its value with a {@link Matchers}.
+   *
+   * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
+   */
+  toHaveProperty<
+    Prop extends string | number | symbol,
+    Matcher extends Matchers,
+  >(
+    property: Prop,
+    matcher?: Matcher,
+  ): Matchers<T & { [keyt in Prop] : InferMatchers<Matcher> }>
+
+  /**
+   * Expects the value to have the specified _property_ and (if specified)
    * further asserts its value with an {@link AssertionFunction}.
    *
    * Negation: {@link NegativeMatchers.toHaveProperty `not.toHaveProperty(...)`}
@@ -374,10 +388,15 @@ export class Matchers<T = unknown> {
     Prop extends string | number | symbol,
     Assert extends AssertionFunction,
   >(
-      property: Prop,
-      assertion?: Assert,
-  ): Matchers<T & { [keyt in Prop] : AssertedType<unknown, Assert> }> {
-    return this._push((e) => e.toHaveProperty(property, assertion))
+    property: Prop,
+    assertion?: Assert,
+  ): Matchers<T & { [keyt in Prop] : AssertedType<unknown, Assert> }>
+
+  toHaveProperty(
+      property: string | number | symbol,
+      assertionOrMatcher?: AssertionFunction | Matchers,
+  ): Matchers {
+    return this._push((e) => e.toHaveProperty(property, assertionOrMatcher as any))
   }
 
   /* ------------------------------------------------------------------------ */
