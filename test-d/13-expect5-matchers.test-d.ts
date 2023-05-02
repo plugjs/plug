@@ -13,6 +13,8 @@ expectType<string>(expect.toBeA('string').expect(12345))
 /* === TO BE A ============================================================== */
 
 expectType<Matchers<string>>(expect.toBeA('string'))
+expectType<Matchers<never>>(expect.toBeA('string', expect.toBeA('number')))
+expectType<Matchers<string & { length: number }>>(expect.toBeA('string', expect.toHaveLength(12)))
 expectType<Matchers<number>>(expect.toBeA('string', (assert) => assert.toBeA('number')))
 expectType<Matchers<string>>(expect.toBeA('string', (assert) => {
   expectType<Expectations<string>>(assert)

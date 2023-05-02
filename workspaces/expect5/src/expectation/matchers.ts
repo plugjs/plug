@@ -54,19 +54,47 @@ export class Matcher<T = unknown> {
 
   /**
    * Expects the value to be of the specified _extended_ {@link TypeName type},
-   * and (if specified) further asserts it with an {@link AssertionFunction}.
+   * and (if specified) further validates it with a {@link Matcher}.
    *
-   * Negation: {@link NegativeMatchers.toBeA `not.toBeA(...)`}
+   * Negation: {@link NegativeExpectations.toBeA `not.toBeA(...)`}
    */
+  toBeA<Name extends TypeName>(type: Name): Matcher<TypeMappings[Name]>
+
+  /**
+    * Expects the value to be of the specified _extended_ {@link TypeName type},
+    * and (if specified) further validates it with a {@link Matcher}.
+    *
+    * Negation: {@link NegativeExpectations.toBeA `not.toBeA(...)`}
+    */
+  toBeA<
+    Name extends TypeName,
+    Mapped extends TypeMappings[Name],
+    Match extends Matcher,
+  >(
+    type: Name,
+    matcher: Match,
+  ): Matcher<InferMatcher<Mapped, Match>>
+
+  /**
+    * Expects the value to be of the specified _extended_ {@link TypeName type},
+    * and (if specified) further asserts it with an {@link AssertionFunction}.
+    *
+    * Negation: {@link NegativeExpectations.toBeA `not.toBeA(...)`}
+    */
   toBeA<
     Name extends TypeName,
     Mapped extends TypeMappings[Name],
     Assert extends AssertionFunction<Mapped>,
   >(
-      type: Name,
-      assertion?: Assert,
-  ): Matcher<AssertedType<Mapped, Assert>> {
-    return this._push((e) => e.toBeA(type, assertion as AssertionFunction))
+    type: Name,
+    assertion: Assert,
+  ): Matcher<AssertedType<Mapped, Assert>>
+
+  toBeA(
+      type: TypeName,
+      assertionOrMatcher?: AssertionFunction | Matcher,
+  ): Matcher {
+    return this._push((e) => e.toBeA(type, assertionOrMatcher as any))
   }
 
   /* ------------------------------------------------------------------------ */
