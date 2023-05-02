@@ -28,9 +28,14 @@ export type AssertedType<T, F extends AssertionFunction<any>, R = ReturnType<F>>
       I : // returns Expectations<something>, use "something"
     T // returns something else (void), use T
 
-export type InferMatchers<T> =
+/** Infer the type of a {@link Matcher} or return the default type `T`  */
+export type InferMatcher<T, M> =
+  M extends Matcher<infer I> ? I : T
+
+/** Recursively infer the type of a {@link Matcher} in a `Record`  */
+export type InferToEqual<T> =
   T extends Matcher<infer V> ? V :
-  T extends Record<any, any> ? { [ k in keyof T ] : InferMatchers<T[k]> } :
+  T extends Record<any, any> ? { [ k in keyof T ] : InferToEqual<T[k]> } :
   T
 
 /** Simple wrapper defining the _parent_ instance of an {@link Expectations}. */
@@ -78,6 +83,21 @@ export class Expectations<T = unknown> {
   /* ------------------------------------------------------------------------ *
    * BASIC                                                                    *
    * ------------------------------------------------------------------------ */
+
+  /**
+   * Expects the value to be of the specified _extended_ {@link TypeName type},
+   * and (if specified) further asserts it with an {@link AssertionFunction}.
+   *
+   * Negation: {@link NegativeExpectations.toBeA `not.toBeA(...)`}
+   */
+  toBeA<
+    Name extends TypeName,
+    Mapped extends TypeMappings[Name],
+    Assert extends AssertionFunction<Mapped>,
+  >(
+    type: Name,
+    assertion?: Assert,
+  ): Expectations<AssertedType<Mapped, Assert>>
 
   /**
    * Expects the value to be of the specified _extended_ {@link TypeName type},
@@ -404,7 +424,7 @@ export class Expectations<T = unknown> {
    *
    * Negation: {@link NegativeExpectations.toEqual `not.toEqual(...)`}
    */
-  toEqual<Type>(expected: Type): Expectations<InferMatchers<Type>> {
+  toEqual<Type>(expected: Type): Expectations<InferToEqual<Type>> {
     if ((this.value as any) === expected) return this as Expectations<any>
 
     const result = diff(this.value, expected)
@@ -455,7 +475,7 @@ export class Expectations<T = unknown> {
   >(
     property: Prop,
     matcher?: Match,
-  ): Expectations<T & { [keyt in Prop] : InferMatchers<Match> }>
+  ): Expectations<T & { [keyt in Prop] : InferMatcher<unknown, Match> }>
 
   /**
    * Expects the value to have the specified _property_ and (if specified)

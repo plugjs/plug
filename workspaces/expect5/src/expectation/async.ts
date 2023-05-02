@@ -2,7 +2,7 @@ import {
   Expectations,
   type AssertionFunction,
   type AssertedType,
-  type InferMatchers,
+  type InferToEqual,
 } from './expectations'
 
 import type { Constructor } from './types'
@@ -54,7 +54,8 @@ export class AsyncExpectations<T = unknown> extends Expectations<T> {
 
   /**
    * Expects the value to be a {@link PromiseLike} _rejected_ with an
-   * {@link Error} _strictly equal_ to the one specified.
+   * {@link Error} {@link Expectations.toStrictlyEqual _strictly equal_}
+   * to the one specified.
    *
    * Negation: {@link Expectations.toBeResolved `toBeResolved(...)`}
    */
@@ -139,13 +140,13 @@ export class AsyncExpectations<T = unknown> extends Expectations<T> {
 
   /**
    * Expects the value to be a {@link PromiseLike} _resolved_ with a value
-   * _deeply equal_ to the one specified.
+   * {@link Expectations.toEqual _deeply equal_} to the one specified.
    *
    * Negation: {@link Expectations.toBeRejected `toBeRejected(...)`}
    */
   toBeResolvedWith<Type>(
       expected: Type,
-  ): Promise<Expectations<PromiseLike<InferMatchers<Type>>>> {
+  ): Promise<Expectations<PromiseLike<InferToEqual<Type>>>> {
     return this.toBeResolved((assert) => assert.toEqual(expected)) as any
   }
 }

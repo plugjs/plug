@@ -126,7 +126,7 @@ expect<Expectations<TestType & { prop: unknown }>>(expectations.toHaveProperty('
 
 // with matchers
 expect<Expectations<TestType & { prop: number }>>(expectations.toHaveProperty('prop', expect.toBeA('number')))
-expect<Expectations<TestType & { prop: { foo: string } }>>(expectations.toHaveProperty('prop', expect.toEqual({ foo: 'bar' })))
+expect<Expectations<TestType & { prop: { foo: string } }>>(expectations.toHaveProperty('prop', expect.toEqual({ foo: expect.toBeA('string') })))
 
 // with assertions
 expect<Expectations<TestType & { prop: number }>>(expectations.toHaveProperty('prop', (assert) => assert.toBeA('number')))

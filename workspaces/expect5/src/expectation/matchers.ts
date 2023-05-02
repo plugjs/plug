@@ -3,7 +3,8 @@ import {
   type AssertedType,
   type AssertionFunction,
   type NegativeExpectations,
-  type InferMatchers,
+  type InferMatcher,
+  type InferToEqual,
 } from './expectations'
 import {
   matcherMarker,
@@ -346,7 +347,7 @@ export class Matcher<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toEqual `not.toEqual(...)`}
    */
-  toEqual<Type>(expected: Type): Matcher<InferMatchers<Type>> {
+  toEqual<Type>(expected: Type): Matcher<InferToEqual<Type>> {
     return this._push((e) => e.toEqual(expected))
   }
 
@@ -376,7 +377,7 @@ export class Matcher<T = unknown> {
   >(
     property: Prop,
     matcher?: Match,
-  ): Matcher<T & { [keyt in Prop] : InferMatchers<Match> }>
+  ): Matcher<T & { [keyt in Prop] : InferMatcher<unknown, Match> }>
 
   /**
    * Expects the value to have the specified _property_ and (if specified)
