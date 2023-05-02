@@ -53,8 +53,7 @@ export class Matcher<T = unknown> {
    * ------------------------------------------------------------------------ */
 
   /**
-   * Expects the value to be of the specified _extended_ {@link TypeName type},
-   * and (if specified) further validates it with a {@link Matcher}.
+   * Expects the value to be of the specified _extended_ {@link TypeName type}.
    *
    * Negation: {@link NegativeExpectations.toBeA `not.toBeA(...)`}
    */
@@ -62,7 +61,7 @@ export class Matcher<T = unknown> {
 
   /**
     * Expects the value to be of the specified _extended_ {@link TypeName type},
-    * and (if specified) further validates it with a {@link Matcher}.
+    * and further validates it with a {@link Matcher}.
     *
     * Negation: {@link NegativeExpectations.toBeA `not.toBeA(...)`}
     */
@@ -77,7 +76,7 @@ export class Matcher<T = unknown> {
 
   /**
     * Expects the value to be of the specified _extended_ {@link TypeName type},
-    * and (if specified) further asserts it with an {@link AssertionFunction}.
+    * and further asserts it with an {@link AssertionFunction}.
     *
     * Negation: {@link NegativeExpectations.toBeA `not.toBeA(...)`}
     */
@@ -403,8 +402,8 @@ export class Matcher<T = unknown> {
   ): Matcher<T & { [keyt in Prop] : unknown }>
 
   /**
-   * Expects the value to have the specified _property_ and (if specified)
-   * validates its value with a {@link Matcher}.
+   * Expects the value to have the specified _property_ and validates its value
+   * with a {@link Matcher}.
    *
    * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
    */
@@ -417,8 +416,8 @@ export class Matcher<T = unknown> {
   ): Matcher<T & { [keyt in Prop] : InferMatcher<unknown, Match> }>
 
   /**
-   * Expects the value to have the specified _property_ and (if specified)
-   * further asserts its value with an {@link AssertionFunction}.
+   * Expects the value to have the specified _property_ and further asserts
+   * its value with an {@link AssertionFunction}.
    *
    * Negation: {@link NegativeMatchers.toHaveProperty `not.toHaveProperty(...)`}
    */

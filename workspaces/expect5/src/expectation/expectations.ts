@@ -87,8 +87,7 @@ export class Expectations<T = unknown> {
    * ------------------------------------------------------------------------ */
 
   /**
-   * Expects the value to be of the specified _extended_ {@link TypeName type},
-   * and (if specified) further validates it with a {@link Matcher}.
+   * Expects the value to be of the specified _extended_ {@link TypeName type}.
    *
    * Negation: {@link NegativeExpectations.toBeA `not.toBeA(...)`}
    */
@@ -96,7 +95,7 @@ export class Expectations<T = unknown> {
 
   /**
    * Expects the value to be of the specified _extended_ {@link TypeName type},
-   * and (if specified) further validates it with a {@link Matcher}.
+   * and further validates it with a {@link Matcher}.
    *
    * Negation: {@link NegativeExpectations.toBeA `not.toBeA(...)`}
    */
@@ -111,7 +110,7 @@ export class Expectations<T = unknown> {
 
   /**
    * Expects the value to be of the specified _extended_ {@link TypeName type},
-   * and (if specified) further asserts it with an {@link AssertionFunction}.
+   * and further asserts it with an {@link AssertionFunction}.
    *
    * Negation: {@link NegativeExpectations.toBeA `not.toBeA(...)`}
    */
@@ -665,20 +664,27 @@ export class Expectations<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /**
-   * Expects the value to be a `function` throwing, and (if specified) further
-   * further validates its value with a {@link Matcher}.
+   * Expects the value to be a `function` throwing.
    *
    * Negation: {@link NegativeExpectations.toThrow `not.toThrow()`}
    */
-  toThrow(matcher?: Matcher): Expectations<() => any>
+  toThrow(matcher: Matcher): Expectations<() => any>
 
   /**
-   * Expects the value to be a `function` throwing, and (if specified) further
-   * asserts the thrown value with an {@link AssertionFunction}.
+   * Expects the value to be a `function` throwing, and further validates the
+   * thrown value with a {@link Matcher}.
    *
    * Negation: {@link NegativeExpectations.toThrow `not.toThrow()`}
    */
-  toThrow(assert?: AssertionFunction): Expectations<() => any>
+  toThrow(matcher: Matcher): Expectations<() => any>
+
+  /**
+   * Expects the value to be a `function` throwing, and further asserts the
+   * thrown value with an {@link AssertionFunction}.
+   *
+   * Negation: {@link NegativeExpectations.toThrow `not.toThrow()`}
+   */
+  toThrow(assert: AssertionFunction): Expectations<() => any>
 
   toThrow(
       assertionOrMatcher?: AssertionFunction | Matcher,
