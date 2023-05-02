@@ -6,8 +6,16 @@ import { expectFail, expectPass } from './utils'
 describe('Basic Expectations', () => {
   it('should expect "toBeA(...)"', () => {
     expectPass(() => expect('foo').toBeA('string'))
+    expectPass(() => expect('foo').toBeA('string', expect.toStrictlyEqual('foo')))
     expectPass(() => expect('foo').toBeA('string', (assert) => assert.toStrictlyEqual('foo')))
+
     expectFail(() => expect('foo').toBeA('number'), 'Expected "foo" to be a <number>')
+    expectFail(() => expect('foo').toBeA('string', expect.toStrictlyEqual('bar')),
+        'Expected "foo" to strictly equal "bar"', {
+          diff: true,
+          value: 'foo',
+          expected: 'bar',
+        })
     expectFail(() => expect('foo').toBeA('string', (assert) => assert.toStrictlyEqual('bar')),
         'Expected "foo" to strictly equal "bar"', {
           diff: true,
