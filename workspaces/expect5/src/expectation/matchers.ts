@@ -366,6 +366,15 @@ export class Matcher<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /**
+   * Expects the value to have the specified _property_.
+   *
+   * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
+   */
+  toHaveProperty<Prop extends string | number | symbol>(
+    property: Prop,
+  ): Matcher<T & { [keyt in Prop] : unknown }>
+
+  /**
    * Expects the value to have the specified _property_ and (if specified)
    * validates its value with a {@link Matcher}.
    *
@@ -376,7 +385,7 @@ export class Matcher<T = unknown> {
     Match extends Matcher,
   >(
     property: Prop,
-    matcher?: Match,
+    matcher: Match,
   ): Matcher<T & { [keyt in Prop] : InferMatcher<unknown, Match> }>
 
   /**
@@ -390,7 +399,7 @@ export class Matcher<T = unknown> {
     Assert extends AssertionFunction,
   >(
     property: Prop,
-    assertion?: Assert,
+    assertion: Assert,
   ): Matcher<T & { [keyt in Prop] : AssertedType<unknown, Assert> }>
 
   toHaveProperty(

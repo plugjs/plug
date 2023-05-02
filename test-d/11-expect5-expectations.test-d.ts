@@ -15,6 +15,8 @@ expectType<TestType>(expectations.value)
 /* === TO BE A ============================================================== */
 
 expectType<Expectations<string>>(expectations.toBeA('string'))
+expectType<Expectations<never>>(expectations.toBeA('string', expect.toBeA('number'))) // string & number
+expectType<Expectations<string & { length: number }>>(expectations.toBeA('string', expect.toHaveLength(12)))
 expectType<Expectations<number>>(expectations.toBeA('string', (assert) => assert.toBeA('number')))
 expectType<Expectations<string>>(expectations.toBeA('string', (assert) => {
   expectType<Expectations<string>>(assert)
