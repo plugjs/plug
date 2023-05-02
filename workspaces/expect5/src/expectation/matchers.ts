@@ -12,19 +12,19 @@ import {
   type TypeName,
 } from './types'
 
-type Matcher = (expectations: Expectations) => Expectations
-type NegativeMatcher = (expectations: NegativeExpectations) => Expectations
+type PositiveMatcherFunction = (expectations: Expectations) => Expectations
+type NegativeMatcherFunction = (expectations: NegativeExpectations) => Expectations
 
 /* ========================================================================== *
- * EXPECTATIONS                                                               *
+ * MATCHERS                                                                   *
  * ========================================================================== */
 
-export class Matchers<T = unknown> {
-  private readonly _matchers: Matcher[]
+export class Matcher<T = unknown> {
+  private readonly _matchers: PositiveMatcherFunction[]
   readonly not: NegativeMatchers<T>
 
   constructor() {
-    const matchers: Matcher[] = []
+    const matchers: PositiveMatcherFunction[] = []
     this.not = new NegativeMatchers(this, matchers)
     this._matchers = matchers
   }
@@ -37,8 +37,8 @@ export class Matchers<T = unknown> {
     return expectations.value as T
   }
 
-  private _push(matcher: Matcher): Matchers<any> {
-    const matchers = new Matchers()
+  private _push(matcher: PositiveMatcherFunction): Matcher<any> {
+    const matchers = new Matcher()
     matchers._matchers.push(...this._matchers, matcher)
     return matchers
   }
@@ -64,7 +64,7 @@ export class Matchers<T = unknown> {
   >(
       type: Name,
       assertion?: Assert,
-  ): Matchers<AssertedType<Mapped, Assert>> {
+  ): Matcher<AssertedType<Mapped, Assert>> {
     return this._push((e) => e.toBeA(type, assertion as AssertionFunction))
   }
 
@@ -76,7 +76,7 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toBeCloseTo `not.toBeCloseTo(...)`}
    */
-  toBeCloseTo(value: number, delta: number): Matchers<number>
+  toBeCloseTo(value: number, delta: number): Matcher<number>
 
   /**
    * Expects the value to be a `bigint` within a given +/- _delta_ range of the
@@ -84,7 +84,7 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toBeCloseTo `not.toBeCloseTo(...)`}
    */
-  toBeCloseTo(value: bigint, delta: bigint): Matchers<bigint>
+  toBeCloseTo(value: bigint, delta: bigint): Matcher<bigint>
 
   /**
    * Expects the value to be a `number` or `bigint` within a given +/- _delta_
@@ -95,7 +95,7 @@ export class Matchers<T = unknown> {
   toBeCloseTo(
       value: number | bigint,
       delta: number | bigint,
-  ): Matchers {
+  ): Matcher {
     return this._push((e) => e.toBeCloseTo(value as number, delta as number))
   }
 
@@ -106,7 +106,7 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toBeDefined `not.toBeDefined()`}
    */
-  toBeDefined(): Matchers<T> {
+  toBeDefined(): Matcher<T> {
     return this._push((e) => e.toBeDefined())
   }
 
@@ -121,7 +121,7 @@ export class Matchers<T = unknown> {
    */
   toBeError(
     message?: string | RegExp
-  ): Matchers<Error>
+  ): Matcher<Error>
 
   /**
    * Expect the value to be an instance of {@link Error} and further asserts
@@ -133,12 +133,12 @@ export class Matchers<T = unknown> {
   toBeError<Class extends Constructor<Error>>(
     constructor: Class,
     message?: string | RegExp,
-  ): Matchers<InstanceType<Class>>
+  ): Matcher<InstanceType<Class>>
 
   toBeError(
       constructorOrMessage?: string | RegExp | Constructor,
       maybeMessage?: string | RegExp,
-  ): Matchers {
+  ): Matcher {
     const [ constructor, message ] =
     typeof constructorOrMessage === 'function' ?
       [ constructorOrMessage, maybeMessage ] :
@@ -149,7 +149,7 @@ export class Matchers<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /** Expects the value strictly equal to `false`. */
-  toBeFalse(): Matchers<false> {
+  toBeFalse(): Matcher<false> {
     return this._push((e) => e.toBeFalse())
   }
 
@@ -158,9 +158,9 @@ export class Matchers<T = unknown> {
   /**
    * Expects the value to be _falsy_ (zero, empty string, `false`, ...).
    *
-   * Negation: {@link Matchers.toBeTruthy `toBeTruthy()`}
+   * Negation: {@link Matcher.toBeTruthy `toBeTruthy()`}
    */
-  toBeFalsy(): Matchers<T> {
+  toBeFalsy(): Matcher<T> {
     return this._push((e) => e.toBeFalsy())
   }
 
@@ -170,19 +170,19 @@ export class Matchers<T = unknown> {
    * Expects the value to be a `number` greater than the specified* expected
    * value.
    *
-   * Negation: {@link Matchers.toBeLessThanOrEqual `toBeLessThanOrEqual(...)`}
+   * Negation: {@link Matcher.toBeLessThanOrEqual `toBeLessThanOrEqual(...)`}
    */
-  toBeGreaterThan(value: number): Matchers<number>
+  toBeGreaterThan(value: number): Matcher<number>
 
   /**
    * Expects the value to be a `bigint` greater than the specified expected
    * value.
    *
-   * Negation: {@link Matchers.toBeLessThanOrEqual `toBeLessThanOrEqual(...)`}
+   * Negation: {@link Matcher.toBeLessThanOrEqual `toBeLessThanOrEqual(...)`}
    */
-  toBeGreaterThan(value: bigint): Matchers<bigint>
+  toBeGreaterThan(value: bigint): Matcher<bigint>
 
-  toBeGreaterThan(value: number | bigint): Matchers {
+  toBeGreaterThan(value: number | bigint): Matcher {
     return this._push((e) => e.toBeGreaterThan(value as number))
   }
 
@@ -192,19 +192,19 @@ export class Matchers<T = unknown> {
    * Expects the value to be a `number` greater than or equal to the specified
    * expected value.
    *
-   * Negation: {@link Matchers.toBeLessThan `toBeLessThan(...)`}
+   * Negation: {@link Matcher.toBeLessThan `toBeLessThan(...)`}
    */
-  toBeGreaterThanOrEqual(value: number): Matchers<number>
+  toBeGreaterThanOrEqual(value: number): Matcher<number>
 
   /**
    * Expects the value to be a `bigint` greater than or equal to the specified
    * expected value.
    *
-   * Negation: {@link Matchers.toBeLessThan `toBeLessThan(...)`}
+   * Negation: {@link Matcher.toBeLessThan `toBeLessThan(...)`}
    */
-  toBeGreaterThanOrEqual(value: bigint): Matchers<bigint>
+  toBeGreaterThanOrEqual(value: bigint): Matcher<bigint>
 
-  toBeGreaterThanOrEqual(value: number | bigint): Matchers {
+  toBeGreaterThanOrEqual(value: number | bigint): Matcher {
     return this._push((e) => e.toBeGreaterThanOrEqual(value as number))
   }
 
@@ -222,7 +222,7 @@ export class Matchers<T = unknown> {
   >(
       constructor: Class,
       assertion?: Assert,
-  ): Matchers<AssertedType<InstanceType<Class>, Assert>> {
+  ): Matcher<AssertedType<InstanceType<Class>, Assert>> {
     return this._push((e) => e.toBeInstanceOf(constructor, assertion as AssertionFunction))
   }
 
@@ -231,18 +231,18 @@ export class Matchers<T = unknown> {
   /**
    * Expects the value to be a `number` less than the specified expected value.
    *
-   * Negation: {@link Matchers.toBeGreaterThanOrEqual `toBeGreaterThanOrEqual(...)`}
+   * Negation: {@link Matcher.toBeGreaterThanOrEqual `toBeGreaterThanOrEqual(...)`}
    */
-  toBeLessThan(value: number): Matchers<number>
+  toBeLessThan(value: number): Matcher<number>
 
   /**
    * Expects the value to be a `bigint` less than the specified expected value.
    *
-   * Negation: {@link Matchers.toBeGreaterThanOrEqual `toBeGreaterThanOrEqual(...)`}
+   * Negation: {@link Matcher.toBeGreaterThanOrEqual `toBeGreaterThanOrEqual(...)`}
    */
-  toBeLessThan(value: bigint): Matchers<bigint>
+  toBeLessThan(value: bigint): Matcher<bigint>
 
-  toBeLessThan(value: number | bigint): Matchers {
+  toBeLessThan(value: number | bigint): Matcher {
     return this._push((e) => e.toBeLessThan(value as number))
   }
 
@@ -252,19 +252,19 @@ export class Matchers<T = unknown> {
    * Expects the value to be a `number` less than or equal to* the specified
    * expected value.
    *
-   * Negation: {@link Matchers.toBeGreaterThan `toBeGreaterThan(...)`}
+   * Negation: {@link Matcher.toBeGreaterThan `toBeGreaterThan(...)`}
    */
-  toBeLessThanOrEqual(value: number): Matchers<number>
+  toBeLessThanOrEqual(value: number): Matcher<number>
 
   /**
    * Expects the value to be a `bigint` less than or equal to the specified
    * expected value.
    *
-   * Negation: {@link Matchers.toBeGreaterThan `toBeGreaterThan(...)`}
+   * Negation: {@link Matcher.toBeGreaterThan `toBeGreaterThan(...)`}
    */
-  toBeLessThanOrEqual(value: bigint): Matchers<bigint>
+  toBeLessThanOrEqual(value: bigint): Matcher<bigint>
 
-  toBeLessThanOrEqual(value: number | bigint): Matchers {
+  toBeLessThanOrEqual(value: number | bigint): Matcher {
     return this._push((e) => e.toBeLessThanOrEqual(value as number))
   }
 
@@ -275,21 +275,21 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toBeNaN `not.toBeNaN()`}
    */
-  toBeNaN(): Matchers<number> {
+  toBeNaN(): Matcher<number> {
     return this._push((e) => e.toBeNaN())
   }
 
   /* ------------------------------------------------------------------------ */
 
   /** Expects the value to strictly equal `null`. */
-  toBeNull(): Matchers<null> {
+  toBeNull(): Matcher<null> {
     return this._push((e) => e.toBeNull())
   }
 
   /* ------------------------------------------------------------------------ */
 
   /** Expects the value to strictly equal `true`. */
-  toBeTrue(): Matchers<true> {
+  toBeTrue(): Matcher<true> {
     return this._push((e) => e.toBeTrue())
   }
 
@@ -298,16 +298,16 @@ export class Matchers<T = unknown> {
   /**
    * Expects the value to be _falsy_ (non-zero, non-empty string, ...).
    *
-   * Negation: {@link Matchers.toBeFalsy `toBeFalsy()`}
+   * Negation: {@link Matcher.toBeFalsy `toBeFalsy()`}
    */
-  toBeTruthy(): Matchers<T> {
+  toBeTruthy(): Matcher<T> {
     return this._push((e) => e.toBeTruthy())
   }
 
   /* ------------------------------------------------------------------------ */
 
   /** Expects the value to strictly equal `undefined`. */
-  toBeUndefined(): Matchers<undefined> {
+  toBeUndefined(): Matcher<undefined> {
     return this._push((e) => e.toBeUndefined())
   }
 
@@ -319,7 +319,7 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toBeWithinRange `not.toBeWithinRange(...)`}
    */
-  toBeWithinRange(min: number, max: number): Matchers<number>
+  toBeWithinRange(min: number, max: number): Matcher<number>
 
   /**
    * Expects the value to be a `bigint` within the specified range where the
@@ -327,7 +327,7 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toBeWithinRange `not.toBeWithinRange(...)`}
    */
-  toBeWithinRange(min: bigint, max: bigint): Matchers<bigint>
+  toBeWithinRange(min: bigint, max: bigint): Matcher<bigint>
 
   /**
    * Expects the value to be a `number` or `bigint` within the specified range
@@ -335,7 +335,7 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toBeWithinRange `not.toBeWithinRange(...)`}
    */
-  toBeWithinRange( min: number | bigint, max: number | bigint): Matchers {
+  toBeWithinRange( min: number | bigint, max: number | bigint): Matcher {
     return this._push((e) => e.toBeWithinRange(min as number, max as number))
   }
 
@@ -346,7 +346,7 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toEqual `not.toEqual(...)`}
    */
-  toEqual<Type>(expected: Type): Matchers<InferMatchers<Type>> {
+  toEqual<Type>(expected: Type): Matcher<InferMatchers<Type>> {
     return this._push((e) => e.toEqual(expected))
   }
 
@@ -358,7 +358,7 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toHaveLength `not.toHaveLength(...)`}
    */
-  toHaveLength(length: number): Matchers<T & { length: number }> {
+  toHaveLength(length: number): Matcher<T & { length: number }> {
     return this._push((e) => e.toHaveLength(length))
   }
 
@@ -366,17 +366,17 @@ export class Matchers<T = unknown> {
 
   /**
    * Expects the value to have the specified _property_ and (if specified)
-   * validates its value with a {@link Matchers}.
+   * validates its value with a {@link Matcher}.
    *
    * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
    */
   toHaveProperty<
     Prop extends string | number | symbol,
-    Matcher extends Matchers,
+    Match extends Matcher,
   >(
     property: Prop,
-    matcher?: Matcher,
-  ): Matchers<T & { [keyt in Prop] : InferMatchers<Matcher> }>
+    matcher?: Match,
+  ): Matcher<T & { [keyt in Prop] : InferMatchers<Match> }>
 
   /**
    * Expects the value to have the specified _property_ and (if specified)
@@ -390,12 +390,12 @@ export class Matchers<T = unknown> {
   >(
     property: Prop,
     assertion?: Assert,
-  ): Matchers<T & { [keyt in Prop] : AssertedType<unknown, Assert> }>
+  ): Matcher<T & { [keyt in Prop] : AssertedType<unknown, Assert> }>
 
   toHaveProperty(
       property: string | number | symbol,
-      assertionOrMatcher?: AssertionFunction | Matchers,
-  ): Matchers {
+      assertionOrMatcher?: AssertionFunction | Matcher,
+  ): Matcher {
     return this._push((e) => e.toHaveProperty(property, assertionOrMatcher as any))
   }
 
@@ -407,7 +407,7 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toHaveSize `not.toHaveSize(...)`}
    */
-  toHaveSize(size: number): Matchers<T & { size: number }> {
+  toHaveSize(size: number): Matcher<T & { size: number }> {
     return this._push((e) => e.toHaveSize(size))
   }
 
@@ -421,14 +421,14 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toInclude `not.toInclude(...)`}
    */
-  toInclude<P extends Record<string, any>>(properties: P): Matchers<T>
+  toInclude<P extends Record<string, any>>(properties: P): Matcher<T>
 
   /**
    * Expect the value to include _all_ mappings from the specified {@link Map}.
    *
    * Negation: {@link NegativeMatchers.toInclude `not.toInclude(...)`}
    */
-  toInclude(mappings: Map<any, any>): Matchers<T>
+  toInclude(mappings: Map<any, any>): Matcher<T>
 
   /**
    * Expect the value to be an {@link Iterable} object includind _all_ values
@@ -436,7 +436,7 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toInclude `not.toInclude(...)`}
    */
-  toInclude(entries: Set<any>): Matchers<T>
+  toInclude(entries: Set<any>): Matcher<T>
 
   /**
    * Expect the value to be an {@link Iterable} object includind _all_ values
@@ -444,11 +444,11 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toInclude `not.toInclude(...)`}
    */
-  toInclude(values: any[]): Matchers<T>
+  toInclude(values: any[]): Matcher<T>
 
   toInclude(
       contents: Record<string, any> | Map<any, any> | Set<any> | any[],
-  ): Matchers {
+  ): Matcher {
     return this._push((e) => e.toInclude(contents))
   }
 
@@ -460,9 +460,9 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toMatch `not.toMatch(...)`}
    */
-  toMatch<Matcher extends string | RegExp>(
-      matcher: Matcher,
-  ): Matchers<string> {
+  toMatch<Match extends string | RegExp>(
+      matcher: Match,
+  ): Matcher<string> {
     return this._push((e) => e.toMatch(matcher))
   }
 
@@ -472,15 +472,15 @@ export class Matchers<T = unknown> {
    * Expect the value to be an {@link Iterable} object includind _all_ values
    * (and only those values) from the specified _array_, in any order.
    */
-  toMatchContents(contents: any[]): Matchers<T>
+  toMatchContents(contents: any[]): Matcher<T>
 
   /**
    * Expect the value to be an {@link Iterable} object includind _all_ values
    * (and only those values) from the specified {@link Set}, in any order.
    */
-  toMatchContents(contents: Set<any>): Matchers<T>
+  toMatchContents(contents: Set<any>): Matcher<T>
 
-  toMatchContents(contents: any[] | Set<any>): Matchers {
+  toMatchContents(contents: any[] | Set<any>): Matcher {
     return this._push((e) => e.toMatchContents(contents))
   }
 
@@ -491,7 +491,7 @@ export class Matchers<T = unknown> {
    *
    * Negation: {@link NegativeMatchers.toStrictlyEqual `not.toStrictlyEqual(...)`}
    */
-  toStrictlyEqual<Type>(expected: Type): Matchers<Type> {
+  toStrictlyEqual<Type>(expected: Type): Matcher<Type> {
     return this._push((e) => e.toStrictlyEqual(expected))
   }
 }
@@ -502,11 +502,11 @@ export class Matchers<T = unknown> {
 
 export class NegativeMatchers<T = unknown> {
   constructor(
-      private readonly _instance: Matchers<T>,
-      private readonly _matchers: Matcher[],
+      private readonly _instance: Matcher<T>,
+      private readonly _matchers: PositiveMatcherFunction[],
   ) {}
 
-  private _push(matcher: NegativeMatcher): Matchers<any> {
+  private _push(matcher: NegativeMatcherFunction): Matcher<any> {
     this._matchers.push((expectations) => matcher(expectations.not))
     return this._instance
   }
@@ -517,9 +517,9 @@ export class NegativeMatchers<T = unknown> {
    * Expects the value _**NOT**_ to be of the specified _extended_
    * {@link TypeName type}.
    *
-   * Negates: {@link Matchers.toBeA `toBeA(...)`}
+   * Negates: {@link Matcher.toBeA `toBeA(...)`}
    */
-  toBeA(type: TypeName): Matchers<T> {
+  toBeA(type: TypeName): Matcher<T> {
     return this._push((e) => e.toBeA(type))
   }
 
@@ -529,19 +529,19 @@ export class NegativeMatchers<T = unknown> {
    * Expects the value to be a `number` _**OUTSIDE**_ of the given +/- _delta_
    * range of the specified expected value.
    *
-   * Negates: {@link Matchers.toBeCloseTo `toBeCloseTo(...)`}
+   * Negates: {@link Matcher.toBeCloseTo `toBeCloseTo(...)`}
    */
-  toBeCloseTo(value: number, delta: number): Matchers<number>
+  toBeCloseTo(value: number, delta: number): Matcher<number>
 
   /**
    * Expects the value to be a `bigint` _**OUTSIDE**_ of the given +/- _delta_
    * range of the specified expected value.
    *
-   * Negates: {@link Matchers.toBeCloseTo `toBeCloseTo(...)`}
+   * Negates: {@link Matcher.toBeCloseTo `toBeCloseTo(...)`}
    */
-  toBeCloseTo(value: bigint, delta: bigint): Matchers<bigint>
+  toBeCloseTo(value: bigint, delta: bigint): Matcher<bigint>
 
-  toBeCloseTo(value: number | bigint, delta: number | bigint): Matchers {
+  toBeCloseTo(value: number | bigint, delta: number | bigint): Matcher {
     return this._push((e) => e.toBeCloseTo(value as number, delta as number))
   }
 
@@ -550,9 +550,9 @@ export class NegativeMatchers<T = unknown> {
   /**
    * Expects the value to be either `null` or `undefined`.
    *
-   * Negates: {@link Matchers.toBeDefined `toBeDefined()`}
+   * Negates: {@link Matcher.toBeDefined `toBeDefined()`}
    */
-  toBeDefined(): Matchers<null | undefined> {
+  toBeDefined(): Matcher<null | undefined> {
     return this._push((e) => e.toBeDefined())
   }
 
@@ -562,9 +562,9 @@ export class NegativeMatchers<T = unknown> {
    * Expects the value _**NOT**_ to be an instance of the specified
    * {@link Constructor}.
    *
-   * Negates: {@link Matchers.toBeInstanceOf `toBeInstanceOf(...)`}
+   * Negates: {@link Matcher.toBeInstanceOf `toBeInstanceOf(...)`}
    */
-  toBeInstanceOf(constructor: Constructor): Matchers<T> {
+  toBeInstanceOf(constructor: Constructor): Matcher<T> {
     return this._push((e) => e.toBeInstanceOf(constructor))
   }
 
@@ -573,9 +573,9 @@ export class NegativeMatchers<T = unknown> {
   /**
    * Expects the value _**NOT**_ to be `NaN`.
    *
-   * Negates: {@link Matchers.toBeNaN `toBeNaN()`}
+   * Negates: {@link Matcher.toBeNaN `toBeNaN()`}
    */
-  toBeNaN(): Matchers<number> {
+  toBeNaN(): Matcher<number> {
     return this._push((e) => e.toBeNaN())
   }
 
@@ -585,19 +585,19 @@ export class NegativeMatchers<T = unknown> {
    * Expects the value to be a `number` _**OUTSIDE**_ of the specified range
    * where minimum and maximum values are inclusive.
    *
-   * Negates: {@link Matchers.toBeWithinRange `toBeWithinRange(...)`}
+   * Negates: {@link Matcher.toBeWithinRange `toBeWithinRange(...)`}
    */
-  toBeWithinRange(min: number, max: number): Matchers<number>
+  toBeWithinRange(min: number, max: number): Matcher<number>
 
   /**
    * Expects the value to be a `bigint` _**OUTSIDE**_ of the specified range
    * where minimum and maximum values are inclusive.
    *
-   * Negates: {@link Matchers.toBeWithinRange `toBeWithinRange(...)`}
+   * Negates: {@link Matcher.toBeWithinRange `toBeWithinRange(...)`}
    */
-  toBeWithinRange(min: bigint, max: bigint): Matchers<bigint>
+  toBeWithinRange(min: bigint, max: bigint): Matcher<bigint>
 
-  toBeWithinRange(min: number | bigint, max: number | bigint): Matchers {
+  toBeWithinRange(min: number | bigint, max: number | bigint): Matcher {
     return this._push((e) => e.toBeWithinRange(min as number, max as number))
   }
 
@@ -607,9 +607,9 @@ export class NegativeMatchers<T = unknown> {
    * Expects the value _**NOT**_ to be _deep equal to_ the specified expected
    * one.
    *
-   * Negates: {@link Matchers.toEqual `toEqual(...)`}
+   * Negates: {@link Matcher.toEqual `toEqual(...)`}
    */
-  toEqual(expected: any): Matchers<T> {
+  toEqual(expected: any): Matcher<T> {
     return this._push((e) => e.toEqual(expected))
   }
 
@@ -619,9 +619,9 @@ export class NegativeMatchers<T = unknown> {
    * Expects the value to have a `number` _property_ `length` _different_ from
    * the specified expected value.
    *
-   * Negates: {@link Matchers.toHaveLength `toHaveLength(...)`}
+   * Negates: {@link Matcher.toHaveLength `toHaveLength(...)`}
    */
-  toHaveLength(length: number): Matchers<T & { length: number }> {
+  toHaveLength(length: number): Matcher<T & { length: number }> {
     return this._push((e) => e.toHaveLength(length))
   }
 
@@ -630,9 +630,9 @@ export class NegativeMatchers<T = unknown> {
   /**
    * Expects the value _**NOT**_ to have the specified _property_.
    *
-   * Negates: {@link Matchers.toHaveProperty `toHaveProperty(...)`}
+   * Negates: {@link Matcher.toHaveProperty `toHaveProperty(...)`}
    */
-  toHaveProperty(property: string | number | symbol): Matchers<T> {
+  toHaveProperty(property: string | number | symbol): Matcher<T> {
     return this._push((e) => e.toHaveProperty(property))
   }
 
@@ -642,9 +642,9 @@ export class NegativeMatchers<T = unknown> {
    * Expects the value to have a `number` _property_ `size` _different_ from
    * the specified expected value.
    *
-   * Negates: {@link Matchers.toHaveSize `toHaveSize(...)`}
+   * Negates: {@link Matcher.toHaveSize `toHaveSize(...)`}
    */
-  toHaveSize(size: number): Matchers<T & { size: number }> {
+  toHaveSize(size: number): Matcher<T & { size: number }> {
     return this._push((e) => e.toHaveSize(size))
   }
 
@@ -657,37 +657,37 @@ export class NegativeMatchers<T = unknown> {
    * If the object being expected is a {@link Map}, the properties specified
    * here will be treated as _mappings_ for said {@link Map}.
    *
-   * Negates: {@link Matchers.toInclude `toInclude(...)`}
+   * Negates: {@link Matcher.toInclude `toInclude(...)`}
    */
-  toInclude<P extends Record<string, any>>(properties: P): Matchers<T>
+  toInclude<P extends Record<string, any>>(properties: P): Matcher<T>
 
   /**
    * Expect the value to include _none_ of the mappings from the specified
    * {@link Map}.
    *
-   * Negates: {@link Matchers.toInclude `toInclude(...)`}
+   * Negates: {@link Matcher.toInclude `toInclude(...)`}
    */
-  toInclude(mappings: Map<any, any>): Matchers<T>
+  toInclude(mappings: Map<any, any>): Matcher<T>
 
   /**
    * Expect the value to be an {@link Iterable} object includind _none_ of the
    * values from the specified {@link Set}.
    *
-   * Negates: {@link Matchers.toInclude `toInclude(...)`}
+   * Negates: {@link Matcher.toInclude `toInclude(...)`}
    */
-  toInclude(entries: Set<any>): Matchers<T>
+  toInclude(entries: Set<any>): Matcher<T>
 
   /**
    * Expect the value to be an {@link Iterable} object includind _none_ of the
    * values from the specified _array_.
    *
-   * Negates: {@link Matchers.toInclude `toInclude(...)`}
+   * Negates: {@link Matcher.toInclude `toInclude(...)`}
    */
-  toInclude(values: any[]): Matchers<T>
+  toInclude(values: any[]): Matcher<T>
 
   toInclude(
       contents: Record<string, any> | Map<any, any> | Set<any> | any[],
-  ): Matchers {
+  ): Matcher {
     return this._push((e) => e.toInclude(contents))
   }
 
@@ -697,9 +697,9 @@ export class NegativeMatchers<T = unknown> {
    * Expects the value to be a `string` _**NOT MATCHING**_ the specified
    * sub-`string` or {@link RegExp}.
    *
-   * Negates: {@link Matchers.toMatch `toMatch(...)`}
+   * Negates: {@link Matcher.toMatch `toMatch(...)`}
    */
-  toMatch(matcher: string | RegExp): Matchers<string> {
+  toMatch(matcher: string | RegExp): Matcher<string> {
     return this._push((e) => e.toMatch(matcher))
   }
 
@@ -709,9 +709,9 @@ export class NegativeMatchers<T = unknown> {
    * Expects the value _**NOT**_ to be _strictly equal to_ the specified
    * expected one.
    *
-   * Negates: {@link Matchers.toStrictlyEqual `toStrictlyEqual(...)`}
+   * Negates: {@link Matcher.toStrictlyEqual `toStrictlyEqual(...)`}
    */
-  toStrictlyEqual(expected: any): Matchers<T> {
+  toStrictlyEqual(expected: any): Matcher<T> {
     return this._push((e) => e.toStrictlyEqual(expected))
   }
 }

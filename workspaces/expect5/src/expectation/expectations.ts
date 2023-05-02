@@ -1,6 +1,6 @@
 import { diff, type Diff } from './diff'
 import { toInclude, toMatchContents } from './include'
-import { type Matchers } from './matchers'
+import { type Matcher } from './matchers'
 import {
   ExpectationError,
   isMatcher,
@@ -29,7 +29,7 @@ export type AssertedType<T, F extends AssertionFunction<any>, R = ReturnType<F>>
     T // returns something else (void), use T
 
 export type InferMatchers<T> =
-  T extends Matchers<infer V> ? V :
+  T extends Matcher<infer V> ? V :
   T extends Record<any, any> ? { [ k in keyof T ] : InferMatchers<T[k]> } :
   T
 
@@ -445,17 +445,17 @@ export class Expectations<T = unknown> {
 
   /**
    * Expects the value to have the specified _property_ and (if specified)
-   * further validates its value with a {@link Matchers}.
+   * further validates its value with a {@link Matcher}.
    *
    * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
    */
   toHaveProperty<
     Prop extends string | number | symbol,
-    Matcher extends Matchers,
+    Match extends Matcher,
   >(
     property: Prop,
-    matcher?: Matcher,
-  ): Expectations<T & { [keyt in Prop] : InferMatchers<Matcher> }>
+    matcher?: Match,
+  ): Expectations<T & { [keyt in Prop] : InferMatchers<Match> }>
 
   /**
    * Expects the value to have the specified _property_ and (if specified)
@@ -473,7 +473,7 @@ export class Expectations<T = unknown> {
 
   toHaveProperty(
       property: string | number | symbol,
-      assertionOrMatcher?: AssertionFunction | Matchers,
+      assertionOrMatcher?: AssertionFunction | Matcher,
   ): Expectations {
     this.toBeDefined()
 
@@ -618,11 +618,11 @@ export class Expectations<T = unknown> {
 
   /**
    * Expects the value to be a `function` throwing, and (if specified) further
-   * further validates its value with a {@link Matchers}.
+   * further validates its value with a {@link Matcher}.
    *
    * Negation: {@link NegativeExpectations.toThrow `not.toThrow()`}
    */
-  toThrow(matcher?: Matchers): Expectations<() => any>
+  toThrow(matcher?: Matcher): Expectations<() => any>
 
   /**
    * Expects the value to be a `function` throwing, and (if specified) further
@@ -633,7 +633,7 @@ export class Expectations<T = unknown> {
   toThrow(assert?: AssertionFunction): Expectations<() => any>
 
   toThrow(
-      assertionOrMatcher?: AssertionFunction | Matchers,
+      assertionOrMatcher?: AssertionFunction | Matcher,
   ): Expectations<() => any> {
     const func = this.toBeA('function')
 
