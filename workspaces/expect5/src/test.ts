@@ -6,7 +6,7 @@ import { AssertionError } from 'node:assert'
 import { BuildFailure } from '@plugjs/plug'
 import { assert } from '@plugjs/plug/asserts'
 import { type Files } from '@plugjs/plug/files'
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN, log, type Logger } from '@plugjs/plug/logging'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN, log, type Logger, $p } from '@plugjs/plug/logging'
 import { type Context, type PipeParameters, type Plug } from '@plugjs/plug/pipe'
 
 import * as setup from './execution/setup'
@@ -63,7 +63,11 @@ export class Test implements Plug<void> {
 
     // Create our _root_ Suite
     const suite = new Suite(undefined, '', async () => {
-      for (const file of files.absolutePaths()) await import(file)
+      let count = 0
+      for (const file of files.absolutePaths()) {
+        log.debug('Importing', $p(file), 'in suite', $gry(`(${++ count}/${files.length})`))
+        await import(file)
+      }
     })
 
     // Setup our suite counts
@@ -244,6 +248,8 @@ function dumpProps(log: Logger, pad: number, error: Error): void {
         'showDiff', // chai
         'stack', // error
       ].includes(k))
+      .filter((k) => !(error[k as keyof typeof error] === null))
+      .filter((k) => !(error[k as keyof typeof error] === undefined))
       .forEach((k) => {
         const value = error[k as keyof typeof error]
         if ((k === 'code') && (value === 'ERR_ASSERTION')) return

@@ -30,30 +30,15 @@ describe('Expect5 Plug', async () => {
   })
 
   it('should fail a suite with errors', async () => {
-    await expect(merge([ find('errors.ts', { directory } ) ]).plug(new Test()))
+    await expect(merge([ find('errors*.ts', { directory, ignore: 'errors*-nodiff.ts' } ) ])
+        .plug(new Test()))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
-  it('should fail a suite with chai assertion errors', async () => {
-    await expect(merge([ find('errors-chai.ts', { directory } ) ]).plug(new Test()))
+  it('should fail a suite with errors (no diffs)', async () => {
+    await expect(merge([ find('errors*-nodiff.ts', { directory } ) ])
+        .plug(new Test({ genericErrorDiffs: false })))
         .toBeRejectedWithError(BuildFailure, '')
-  })
-
-  it('should fail a suite with chai assertion errors (no diffs)', async () => {
-    await expect(merge([ find('errors-chai-nodiff.ts', { directory } ) ]).plug(new Test({
-      genericErrorDiffs: false,
-    }))).toBeRejectedWithError(BuildFailure, '')
-  })
-
-  it('should fail a suite with node assertion errors', async () => {
-    await expect(merge([ find('errors-assert.ts', { directory } ) ]).plug(new Test()))
-        .toBeRejectedWithError(BuildFailure, '')
-  })
-
-  it('should fail a suite with node assertion errors (no diffs)', async () => {
-    await expect(merge([ find('errors-assert-nodiff.ts', { directory } ) ]).plug(new Test({
-      genericErrorDiffs: false,
-    }))).toBeRejectedWithError(BuildFailure, '')
   })
 
   it('should fail a suite with only specs', async () => {

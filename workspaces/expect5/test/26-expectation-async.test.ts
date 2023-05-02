@@ -8,20 +8,28 @@ describe('Asynchronous Expectations', () => {
     const error = new Error('foo')
     const expectation = expect(Promise.reject(error))
 
-    // should be simply resolved...
+    // should be simply rejected...
     const promise = expectation.toBeRejected()
     assert(promise instanceof Promise)
     assert.strictEqual(await promise, expectation)
 
     // should also pass assertions through
     let assertions: any = undefined
-    await expect(Promise.reject(error)).toBeRejected((assert) => void (assertions = assert))
+    await expectation.toBeRejected((assert) => void (assertions = assert))
     assert.strictEqual(assertions.value, error)
 
     // rejections
     await assert.rejects(expect(Promise.resolve('foo')).toBeRejected(), (reason) => {
       assert(reason instanceof ExpectationError)
       assert.strictEqual(reason.message, 'Expected [Promise] to be rejected')
+      return true
+    })
+
+    // should be rejected and match the error _precisely_...
+    await expectation.toBeRejected(expect.toStrictlyEqual(error))
+    await assert.rejects(expectation.toBeRejected(expect.toStrictlyEqual('foo')), (reason) => {
+      assert(reason instanceof ExpectationError)
+      assert.strictEqual(reason.message, 'Expected [Error] to strictly equal "foo"')
       return true
     })
   })
@@ -104,13 +112,21 @@ describe('Asynchronous Expectations', () => {
 
     // should also pass assertions through
     let assertions: any = undefined
-    await expect(Promise.resolve('foo')).toBeResolved((assert) => void (assertions = assert))
+    await expectation.toBeResolved((assert) => void (assertions = assert))
     assert.strictEqual(assertions.value, 'foo')
 
     // rejections
     await assert.rejects(expect(Promise.reject(new Error('foo'))).toBeResolved(), (reason) => {
       assert(reason instanceof ExpectationError)
       assert.strictEqual(reason.message, 'Expected [Promise] to be resolved')
+      return true
+    })
+
+    // should be resolved and match the result _precisely_...
+    await expectation.toBeResolved(expect.toStrictlyEqual('foo'))
+    await assert.rejects(expectation.toBeResolved(expect.toStrictlyEqual('bar')), (reason) => {
+      assert(reason instanceof ExpectationError)
+      assert.strictEqual(reason.message, 'Expected "foo" to strictly equal "bar"')
       return true
     })
   })

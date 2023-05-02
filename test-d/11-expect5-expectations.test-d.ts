@@ -15,6 +15,8 @@ expectType<TestType>(expectations.value)
 /* === TO BE A ============================================================== */
 
 expectType<Expectations<string>>(expectations.toBeA('string'))
+expectType<Expectations<never>>(expectations.toBeA('string', expect.toBeA('number'))) // string & number
+expectType<Expectations<string & { length: number }>>(expectations.toBeA('string', expect.toHaveLength(12)))
 expectType<Expectations<number>>(expectations.toBeA('string', (assert) => assert.toBeA('number')))
 expectType<Expectations<string>>(expectations.toBeA('string', (assert) => {
   expectType<Expectations<string>>(assert)
@@ -60,6 +62,7 @@ expectType<Expectations<bigint>>(expectations.toBeGreaterThanOrEqual(10n))
 /* === TO BE INSTANCE OF ==================================================== */
 
 expectType<Expectations<TestError>>(expectations.toBeInstanceOf(TestError))
+expectType<Expectations<TestError & { length: number }>>(expectations.toBeInstanceOf(TestError, expect.toHaveLength(12)))
 expectType<Expectations<number>>(expectations.toBeInstanceOf(TestError, (assert) => assert.toBeA('number')))
 expectType<Expectations<TestError>>(expectations.toBeInstanceOf(TestError, (assert) => {
   expectType<Expectations<TestError>>(assert)
@@ -123,8 +126,16 @@ expectType<Expectations<TestType & { length: number }>>(expectations.toHaveLengt
 /* === TO HAVE PROPERTY ===================================================== */
 
 expect<Expectations<TestType & { prop: unknown }>>(expectations.toHaveProperty('prop'))
+
+// with matchers
+expect<Expectations<TestType & { prop: number }>>(expectations.toHaveProperty('prop', expect.toBeA('number')))
+expect<Expectations<TestType & { prop: { foo: string } }>>(expectations.toHaveProperty('prop', expect.toEqual({ foo: expect.toBeA('string') })))
+
+// with assertions
 expect<Expectations<TestType & { prop: number }>>(expectations.toHaveProperty('prop', (assert) => assert.toBeA('number')))
 expect<Expectations<TestType & { prop: undefined }>>(expectations.toHaveProperty('prop', (assert) => assert.toBeUndefined()))
+
+// with assertion returning "void"
 expect<Expectations<TestType & { prop: unknown }>>(expectations.toHaveProperty('prop', (assert) => {
   expectType<Expectations<unknown>>(assert)
   assert.toBeA('number')
@@ -161,6 +172,7 @@ expectType<Expectations<{ foo: string}>>(expectations.toStrictlyEqual({ foo: 'ba
 /* === TO THROW ============================================================= */
 
 expectType<Expectations<() => any>>(expectations.toThrow())
+expectType<Expectations<() => any>>(expectations.toThrow(expect.toBeA('string')))
 expectType<Expectations<() => any>>(expectations.toThrow((assert) => assert.toBeA('string')))
 expectType<Expectations<() => any>>(expectations.toThrow((assert) => {
   expectType<Expectations<unknown>>(assert)

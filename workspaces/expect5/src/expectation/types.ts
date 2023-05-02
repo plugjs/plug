@@ -1,6 +1,6 @@
 import { type Diff } from './diff'
 import { type Expectations } from './expectations'
-import { type Matchers } from './matchers'
+import { type Matcher } from './matchers'
 
 /* ========================================================================== *
  * INTERNAL TYPES FOR EXPECTATIONS                                            *
@@ -194,7 +194,7 @@ export function prefixType(type: TypeName): string {
 
 export const matcherMarker = Symbol.for('plugjs:expect5:types:Matcher')
 
-export function isMatcher(what: any): what is Matchers {
+export function isMatcher(what: any): what is Matcher {
   return what && what[matcherMarker] === matcherMarker
 }
 

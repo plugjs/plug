@@ -6,8 +6,16 @@ import { expectFail, expectPass } from './utils'
 describe('Basic Expectations', () => {
   it('should expect "toBeA(...)"', () => {
     expectPass(() => expect('foo').toBeA('string'))
+    expectPass(() => expect('foo').toBeA('string', expect.toStrictlyEqual('foo')))
     expectPass(() => expect('foo').toBeA('string', (assert) => assert.toStrictlyEqual('foo')))
+
     expectFail(() => expect('foo').toBeA('number'), 'Expected "foo" to be a <number>')
+    expectFail(() => expect('foo').toBeA('string', expect.toStrictlyEqual('bar')),
+        'Expected "foo" to strictly equal "bar"', {
+          diff: true,
+          value: 'foo',
+          expected: 'bar',
+        })
     expectFail(() => expect('foo').toBeA('string', (assert) => assert.toStrictlyEqual('bar')),
         'Expected "foo" to strictly equal "bar"', {
           diff: true,
@@ -95,11 +103,38 @@ describe('Basic Expectations', () => {
   })
 
   it('should expect "toBeInstanceOf(...)"', () => {
-    const error = new TypeError()
+    const error = new TypeError('some message')
 
     expectPass(() => expect(error).toBeInstanceOf(Error))
     expectPass(() => expect(error).toBeInstanceOf(TypeError))
+    expectPass(() => expect(error).toBeInstanceOf(TypeError, expect.toHaveProperty('message', expect.toStrictlyEqual('some message'))))
+    expectPass(() => expect(error).toBeInstanceOf(TypeError, (assert) => assert.toHaveProperty('message', expect.toStrictlyEqual('some message'))))
+
     expectFail(() => expect(error).toBeInstanceOf(SyntaxError), 'Expected [TypeError] to be an instance of [SyntaxError]')
+    expectFail(() => expect(error).toBeInstanceOf(TypeError, expect.toHaveProperty('message', expect.toStrictlyEqual('a different message'))),
+        'Expected property ["message"] of [TypeError] ("some message") to strictly equal "a different message"', {
+          diff: true,
+          value: error,
+          props: {
+            message: {
+              diff: true,
+              value: 'some message',
+              expected: 'a different message',
+            },
+          },
+        })
+    expectFail(() => expect(error).toBeInstanceOf(TypeError, (assert) => assert.toHaveProperty('message', expect.toStrictlyEqual('a different message'))),
+        'Expected property ["message"] of [TypeError] ("some message") to strictly equal "a different message"', {
+          diff: true,
+          value: error,
+          props: {
+            message: {
+              diff: true,
+              value: 'some message',
+              expected: 'a different message',
+            },
+          },
+        })
 
     expectFail(() => expect(error).not.toBeInstanceOf(Error), 'Expected [TypeError] not to be an instance of [Error]')
     expectFail(() => expect(error).not.toBeInstanceOf(TypeError), 'Expected [TypeError] not to be an instance of [TypeError]')
@@ -229,6 +264,7 @@ describe('Basic Expectations', () => {
     const s2 = Symbol()
 
     expectPass(() => expect('foo').toHaveProperty('length'))
+    expectPass(() => expect('foo').toHaveProperty('length', expect.toStrictlyEqual(3)))
     expectPass(() => expect('foo').toHaveProperty('length', (assert) => assert.toEqual(3)))
     expectPass(() => expect([ 0 ]).toHaveProperty(0))
     expectPass(() => expect({ [s]: 'foo' }).toHaveProperty(s))

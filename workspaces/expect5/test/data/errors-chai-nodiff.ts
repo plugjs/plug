@@ -1,6 +1,6 @@
 import { expect as chai } from 'chai'
 
-describe('A test suite (errors-chai)', () => {
+describe('A test suite (errors-chai-nodiff)', () => {
   it('should throw a chai assertion error (1)', () => {
     chai({ foo: 'bar' }).to.eql({ foo: 'baz' })
   })

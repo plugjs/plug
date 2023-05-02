@@ -13,6 +13,8 @@ expectType<string>(expect.toBeA('string').expect(12345))
 /* === TO BE A ============================================================== */
 
 expectType<Matchers<string>>(expect.toBeA('string'))
+expectType<Matchers<never>>(expect.toBeA('string', expect.toBeA('number')))
+expectType<Matchers<string & { length: number }>>(expect.toBeA('string', expect.toHaveLength(12)))
 expectType<Matchers<number>>(expect.toBeA('string', (assert) => assert.toBeA('number')))
 expectType<Matchers<string>>(expect.toBeA('string', (assert) => {
   expectType<Expectations<string>>(assert)
@@ -58,6 +60,7 @@ expectType<Matchers<bigint>>(expect.toBeGreaterThanOrEqual(10n))
 /* === TO BE INSTANCE OF ==================================================== */
 
 expectType<Matchers<TestError>>(expect.toBeInstanceOf(TestError))
+expectType<Matchers<TestError & { length: number }>>(expect.toBeInstanceOf(TestError, expect.toHaveLength(12)))
 expectType<Matchers<number>>(expect.toBeInstanceOf(TestError, (assert) => assert.toBeA('number')))
 expectType<Matchers<TestError>>(expect.toBeInstanceOf(TestError, (assert) => {
   expectType<Expectations<TestError>>(assert)
@@ -121,8 +124,16 @@ expectType<Matchers<unknown & { length: number }>>(expect.toHaveLength(123))
 /* === TO HAVE PROPERTY ===================================================== */
 
 expect<Matchers<unknown & { prop: unknown }>>(expect.toHaveProperty('prop'))
+
+// with matchers
+expect<Matchers<unknown & { prop: number }>>(expect.toHaveProperty('prop', expect.toBeA('number')))
+expect<Matchers<unknown & { prop: { foo: string } }>>(expect.toHaveProperty('prop', expect.toEqual({ foo: 'bar' })))
+
+// with assertions
 expect<Matchers<unknown & { prop: number }>>(expect.toHaveProperty('prop', (assert) => assert.toBeA('number')))
 expect<Matchers<unknown & { prop: undefined }>>(expect.toHaveProperty('prop', (assert) => assert.toBeUndefined()))
+
+// with assertion returning "void"
 expect<Matchers<unknown & { prop: unknown }>>(expect.toHaveProperty('prop', (assert) => {
   expectType<Expectations<unknown>>(assert)
   assert.toBeA('number')
