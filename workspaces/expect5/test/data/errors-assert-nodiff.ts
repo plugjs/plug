@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 
-describe('A test suite (error-asserts)', () => {
+describe('A test suite (error-asserts-nodiff)', () => {
   it('should throw a node assertion error (1)', () => {
     assert.deepEqual({ foo: 'bar' }, { foo: 'baz' })
   })
