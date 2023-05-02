@@ -30,6 +30,26 @@ expectType<Promise<Expectations<PromiseLike<boolean>>>>(
 
 /* -------------------------------------------------------------------------- */
 
+// toBeRejected(matcher)
+
+expectType<Promise<Expectations<PromiseLike<unknown>>>>(
+    expect(unknown).toBeRejected(expect.toBeInstanceOf(Error)),
+)
+
+expectType<Promise<Expectations<PromiseLike<unknown>>>>(
+    expect(Promise.resolve(unknown)).toBeRejected(expect.toBeInstanceOf(Error)),
+)
+
+expectType<Promise<Expectations<PromiseLike<boolean>>>>(
+    expect(true).toBeRejected(expect.toBeInstanceOf(Error)),
+)
+
+expectType<Promise<Expectations<PromiseLike<boolean>>>>(
+    expect(Promise.resolve(true)).toBeRejected(expect.toBeInstanceOf(Error)),
+)
+
+/* -------------------------------------------------------------------------- */
+
 // toBeRejected(assert) - assert returns void
 
 expectType<Promise<Expectations<PromiseLike<unknown>>>>(
@@ -57,6 +77,38 @@ expectType<Promise<Expectations<PromiseLike<boolean>>>>(
     expect(Promise.resolve(true)).toBeRejected((assert) => {
       expectType<Expectations<unknown>>(assert) // unknown, it's a rejection!
       // return void
+    }),
+)
+
+/* -------------------------------------------------------------------------- */
+
+// toBeRejected(assert) - assert returns Expectations<string>
+
+expectType<Promise<Expectations<PromiseLike<unknown>>>>(
+    expect(unknown).toBeRejected((assert) => {
+      expectType<Expectations<unknown>>(assert) // unknown, it's a rejection!
+      return assert.toBeA('string')
+    }),
+)
+
+expectType<Promise<Expectations<PromiseLike<unknown>>>>(
+    expect(Promise.resolve(unknown)).toBeRejected((assert) => {
+      expectType<Expectations<unknown>>(assert) // unknown, it's a rejection!
+      return assert.toBeA('string')
+    }),
+)
+
+expectType<Promise<Expectations<PromiseLike<boolean>>>>(
+    expect(true).toBeRejected((assert) => {
+      expectType<Expectations<unknown>>(assert) // unknown, it's a rejection!
+      return assert.toBeA('string')
+    }),
+)
+
+expectType<Promise<Expectations<PromiseLike<boolean>>>>(
+    expect(Promise.resolve(true)).toBeRejected((assert) => {
+      expectType<Expectations<unknown>>(assert) // unknown, it's a rejection!
+      return assert.toBeA('string')
     }),
 )
 
@@ -166,6 +218,26 @@ expectType<Promise<Expectations<PromiseLike<boolean>>>>(
 
 expectType<Promise<Expectations<PromiseLike<boolean>>>>(
     expect(Promise.resolve(true)).toBeResolved(),
+)
+
+/* -------------------------------------------------------------------------- */
+
+// toBeResolved(matcher)
+
+expectType<Promise<Expectations<PromiseLike<string>>>>(
+    expect(unknown).toBeResolved(expect.toBeA('string')),
+)
+
+expectType<Promise<Expectations<PromiseLike<string>>>>(
+    expect(Promise.resolve(unknown)).toBeResolved(expect.toBeA('string')),
+)
+
+expectType<Promise<Expectations<PromiseLike<string>>>>(
+    expect(true).toBeResolved(expect.toBeA('string')),
+)
+
+expectType<Promise<Expectations<PromiseLike<string>>>>(
+    expect(Promise.resolve(true)).toBeResolved(expect.toBeA('string')),
 )
 
 /* -------------------------------------------------------------------------- */
