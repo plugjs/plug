@@ -169,6 +169,7 @@ expectType<Expectations<{ foo: string}>>(expectations.toStrictlyEqual({ foo: 'ba
 /* === TO THROW ============================================================= */
 
 expectType<Expectations<() => any>>(expectations.toThrow())
+expectType<Expectations<() => any>>(expectations.toThrow(expect.toBeA('string')))
 expectType<Expectations<() => any>>(expectations.toThrow((assert) => assert.toBeA('string')))
 expectType<Expectations<() => any>>(expectations.toThrow((assert) => {
   expectType<Expectations<unknown>>(assert)

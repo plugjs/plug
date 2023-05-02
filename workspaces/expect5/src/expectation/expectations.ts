@@ -445,7 +445,7 @@ export class Expectations<T = unknown> {
 
   /**
    * Expects the value to have the specified _property_ and (if specified)
-   * validates its value with a {@link Matchers}.
+   * further validates its value with a {@link Matchers}.
    *
    * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
    */
@@ -618,11 +618,23 @@ export class Expectations<T = unknown> {
 
   /**
    * Expects the value to be a `function` throwing, and (if specified) further
+   * further validates its value with a {@link Matchers}.
+   *
+   * Negation: {@link NegativeExpectations.toThrow `not.toThrow()`}
+   */
+  toThrow(matcher?: Matchers): Expectations<() => any>
+
+  /**
+   * Expects the value to be a `function` throwing, and (if specified) further
    * asserts the thrown value with an {@link AssertionFunction}.
    *
    * Negation: {@link NegativeExpectations.toThrow `not.toThrow()`}
    */
-  toThrow(assert?: AssertionFunction): Expectations<() => any> {
+  toThrow(assert?: AssertionFunction): Expectations<() => any>
+
+  toThrow(
+      assertionOrMatcher?: AssertionFunction | Matchers,
+  ): Expectations<() => any> {
     const func = this.toBeA('function')
 
     let passed = false
@@ -630,7 +642,11 @@ export class Expectations<T = unknown> {
       func.value()
       passed = true
     } catch (thrown) {
-      if (assert) assert(new Expectations(thrown, this.remarks))
+      if (isMatcher(assertionOrMatcher)) {
+        assertionOrMatcher.expect(thrown)
+      } else if (assertionOrMatcher) {
+        assertionOrMatcher(new Expectations(thrown, this.remarks))
+      }
     }
 
     if (passed) this._fail('to throw')

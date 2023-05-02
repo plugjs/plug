@@ -10,18 +10,33 @@ describe('Throwing Expectations', () => {
       throw error
     }
 
+    // no parameters
     expectPass(() => expect(throwing).toThrow())
     expectFail(() => expect(() => {}).toThrow(), 'Expected <function> to throw')
 
+    // with expectations matcher
+    expectPass(() => expect(throwing).toThrow(expect.toStrictlyEqual(error)))
+    expectFail(() => expect(throwing).toThrow(expect.toStrictlyEqual('foo')),
+        'Expected [SyntaxError] to strictly equal "foo"', {
+          diff: true,
+          value: error,
+          expected: 'foo',
+        })
+
+    // with assertion function
     let asserted: any = undefined
     expectPass(() => expect(throwing).toThrow((e) => void (asserted = e.value)))
     assert.strictEqual(asserted, error)
 
     // even when throwing undefined
-    expectPass(() => expect(() => {
+    function throwUndefined(): never {
       // eslint-disable-next-line no-throw-literal
       throw undefined
-    }).toThrow((assert) => void (asserted = assert.value)))
+    }
+
+    asserted = 'bogus!'
+    expectPass(() => expect(throwUndefined).toThrow(expect.toBeUndefined()))
+    expectPass(() => expect(throwUndefined).toThrow((assert) => void (asserted = assert.value)))
     assert.strictEqual(asserted, undefined)
   })
 
