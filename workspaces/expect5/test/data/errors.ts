@@ -8,6 +8,8 @@ describe('A test suite (errors)', () => {
     error.str = 'test'
     error.num = 12345
     error.sym = Symbol.for('foobar')
+    error.null = null
+    error.none = undefined
     throw error
   })
 
