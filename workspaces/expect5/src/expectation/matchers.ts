@@ -2,9 +2,10 @@ import {
   Expectations,
   type AssertedType,
   type AssertionFunction,
-  type NegativeExpectations,
+  type ExpectationsParent,
   type InferMatcher,
   type InferToEqual,
+  type NegativeExpectations,
 } from './expectations'
 import {
   matcherMarker,
@@ -30,8 +31,8 @@ export class Matcher<T = unknown> {
     this._matchers = matchers
   }
 
-  expect(value: unknown): T {
-    let expectations = new Expectations(value, undefined)
+  expect(value: unknown, parent?: ExpectationsParent): T {
+    let expectations = new Expectations(value, undefined, parent)
     for (const matcher of this._matchers) {
       expectations = matcher(expectations)
     }
@@ -239,8 +240,28 @@ export class Matcher<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /**
+   * Expects the value to be an instance of the specified {@link Constructor}.
+   *
+   * Negation: {@link NegativeMatchers.toBeInstanceOf `not.toInstanceOf(...)`}
+   */
+  toBeInstanceOf<Class extends Constructor>(
+    constructor: Class,
+  ): Matcher<InstanceType<Class>>
+
+  /**
    * Expects the value to be an instance of the specified {@link Constructor},
-   * and (if specified) further asserts it with an {@link AssertionFunction}.
+   * and further validates it with a {@link Matcher}.
+   *
+   * Negation: {@link NegativeMatchers.toBeInstanceOf `not.toInstanceOf(...)`}
+   */
+  toBeInstanceOf<Class extends Constructor, Match extends Matcher>(
+    constructor: Class,
+    matcher: Match,
+  ): Matcher<InferMatcher<InstanceType<Class>, Match>>
+
+  /**
+   * Expects the value to be an instance of the specified {@link Constructor},
+   * and further asserts it with an {@link AssertionFunction}.
    *
    * Negation: {@link NegativeMatchers.toBeInstanceOf `not.toInstanceOf(...)`}
    */
@@ -248,10 +269,15 @@ export class Matcher<T = unknown> {
     Class extends Constructor,
     Assert extends AssertionFunction<InstanceType<Class>>,
   >(
-      constructor: Class,
-      assertion?: Assert,
-  ): Matcher<AssertedType<InstanceType<Class>, Assert>> {
-    return this._push((e) => e.toBeInstanceOf(constructor, assertion as AssertionFunction))
+    constructor: Class,
+    assertion: Assert,
+  ): Matcher<AssertedType<InstanceType<Class>, Assert>>
+
+  toBeInstanceOf(
+      constructor: Constructor,
+      assertionOrMatcher?: AssertionFunction | Matcher,
+  ): Matcher {
+    return this._push((e) => e.toBeInstanceOf(constructor, assertionOrMatcher as any))
   }
 
   /* ------------------------------------------------------------------------ */

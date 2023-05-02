@@ -41,7 +41,7 @@ export type InferToEqual<T> =
   T
 
 /** Simple wrapper defining the _parent_ instance of an {@link Expectations}. */
-type ExpectationsParent = {
+export type ExpectationsParent = {
   /** Parent {@link Expectations} instance */
   expectations: Expectations,
   /** Property associating _this_ to the parent */
@@ -289,8 +289,31 @@ export class Expectations<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /**
+   * Expects the value to be an instance of the specified {@link Constructor}.
+   *
+   * Negation: {@link NegativeExpectations.toBeInstanceOf `not.toInstanceOf(...)`}
+   */
+  toBeInstanceOf<Class extends Constructor>(
+    constructor: Class,
+  ): Expectations<InstanceType<Class>>
+
+  /**
    * Expects the value to be an instance of the specified {@link Constructor},
-   * and (if specified) further asserts it with an {@link AssertionFunction}.
+   * and further validates it with a {@link Matcher}.
+   *
+   * Negation: {@link NegativeExpectations.toBeInstanceOf `not.toInstanceOf(...)`}
+   */
+  toBeInstanceOf<
+    Class extends Constructor,
+    Match extends Matcher,
+  >(
+    constructor: Class,
+    matcher: Match,
+  ): Expectations<InferMatcher<InstanceType<Class>, Match>>
+
+  /**
+   * Expects the value to be an instance of the specified {@link Constructor},
+   * and further asserts it with an {@link AssertionFunction}.
    *
    * Negation: {@link NegativeExpectations.toBeInstanceOf `not.toInstanceOf(...)`}
    */
@@ -298,11 +321,20 @@ export class Expectations<T = unknown> {
     Class extends Constructor,
     Assert extends AssertionFunction<InstanceType<Class>>,
   >(
-      constructor: Class,
-      assertion?: Assert,
-  ): Expectations<AssertedType<InstanceType<Class>, Assert>> {
+    constructor: Class,
+    assertion: Assert,
+  ): Expectations<AssertedType<InstanceType<Class>, Assert>>
+
+  toBeInstanceOf(
+      constructor: Constructor,
+      assertionOrMatcher?: AssertionFunction | Matcher,
+  ): Expectations {
     if (this.value instanceof constructor) {
-      if (assertion) assertion(this as Expectations<any>)
+      if (isMatcher(assertionOrMatcher)) {
+        assertionOrMatcher.expect(this.value)
+      } else if (assertionOrMatcher) {
+        assertionOrMatcher(this as Expectations<any>)
+      }
       return this as Expectations<any>
     }
 
@@ -530,13 +562,15 @@ export class Expectations<T = unknown> {
       this._fail(`to have property "${String(property)}"`)
     }
 
-    if (isMatcher(assertionOrMatcher)) {
-      assertionOrMatcher.expect(propertyValue)
-    } else if (assertionOrMatcher) {
+    if (assertionOrMatcher) {
+      const parent: ExpectationsParent = { expectations: this, prop: property }
       try {
-        const parent: ExpectationsParent = { expectations: this, prop: property }
-        const expectations = new Expectations(propertyValue, this.remarks, parent)
-        assertionOrMatcher(expectations)
+        if (isMatcher(assertionOrMatcher)) {
+          assertionOrMatcher.expect(propertyValue, parent)
+        } else if (assertionOrMatcher) {
+          const expectations = new Expectations(propertyValue, this.remarks, parent)
+          assertionOrMatcher(expectations)
+        }
       } catch (error) {
         // any caught error difference gets remapped as a property diff
         if ((error instanceof ExpectationError) && (error.diff)) {
@@ -668,7 +702,7 @@ export class Expectations<T = unknown> {
    *
    * Negation: {@link NegativeExpectations.toThrow `not.toThrow()`}
    */
-  toThrow(matcher: Matcher): Expectations<() => any>
+  toThrow(): Expectations<() => any>
 
   /**
    * Expects the value to be a `function` throwing, and further validates the

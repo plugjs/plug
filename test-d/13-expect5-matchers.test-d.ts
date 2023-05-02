@@ -60,6 +60,7 @@ expectType<Matchers<bigint>>(expect.toBeGreaterThanOrEqual(10n))
 /* === TO BE INSTANCE OF ==================================================== */
 
 expectType<Matchers<TestError>>(expect.toBeInstanceOf(TestError))
+expectType<Matchers<TestError & { length: number }>>(expect.toBeInstanceOf(TestError, expect.toHaveLength(12)))
 expectType<Matchers<number>>(expect.toBeInstanceOf(TestError, (assert) => assert.toBeA('number')))
 expectType<Matchers<TestError>>(expect.toBeInstanceOf(TestError, (assert) => {
   expectType<Expectations<TestError>>(assert)

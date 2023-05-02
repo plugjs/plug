@@ -71,6 +71,18 @@ describe('Expectation Matchers', () => {
     })
     expectFail(() => expect.toHaveLength(0).expect('foo'), 'Expected "foo" to have length 0')
     expectFail(() => expect.toHaveProperty('a').expect({ b: 'foo' }), 'Expected [Object] to have property "a"')
+    expectFail(() => expect.toHaveProperty('b', expect.toStrictlyEqual('bar')).expect({ b: 'foo' }),
+        'Expected property ["b"] of [Object] ("foo") to strictly equal "bar"', {
+          diff: true,
+          value: { b: 'foo' },
+          props: {
+            b: {
+              diff: true,
+              value: 'foo',
+              expected: 'bar',
+            },
+          },
+        })
     expectFail(() => expect.toHaveSize(2).expect(new Set([ 'foo' ])), 'Expected [Set (1)] to have size 2')
     expectFail(() => expect.toMatch(/^foo$/i).expect('bar'), 'Expected "bar" to match /^foo$/i')
     expectFail(() => expect.toStrictlyEqual('foo').expect('bar'), 'Expected "bar" to strictly equal "foo"', {
