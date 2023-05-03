@@ -8,7 +8,7 @@ import {
   type MissingValueDiff,
   type ObjectDiff,
 } from './diff'
-import { stringifyValue } from './types'
+import { isMatcher, stringifyValue } from './types'
 
 /* ========================================================================== *
  * CONSTANT LABELS FOR PRINTING                                               *
@@ -31,6 +31,7 @@ const _hellip = $gry('\u2026')
 
 const _error = `${_opnPar}${$gry($und('error'))}${_clsPar}`
 const _string = `${_opnPar}${$gry($und('string'))}${_clsPar}`
+const _matcher = $gry('\u2026 matcher \u2026')
 const _extraProps = $gry('\u2026 extra props \u2026')
 const _diffHeader = `${$wht('Differences')} ${_opnPar}${$red('actual')}${_slash}${$grn('expected')}${_slash}${$ylw('errors')}${_clsPar}:`
 
@@ -268,6 +269,11 @@ function dumpAndContinue(
   // primitives just get dumped
   if ((value === null) || (typeof value !== 'object')) {
     return `${prefix}${color(stringify(value))}${suffix}`
+  }
+
+  // matchers are a very special value...
+  if (isMatcher(value)) {
+    return `${prefix}${_matcher}${suffix}`
   }
 
   // check for circular dependencies
