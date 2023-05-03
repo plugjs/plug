@@ -22,9 +22,11 @@ describe('Logger', () => {
     })
 
     const _colors = logOptions.colors
+    const _format = logOptions.format
     const _output = logOptions.output
     const _indent = logOptions.indentSize
     logOptions.colors = false
+    logOptions.format = 'plain'
     logOptions.output = out
     logOptions.indentSize = 2
 
@@ -46,6 +48,7 @@ describe('Logger', () => {
       ])
     } finally {
       logOptions.colors = _colors
+      logOptions.format = _format
       logOptions.output = _output
       logOptions.indentSize = _indent
     }
@@ -64,10 +67,12 @@ describe('Logger', () => {
 
     const _level = logOptions.level
     const _colors = logOptions.colors
+    const _format = logOptions.format
     const _output = logOptions.output
     const _indent = logOptions.indentSize
     logOptions.level = logLevels.DEBUG
     logOptions.colors = false
+    logOptions.format = 'plain'
     logOptions.output = out
     logOptions.indentSize = 2
 
@@ -87,6 +92,7 @@ describe('Logger', () => {
     } finally {
       logOptions.level = _level
       logOptions.colors = _colors
+      logOptions.format = _format
       logOptions.output = _output
       logOptions.indentSize = _indent
     }
@@ -103,10 +109,12 @@ describe('Logger', () => {
 
     const _level = logOptions.level
     const _colors = logOptions.colors
+    const _format = logOptions.format
     const _output = logOptions.output
     const _indent = logOptions.indentSize
     logOptions.level = logLevels.DEBUG
     logOptions.colors = false
+    logOptions.format = 'plain'
     logOptions.output = out
     logOptions.indentSize = 2
 
@@ -138,6 +146,7 @@ describe('Logger', () => {
     } finally {
       logOptions.level = _level
       logOptions.colors = _colors
+      logOptions.format = _format
       logOptions.output = _output
       logOptions.indentSize = _indent
     }
