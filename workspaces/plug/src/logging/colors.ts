@@ -73,7 +73,7 @@ export function $ms(millis: number, note?: string): string {
     // Milliseconds: style is 123ms
     string = `${millis}ms`
   }
-  if (note) string = `${note} ${string}`
+  if (note) string = `${note}${gry}|${string}`
   return _colors ? `${gry}[${string}]${rst}` : `[${string}]`
 }
 
