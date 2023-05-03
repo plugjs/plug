@@ -5,14 +5,17 @@ import { logOptions } from './options'
 
 import type { AbsolutePath } from '../paths'
 
+/* Strip ANSI from strings */
+const ansiRegExp = new RegExp([
+  '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+  '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))',
+].join('|'), 'g')
 
 /* Initial values, and subscribe to changes */
-let _colors = logOptions.colors
 let _output = logOptions.output
 let _inspectOptions = logOptions.inspectOptions
 let _githubAnnotations = logOptions.githubAnnotations
 logOptions.on('changed', (options) => {
-  _colors = options.colors
   _output = options.output
   _githubAnnotations = options.githubAnnotations
   _inspectOptions = { ...options.inspectOptions, breakLength: Infinity }
@@ -21,6 +24,7 @@ logOptions.on('changed', (options) => {
 
 function escapeData(data: string): string {
   return data
+      .replace(ansiRegExp, '')
       .replace(/%/g, '%25')
       .replace(/\r/g, '%0D')
       .replace(/\n/g, '%0A')
@@ -28,6 +32,7 @@ function escapeData(data: string): string {
 
 function escapeProp(prop: string | number): string {
   return `${prop}`
+      .replace(ansiRegExp, '')
       .replace(/%/g, '%25')
       .replace(/\r/g, '%0D')
       .replace(/\n/g, '%0A')
@@ -51,7 +56,7 @@ export function githubAnnotation(type: GithubAnnotationType, message: string, ..
 export function githubAnnotation(options: GithubAnnotationOptions, message: string, ...args: any[]): void
 
 export function githubAnnotation(options: GithubAnnotationType | GithubAnnotationOptions, ...args: any[]): void {
-  if (_colors || (! _githubAnnotations)) return
+  if (! _githubAnnotations) return
 
   if (typeof options === 'string') options = { type: options }
   const { type, ...parameters } = options

@@ -1,11 +1,10 @@
 import assert from 'node:assert'
 import { Writable } from 'node:stream'
 
-
 import { currentContext } from '../../src/async.js'
 import { log } from '../../src/logging.js'
 import { $gry } from '../../src/logging/colors.js'
-import { emitColor, emitPlain } from '../../src/logging/emit.js'
+import { emitFancy, emitPlain } from '../../src/logging/emit.js'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from '../../src/logging/levels.js'
 import { logOptions } from '../../src/logging/options.js'
 import { zapSpinner } from '../../src/logging/spinner.js'
@@ -37,7 +36,7 @@ describe('Emit', () => {
     }
   })
 
-  it('should emit the correct values for colorized output', () => {
+  it('should emit the correct values for fancy output', () => {
     const run = currentContext() // this might fail if not just-in-time transpiled
     assert(run)
 
@@ -53,36 +52,39 @@ describe('Emit', () => {
 
     const _colors = logOptions.colors
     const _output = logOptions.output
+    const _indent = logOptions.indentSize
     logOptions.colors = false
     logOptions.output = out
+    logOptions.indentSize = 2
 
     try {
-      emitColor({ level: TRACE, taskName }, [ 'trace', 123, { foo: 'bar' } ])
-      emitColor({ level: DEBUG, taskName }, [ 'debug', 123, { foo: 'bar' } ])
-      emitColor({ level: INFO, taskName }, [ 'info', 123, { foo: 'bar' } ])
-      emitColor({ level: NOTICE, taskName }, [ 'notice', 123, { foo: 'bar' } ])
-      emitColor({ level: WARN, taskName }, [ 'warn', 123, { foo: 'bar' } ])
-      emitColor({ level: ERROR, taskName }, [ 'error', 123, { foo: 'bar' } ])
-      emitColor({ level: ERROR, taskName, indent: 4 }, [ 'indented' ])
-      emitColor({ level: ERROR, taskName, prefix: '{prefix}' }, [ 'prefixed' ])
+      emitFancy({ level: TRACE, taskName }, [ 'trace', 123, { foo: 'bar' } ])
+      emitFancy({ level: DEBUG, taskName }, [ 'debug', 123, { foo: 'bar' } ])
+      emitFancy({ level: INFO, taskName }, [ 'info', 123, { foo: 'bar' } ])
+      emitFancy({ level: NOTICE, taskName }, [ 'notice', 123, { foo: 'bar' } ])
+      emitFancy({ level: WARN, taskName }, [ 'warn', 123, { foo: 'bar' } ])
+      emitFancy({ level: ERROR, taskName }, [ 'error', 123, { foo: 'bar' } ])
+      emitFancy({ level: ERROR, taskName, indent: 4 }, [ 'indented' ])
+      emitFancy({ level: ERROR, taskName, prefix: '{prefix}' }, [ 'prefixed' ])
 
       const lines: string[] = string.replaceAll(zapSpinner, '')
           .replaceAll(/^\s+/gm, '')
           .split('\n')
       expect(lines).toEqual([
-        `"${taskName}" \u25a1 trace 123 { foo: 'bar' }`,
-        `"${taskName}" \u25a0 debug 123 { foo: 'bar' }`,
-        `"${taskName}" \u25a0 info 123 { foo: 'bar' }`,
-        `"${taskName}" \u25a0 notice 123 { foo: 'bar' }`,
-        `"${taskName}" \u25a0 warn 123 { foo: 'bar' }`,
-        `"${taskName}" \u25a0 error 123 { foo: 'bar' }`,
-        `"${taskName}" \u25a0         indented`,
-        `"${taskName}" \u25a0 {prefix}prefixed`,
+        `${taskName} \u25a1 trace 123 { foo: 'bar' }`,
+        `${taskName} \u25a0 debug 123 { foo: 'bar' }`,
+        `${taskName} \u25a0 info 123 { foo: 'bar' }`,
+        `${taskName} \u25a0 notice 123 { foo: 'bar' }`,
+        `${taskName} \u25a0 warn 123 { foo: 'bar' }`,
+        `${taskName} \u25a0 error 123 { foo: 'bar' }`,
+        `${taskName} \u25a0         indented`,
+        `${taskName} \u25a0 {prefix}prefixed`,
         '', // last newline
       ])
     } finally {
       logOptions.colors = _colors
       logOptions.output = _output
+      logOptions.indentSize = _indent
     }
   })
 

@@ -1,7 +1,7 @@
 import { formatWithOptions } from 'node:util'
 
 import { BuildFailure } from '../asserts'
-import { emitColor, emitPlain } from './emit'
+import { emitFancy, emitPlain } from './emit'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
 import { ReportImpl } from './report'
@@ -16,11 +16,11 @@ import type { Report } from './report'
 
 /* Initial value of log colors, and subscribe to changes */
 let _level = logOptions.level
-let _colors = logOptions.colors
+let _format = logOptions.format
 let _defaultTaskName = logOptions.defaultTaskName
-logOptions.on('changed', ({ defaultTaskName, colors, level }) => {
+logOptions.on('changed', ({ defaultTaskName, format, level }) => {
   _defaultTaskName = defaultTaskName
-  _colors = colors
+  _format = format
   _level = level
 })
 
@@ -67,7 +67,7 @@ export interface Logger extends Log {
 export function getLogger(task: string = _defaultTaskName): Logger {
   let logger = _loggers.get(task)
   if (! logger) {
-    const emitter = _colors ? emitColor : emitPlain
+    const emitter = _format === 'fancy' ? emitFancy : emitPlain
     logger = new LoggerImpl(task, emitter)
     _loggers.set(task, logger)
   }

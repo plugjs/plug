@@ -14,11 +14,13 @@ export const zapSpinner = '\u001b[0G\u001b[2K'
 /* Initial value of log colors, and subscribe to changes */
 let _output = logOptions.output
 let _colors = logOptions.colors
+let _format = logOptions.format
 let _spinner = logOptions.spinner
 let _taskLength = logOptions.taskLength
-logOptions.on('changed', ({ output, colors, spinner, taskLength }) => {
+logOptions.on('changed', ({ output, colors, format, spinner, taskLength }) => {
   _output = output
   _colors = colors
+  _format = format
   _spinner = spinner
   _taskLength = taskLength
   setupSpinner()
@@ -68,5 +70,7 @@ function spin(): void {
 /* Start or stop the spinner */
 export function setupSpinner(): void {
   if (_interval) clearInterval(_interval)
-  if (_colors && _spinner) _interval = setInterval(spin, 150).unref()
+  if (_colors && _spinner && (_format === 'fancy')) {
+    _interval = setInterval(spin, 150).unref()
+  }
 }

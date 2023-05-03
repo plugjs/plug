@@ -6,7 +6,7 @@ import { AssertionError } from 'node:assert'
 import { BuildFailure } from '@plugjs/plug'
 import { assert } from '@plugjs/plug/asserts'
 import { type Files } from '@plugjs/plug/files'
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN, log, type Logger, $p } from '@plugjs/plug/logging'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN, log, type Logger, $p, githubAnnotation } from '@plugjs/plug/logging'
 import { type Context, type PipeParameters, type Plug } from '@plugjs/plug/pipe'
 
 import * as setup from './execution/setup'
@@ -15,7 +15,7 @@ import { runSuite } from './execution/executor'
 import { diff } from './expectation/diff'
 import { expect } from './expectation/expect'
 import { printDiff } from './expectation/print'
-import { ExpectationError, stringifyObjectType, stringifyValue } from './expectation/types'
+import { ExpectationError, stringifyValue } from './expectation/types'
 
 import { type TestOptions } from './index'
 
@@ -178,6 +178,8 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
   // First and foremost, our own expectation errors
   if (error instanceof ExpectationError) {
     log.enter(ERROR, `${$gry('Expectation Error:')} ${$red(error.message)}`)
+    githubAnnotation({ type: 'error', title: 'Expectation Error' }, error.message)
+
     try {
       dumpProps(log, 17, error)
       dumpStack(log, error)
@@ -190,7 +192,10 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
   // Assertion errors are another kind of exception we support
   } else if (error instanceof AssertionError) {
     const [ message = 'Unknown Error', ...lines ] = error.message.split('\n')
+
     log.enter(ERROR, `${$gry('Assertion Error:')} ${$red(message)}`)
+    githubAnnotation({ type: 'error', title: 'Assertion Error' }, message)
+
     try {
       dumpProps(log, 15, error)
       dumpStack(log, error)
@@ -213,10 +218,16 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
   // Any other error also gets printed somewhat nicely
   } else if (error instanceof Error) {
     const message = error.message || 'Unknown Error'
-    const string = stringifyObjectType(error)
+    const string = Object.getPrototypeOf(error)?.constructor?.name || 'Error'
+
     // Chai calls its own assertion errors "AssertionError"
-    const type = string === '[AssertionError]' ? 'Assertion Error' : string
-    log.enter(ERROR, `${$gry(type)}: ${$red(message)}`)
+    const type =
+        string === 'AssertionError' ? `${$gry('Assertion Error')}: ` :
+        string === 'Error' ? '' : `${$gry(string)}: `
+
+    log.enter(ERROR, `${type}${$red(message)}`)
+    githubAnnotation({ type: 'error', title: string }, message)
+
     try {
       dumpProps(log, type.length, error)
       dumpStack(log, error)

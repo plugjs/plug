@@ -18,6 +18,8 @@ export interface LogOptions {
   level: LogLevel,
   /** Whether to log in colors or not. */
   colors: boolean,
+  /** The format of the log to use: `plain` or `fancy`. */
+  format: 'plain' | 'fancy',
   /** Whether to enable the tasks spinner or not. */
   spinner: boolean,
   /** Width of the current terminal (if any) or `80`. */
@@ -62,6 +64,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   private _output: Writable = process.stderr
   private _level: LogLevel = NOTICE
   private _colors = (<NodeJS.WriteStream> this._output).isTTY
+  private _format: 'fancy' | 'plain' = this._colors ? 'fancy' : 'plain'
   private _colorsSet = false // have colors been set manually?
   private _spinner = true // by default, the spinner is enabled
   private _lineLength = (<NodeJS.WriteStream> this._output).columns || 80
@@ -88,8 +91,13 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
       // Other values don't change the value of `options.colors`
     }
 
-    /* If the `GITHUB_ACTIONS` is `true` then enable annotations */
+    /* If the `GITHUB_ACTIONS` is `true` then enable annotations and use plain logs */
     this._githubAnnotations = process.env.GITHUB_ACTIONS === 'true'
+    if (this._githubAnnotations) {
+      this._colors = true
+      this._format = 'plain'
+      this._spinner = false
+    }
 
     /*
      * The `__LOG_OPTIONS` variable is a JSON-serialized `LogOptions` object
@@ -151,6 +159,15 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   set colors(color: boolean) {
     this._colors = color
     this._colorsSet = true
+    this._notifyListeners()
+  }
+
+  get format(): 'plain' | 'fancy' {
+    return this._format
+  }
+
+  set format(format: 'plain' | 'fancy') {
+    this._format = format === 'fancy' ? 'fancy' : 'plain'
     this._notifyListeners()
   }
 
