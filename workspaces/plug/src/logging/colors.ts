@@ -47,8 +47,8 @@ export function $p(path: AbsolutePath): string {
 }
 
 /** Colorize a _task name_. */
-export function $t(task: string): string {
-  return _colors ? `${tsk}${task}${rst}` : `"${task}"`
+export function $t(task: string, quoted = true): string {
+  return _colors ? `${tsk}${task}${rst}` : quoted ? `"${task}"` : task
 }
 
 /** Colorize milliseconds. */
