@@ -64,7 +64,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   private _output: Writable = process.stderr
   private _level: LogLevel = NOTICE
   private _colors = (<NodeJS.WriteStream> this._output).isTTY
-  private _format = this._colors ? 'fancy' as const : 'plain' as const
+  private _format: 'fancy' | 'plain' = this._colors ? 'fancy' : 'plain'
   private _colorsSet = false // have colors been set manually?
   private _spinner = true // by default, the spinner is enabled
   private _lineLength = (<NodeJS.WriteStream> this._output).columns || 80
