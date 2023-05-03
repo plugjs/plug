@@ -40,8 +40,8 @@ export type LogEmitter = (options: LogEmitterOptions, args: any[]) => void
 
 /* ========================================================================== */
 
-/** Emit in full colors! */
-export const emitColor: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
+/** Emit in full colors with spinner support and whatnot! */
+export const emitFancy: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
   const { taskName, level, prefix = '', indent = 0 } = options
   const logPrefix = ''.padStart(indent * _indentSize) + prefix
 
@@ -50,7 +50,7 @@ export const emitColor: LogEmitter = (options: LogEmitterOptions, args: any[]): 
 
   /* Task name or blank padding */
   prefixes.push(''.padStart(_taskLength - taskName.length, ' ')) // padding
-  prefixes.push(`${$t(taskName)}`) // task name
+  prefixes.push(`${$t(taskName, false)}`) // task name
 
   /* Level indicator (our little colorful squares) */
   if (level <= TRACE) {
@@ -83,7 +83,7 @@ export const emitColor: LogEmitter = (options: LogEmitterOptions, args: any[]): 
 
 /* ========================================================================== */
 
-/** Emit in plain text! (no colors) */
+/** Emit in plain text (maybe with some colors?) */
 export const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
   const { taskName, level, prefix = '', indent = 0 } = options
   const logPrefix = ''.padStart(indent * _indentSize) + prefix
@@ -91,20 +91,20 @@ export const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): 
   const prefixes: string[] = []
 
   const pad = ''.padStart(_taskLength - taskName.length, ' ')
-  prefixes.push(`${pad}${taskName}`)
+  prefixes.push(`${pad}${$t(taskName, false)}`)
 
   if (level <= TRACE) {
-    prefixes.push(' \u2502  trace \u2502 ')
+    prefixes.push(` ${$gry('\u2502')} ${$gry(' trace')} ${$gry('\u2502')} `)
   } else if (level <= DEBUG) {
-    prefixes.push(' \u2502  debug \u2502 ')
+    prefixes.push(` ${$gry('\u2502')} ${$gry(' debug')} ${$gry('\u2502')} `)
   } else if (level <= INFO) {
-    prefixes.push(' \u2502   info \u2502 ')
+    prefixes.push(` ${$gry('\u2502')} ${$grn('  info')} ${$gry('\u2502')} `)
   } else if (level <= NOTICE) {
-    prefixes.push(' \u2502 notice \u2502 ')
+    prefixes.push(` ${$gry('\u2502')} ${$blu('notice')} ${$gry('\u2502')} `)
   } else if (level <= WARN) {
-    prefixes.push(' \u2502   warn \u2502 ')
+    prefixes.push(` ${$gry('\u2502')} ${$ylw('  warn')} ${$gry('\u2502')} `)
   } else {
-    prefixes.push(' \u2502  error \u2502 ')
+    prefixes.push(` ${$gry('\u2502')} ${$red(' error')} ${$gry('\u2502')} `)
   }
 
   /* The prefix (task name and level) */
