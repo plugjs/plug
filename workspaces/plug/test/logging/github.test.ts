@@ -1,8 +1,9 @@
 import { EOL } from 'node:os'
 import { Writable } from 'node:stream'
 
+import { $red } from '../../src/logging/colors'
 import { githubAnnotation } from '../../src/logging/github'
-import { logOptions } from '../../src/logging/options.js'
+import { logOptions } from '../../src/logging/options'
 
 describe('GitHub Annotations', () => {
   it('should produce some annotations', () => {
@@ -19,7 +20,7 @@ describe('GitHub Annotations', () => {
     })
 
     try {
-      logOptions.colors = false
+      logOptions.colors = true
       logOptions.output = output
       logOptions.githubAnnotations = true
 
@@ -27,16 +28,16 @@ describe('GitHub Annotations', () => {
       expect(string).toEqual(`::warning::Hello, world!${EOL}`)
       string = ''
 
-      githubAnnotation('error', 'Hello, world!')
+      githubAnnotation('error', `Hello, ${$red('world!')}`)
       expect(string).toEqual(`::error::Hello, world!${EOL}`)
       string = ''
 
       githubAnnotation({
         type: 'warning',
-        title: 'Title\nTitle2',
+        title: `Title\n${$red('Title2')}`,
         line: 10,
         col: 20,
-      }, 'Hello,\nworld!')
+      }, `Hello,\n${$red('world!')}`)
       expect(string).toEqual(`::warning title=Title%0ATitle2,line=10,col=20::Hello,%0Aworld!${EOL}`)
       string = ''
 
