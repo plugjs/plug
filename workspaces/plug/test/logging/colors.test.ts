@@ -91,7 +91,7 @@ describe('Colors', () => {
         '[1m 0s]',
         '[1m 1s]',
         '[2m 3s]',
-        '[hello 2m 3s]',
+        '[hello|2m 3s]',
       ])
     } finally {
       logOptions.colors = _colors
