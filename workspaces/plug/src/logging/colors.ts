@@ -73,8 +73,14 @@ export function $ms(millis: number, note?: string): string {
     // Milliseconds: style is 123ms
     string = `${millis}ms`
   }
-  if (note) string = `${note} ${string}`
-  return _colors ? `${gry}[${string}]${rst}` : `[${string}]`
+
+  return note ?
+    _colors ?
+      `${gry}[${note}${gry}|${string}]${rst}` :
+      `[${note}|${string}]` :
+    _colors ?
+      `${gry}[${string}]${rst}` :
+      `[${string}]`
 }
 
 /** Colorize in gray. */

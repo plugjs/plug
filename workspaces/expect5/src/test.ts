@@ -106,11 +106,15 @@ export class Test implements Plug<void> {
 
     execution.on('spec:skip', (spec, ms) => {
       if (suite.flag === 'only') return context.log.leave()
-      context.log.leave(WARN, `${$ylw(_pending)} ${spec.name} ${$ms(ms)} ${$gry('[')}${$ylw('skipped')}${$gry(']')}`)
+      context.log.leave(WARN, `${$ylw(_pending)} ${spec.name} ${$ms(ms, $ylw('skipped'))}`)
     })
 
     execution.on('spec:pass', (spec, ms) => {
-      context.log.leave(NOTICE, `${$grn(_success)} ${spec.name} ${$ms(ms)}`)
+      if (ms >= (spec.timeout * 0.75)) {
+        context.log.leave(WARN, `${$ylw(_success)} ${spec.name} ${$ms(ms, $ylw('slow'))}`)
+      } else {
+        context.log.leave(NOTICE, `${$grn(_success)} ${spec.name} ${$ms(ms)}`)
+      }
     })
 
     execution.on('spec:fail', (spec, ms, { number }) => {
