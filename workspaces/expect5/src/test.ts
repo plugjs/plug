@@ -5,6 +5,7 @@ import { AssertionError } from 'node:assert'
 
 import { BuildFailure } from '@plugjs/plug'
 import { assert } from '@plugjs/plug/asserts'
+import { dirnameFromUrl, filenameFromUrl } from '@plugjs/plug/paths'
 import { type Files } from '@plugjs/plug/files'
 import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN, log, type Logger, $p, githubAnnotation } from '@plugjs/plug/logging'
 import { type Context, type PipeParameters, type Plug } from '@plugjs/plug/pipe'
@@ -59,6 +60,8 @@ export class Test implements Plug<void> {
       anyGlobal['skip'] = skip
       anyGlobal['expect'] = expect
       anyGlobal['log'] = log
+      anyGlobal['dirnameFromUrl'] = dirnameFromUrl
+      anyGlobal['filenameFromUrl'] = filenameFromUrl
     }
 
     // Create our _root_ Suite

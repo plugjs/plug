@@ -1,4 +1,4 @@
-import type { logging } from '@plugjs/plug'
+import type { logging, paths } from '@plugjs/plug'
 import type { skip as SkipFunction } from './execution/executable'
 import type { expect as ExpectFunction } from './expectation/expect'
 import type * as setup from './execution/setup'
@@ -27,4 +27,6 @@ declare global {
   const expect: typeof ExpectFunction
 
   const log: logging.LogFunction
+  const dirnameFromUrl: typeof paths.dirnameFromUrl
+  const filenameFromUrl: typeof paths.filenameFromUrl
 }
