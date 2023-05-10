@@ -12,4 +12,5 @@ rm -rf node_modules/ package-lock.json
 npm install --workspaces --include-workspace-root
 
 # Bump all packages versions
+npm run build transpile
 npm run build exports

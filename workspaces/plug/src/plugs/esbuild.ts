@@ -15,10 +15,7 @@ import type { Logger, ReportLevel, ReportRecord } from '../logging'
 import type { AbsolutePath } from '../paths'
 import type { Context, PipeParameters, Plug } from '../pipe'
 
-export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'> & {
-  /** Add support for `__filename` and `__dirname` in ESM modules (default: `true`). */
-  enableEsmPathHelpers?: boolean
-}
+export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 
 export * from './esbuild/bundle-locals'
 export * from './esbuild/fix-extensions'
@@ -49,7 +46,6 @@ install('esbuild', class ESBuild implements Plug<Files> {
   async pipe(files: Files, context: Context): Promise<Files> {
     const entryPoints = [ ...files ]
     const absWorkingDir = files.directory
-    const { enableEsmPathHelpers = true, ...esbuildOptions } = this._options
 
     const options: BuildOptions = {
       /* Default our platform/target to NodeJS, current major version */
@@ -63,7 +59,7 @@ install('esbuild', class ESBuild implements Plug<Files> {
       outbase: absWorkingDir,
 
       /* Merge in the caller's options */
-      ...esbuildOptions,
+      ...this._options,
 
       /* Always override */
       absWorkingDir,
@@ -75,20 +71,6 @@ install('esbuild', class ESBuild implements Plug<Files> {
       options.define = Object.assign({ __fileurl: '__filename' }, options.define)
     } else if (options.format === 'esm') {
       options.define = Object.assign({ __fileurl: 'import.meta.url' }, options.define)
-
-      /* If enabled, add support for `__filename` and `__dirname` in ESM */
-      if (enableEsmPathHelpers) {
-        options.define['__dirname'] = '__$$_esm_paths_helper.__dirname'
-        options.define['__filename'] = '__$$_esm_paths_helper.__filename'
-        options.banner = { ...options.banner,
-          js: (options.banner?.js || '') +
-            ';const __$$_esm_paths_helper = await (async() => {\n' +
-            '  const __filename = (await import("node:url")).fileURLToPath(import.meta.url);\n' +
-            '  const __dirname = (await import("node:path")).dirname(__filename);\n' +
-            '  return { __filename, __dirname };\n' +
-            '})();',
-        }
-      }
     }
 
     /* Sanity check on output file/directory */

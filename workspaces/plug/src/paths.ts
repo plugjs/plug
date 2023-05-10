@@ -109,6 +109,27 @@ export function commonPath(path: AbsolutePath, ...paths: string[]): AbsolutePath
  * MODULE RESOLUTION FUNCTIONS                                                *
  * ========================================================================== */
 
+function resolveFilename(__fileurl: string): AbsolutePath {
+  const file = __fileurl.startsWith('file:') ? fileURLToPath(__fileurl) : __fileurl
+  assertAbsolutePath(file)
+  return file
+}
+
+/** Return the equivalent of `__filename` from our `__fileurl` pseudo variable */
+export function filenameFromUrl(__fileurl: string): AbsolutePath {
+  const file = resolveFilename(__fileurl)
+  assert(resolveFile(file), `Unable to resolve "${__fileurl}" as a file`)
+  return file
+}
+
+
+/** Return the equivalent of `__dirname` from our `__fileurl` pseudo variable */
+export function dirnameFromUrl(__fileurl: string): AbsolutePath {
+  const dir = getAbsoluteParent(resolveFilename(__fileurl))
+  assert(resolveDirectory(dir), `Unable to resolve "${__fileurl}" as a directory`)
+  return dir
+}
+
 /**
  * Return the absolute path of a file relative to the given `__fileurl`, where
  * `__fileurl` is either CommonJS's own `__filename` variable, or EcmaScript's
@@ -118,16 +139,13 @@ export function commonPath(path: AbsolutePath, ...paths: string[]): AbsolutePath
  * to the original `__fileurl` so we can easily write something like this:
  *
  * ```
- * const dataFile = resolveFilename(__fileurl, 'data.json')
+ * const dataFile = requireFilename(__fileurl, 'data.json')
  * // if we write this in "/foo/bar/baz.(ts|js|cjs|mjs)"
  * // `dataFile` will now be "/foo/bar/data.json"
  * ```
  */
 export function requireFilename(__fileurl: string, ...paths: string[]): AbsolutePath {
-  /* Convert any "file:..." URL into a path name */
-  const file = __fileurl.startsWith('file:') ? fileURLToPath(__fileurl) : __fileurl
-
-  /* We should really have a proper absolute file name now */
+  const file = resolveFilename(__fileurl)
   assertAbsolutePath(file)
 
   /* No paths? Return the file! */
@@ -147,7 +165,7 @@ export function requireFilename(__fileurl: string, ...paths: string[]): Absolute
  * (so, `.ts` for `ts-node`, `.mjs` for ESM modules, ...).
  */
 export function requireResolve(__fileurl: string, module: string): AbsolutePath {
-  const file = requireFilename(__fileurl)
+  const file = resolveFilename(__fileurl)
 
   // We do our custom resolution _only_ for local (./foo.bar) files...
   if (module.match(/^\.\.?\//)) {

@@ -47,6 +47,7 @@ const workspaceExports: Record<typeof workspaces[number], [ string, ...string[] 
     'files.*',
     'fork.*',
     'fs.*',
+    'globals.*',
     'logging.*',
     'paths.*',
     'pipe.*',
