@@ -8,9 +8,14 @@ import { main, yargsParser } from '@plugjs/tsrun'
 import { BuildFailure } from './asserts'
 import { invokeTasks, isBuild } from './build'
 import { $blu, $gry, $p, $red, $t, $und, $wht } from './logging/colors'
+import { logOptions } from './logging/options'
 import { getCurrentWorkingDirectory, resolveDirectory, resolveFile, resolveAbsolutePath } from './paths'
+import { logLevels } from './logging/levels'
 
 import type { AbsolutePath } from './paths'
+
+/* Log levels */
+const { TRACE, DEBUG, INFO, NOTICE, WARN, ERROR, OFF } = logLevels
 
 /* Extra colors */
 const $bnd = (s: string): string => $blu($und(s))
@@ -169,16 +174,16 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
    * ======================================================================== */
 
   /* Log colors, overriding our LOG_COLORS environment variable */
-  if (colors !== undefined) process.env.LOG_COLORS = `${colors}`
+  if (colors !== undefined) logOptions.colors = colors
 
   /* Log level (from verbosity) overriding LOG_LEVEL */
   if (verbosity) {
-    const levels = [ 'TRACE', 'DEBUG', 'INFO', 'NOTICE', 'WARN', 'ERROR', 'OFF' ]
-    let level = levels.indexOf('NOTICE') - verbosity
+    const levels = [ TRACE, DEBUG, INFO, NOTICE, WARN, ERROR, OFF ]
+    let level = levels.indexOf(logLevels.NOTICE) - verbosity
     if (level >= levels.length) level = levels.length - 1
     else if (level < 0) level = 0
 
-    process.env.LOG_LEVEL = levels[level]
+    logOptions.level = levels[level]!
   }
 
   /* ======================================================================== *
