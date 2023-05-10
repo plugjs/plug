@@ -59,6 +59,16 @@
         "default": "./dist/fs.mjs"
       }
     },
+    "./globals": {
+      "require": {
+        "types": "./dist/globals.d.ts",
+        "default": "./dist/globals.cjs"
+      },
+      "import": {
+        "types": "./dist/globals.d.ts",
+        "default": "./dist/globals.mjs"
+      }
+    },
     "./logging": {
       "require": {
         "types": "./dist/logging.d.ts",
