@@ -1,9 +1,3 @@
-/**
- * A pseudo-variable replaced by `ESBuild` resolving to either `__filename`
- * in CJS modules, or to `import.meta.url` in ESM modules.
- */
-declare const __fileurl: string
-
 /*
  * Type definition for `WebAssembly`. This is normally provided to TypeScript
  * by `lib.dom.d.ts`, and is not defined by Node's own types.
