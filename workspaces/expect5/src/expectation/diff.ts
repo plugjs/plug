@@ -366,6 +366,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
     if (! (actual instanceof prototype.constructor)) {
       return {
         ...errorDiff(actual, `to be instance of ${stringifyConstructor(prototype.constructor)}`),
+        diff: true,
         expected,
       }
     }
