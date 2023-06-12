@@ -33,7 +33,16 @@ export class ESLint implements Plug<void> {
     }
 
     /* Create our ESLint instance */
-    const eslint = new RealESLint({ overrideConfigFile, cwd })
+    const eslint = new RealESLint({
+      /* Pass our logger function to ESLint's parser (for warnings) */
+      baseConfig: {
+        'parserOptions': {
+          loggerFn: (arg: any, ...args: any[]) => context.log.warn(arg, ...args),
+        },
+      },
+      overrideConfigFile,
+      cwd,
+    })
 
     /* Lint all files in parallel */
     const paths = [ ...files.absolutePaths() ]
