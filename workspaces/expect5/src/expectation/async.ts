@@ -1,13 +1,14 @@
-import {
-  Expectations,
-  type AssertionFunction,
-  type AssertedType,
-  type InferToEqual,
-  type InferMatcher,
-} from './expectations'
-import { isMatcher, type Constructor } from './types'
+import { Expectations } from './expectations'
+import { isMatcher } from './types'
 
 import type { Matcher } from './matchers'
+import type {
+  AssertionFunction,
+  AssertedType,
+  InferToEqual,
+  InferMatcher,
+} from './expectations'
+import type { Constructor } from './types'
 
 
 /**

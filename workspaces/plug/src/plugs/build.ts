@@ -1,10 +1,11 @@
 import { $p } from '../logging/colors'
-import { ForkingPlug, type ForkOptions } from '../fork'
+import { ForkingPlug } from '../fork'
 import { requireFilename } from '../paths'
 import { invokeTasks, isBuild } from '../build'
 
 import type { Files } from '../files'
 import type { Context, Plug } from '../pipe'
+import type { ForkOptions } from '../fork'
 
 /** Writes some info about the current {@link Files} being passed around. */
 export class RunBuildInternal implements Plug<void> {

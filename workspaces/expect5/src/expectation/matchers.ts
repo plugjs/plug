@@ -1,17 +1,17 @@
-import {
-  Expectations,
-  type AssertedType,
-  type AssertionFunction,
-  type ExpectationsParent,
-  type InferMatcher,
-  type InferToEqual,
-  type NegativeExpectations,
+import { Expectations } from './expectations'
+import { matcherMarker } from './types'
+
+import type { AssertedType,
+  AssertionFunction,
+  ExpectationsParent,
+  InferMatcher,
+  InferToEqual,
+  NegativeExpectations,
 } from './expectations'
-import {
-  matcherMarker,
-  type Constructor,
-  type TypeMappings,
-  type TypeName,
+import type {
+  Constructor,
+  TypeMappings,
+  TypeName,
 } from './types'
 
 type PositiveMatcherFunction = (expectations: Expectations) => Expectations

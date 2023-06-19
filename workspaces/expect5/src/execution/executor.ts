@@ -1,7 +1,9 @@
 import assert from 'node:assert'
 import { EventEmitter } from 'node:events'
 
-import { Hook, Spec, Suite, type Executor } from './executable'
+import { Hook, Spec, Suite } from './executable'
+
+import type { Executor } from './executable'
 
 /* ========================================================================== */
 

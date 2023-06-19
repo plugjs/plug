@@ -1,6 +1,5 @@
-import { diff, type Diff } from './diff'
+import { diff } from './diff'
 import { toInclude, toMatchContents } from './include'
-import { type Matcher } from './matchers'
 import {
   ExpectationError,
   isMatcher,
@@ -8,9 +7,14 @@ import {
   stringifyConstructor,
   stringifyValue,
   typeOf,
-  type Constructor,
-  type TypeMappings,
-  type TypeName,
+} from './types'
+
+import type { Diff } from './diff'
+import type { Matcher } from './matchers'
+import type {
+  Constructor,
+  TypeMappings,
+  TypeName,
 } from './types'
 
 /* ========================================================================== *

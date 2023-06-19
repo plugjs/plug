@@ -6,9 +6,7 @@ import { AssertionError } from 'node:assert'
 import { BuildFailure } from '@plugjs/plug'
 import { assert } from '@plugjs/plug/asserts'
 import { dirnameFromUrl, filenameFromUrl } from '@plugjs/plug/paths'
-import { type Files } from '@plugjs/plug/files'
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN, log, type Logger, $p, githubAnnotation } from '@plugjs/plug/logging'
-import { type Context, type PipeParameters, type Plug } from '@plugjs/plug/pipe'
+import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN, log, $p, githubAnnotation } from '@plugjs/plug/logging'
 
 import * as setup from './execution/setup'
 import { Suite, skip } from './execution/executable'
@@ -18,7 +16,10 @@ import { expect } from './expectation/expect'
 import { printDiff } from './expectation/print'
 import { ExpectationError, stringifyValue } from './expectation/types'
 
-import { type TestOptions } from './index'
+import type { TestOptions } from './index'
+import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
+import type { Files } from '@plugjs/plug/files'
+import type { Logger } from '@plugjs/plug/logging'
 
 const _pending = '\u22EF' // middle ellipsis
 const _success = '\u2714' // heavy check mark

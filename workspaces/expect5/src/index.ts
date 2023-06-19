@@ -1,5 +1,7 @@
-import { installForking, type ForkOptions } from '@plugjs/plug/fork'
+import { installForking } from '@plugjs/plug/fork'
 import { requireResolve } from '@plugjs/plug/paths'
+
+import type { ForkOptions } from '@plugjs/plug/fork'
 
 /* ========================================================================== *
  * EXPORTED VARIABLES (for when globals is false)                             *

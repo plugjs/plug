@@ -1,10 +1,12 @@
-import { diff, type Diff } from './diff'
-import { type Expectations } from './expectations'
+import { diff } from './diff'
 import {
   ExpectationError,
   stringifyObjectType,
   stringifyValue,
 } from './types'
+
+import type { Diff } from './diff'
+import type { Expectations } from './expectations'
 
 /* === TO INCLUDE =========================================================== */
 

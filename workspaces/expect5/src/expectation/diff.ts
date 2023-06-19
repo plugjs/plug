@@ -4,8 +4,9 @@ import {
   isMatcher,
   stringifyConstructor,
   stringifyValue,
-  type Constructor,
 } from './types'
+
+import type { Constructor } from './types'
 
 export interface BaseDiff {
   diff: boolean,
