@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/zip",
-  "version": "0.4.22",
+  "version": "0.4.23",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -38,7 +38,7 @@
     "yauzl": "^2.10.0"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.4.22"
+    "@plugjs/plug": "0.4.23"
   },
   "files": [
     "*.md",
