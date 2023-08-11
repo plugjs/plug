@@ -75,8 +75,6 @@ const esbuildOptions: ESBuildOptions = {
   sourcemap: 'linked',
   sourcesContent: false,
   plugins: [ fixExtensions() ],
-  // TODO: workaround for https://github.com/evanw/esbuild/issues/3307
-  tsconfigRaw: { compilerOptions: { baseUrl: false } },
 }
 
 /* ========================================================================== *
