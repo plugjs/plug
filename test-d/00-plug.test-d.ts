@@ -1,6 +1,5 @@
-import { printType, expectType, expectAssignable, expectError } from 'tsd'
-import { build, find, invokeTasks } from '@plugjs/plug'
-import { type Files, type Pipe, buildMarker } from '@plugjs/plug'
+import { build, find, invokeTasks, type Files, type Pipe } from '@plugjs/plug'
+import { expectAssignable, expectError, expectType, printType } from 'tsd'
 
 printType('__file_marker__')
 
@@ -28,7 +27,6 @@ const tasks = build({
     expectType<() => Pipe>(this.task_b)
     expectType<() => Pipe>(this.task_c)
 
-    // expectError(this[buildMarker]) // ts7053 unsupported
     expectError(this.missing)
 
     return await find('')
@@ -43,7 +41,6 @@ expectAssignable<{
   readonly task_a:() => Promise<undefined>,
   readonly task_b:() => Promise<Files>,
   readonly task_c:() => Promise<Files>,
-  [buildMarker]: (tasks: string[], props?: Record<string, string | undefined> | undefined) => Promise<void>
 }>(tasks)
 
 expectType<string>(tasks.prop_a)
@@ -57,14 +54,8 @@ expectType<Promise<undefined>>(tasks.task_a())
 expectType<Promise<Files>>(tasks.task_b())
 expectType<Promise<Files>>(tasks.task_c())
 
-expectType<(
-tasks: readonly string[],
-props?: Record<string, string | undefined> | undefined,
-) => Promise<void>>(tasks[buildMarker])
-
 expectError(tasks.prop_a = 'foo')
 expectError(tasks.task_a = async (): Promise<void> => {} )
-expectError(tasks[buildMarker] = async (): Promise<void> => {} )
 expectError(tasks.missing)
 
 expectType<Promise<void>>(invokeTasks(tasks, [ 'task_a', 'task_b', 'task_c' ], { prop_a: '', prop_b: '' }))

@@ -4,28 +4,35 @@ import { $gry, $ms, $p, $t, getLogger, logOptions } from './logging'
 import { Context, ContextPromises, PipeImpl } from './pipe'
 import { findCaller } from './utils/caller'
 import { getSingleton } from './utils/singleton'
-import { buildMarker } from './types'
 
 import type { Pipe } from './index'
 import type { AbsolutePath } from './paths'
 import type {
   Build,
-  BuildProps,
   BuildDef,
+  BuildProps,
+  BuildTasks,
+  Props,
   Result,
   State,
   Task,
-  TaskDef,
-  ThisBuild,
-  Props,
   TaskCall,
-  BuildTasks,
+  TaskDef,
   Tasks,
+  ThisBuild,
 } from './types'
 
 /* ========================================================================== *
  * INTERNAL UTILITIES                                                         *
  * ========================================================================== */
+
+/**
+ * Symbol indicating that an object is a {@link Build}.
+ *
+ * In a compiled {@link Build} this symbol will be associated with a function
+ * taking an array of strings (task names) and record of props to override
+ */
+const buildMarker = Symbol.for('plugjs:plug:types:Build')
 
 /** Symbol indicating that an object is a {@link TaskCall} */
 const taskCallMarker = Symbol.for('plugjs:plug:types:TaskCall')
@@ -254,7 +261,7 @@ export function invokeTasks<B extends Build>(
     props?: BuildProps<B>,
 ): Promise<void> {
   if (isBuild(build)) {
-    return build[buildMarker](tasks, props)
+    return (build as any)[buildMarker](tasks, props)
   } else {
     throw new TypeError('Invalid build instance')
   }
