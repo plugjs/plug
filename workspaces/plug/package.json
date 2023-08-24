@@ -116,6 +116,7 @@
     "@plugjs/tsrun": "^0.4.19",
     "@types/node": "<19",
     "esbuild": "^0.19.2",
+    "jsonc-parser": "^3.2.0",
     "picomatch": "^2.3.1"
   },
   "devDependencies": {
