@@ -2,11 +2,11 @@ import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { assert, assertPromises } from './asserts'
+import { BuildFailure, assert, assertPromises } from './asserts'
 import { requireContext } from './async'
 import { Files } from './files'
 import { rm } from './fs'
-import { $p, log } from './logging'
+import { $gry, $p, $plur, $wht, $ylw, log } from './logging'
 import {
   commonPath,
   getAbsoluteParent,
@@ -16,6 +16,7 @@ import {
 } from './paths'
 import { PipeImpl } from './pipe'
 import { RunBuild } from './plugs/build'
+import { JsoncError, parseJsonc } from './utils'
 import { execChild } from './utils/exec'
 import { parseOptions } from './utils/options'
 import { walk } from './utils/walk'
@@ -260,11 +261,11 @@ export function exec(
 }
 
 /**
- * Read and parse a JSON file, throwing an error if not found.
+ * Read and parse a JSON/JSONC file, throwing an error if not found.
  *
  * @params file The JSON file to parse
  */
-export function parseJson(file: string): any {
+export function parseJson(file: string, strict: boolean = false): any {
   const jsonFile = requireContext().resolve(file)
   let jsonText: string
   try {
@@ -276,8 +277,19 @@ export function parseJson(file: string): any {
   }
 
   try {
-    return JSON.parse(jsonText)
+    return parseJsonc(jsonText, {
+      disallowComments: strict,
+      allowTrailingComma: ! strict,
+    })
   } catch (error) {
-    log.fail(`Error parsing ${$p(jsonFile)}`, error)
+    if (error instanceof JsoncError) {
+      const errors = error.errors
+      log.error(`Found ${$plur(errors.length, 'error', 'errors')} parsing ${$p(jsonFile)}`)
+      for (const e of errors) {
+        log.error(`  ${$wht(e.code)} ${$gry('at line')} ${$ylw(e.line)}${$gry(', column')} ${$ylw(e.column)}`)
+      }
+
+      throw new BuildFailure()
+    } else throw error
   }
 }
