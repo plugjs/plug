@@ -1,3 +1,5 @@
+import { BuildFailure } from '@plugjs/plug'
+
 import { requireContext } from '../src/async'
 import { Files } from '../src/files'
 import { writeFile } from '../src/fs'
@@ -84,14 +86,15 @@ describe('Helpers Test', () => {
     await expect(exec('exit 1', { shell: true })).toBeRejected() // with shell
   })
 
-  fit('should parse a json file', async () => {
+  it('should parse a json file', async () => {
     const tempdir = mkdtemp()
     const jsonfile = resolve(tempdir, 'test.jsonc')
     try {
       await writeFile(jsonfile, '{/*test*/"hello":"world",}', 'utf-8')
-      expect(await parseJson(jsonfile)).toEqual({ hello: 'world' })
-      expect(await parseJson(jsonfile, false)).toEqual({ hello: 'world' })
-      await expect(parseJson(jsonfile, true)).toBeRejected()
+
+      expect(parseJson(jsonfile)).toEqual({ hello: 'world' })
+      expect(parseJson(jsonfile, false)).toEqual({ hello: 'world' })
+      expect(() => parseJson(jsonfile, true)).toThrowError(BuildFailure)
     } finally {
       await rmrf(tempdir)
     }
