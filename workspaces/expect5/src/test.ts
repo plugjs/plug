@@ -5,21 +5,21 @@ import { AssertionError } from 'node:assert'
 
 import { BuildFailure } from '@plugjs/plug'
 import { assert } from '@plugjs/plug/asserts'
+import { $blu, $grn, $gry, $ms, $p, $plur, $red, $wht, $ylw, ERROR, NOTICE, WARN, githubAnnotation, log } from '@plugjs/plug/logging'
 import { dirnameFromUrl, filenameFromUrl } from '@plugjs/plug/paths'
-import { $blu, $grn, $gry, $ms, $red, $wht, $ylw, ERROR, NOTICE, WARN, log, $p, githubAnnotation } from '@plugjs/plug/logging'
 
-import * as setup from './execution/setup'
 import { Suite, skip } from './execution/executable'
 import { runSuite } from './execution/executor'
+import * as setup from './execution/setup'
 import { diff } from './expectation/diff'
 import { expect } from './expectation/expect'
 import { printDiff } from './expectation/print'
 import { ExpectationError, stringifyValue } from './expectation/types'
 
-import type { TestOptions } from './index'
-import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
 import type { Files } from '@plugjs/plug/files'
 import type { Logger } from '@plugjs/plug/logging'
+import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
+import type { TestOptions } from './index'
 
 const _pending = '\u22EF' // middle ellipsis
 const _success = '\u2714' // heavy check mark
@@ -79,8 +79,8 @@ export class Test implements Plug<void> {
 
     const snum = suite.specs
     const fnum = files.length
-    const smsg = snum === 1 ? 'spec' : 'specs'
-    const fmsg = fnum === 1 ? 'file' : 'files'
+    const smsg = $plur(snum, 'spec', 'specs')
+    const fmsg = $plur(fnum, 'file', 'files')
 
     assert(snum, 'No specs configured by test files')
 
@@ -95,7 +95,7 @@ export class Test implements Plug<void> {
       } else if (current.parent) {
         context.log.enter(NOTICE, `${$blu(_details)} ${$wht(current.name)}`)
       } else {
-        context.log.notice(`Running ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}`)
+        context.log.notice(`Running ${smsg} from ${fmsg}`)
         if (suite.flag === 'only') context.log.notice('')
       }
     })

@@ -1,6 +1,6 @@
 import { assert } from './asserts'
 import { runAsync } from './async'
-import { $gry, $ms, $p, $t, getLogger, logOptions } from './logging'
+import { $gry, $ms, $p, $plur, $t, getLogger, logOptions } from './logging'
 import { Context, ContextPromises, PipeImpl } from './pipe'
 import { findCaller } from './utils/caller'
 import { getSingleton } from './utils/singleton'
@@ -205,7 +205,7 @@ export function build<
     } catch (error) {
       if (state.fails.size) {
         logger.error('')
-        logger.error(state.fails.size, state.fails.size === 1 ? 'task' : 'tasks', 'failed:')
+        logger.error($plur(state.fails.size, 'task', 'tasks'), 'failed:')
         state.fails.forEach((task) => logger.error($gry('*'), $t(task.name)))
         logger.error('')
       }
