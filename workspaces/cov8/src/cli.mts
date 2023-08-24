@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { async, find, paths, pipe, logging, mkdtemp, rmrf, utils } from '@plugjs/plug'
+import { async, find, logging, mkdtemp, paths, pipe, rmrf, utils } from '@plugjs/plug'
 import { main, yargsParser } from '@plugjs/tsrun'
 
 import { Coverage } from './coverage'
@@ -164,7 +164,7 @@ main(import.meta.url, async (args): Promise<void> => {
   // Simply create the Test plug and pass everything to it
   try {
     process.exitCode = 0
-    await async.runAsync(context, '', async () => {
+    await async.runAsync(context, async () => {
       let tempDir: string | undefined = undefined
       if (! coverageDir) {
         const directory = mkdtemp()

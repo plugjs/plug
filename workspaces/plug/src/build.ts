@@ -134,7 +134,7 @@ class TaskImpl<R extends Result> implements Task<R> {
     const now = Date.now()
 
     /* Run asynchronously in an asynchronous context */
-    const promise = runAsync(context, taskName, async () => {
+    const promise = runAsync(context, async () => {
       return await this._def.call(build) || undefined
     }).then(async (result) => {
       const level = taskName.startsWith('_') ? 'info' : 'notice'
