@@ -1,8 +1,10 @@
 /* eslint-disable no-new-wrappers */
 import { context } from '@plugjs/plug'
 
-import { diff, type Diff } from '../src/expectation/diff'
+import { diff } from '../src/expectation/diff'
 import { printDiff } from '../src/expectation/print'
+
+import type { Diff } from '../src/expectation/diff'
 
 describe('Diff Printer', () => {
   function map(object: Record<string, any>): Map<any, any> {
