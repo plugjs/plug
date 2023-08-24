@@ -158,8 +158,8 @@ export class Test implements Plug<void> {
     if (failed) summary.push(`${failed} ${$gry('failed')}`)
     if (failures.length) summary.push(`${failures.length} ${$gry('total failures')}`)
 
-    const epilogue = ` ${$gry('(')}${summary.join($gry(', '))}${$gry(')')}`
-    const message = `Ran ${$ylw(snum)} ${smsg} from ${$ylw(fnum)} ${fmsg}${epilogue} ${$ms(time)}`
+    const epilogue = `${$gry('(')}${summary.join($gry(', '))}${$gry(')')}`
+    const message = `Ran ${smsg} from ${fmsg} ${epilogue} ${$ms(time)}`
 
     if (failures.length) {
       context.log.error(message)
