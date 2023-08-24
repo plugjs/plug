@@ -1,7 +1,7 @@
 /* coverage ignore file */
 
 import { runningTasks } from '../async'
-import { $cyn, $gry, $t } from './colors'
+import { $cyn, $gry, $plur, $t } from './colors'
 import { logOptions } from './options'
 
 /* ========================================================================== */
@@ -60,11 +60,11 @@ function spin(): void {
   const pad = ''.padStart(_taskLength, ' ')
   const names = tasks.map((task) => $t(task)).join($gry(', '))
 
-  const task = tasks.length > 1 ? 'tasks' : 'task'
+  const task = $plur(tasks.length, 'task', 'tasks')
 
   _nextSpin = (++ _nextSpin) % _spins.length
 
-  _output.write(`${zapSpinner}${pad} ${_spins[_nextSpin]}  Running ${tasks.length} ${task}: ${$gry(names)}`)
+  _output.write(`${zapSpinner}${pad} ${_spins[_nextSpin]}  Running ${task}: ${$gry(names)}`)
 }
 
 /* Start or stop the spinner */

@@ -209,7 +209,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
     context.log.debug('Message from parent process for PID', process.pid, message)
 
     /* Contextualize this run, and go! */
-    const result = runAsync(context, taskName, async () => {
+    const result = runAsync(context, async () => {
       /* Check that we have a proper script file name */
       assert(resolveFile(scriptFile), `Script file ${$p(scriptFile)} not found`)
       const script = await import(scriptFile)

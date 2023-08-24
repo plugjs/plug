@@ -15,15 +15,14 @@ import type { Context } from './pipe'
  */
 export function runAsync<T>(
     context: Context,
-    taskName: string,
     callback: () => Promise<T>,
 ): Promise<T> {
   return storage.run(context, async () => {
     try {
-      tasks.add(taskName)
+      tasks.add(context.taskName)
       return await callback()
     } finally {
-      tasks.delete(taskName)
+      tasks.delete(context.taskName)
     }
   })
 }

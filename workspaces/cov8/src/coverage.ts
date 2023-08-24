@@ -5,7 +5,7 @@ import { sep } from 'node:path'
 
 import { html, initFunction } from '@plugjs/cov8-html'
 import { Files } from '@plugjs/plug/files'
-import { $gry, $ms, $p, $red, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
+import { $gry, $ms, $p, $plur, $red, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import { resolveAbsolutePath } from '@plugjs/plug/paths'
 import { walk } from '@plugjs/plug/utils'
 
@@ -104,14 +104,14 @@ export class Coverage implements Plug<Files | undefined> {
 
     if (fileErrors) {
       /* coverage ignore next */
-      const f = fileErrors === 1 ? 'file does' : 'files do'
-      const message = `${$red(fileErrors)} ${f} not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`
+      const f = $plur(fileErrors, 'file does', 'files do')
+      const message = `${f} not meet minimum file coverage ${$gry(`(${minimumFileCoverage}%)`)}`
       _report.add({ level: ERROR, message })
     }
     if (fileWarnings) {
       /* coverage ignore next */
-      const f = fileErrors === 1 ? 'file does' : 'files do'
-      const message = `${$ylw(fileWarnings)} ${f} not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`
+      const f = $plur(fileWarnings, 'file does', 'files do')
+      const message = `${f} not meet optimal file coverage ${$gry(`(${optimalFileCoverage}%)`)}`
       _report.add({ level: WARN, message })
     }
 

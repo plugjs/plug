@@ -112,7 +112,7 @@ main(import.meta.url, async (args): Promise<void> => {
   // Simply create the Test plug and pass everything to it
   try {
     process.exitCode = 0
-    await async.runAsync(context, '', () => {
+    await async.runAsync(context, () => {
       return find(glob, ...globs, { directory }).plug(new Test())
     })
   } catch (error) {

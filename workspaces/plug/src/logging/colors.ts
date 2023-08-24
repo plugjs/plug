@@ -127,3 +127,14 @@ export function $wht(string: any): string {
 export function $und(string: any): string {
   return colorize(und, string)
 }
+
+/** Pluralize (not really colors, but peace, love unity and respect). */
+export function $plur(number: number, singular: string, plural: string, colorize: boolean = _colors): string {
+  return colorize ?
+    number === 1 ?
+      `${$ylw(number)} ${singular}` :
+      `${$ylw(number)} ${plural}` :
+    number === 1 ?
+      `${number} ${singular}` :
+      `${number} ${plural}`
+}

@@ -1,9 +1,9 @@
 import { BuildFailure } from '../asserts'
 import { readFile } from '../fs'
-import { $blu, $cyn, $gry, $red, $und, $wht, $ylw } from './colors'
-import { ERROR, logLevels, NOTICE, WARN } from './levels'
-import { logOptions } from './options'
+import { $blu, $cyn, $gry, $plur, $red, $und, $wht, $ylw } from './colors'
 import { githubAnnotation } from './github'
+import { ERROR, NOTICE, WARN, logLevels } from './levels'
+import { logOptions } from './options'
 
 import type { AbsolutePath } from '../paths'
 import type { LogEmitter } from './emit'
@@ -427,12 +427,12 @@ export class ReportImpl implements Report {
 
     const status: any[] = [ 'Found' ]
     if (this.errors) {
-      status.push($red(this.errors), this.errors === 1 ? 'error' : 'errors' )
+      status.push($plur(this.errors, 'error', 'errors'))
     }
 
     if (this.warnings) {
       if (this.errors) status.push('and')
-      status.push($ylw(this.warnings), this.warnings === 1 ? 'warning' : 'warnings' )
+      status.push($plur(this.warnings, 'warning', 'warnings'))
     }
 
     if (this.errors || this.warnings) {

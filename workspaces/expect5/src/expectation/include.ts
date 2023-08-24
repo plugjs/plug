@@ -1,3 +1,5 @@
+import { $plur } from '@plugjs/plug/logging'
+
 import { diff } from './diff'
 import {
   ExpectationError,
@@ -100,9 +102,9 @@ function includesProps(
   const count = Object.keys(props).length
   if (count === 0) return // no props? no errors!
 
-  const type = count === 1 ? 'property' : 'properties'
+  const type = $plur(count, 'property', 'properties', false)
   const not = negative ? 'not ' : ''
-  throw new ExpectationError(expectations, `${not}to include ${count} ${type}`, {
+  throw new ExpectationError(expectations, `${not}to include ${type}`, {
     diff: true,
     value: actual,
     props,
@@ -153,9 +155,9 @@ function includesValues(
   const count = values.length
   if (count === 0) return // no values? no errors!
 
-  const type = count === 1 ? 'value' : 'values'
+  const type = $plur(count, 'value', 'values', false)
   const not = negative ? 'not ' : ''
-  throw new ExpectationError(expectations, `${not}to include ${count} ${type}`, {
+  throw new ExpectationError(expectations, `${not}to include ${type}`, {
     diff: true,
     value: expectations.value,
     values,
@@ -194,9 +196,9 @@ function includesMappings(
   const count = mappings.length
   if (count === 0) return // no mappings? no errors!
 
-  const type = count === 1 ? 'mapping' : 'mappings'
+  const type = $plur(count, 'mapping', 'mappings', false)
   const not = negative ? 'not ' : ''
-  throw new ExpectationError(expectations, `${not}to include ${count} ${type}`, {
+  throw new ExpectationError(expectations, `${not}to include ${type}`, {
     diff: true,
     value: expectations.value,
     mappings,
