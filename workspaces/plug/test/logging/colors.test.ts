@@ -1,6 +1,6 @@
 import { log, logOptions } from '../../src/logging.js'
-import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../../src/paths.js'
 import * as colors from '../../src/logging/colors.js'
+import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../../src/paths.js'
 
 describe('Colors', () => {
   const cwd = getCurrentWorkingDirectory()
@@ -96,5 +96,12 @@ describe('Colors', () => {
     } finally {
       logOptions.colors = _colors
     }
+  })
+
+  it('should pluralize a number with and without colors', () => {
+    expect(colors.$plur(1, 'foo', 'bar', true)).toEqual(`${colors.$ylw('1')} foo`)
+    expect(colors.$plur(2, 'foo', 'bar', true)).toEqual(`${colors.$ylw('2')} bar`)
+    expect(colors.$plur(1, 'foo', 'bar', false)).toEqual('1 foo')
+    expect(colors.$plur(2, 'foo', 'bar', false)).toEqual('2 bar')
   })
 })
