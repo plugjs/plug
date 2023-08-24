@@ -44,7 +44,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@types/chai": "^4.3.5",
-    "chai": "^4.3.7"
+    "chai": "^4.3.8"
   },
   "peerDependencies": {
     "@plugjs/plug": "0.4.29"
