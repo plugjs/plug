@@ -17,9 +17,10 @@ import {
 import { readFile } from '@plugjs/plug/fs'
 import { $p } from '@plugjs/plug/logging'
 
+import type { ParseResult } from '@babel/parser'
+import type { Comment, File, Node } from '@babel/types'
 import type { Logger } from '@plugjs/plug/logging'
 import type { AbsolutePath } from '@plugjs/plug/paths'
-import type { Comment, Node } from '@babel/types'
 import type { CoverageAnalyser } from './analysis'
 
 /* ========================================================================== *
@@ -127,24 +128,29 @@ export async function coverageReport(
     const url = pathToFileURL(file).toString()
     const code = await readFile(file, 'utf-8')
 
-    const tree = parse(code, {
-      allowImportExportEverywhere: true,
-      allowAwaitOutsideFunction: true,
-      allowReturnOutsideFunction: true,
-      allowSuperOutsideMethod: true,
-      allowUndeclaredExports: true,
-      attachComment: true,
-      errorRecovery: false,
-      sourceType: 'unambiguous',
-      sourceFilename: file,
-      startLine: 1,
-      startColumn: 0,
-      plugins: [ 'typescript' ],
-      strictMode: false,
-      ranges: false,
-      tokens: false,
-      createParenthesizedExpressions: true,
-    })
+    let tree: ParseResult<File>
+    try {
+      tree = parse(code, {
+        allowImportExportEverywhere: true,
+        allowAwaitOutsideFunction: true,
+        allowReturnOutsideFunction: true,
+        allowSuperOutsideMethod: true,
+        allowUndeclaredExports: true,
+        attachComment: true,
+        errorRecovery: false,
+        sourceType: 'unambiguous',
+        sourceFilename: file,
+        startLine: 1,
+        startColumn: 0,
+        plugins: [ 'typescript' ],
+        strictMode: false,
+        ranges: false,
+        tokens: false,
+        createParenthesizedExpressions: true,
+      })
+    } catch (error) {
+      log.fail(`Error parsing ${$p(file)}`, error)
+    }
 
     const codeCoverage: number[] = new Array(code.length).fill(0)
     const nodeCoverage: NodeCoverageResult = {
