@@ -144,16 +144,18 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
 
       /* After the handlers have been setup, send the message */
       try {
-        const result = child.send(request, (error) => {
+        /* Ignore the return value from `child.send(...)` here. The docs allow
+         * it to return `false` _when the backlog of unsent messages exceeds a
+         * threshold that makes it unwise to send more_. Bascially, on large
+         * file lists, this returns `false`... The only thing we can do is to
+         * handle any callback error, and hope for the best!
+         */
+        child.send(request, (error) => {
           if (error) {
             context.log.error('Error sending message to forked plug process (callback failure)', error)
             reject(BuildFailure.fail())
           }
         })
-        if (! result) {
-          context.log.error('Error sending message to forked plug process (send returned false)')
-          reject(BuildFailure.fail())
-        }
       } catch (error) {
         context.log.error('Error sending message to forked plug process (exception caught)', error)
         reject(BuildFailure.fail())
