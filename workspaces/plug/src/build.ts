@@ -1,6 +1,6 @@
 import { assert } from './asserts'
 import { runAsync } from './async'
-import { $gry, $ms, $p, $plur, $t, getLogger, logOptions } from './logging'
+import { $gry, $ms, $p, $plur, $t, NOTICE, getLogger, logOptions } from './logging'
 import { Context, ContextPromises, PipeImpl } from './pipe'
 import { findCaller } from './utils/caller'
 import { getSingleton } from './utils/singleton'
@@ -178,11 +178,11 @@ export function build<
       props[key] = val
     } else if (typeof val === 'function') {
       tasks[key] = new TaskImpl(key, buildFile, val, tasks, props)
-      // tasks[key] = makeTask(buildFile, tasks, props, val, key)
       len = key.length
     }
 
     /* Update the logger's own "taskLength" for nice printing */
+    if ((logOptions.level >= NOTICE) && (key.startsWith('_'))) continue
     /* coverage ignore if */
     if (len > logOptions.taskLength) logOptions.taskLength = len
   }
