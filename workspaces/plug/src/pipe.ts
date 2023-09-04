@@ -5,10 +5,10 @@ import { getLogger } from './logging'
 import { getAbsoluteParent, getCurrentWorkingDirectory, resolveAbsolutePath } from './paths'
 
 import type { Files } from './files'
+import type { Pipe } from './index'
 import type { Logger } from './logging'
 import type { AbsolutePath } from './paths'
 import type { Result } from './types'
-import type { Pipe } from './index'
 
 /* ========================================================================== *
  * PLUGS                                                                      *

@@ -1,10 +1,10 @@
 import { install } from '../pipe'
-import { parseOptions } from '../utils/options'
 import { execChild } from '../utils/exec'
+import { parseOptions } from '../utils/options'
 
-import type { ExecChildOptions } from '../utils/exec'
 import type { Files } from '../files'
 import type { Context, PipeParameters, Plug } from '../pipe'
+import type { ExecChildOptions } from '../utils/exec'
 
 /** Options for executing scripts */
 export interface ExecOptions extends ExecChildOptions {

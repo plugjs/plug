@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable no-fallthrough */
 /* eslint-disable no-console */
 
 import _fs from 'node:fs'
@@ -8,9 +9,9 @@ import { main, yargsParser } from '@plugjs/tsrun'
 import { BuildFailure } from './asserts'
 import { invokeTasks, isBuild } from './build'
 import { $blu, $gry, $p, $red, $t, $und, $wht } from './logging/colors'
-import { logOptions } from './logging/options'
-import { getCurrentWorkingDirectory, resolveDirectory, resolveFile, resolveAbsolutePath } from './paths'
 import { logLevels } from './logging/levels'
+import { logOptions } from './logging/options'
+import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from './paths'
 
 import type { AbsolutePath } from './paths'
 
@@ -158,11 +159,9 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
       case 'help':
         help()
         process.exit(0)
-        break
       case 'version':
         console.log(`PlugJS ${$gry('ver.')} ${$wnd(version)}`)
         process.exit(0)
-        break
       default:
         console.log(`Unsupported option ${$wnd(key)} (try ${$wnd('--help')})`)
         process.exit(1)

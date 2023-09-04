@@ -1,13 +1,13 @@
-import { $p } from '../logging/colors'
-import { ForkingPlug } from '../fork'
-import { requireFilename } from '../paths'
 import { invokeTasks, isBuild } from '../build'
+import { ForkingPlug } from '../fork'
+import { $p } from '../logging/colors'
+import { requireFilename } from '../paths'
 
 import type { Files } from '../files'
-import type { Context, Plug } from '../pipe'
 import type { ForkOptions } from '../fork'
+import type { Context, Plug } from '../pipe'
 
-/** Writes some info about the current {@link Files} being passed around. */
+/** Helper {@link Plug} used by the `invokeBuild` helper. */
 export class RunBuildInternal implements Plug<void> {
   constructor(
       private readonly _tasks: readonly string[],

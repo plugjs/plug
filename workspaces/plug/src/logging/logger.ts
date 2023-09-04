@@ -1,11 +1,11 @@
 import { formatWithOptions } from 'node:util'
 
 import { BuildFailure } from '../asserts'
+import { $gry } from './colors'
 import { emitFancy, emitPlain } from './emit'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
 import { ReportImpl } from './report'
-import { $gry } from './colors'
 
 import type { LogEmitter, LogEmitterOptions } from './emit'
 import type { LogLevel } from './levels'
