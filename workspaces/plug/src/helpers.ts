@@ -21,10 +21,10 @@ import { execChild } from './utils/exec'
 import { parseOptions } from './utils/options'
 import { walk } from './utils/walk'
 
-import type { ForkOptions } from './fork'
 import type { Pipe } from './index'
 import type { AbsolutePath } from './paths'
 import type { Context } from './pipe'
+import type { RunBuildOptions } from './plugs/build'
 import type { ExecChildOptions } from './utils/exec'
 import type { ParseOptions } from './utils/options'
 import type { WalkOptions } from './utils/walk'
@@ -71,7 +71,7 @@ export function find(...args: ParseOptions<FindOptions>): Pipe {
   }))
 }
 
-export type InvokeBuildOptions = ForkOptions & Record<string, string>
+export type InvokeBuildOptions = RunBuildOptions & Record<string, string>
 export type InvokeBuildTasks = string | [ string, ...string[] ]
 
 export function invokeBuild(buildFile: string): Promise<void>

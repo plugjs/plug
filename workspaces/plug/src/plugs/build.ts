@@ -7,15 +7,23 @@ import type { Files } from '../files'
 import type { ForkOptions } from '../fork'
 import type { Context, Plug } from '../pipe'
 
+export interface RunBuildOptions extends ForkOptions {
+  /** The _current working directory_ to be set when running the build */
+  cwd?: string
+}
+
 /** Helper {@link Plug} used by the `invokeBuild` helper. */
 export class RunBuildInternal implements Plug<void> {
   constructor(
       private readonly _tasks: readonly string[],
       private readonly _props: Readonly<Record<string, string>>,
+      private readonly _options: RunBuildOptions,
   ) {}
 
   async pipe(files: Files, context: Context): Promise<void> {
     const tasks = this._tasks.length === 0 ? [ 'default' ] : this._tasks
+
+    const cwd = this._options.cwd || process.cwd()
 
     for (const file of files.absolutePaths()) {
       // Import and check build file
@@ -29,7 +37,13 @@ export class RunBuildInternal implements Plug<void> {
       if (! isBuild(maybeBuild)) {
         context.log.fail(`File ${$p(file)} did not export a proper build`)
       } else {
-        await invokeTasks(maybeBuild, tasks, this._props)
+        const dir = process.cwd()
+        try {
+          process.chdir(cwd)
+          await invokeTasks(maybeBuild, tasks, this._props)
+        } finally {
+          process.chdir(dir)
+        }
       }
     }
   }
