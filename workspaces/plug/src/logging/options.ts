@@ -1,8 +1,8 @@
 import { EventEmitter } from 'node:events'
 import { Socket } from 'node:net'
 
-import { getLevelNumber, NOTICE } from './levels'
 import { getSingleton } from '../utils/singleton'
+import { getLevelNumber, NOTICE } from './levels'
 
 import type { Writable } from 'node:stream'
 import type { InspectOptions } from 'node:util'
@@ -107,7 +107,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
     const { fd, ...options } = JSON.parse(process.env.__LOG_OPTIONS || '{}')
     if (fd) {
       const output = new Socket({ fd, readable: false, writable: true }).unref()
-      process.on('beforeExit', () => this._output.end())
+      process.on('beforeExit', () => output.end())
       this._output = output
     }
     Object.assign(this, options)
