@@ -4,6 +4,7 @@
 import { sep } from 'node:path'
 
 import { html, initFunction } from '@plugjs/cov8-html'
+import { assert } from '@plugjs/plug/asserts'
 import { Files } from '@plugjs/plug/files'
 import { $gry, $ms, $p, $plur, $red, $ylw, ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import { resolveAbsolutePath } from '@plugjs/plug/paths'
@@ -31,10 +32,7 @@ export class Coverage implements Plug<Files | undefined> {
       coverageFiles.push(resolveAbsolutePath(coverageDir, file))
     }
 
-    if (coverageFiles.length === 0) {
-      throw context.log.fail(`No coverage files found in ${$p(coverageDir)}`)
-    }
-
+    assert(coverageFiles.length > 0, `No coverage files found in ${$p(coverageDir)}`)
     const sourceFiles = [ ...files.absolutePaths() ]
 
     const ms1 = Date.now()
