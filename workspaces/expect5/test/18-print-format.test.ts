@@ -1,8 +1,8 @@
 /* eslint-disable no-new-wrappers */
 import { TestLogger, logOptions } from '@plugjs/plug/logging'
 
-import { printDiff } from '../src/expectation/print'
 import { diff } from '../src/expectation/diff'
+import { printDiff } from '../src/expectation/print'
 
 import type { Diff } from '../src/expectation/diff'
 
