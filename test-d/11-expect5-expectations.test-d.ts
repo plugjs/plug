@@ -1,5 +1,7 @@
-import { expect, type AsyncExpectations, type Expectations } from '@plugjs/expect5'
+import { expect } from '@plugjs/expect5'
 import { expectError, expectType, printType } from 'tsd'
+
+import type { AsyncExpectations, Expectations } from '@plugjs/expect5'
 
 printType('__file_marker__')
 

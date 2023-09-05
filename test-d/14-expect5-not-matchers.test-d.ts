@@ -1,5 +1,7 @@
-import { expect, type Matchers } from '@plugjs/expect5'
+import { expect } from '@plugjs/expect5'
 import { expectError, expectType, printType } from 'tsd'
+
+import type { Matchers } from '@plugjs/expect5'
 
 printType('__file_marker__')
 
