@@ -225,7 +225,7 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
 
   // Any other error also gets printed somewhat nicely
   } else if (error instanceof Error) {
-    const message = error.message || 'Unknown Error'
+    const message = error.message || error instanceof BuildFailure ? 'Build Failure' : 'Unknown Error'
     const string = Object.getPrototypeOf(error)?.constructor?.name || 'Error'
 
     // Chai calls its own assertion errors "AssertionError"
