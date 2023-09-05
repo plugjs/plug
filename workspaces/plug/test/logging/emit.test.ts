@@ -4,7 +4,7 @@ import { Writable } from 'node:stream'
 import { currentContext } from '../../src/async.js'
 import { log } from '../../src/logging.js'
 import { $gry } from '../../src/logging/colors.js'
-import { emit } from '../../src/logging/emit.js'
+import { emitFancy, emitPlain } from '../../src/logging/emit.js'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from '../../src/logging/levels.js'
 import { logOptions } from '../../src/logging/options.js'
 import { zapSpinner } from '../../src/logging/spinner.js'
@@ -52,22 +52,20 @@ describe('Emit', () => {
 
     const _colors = logOptions.colors
     const _output = logOptions.output
-    const _format = logOptions.format
     const _indent = logOptions.indentSize
     logOptions.colors = false
     logOptions.output = out
-    logOptions.format = 'fancy'
     logOptions.indentSize = 2
 
     try {
-      emit({ level: TRACE, taskName }, [ 'trace', 123, { foo: 'bar' } ])
-      emit({ level: DEBUG, taskName }, [ 'debug', 123, { foo: 'bar' } ])
-      emit({ level: INFO, taskName }, [ 'info', 123, { foo: 'bar' } ])
-      emit({ level: NOTICE, taskName }, [ 'notice', 123, { foo: 'bar' } ])
-      emit({ level: WARN, taskName }, [ 'warn', 123, { foo: 'bar' } ])
-      emit({ level: ERROR, taskName }, [ 'error', 123, { foo: 'bar' } ])
-      emit({ level: ERROR, taskName, indent: 4 }, [ 'indented' ])
-      emit({ level: ERROR, taskName, prefix: '{prefix}' }, [ 'prefixed' ])
+      emitFancy({ level: TRACE, taskName }, [ 'trace', 123, { foo: 'bar' } ])
+      emitFancy({ level: DEBUG, taskName }, [ 'debug', 123, { foo: 'bar' } ])
+      emitFancy({ level: INFO, taskName }, [ 'info', 123, { foo: 'bar' } ])
+      emitFancy({ level: NOTICE, taskName }, [ 'notice', 123, { foo: 'bar' } ])
+      emitFancy({ level: WARN, taskName }, [ 'warn', 123, { foo: 'bar' } ])
+      emitFancy({ level: ERROR, taskName }, [ 'error', 123, { foo: 'bar' } ])
+      emitFancy({ level: ERROR, taskName, indent: 4 }, [ 'indented' ])
+      emitFancy({ level: ERROR, taskName, prefix: '{prefix}' }, [ 'prefixed' ])
 
       const lines: string[] = string.replaceAll(zapSpinner, '')
           .replaceAll(/^\s+/gm, '')
@@ -86,7 +84,6 @@ describe('Emit', () => {
     } finally {
       logOptions.colors = _colors
       logOptions.output = _output
-      logOptions.format = _format
       logOptions.indentSize = _indent
     }
   })
@@ -108,22 +105,20 @@ describe('Emit', () => {
 
     const _colors = logOptions.colors
     const _output = logOptions.output
-    const _format = logOptions.format
     const _indent = logOptions.indentSize
     logOptions.colors = false
     logOptions.output = out
-    logOptions.format = 'plain'
     logOptions.indentSize = 2
 
     try {
-      emit({ level: TRACE, taskName }, [ 'trace', 123, { foo: 'bar' } ])
-      emit({ level: DEBUG, taskName }, [ 'debug', 123, { foo: 'bar' } ])
-      emit({ level: INFO, taskName }, [ 'info', 123, { foo: 'bar' } ])
-      emit({ level: NOTICE, taskName }, [ 'notice', 123, { foo: 'bar' } ])
-      emit({ level: WARN, taskName }, [ 'warn', 123, { foo: 'bar' } ])
-      emit({ level: ERROR, taskName }, [ 'error', 123, { foo: 'bar' } ])
-      emit({ level: ERROR, taskName, indent: 4 }, [ 'indented' ])
-      emit({ level: ERROR, taskName, prefix: '{prefix}' }, [ 'prefixed' ])
+      emitPlain({ level: TRACE, taskName }, [ 'trace', 123, { foo: 'bar' } ])
+      emitPlain({ level: DEBUG, taskName }, [ 'debug', 123, { foo: 'bar' } ])
+      emitPlain({ level: INFO, taskName }, [ 'info', 123, { foo: 'bar' } ])
+      emitPlain({ level: NOTICE, taskName }, [ 'notice', 123, { foo: 'bar' } ])
+      emitPlain({ level: WARN, taskName }, [ 'warn', 123, { foo: 'bar' } ])
+      emitPlain({ level: ERROR, taskName }, [ 'error', 123, { foo: 'bar' } ])
+      emitPlain({ level: ERROR, taskName, indent: 4 }, [ 'indented' ])
+      emitPlain({ level: ERROR, taskName, prefix: '{prefix}' }, [ 'prefixed' ])
 
       const lines: string[] = string.replaceAll(zapSpinner, '')
           .replaceAll(/^\s+/gm, '')
@@ -143,7 +138,6 @@ describe('Emit', () => {
     } finally {
       logOptions.colors = _colors
       logOptions.output = _output
-      logOptions.format = _format
       logOptions.indentSize = _indent
     }
   })

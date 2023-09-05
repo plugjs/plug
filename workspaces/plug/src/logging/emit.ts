@@ -52,7 +52,7 @@ export interface ConfigurableLogEmitter extends LogEmitter {
 /* ========================================================================== */
 
 /** Emit in full colors with spinner support and whatnot! */
-const emitFancy: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
+export const emitFancy: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
   const { taskName, level, prefix = '', indent = 0 } = options
   const logPrefix = ''.padStart(indent * _indentSize) + prefix
 
@@ -95,7 +95,7 @@ const emitFancy: LogEmitter = (options: LogEmitterOptions, args: any[]): void =>
 /* ========================================================================== */
 
 /** Emit in plain text (maybe with some colors?) */
-const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
+export const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
   const { taskName, level, prefix = '', indent = 0 } = options
   const logPrefix = ''.padStart(indent * _indentSize) + prefix
 
