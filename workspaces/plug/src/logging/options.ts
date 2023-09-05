@@ -236,7 +236,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   }
 
   get inspectOptions(): InspectOptions {
-    return new Proxy(this.inspectOptions, {
+    return new Proxy(this._inspectOptions, {
       get: (target, prop): any => {
         if (prop === 'colors') return this.colors
         if (prop === 'breakLength') return this._lineLength
