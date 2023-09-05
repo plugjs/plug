@@ -1,5 +1,6 @@
 import { formatWithOptions } from 'node:util'
 
+import { fail } from '../asserts'
 import { $blu, $grn, $gry, $red, $t, $ylw } from './colors'
 import { DEBUG, INFO, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
@@ -21,6 +22,10 @@ logOptions.on('changed', (options) => {
   _taskLength = options.taskLength
   _lineLength = options.lineLength
   _inspectOptions = { ...options.inspectOptions } // proxy
+  _emitter =
+    options.format === 'fancy' ? emitFancy :
+    options.format === 'plain' ? emitPlain :
+    fail(`Invalid log format "${logOptions.format}"`)
 })
 
 /* ========================================================================== *
@@ -41,7 +46,7 @@ export type LogEmitter = (options: LogEmitterOptions, args: any[]) => void
 /* ========================================================================== */
 
 /** Emit in full colors with spinner support and whatnot! */
-export const emitFancy: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
+const emitFancy: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
   const { taskName, level, prefix = '', indent = 0 } = options
   const logPrefix = ''.padStart(indent * _indentSize) + prefix
 
@@ -84,7 +89,7 @@ export const emitFancy: LogEmitter = (options: LogEmitterOptions, args: any[]): 
 /* ========================================================================== */
 
 /** Emit in plain text (maybe with some colors?) */
-export const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
+const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
   const { taskName, level, prefix = '', indent = 0 } = options
   const logPrefix = ''.padStart(indent * _indentSize) + prefix
 
@@ -119,4 +124,15 @@ export const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): 
   for (const line of message.split('\n')) {
     _output.write(`${linePrefix}${line}\n`)
   }
+}
+
+/* ========================================================================== */
+
+let _emitter =
+  logOptions.format === 'fancy' ? emitFancy :
+  logOptions.format === 'plain' ? emitPlain :
+  fail(`Invalid log format "${logOptions.format}"`)
+
+export const emit: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
+  _emitter(options, args)
 }
