@@ -17,9 +17,7 @@ import type { Report } from './report'
 
 /* Initial value of log colors, and subscribe to changes */
 let _level = logOptions.level
-let _defaultTaskName = logOptions.defaultTaskName
-logOptions.on('changed', ({ defaultTaskName, level }) => {
-  _defaultTaskName = defaultTaskName
+logOptions.on('changed', ({ level }) => {
   _level = level
 })
 
@@ -50,7 +48,7 @@ export interface Logger extends Log {
   /** The current level for logging. */
   level: LogLevel,
   /** The current indent level for logging. */
-  readonly indent: number,
+  indent: number,
 
   /** Enter a sub-level of logging, increasing indent */
   enter(): void
@@ -65,11 +63,11 @@ export interface Logger extends Log {
 }
 
 /** Return a {@link Logger} associated with the specified task name. */
-export function getLogger(
-    task: string = _defaultTaskName,
-    indent: number = currentContext()?.log.indent || 0,
-): Logger {
-  return new LoggerImpl(task, emit, indent)
+export function getLogger(task?: string, indent?: number): Logger {
+  const context = currentContext()
+  const taskName = task === undefined ? (context?.taskName || '') : task
+  const indentLevel = indent === undefined ? (context?.log.indent || 0) : 0
+  return new LoggerImpl(taskName, emit, indentLevel)
 }
 
 /* ========================================================================== */
@@ -80,16 +78,16 @@ const _loggedFailures = new WeakSet<BuildFailure>()
 /** Default implementation of the {@link Logger} interface. */
 class LoggerImpl implements Logger {
   private readonly _stack: { level: LogLevel, message: string, indent: number }[] = []
-  private _level = _level
+  public level = _level
 
   constructor(
       private readonly _task: string,
       private readonly _emitter: LogEmitter,
-      private _indent: number,
+      public indent: number,
   ) {}
 
   private _emit(level: LogLevel, args: [ any, ...any ], taskName = this._task): void {
-    if (this._level > level) return
+    if (this.level > level) return
 
     // The `BuildFailure` is a bit special case
     const params = args.filter((arg) => {
@@ -119,7 +117,7 @@ class LoggerImpl implements Logger {
     if (params.length === 0) return
 
     // Prepare our options for logging
-    const options = { level, taskName, indent: this._indent }
+    const options = { level, taskName, indent: this.indent }
 
     // Dump any existing stack entry
     if (this._stack.length) {
@@ -131,18 +129,6 @@ class LoggerImpl implements Logger {
 
     // Emit our log lines and return
     this._emitter(options, params)
-  }
-
-  get level(): LogLevel {
-    return this._level
-  }
-
-  set level(level: LogLevel) {
-    this._level = level
-  }
-
-  get indent(): number {
-    return this._indent
   }
 
   trace(...args: [ any, ...any ]): void {
@@ -179,19 +165,19 @@ class LoggerImpl implements Logger {
   enter(...args: [] | [ level: LogLevel, message: string ]): void {
     if (args.length) {
       const [ level, message ] = args
-      this._stack.push({ level, message, indent: this._indent })
+      this._stack.push({ level, message, indent: this.indent })
     }
 
-    this._indent ++
+    this.indent ++
   }
 
   leave(): void
   leave(level: LogLevel, message: string): void
   leave(...args: [] | [ level: LogLevel, message: string ]): void {
     this._stack.pop()
-    this._indent --
+    this.indent --
 
-    if (this._indent < 0) this._indent = 0
+    if (this.indent < 0) this.indent = 0
 
     if (args.length) {
       const [ level, message ] = args
@@ -209,8 +195,8 @@ class LoggerImpl implements Logger {
       }
 
       let { indent = 0, prefix = '' } = options
-      prefix = this._indent ? $gry('| ') + prefix : prefix
-      indent += this._indent
+      prefix = this.indent ? $gry('| ') + prefix : prefix
+      indent += this.indent
       this._emitter({ ...options, indent, prefix }, args)
     }
     return new ReportImpl(title, this._task, emitter)

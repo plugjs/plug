@@ -29,8 +29,6 @@ export interface LogOptions {
   indentSize: number,
   /** Whether to show sources in reports or not. */
   showSources: boolean,
-  /** The task name to be used by default if a task is not contextualized. */
-  defaultTaskName: string,
   /** Whether GitHub annotations are enabled or not. */
   githubAnnotations: boolean,
 
@@ -68,7 +66,6 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   private _showSources = true // by default, always show source snippets
   private _githubAnnotations = false // ultimately set by the constructor
   private _inspectOptions: InspectOptions = {}
-  private _defaultTaskName = ''
   private _taskLength = 0
   private _indentSize = 2
 
@@ -109,6 +106,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   }
 
   forkEnv(taskName?: string): Record<string, string> {
+    void taskName
     return {
       __LOG_OPTIONS: JSON.stringify({
         level: this._level,
@@ -118,7 +116,6 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
         taskLength: this._taskLength,
         showSources: this._showSources,
         githubAnnotations: this.githubAnnotations,
-        defaultTaskName: taskName || this._defaultTaskName,
         indentSize: this.indentSize,
         spinner: false, // forked spinner is always false
       }),
@@ -209,15 +206,6 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
 
   set showSources(showSources: boolean) {
     this._showSources = showSources
-    this._notifyListeners()
-  }
-
-  get defaultTaskName(): string {
-    return this._defaultTaskName
-  }
-
-  set defaultTaskName(defaultTaskName: string) {
-    this._defaultTaskName = defaultTaskName
     this._notifyListeners()
   }
 

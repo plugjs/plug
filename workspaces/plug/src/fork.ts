@@ -39,6 +39,7 @@ export interface ForkData {
   filesDir: AbsolutePath,
   /** All files to pipe */
   filesList: AbsolutePath[],
+  logIndent: number,
 }
 
 /** Fork result, from child to parent process */
@@ -71,6 +72,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
       buildFile: context.buildFile,
       filesDir: files.directory,
       filesList: [ ...files.absolutePaths() ],
+      logIndent: context.log.indent,
     }
 
     /* Get _this_ filename to spawn */
@@ -211,6 +213,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
       buildFile,
       filesDir,
       filesList,
+      logIndent,
     } = message
 
     /* Before anything else, capture logs! */
@@ -218,6 +221,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
 
     /* First of all, our plug context */
     const context = new Context(buildFile, taskName)
+    context.log.indent = logIndent
     context.log.debug('Message from parent process for PID', process.pid, message)
 
     /* Contextualize this run, and go! */
