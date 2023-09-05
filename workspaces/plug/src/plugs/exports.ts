@@ -1,6 +1,7 @@
 import { EOL } from 'node:os'
 import { sep } from 'node:path'
 
+import { assert } from '../asserts'
 import { Files } from '../files'
 import { readFile, writeFile } from '../fs'
 import { $p } from '../logging'
@@ -76,7 +77,7 @@ install('exports', class Exports implements Plug<Files> {
       packageData.type === 'commonjs' ? 'commonjs' :
       packageData.type == null ? 'commonjs' :
       undefined
-    if (! type) context.log.fail(`Unknown module type "${packageData.type}" in ${$p(incomingFile)}`)
+    assert(type, `Unknown module type "${packageData.type}" in ${$p(incomingFile)}`)
 
     context.log.debug(`Package file ${$p(incomingFile)} declares module type "${type}"`)
 
@@ -84,9 +85,7 @@ install('exports', class Exports implements Plug<Files> {
     const esmExtension = this._esmExtension || (type === 'module' ? '.js' : '.mjs')
 
     // reject when commonjs and ecmascript modules have the same extension
-    if (cjsExtension === esmExtension) {
-      context.log.fail(`CommonJS and EcmaScript modules both resolve to same extension "${cjsExtension}"`)
-    }
+    assert(cjsExtension !== esmExtension, `CommonJS and EcmaScript modules both resolve to same extension "${cjsExtension}"`)
 
     const exports: ExportsDeclaration = {}
     function addExport(
