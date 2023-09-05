@@ -47,7 +47,7 @@ export interface Log {
 /** A {@link Logger} extends the basic {@link Log} adding some state. */
 export interface Logger extends Log {
   /** The current level for logging. */
-  readonly level: LogLevel,
+  level: LogLevel,
   /** The current indent level for logging. */
   readonly indent: number,
 
