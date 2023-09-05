@@ -91,7 +91,7 @@ class LoggerImpl implements Logger {
       private readonly _emitter: LogEmitter = emit,
   ) {}
 
-  private _emit(level: LogLevel, args: [ any, ...any ]): void {
+  private _emit(level: LogLevel, args: [ any, ...any ], taskName = this._task): void {
     if (this._level > level) return
 
     // The `BuildFailure` is a bit special case
@@ -122,7 +122,7 @@ class LoggerImpl implements Logger {
     if (params.length === 0) return
 
     // Prepare our options for logging
-    const options = { level, taskName: this._task, indent: this._indent }
+    const options = { level, taskName, indent: this._indent }
 
     // Dump any existing stack entry
     if (this._stack.length) {

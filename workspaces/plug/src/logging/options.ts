@@ -1,5 +1,4 @@
 import { EventEmitter } from 'node:events'
-import { Socket } from 'node:net'
 
 import { getSingleton } from '../utils/singleton'
 import { getLevelNumber, NOTICE } from './levels'
@@ -49,9 +48,8 @@ export interface LogOptions {
    * Return a record of environment variables for forking.
    *
    * @param taskName The default task name of the forked process
-   * @param logFd A file descriptor where logs should be sinked to
    */
-  forkEnv(taskName?: string, logFd?: number): Record<string, string>
+  forkEnv(taskName?: string): Record<string, string>
 }
 
 /* ========================================================================== *
@@ -102,12 +100,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
      * and it's processed _last_ as it's normally only created by fork below
      * and consumed by the `Exec` plug (which has no other way of communicating)
      */
-    const { fd, ...options } = JSON.parse(process.env.__LOG_OPTIONS || '{}')
-    if (fd) {
-      const output = new Socket({ fd, readable: false, writable: true }).unref()
-      process.on('beforeExit', () => output.end())
-      this._output = output
-    }
+    const options = JSON.parse(process.env.__LOG_OPTIONS || '{}')
     Object.assign(this, options)
   }
 
@@ -115,17 +108,19 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
     super.emit('changed', this)
   }
 
-  forkEnv(taskName?: string, fd?: number): Record<string, string> {
+  forkEnv(taskName?: string): Record<string, string> {
     return {
       __LOG_OPTIONS: JSON.stringify({
         level: this._level,
         colors: this._colors,
+        format: this._format,
         lineLength: this._lineLength,
         taskLength: this._taskLength,
+        showSources: this._showSources,
         githubAnnotations: this.githubAnnotations,
         defaultTaskName: taskName || this._defaultTaskName,
+        indentSize: this.indentSize,
         spinner: false, // forked spinner is always false
-        fd, // file descriptor for logs
       }),
     }
   }

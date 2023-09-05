@@ -4,9 +4,11 @@ import { assert, BuildFailure } from './asserts'
 import { runAsync } from './async'
 import { Files } from './files'
 import { $gry, $p, $red, logOptions } from './logging'
+import { emit, emitForked } from './logging/emit'
 import { requireFilename, resolveFile } from './paths'
 import { Context, install } from './pipe'
 
+import type { ForkedLogMessage } from './logging/emit'
 import type { AbsolutePath } from './paths'
 import type { Plug, PlugName, PlugResult } from './pipe'
 
@@ -76,7 +78,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
     context.log.debug('About to fork plug from', $p(this._scriptFile))
 
     /* Environment variables */
-    const env = { ...process.env, ...logOptions.forkEnv(context.taskName, 4) }
+    const env = { ...process.env, ...logOptions.forkEnv(context.taskName) }
 
     /* Check our args (reversed) to see if the last specifies `coverageDir` */
     for (let i = this._arguments.length - 1; i >= 0; i --) {
@@ -95,15 +97,11 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
 
     /* Run our script in a _separate_ process */
     const child = fork(script, {
-      stdio: [ 'ignore', 'inherit', 'inherit', 'ipc', 'pipe' ],
+      stdio: [ 'ignore', 'inherit', 'inherit', 'ipc' ],
       env,
     })
 
-    /* Pipe child logs directly to the writer */
-    if (child.stdio[4]) {
-      child.stdio[4].on('data', (data) => logOptions.output.write(data))
-    }
-
+    /* Do some logging... */
     context.log.info('Running', $p(script), $gry(`(pid=${child.pid})`))
 
     /* Return a promise from the child process events */
@@ -116,9 +114,18 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
         return done || reject(BuildFailure.fail())
       })
 
-      child.on('message', (message: ForkResult) => {
-        context.log.debug('Message from forked plug process with PID', child.pid, message)
-        response = message
+      child.on('message', (message: ForkResult | ForkedLogMessage) => {
+        if ('logLevel' in message) {
+          const { logLevel, taskName, lines } = message
+          lines.forEach((line) => {
+            // this is _a hack_, as we want to reuse the indent and prefix of
+            // the current log, but the task name from the forked plug!!!
+            (context.log as any)._emit(logLevel, [ line ], taskName)
+          })
+        } else {
+          context.log.debug('Message from forked plug process with PID', child.pid, message)
+          response = message
+        }
       })
 
       child.on('exit', (code, signal) => {
@@ -206,6 +213,9 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
       filesList,
     } = message
 
+    /* Before anything else, capture logs! */
+    emit.emitter = emitForked // replace the log emitter...
+
     /* First of all, our plug context */
     const context = new Context(buildFile, taskName)
     context.log.debug('Message from parent process for PID', process.pid, message)
@@ -260,11 +270,8 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
       console.error('\n\nError sending message back to parent process', error)
       process.exitCode = 1
     }).finally(() => {
-      /* Flush and end our log output */
-      logOptions.output.end(() => {
-        process.disconnect()
-        process.exit(process.exitCode)
-      })
+      process.disconnect()
+      process.exit(process.exitCode)
     })
   })
 }

@@ -134,6 +134,34 @@ export const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): 
 
 /* ========================================================================== */
 
+export interface ForkedLogMessage {
+  logLevel: LogLevel,
+  taskName: string,
+  lines: string[],
+}
+
+/** Emit to the parent process of a forked child, or to the default emitter */
+export const emitForked: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
+  if (process.connected && process.send) {
+    const { taskName, level, prefix = '', indent = 0 } = options
+    const linePrefix = ''.padStart(indent * _indentSize) + prefix
+
+    /* Now for the normal logging of all our parameters */
+    const breakLength = _lineLength - _taskLength - linePrefix.length - 20
+    const message = formatWithOptions({ ..._inspectOptions, breakLength }, ...args)
+
+    /* Format each individual line */
+    const lines = message.split('\n').map((line) => `${linePrefix}${line}`)
+
+    /* Send the message to the parent process */
+    process.send({ logLevel: level, taskName, lines })
+  } else {
+    _defaultEmitter(options, args)
+  }
+}
+
+/* ========================================================================== */
+
 /** The _default_ emitter (from `format`) */
 let _defaultEmitter =
   logOptions.format === 'fancy' ? emitFancy :
