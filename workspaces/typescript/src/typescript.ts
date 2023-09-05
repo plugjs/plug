@@ -4,7 +4,7 @@
 import { assert, assertPromises, BuildFailure } from '@plugjs/plug/asserts'
 import { Files } from '@plugjs/plug/files'
 import { $p } from '@plugjs/plug/logging'
-import { commonPath, resolveAbsolutePath, resolveFile } from '@plugjs/plug/paths'
+import { commonPath, getAbsoluteParent, resolveAbsolutePath, resolveFile } from '@plugjs/plug/paths'
 import { parseOptions, walk } from '@plugjs/plug/utils'
 import ts from 'typescript'
 
@@ -27,7 +27,8 @@ function defaultRootDir(paths: AbsolutePath[]): AbsolutePath {
   })
 
   assert(firstPath, 'No non-declaration files found to compile')
-  return commonPath(firstPath, ...restPaths)
+  if (restPaths.length) return commonPath(firstPath, ...restPaths)
+  return getAbsoluteParent(firstPath)
 }
 
 export class Tsc implements Plug<Files> {
