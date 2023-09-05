@@ -1,4 +1,4 @@
-import { assert } from './asserts'
+import { BuildFailure, assert } from './asserts'
 import { runAsync } from './async'
 import { $gry, $ms, $p, $plur, $t, NOTICE, getLogger, logOptions } from './logging'
 import { Context, ContextPromises, PipeImpl } from './pipe'
@@ -142,7 +142,8 @@ class TaskImpl<R extends Result> implements Task<R> {
       return result
     }).catch((error) => {
       state.fails.add(this)
-      throw context.log.fail(`Failure ${$ms(Date.now() - now)}`, error)
+      context.log.error(`Failure ${$ms(Date.now() - now)}`, error)
+      throw BuildFailure.fail()
     }).finally(async () => {
       await ContextPromises.wait(context)
     }).then(async (result) => {
