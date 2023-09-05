@@ -47,6 +47,7 @@ describe('TypeScript Compiler', () => {
   it('should compile some basic sources', async () => {
     const result = await find('**/*.ts', { directory: `${testDir}/data` })
         .plug(new Tsc({
+          rootDir: undefined,
           outDir: tempDir,
           noEmit: false,
           declaration: true,
@@ -99,6 +100,7 @@ describe('TypeScript Compiler', () => {
           outDir: tempDir,
           noEmit: false,
           declaration: false,
+          rootDir: undefined,
           rootDirs: [ `${testDir}/rootdirs/a`, `${testDir}/rootdirs/b` ],
         }))
 
