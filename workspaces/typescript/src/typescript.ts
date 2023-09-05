@@ -1,12 +1,12 @@
 // Reference ourselves, so that the constructor's parameters are correct
 /// <reference path="./index.ts"/>
 
-import ts from 'typescript' // TypeScript does NOT support ESM modules
-import { assertPromises, BuildFailure } from '@plugjs/plug/asserts'
+import { assert, assertPromises, BuildFailure } from '@plugjs/plug/asserts'
 import { Files } from '@plugjs/plug/files'
 import { $p } from '@plugjs/plug/logging'
 import { resolveAbsolutePath, resolveFile } from '@plugjs/plug/paths'
 import { parseOptions, walk } from '@plugjs/plug/utils'
+import ts from 'typescript'
 
 import { TypeScriptHost } from './compiler'
 import { getCompilerOptions } from './options'
@@ -32,6 +32,10 @@ export class Tsc implements Plug<Files> {
   }
 
   async pipe(files: Files, context: Context): Promise<Files> {
+    const [ firstFile, ...restFiles ] = files.absolutePaths()
+    assert(firstFile, 'No files found to compile')
+
+
     const baseDir = context.resolve('.') // "this" directory, base of all relative paths
     const report = context.log.report('TypeScript Report') // report used throughout
     const { extraTypesDir, ...overrides } = { ...this._options } // clone our options
@@ -74,7 +78,9 @@ export class Tsc implements Plug<Files> {
     /* We can now get our compiler options, and check any and all overrides */
     const { errors, options } = await getCompilerOptions(
         tsconfig, // resolved tsconfig.json from constructor, might be undefined
-        overrides) // overrides from constructor, might be an empty object
+        overrides,
+        [ firstFile, ...restFiles ],
+    ) // overrides from constructor, might be an empty object
 
     /* Update report and fail on errors */
     updateReport(report, errors, baseDir)
