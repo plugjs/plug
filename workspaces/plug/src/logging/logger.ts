@@ -47,7 +47,9 @@ export interface Log {
 /** A {@link Logger} extends the basic {@link Log} adding some state. */
 export interface Logger extends Log {
   /** The current level for logging. */
-  level: LogLevel,
+  readonly level: LogLevel,
+  /** The current indent level for logging. */
+  readonly indent: number,
 
   /** Enter a sub-level of logging, increasing indent */
   enter(): void
@@ -140,6 +142,10 @@ class LoggerImpl implements Logger {
 
   set level(level: LogLevel) {
     this._level = level
+  }
+
+  get indent(): number {
+    return this._indent
   }
 
   trace(...args: [ any, ...any ]): void {
