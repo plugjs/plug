@@ -23,7 +23,7 @@ import type { ExtendedCompilerOptions } from './index'
 
 function defaultRootDir(paths: AbsolutePath[]): AbsolutePath {
   const [ firstPath, ...restPaths ] = paths.filter((path) => {
-    return ! path.match(/\.d\.[mc]ts$/i)
+    return ! path.match(/\.d\.[mc]?ts$/i)
   })
 
   assert(firstPath, 'No non-declaration files found to compile')
