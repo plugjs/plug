@@ -32,7 +32,7 @@ describe('Logger', () => {
 
     try {
       const taskName = 'test' + Math.floor(Math.random() * 1000000)
-      const log = getLogger(taskName)
+      const log = getLogger(taskName, 0)
       log.error(failure)
       log.error(failure)
       log.error(failure)
@@ -78,7 +78,7 @@ describe('Logger', () => {
 
     try {
       const taskName = 'test' + Math.floor(Math.random() * 1000000)
-      const log = getLogger(taskName)
+      const log = getLogger(taskName, 0)
       log.error(failure)
 
       const lines: string[] = string.replaceAll(zapSpinner, '')
@@ -120,7 +120,7 @@ describe('Logger', () => {
 
     try {
       const taskName = 'test' + Math.floor(Math.random() * 1000000)
-      const log = getLogger(taskName)
+      const log = getLogger(taskName, 0)
       log.notice('First')
       log.enter(logLevels.NOTICE, 'Second')
       log.notice('Third')

@@ -1,6 +1,7 @@
 import { formatWithOptions } from 'node:util'
 
 import { BuildFailure } from '../asserts'
+import { currentContext } from '../async'
 import { $gry } from './colors'
 import { emit } from './emit'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
@@ -64,19 +65,15 @@ export interface Logger extends Log {
 }
 
 /** Return a {@link Logger} associated with the specified task name. */
-export function getLogger(task: string = _defaultTaskName): Logger {
-  let logger = _loggers.get(task)
-  if (! logger) {
-    logger = new LoggerImpl(task)
-    _loggers.set(task, logger)
-  }
-  return logger
+export function getLogger(
+    task: string = _defaultTaskName,
+    indent: number = currentContext()?.log.indent || 0,
+): Logger {
+  return new LoggerImpl(task, emit, indent)
 }
 
 /* ========================================================================== */
 
-/** Cache of loggers by task-name. */
-const _loggers = new Map<string, Logger>()
 /** Weak set of already logged build failures */
 const _loggedFailures = new WeakSet<BuildFailure>()
 
@@ -84,11 +81,11 @@ const _loggedFailures = new WeakSet<BuildFailure>()
 class LoggerImpl implements Logger {
   private readonly _stack: { level: LogLevel, message: string, indent: number }[] = []
   private _level = _level
-  private _indent = 0
 
   constructor(
       private readonly _task: string,
-      private readonly _emitter: LogEmitter = emit,
+      private readonly _emitter: LogEmitter,
+      private _indent: number,
   ) {}
 
   private _emit(level: LogLevel, args: [ any, ...any ], taskName = this._task): void {
@@ -227,7 +224,7 @@ const ansiPattern = '[\\u001b\\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-
 /** Regular expression matching ANSI */
 const ansiRegExp = new RegExp(ansiPattern, 'g')
 
-/** A test logger, writing to a buffer always _without_ colors */
+/** A test logger, writing to a buffer always _without_ colors/indent */
 export class TestLogger extends LoggerImpl {
   private _lines: string[] = []
 
@@ -242,7 +239,7 @@ export class TestLogger extends LoggerImpl {
             const stripped = line.replaceAll(ansiRegExp, '')
             this._lines.push(`${linePrefix}${stripped}`)
           })
-    })
+    }, 0)
   }
 
   /** Return the _current_ buffer for this instance */
