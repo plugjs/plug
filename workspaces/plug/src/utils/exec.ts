@@ -3,7 +3,7 @@ import path from 'node:path'
 import readline from 'node:readline'
 
 import { assert, BuildFailure } from '../asserts'
-import { $p } from '../logging'
+import { $p, logOptions } from '../logging'
 import { getCurrentWorkingDirectory, resolveDirectory } from '../paths'
 
 import type { SpawnOptions } from 'node:child_process'
@@ -56,7 +56,12 @@ export async function execChild(
 
   // Build our environment variables record
   const PATH = childPaths.join(path.delimiter)
-  const childEnv: Record<string, string> = { ...process.env, ...env, PATH }
+  const childEnv: Record<string, string> = {
+    ...process.env, // environment from current running process
+    ...env, // environment configured from "execChild" arguments
+    ...logOptions.forkEnv(), // forked log options for child plugjs
+    PATH, // path with all ".../node_modules/.bin" directories
+  }
 
   // Instrument coverage directory if needed
   if (coverageDir) childEnv.NODE_V8_COVERAGE = context.resolve(coverageDir)
