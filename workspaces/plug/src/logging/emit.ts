@@ -22,7 +22,7 @@ logOptions.on('changed', (options) => {
   _taskLength = options.taskLength
   _lineLength = options.lineLength
   _inspectOptions = { ...options.inspectOptions } // proxy
-  _emitter =
+  _defaultEmitter =
     options.format === 'fancy' ? emitFancy :
     options.format === 'plain' ? emitPlain :
     fail(`Invalid log format "${logOptions.format}"`)
@@ -42,6 +42,12 @@ export interface LogEmitterOptions {
 
 /** Emit a line (or multiple lines) of text to the log */
 export type LogEmitter = (options: LogEmitterOptions, args: any[]) => void
+
+/** A {@link LogEmitter} function configurable with a specific emitter */
+export interface ConfigurableLogEmitter extends LogEmitter {
+  get emitter(): LogEmitter
+  set emitter(emitter: LogEmitter | undefined)
+}
 
 /* ========================================================================== */
 
@@ -128,11 +134,24 @@ const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): void =>
 
 /* ========================================================================== */
 
-let _emitter =
+/** The _default_ emitter (from `format`) */
+let _defaultEmitter =
   logOptions.format === 'fancy' ? emitFancy :
   logOptions.format === 'plain' ? emitPlain :
   fail(`Invalid log format "${logOptions.format}"`)
 
-export const emit: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
-  _emitter(options, args)
+/** The _actual_ emitter (either default or configured) */
+let _emitter = _defaultEmitter
+
+/** Our `emit` wrapper function to export */
+const wrapper: LogEmitter = function emit(options: LogEmitterOptions, args: any[]): void {
+  _defaultEmitter(options, args)
 }
+
+/** A _configurable_ {@link LogEmitter} where log should be emitted to */
+export const emit = Object.defineProperty(wrapper, 'emitter', {
+  get: () => _emitter,
+  set: (emitter: LogEmitter | undefined) => {
+    _emitter = emitter || _defaultEmitter
+  },
+}) as ConfigurableLogEmitter
