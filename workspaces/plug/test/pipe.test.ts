@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { BuildFailure } from '../src/asserts'
 import { requireContext } from '../src/async'
 import { Files } from '../src/files'
-import { build, noop } from '../src/index'
+import { noop, plugjs } from '../src/index'
 import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../src/paths'
 import { Context, PipeImpl, install } from '../src/pipe'
 
@@ -136,7 +136,7 @@ describe('Pipes and Context', () => {
       }
     }
 
-    const tasks = build({
+    const tasks = plugjs({
       async _test1() {
         const pipe1 = noop()
         expect((<any> pipe1).__my_plug__).toBeUndefined()
