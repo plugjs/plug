@@ -13,8 +13,8 @@ const ansiRegExp = new RegExp([
 
 /* Initial values, and subscribe to changes */
 let _output = logOptions.output
-let _inspectOptions = logOptions.inspectOptions
 let _githubAnnotations = logOptions.githubAnnotations
+let _inspectOptions = { ...logOptions.inspectOptions, breakLength: Infinity }
 logOptions.on('changed', (options) => {
   _output = options.output
   _githubAnnotations = options.githubAnnotations

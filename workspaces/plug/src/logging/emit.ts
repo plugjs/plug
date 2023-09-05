@@ -14,13 +14,13 @@ let _output = logOptions.output
 let _indentSize = logOptions.indentSize
 let _taskLength = logOptions.taskLength
 let _lineLength = logOptions.lineLength
-let _inspectOptions = logOptions.inspectOptions
+let _inspectOptions = { ...logOptions.inspectOptions }
 logOptions.on('changed', (options) => {
   _output = options.output
   _indentSize = options.indentSize
   _taskLength = options.taskLength
   _lineLength = options.lineLength
-  _inspectOptions = options.inspectOptions
+  _inspectOptions = { ...options.inspectOptions } // proxy
 })
 
 /* ========================================================================== *

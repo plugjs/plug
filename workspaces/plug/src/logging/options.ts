@@ -34,11 +34,9 @@ export interface LogOptions {
   defaultTaskName: string,
   /** Whether GitHub annotations are enabled or not. */
   githubAnnotations: boolean,
+
   /** The options used by NodeJS for object inspection. */
   readonly inspectOptions: InspectOptions,
-
-  /** Set an inspect option in {@link LogOptions.inspectOptions}). */
-  setInspectOption<K extends keyof InspectOptions>(key: K, value: InspectOptions[K]): void
 
   /** Add an event listener for the specified event. */
   on(eventName: 'changed', listener: (logOptions: this) => void): this;
@@ -159,6 +157,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   set colors(color: boolean) {
     this._colors = color
     this._colorsSet = true
+    this._inspectOptions.colors = color
     this._notifyListeners()
   }
 
@@ -237,16 +236,26 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   }
 
   get inspectOptions(): InspectOptions {
-    return {
-      colors: this._colors,
-      breakLength: this._lineLength,
-      ...this._inspectOptions,
-    }
-  }
-
-  setInspectOption<K extends keyof InspectOptions>(key: K, value: InspectOptions[K]): void {
-    this._inspectOptions[key] = value
-    this._notifyListeners()
+    return new Proxy(this.inspectOptions, {
+      get: (target, prop): any => {
+        if (prop === 'colors') return this.colors
+        if (prop === 'breakLength') return this._lineLength
+        return (target as any)[prop]
+      },
+      set: (target, prop, value): boolean => {
+        if (prop === 'colors') {
+          this.colors = !! value
+        } else if (prop === 'breakLength') {
+          const length = parseInt(value)
+          if (isNaN(length)) return false
+          this.lineLength = length
+        } else {
+          (target as any)[prop] = value
+        }
+        this._notifyListeners()
+        return true
+      },
+    })
   }
 }
 
