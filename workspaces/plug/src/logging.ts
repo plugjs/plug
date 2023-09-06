@@ -83,7 +83,7 @@ export function banner(message: string): void {
   log.notice([
     '',
     $gry(`\u2554${''.padStart(padLines, '\u2550')}\u2557`),
-    `${$gry('\u2551')} ${$wht(message)}${''.padEnd(padBlank, ' ')} ${$gry('\u2551')} ${length}`,
+    `${$gry('\u2551')} ${$wht(message)}${''.padEnd(padBlank, ' ')} ${$gry('\u2551')}`,
     $gry(`\u255A${''.padStart(padLines, '\u2550')}\u255D`),
     '',
   ].join('\n'))
