@@ -2,6 +2,7 @@ import { currentContext } from './async'
 import { $gry, $wht } from './logging/colors'
 import { getLogger } from './logging/logger'
 import { setupSpinner } from './logging/spinner'
+import { stripAnsi } from './utils/ansi'
 
 import type { Log, Logger } from './logging/logger'
 
@@ -75,13 +76,14 @@ export const log: LogFunction = ((): LogFunction => {
 
 /** Print a nice _banner_ message on the log */
 export function banner(message: string): void {
-  const padMessage = message.length > 60 ? message.length : 60
-  const padLines = padMessage + 2
+  const length = stripAnsi(message).length
+  const padLines = length > 60 ? length + 2 : 62
+  const padBlank = length > 60 ? 0 : 60 - length
 
   log.notice([
     '',
     $gry(`\u2554${''.padStart(padLines, '\u2550')}\u2557`),
-    `${$gry('\u2551')} ${$wht(message.padEnd(padMessage, ' '))} ${$gry('\u2551')}`,
+    `${$gry('\u2551')} ${$wht(message)}${''.padEnd(padBlank, ' ')} ${$gry('\u2551')} ${length}`,
     $gry(`\u255A${''.padStart(padLines, '\u2550')}\u255D`),
     '',
   ].join('\n'))

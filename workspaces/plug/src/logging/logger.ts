@@ -2,6 +2,7 @@ import { formatWithOptions } from 'node:util'
 
 import { BuildFailure } from '../asserts'
 import { currentContext } from '../async'
+import { stripAnsi } from '../utils/ansi'
 import { $gry } from './colors'
 import { emit } from './emit'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
@@ -205,11 +206,6 @@ class LoggerImpl implements Logger {
 
 /* ========================================================================== */
 
-/** Pattern to match ANSI expressions */
-const ansiPattern = '[\\u001b\\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]'
-/** Regular expression matching ANSI */
-const ansiRegExp = new RegExp(ansiPattern, 'g')
-
 /** A test logger, writing to a buffer always _without_ colors/indent */
 export class TestLogger extends LoggerImpl {
   private _lines: string[] = []
@@ -222,7 +218,7 @@ export class TestLogger extends LoggerImpl {
       /* Now for the normal logging of all our parameters */
       formatWithOptions({ colors: false, breakLength: 120 }, ...args)
           .split('\n').forEach((line) => {
-            const stripped = line.replaceAll(ansiRegExp, '')
+            const stripped = stripAnsi(line)
             this._lines.push(`${linePrefix}${stripped}`)
           })
     }, 0)
