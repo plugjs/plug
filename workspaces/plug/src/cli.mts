@@ -7,13 +7,16 @@ import _fs from 'node:fs'
 import { main, yargsParser } from '@plugjs/tsrun'
 
 import { BuildFailure } from './asserts'
+import { runAsync } from './async'
 import { invokeTasks, isBuild } from './build'
 import { $blu, $gry, $p, $red, $t, $und, $wht } from './logging/colors'
 import { logLevels } from './logging/levels'
 import { logOptions } from './logging/options'
 import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from './paths'
+import { Context } from './pipe'
 
 import type { AbsolutePath } from './paths'
+import type { Build } from './types'
 
 /* Log levels */
 const { TRACE, DEBUG, INFO, NOTICE, WARN, ERROR, OFF } = logLevels
@@ -258,11 +261,14 @@ main(import.meta.url, async (args: string[]): Promise<void> => {
   if (tasks.length === 0) tasks.push('default')
 
   // Import and check build file
-  let maybeBuild = await import(buildFile)
-  while (maybeBuild) {
-    if (isBuild(maybeBuild)) break
-    maybeBuild = maybeBuild.default
-  }
+  const initialContext = new Context(buildFile, '')
+  const maybeBuild = await runAsync(initialContext, async (): Promise<Build | void> => {
+    let maybeBuild = await import(buildFile)
+    while (maybeBuild) {
+      if (isBuild(maybeBuild)) return maybeBuild
+      maybeBuild = maybeBuild.default
+    }
+  })
 
   // We _need_ a build
   if (! isBuild(maybeBuild)) {
