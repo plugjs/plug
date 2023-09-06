@@ -1,5 +1,5 @@
-import ts from 'typescript' // TypeScript does NOT support ESM modules
 import { resolveAbsolutePath } from '@plugjs/plug/paths'
+import ts from 'typescript'
 
 import type { AbsolutePath } from '@plugjs/plug/paths'
 

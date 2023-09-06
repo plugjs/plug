@@ -2,13 +2,13 @@ import { Files } from '@plugjs/plug'
 
 import { BuildFailure } from '../src/asserts'
 import { currentContext, requireContext, runningTasks } from '../src/async'
-import { build, hookAfter, hookBefore, invokeTasks, isBuild } from '../src/build'
+import { hookAfter, hookBefore, invokeTasks, isBuild, plugjs } from '../src/build'
 
 describe('Build Invocation', () => {
   it('should invoke a build', async () => {
     let propValue: string | undefined
 
-    const tasks = build({
+    const tasks = plugjs({
       myProp: 'this is the default',
       _myTask() {
         propValue = this.myProp
@@ -28,7 +28,7 @@ describe('Build Invocation', () => {
   it('should invoke a build overriding its properties', async () => {
     let propValue: string | undefined
 
-    const tasks = build({
+    const tasks = plugjs({
       myProp: 'this is the default',
       _myTask() {
         propValue = this.myProp
@@ -45,7 +45,7 @@ describe('Build Invocation', () => {
   })
 
   it('should return the correct types invoking tasks', async () => {
-    const tasks = build({
+    const tasks = plugjs({
       _void: () => void 0,
       _files: () => new Files(),
     })
@@ -63,7 +63,7 @@ describe('Build Invocation', () => {
     let secondCalls = 0
     let defaultCalls = 0
 
-    const tasks = build({
+    const tasks = plugjs({
       _cached() {
         cachedCalls ++
       },
@@ -92,12 +92,12 @@ describe('Build Invocation', () => {
   it('should merge two builds', async () => {
     const calls: string[] = []
 
-    const tasks1 = build({
+    const tasks1 = plugjs({
       _myTask1: () => void calls.push('original myTask1'),
       _myTask2: () => void calls.push('original myTask2'),
     })
 
-    const tasks2 = build({
+    const tasks2 = plugjs({
       ...tasks1,
       async _myTask2() {
         await this._myTask1()
@@ -115,7 +115,7 @@ describe('Build Invocation', () => {
   it('should override a task', async () => {
     const calls: string[] = []
 
-    const tasks1 = build({
+    const tasks1 = plugjs({
       async _caller() {
         calls.push('from the caller invoking the callee')
         await this._callee()
@@ -125,7 +125,7 @@ describe('Build Invocation', () => {
       },
     })
 
-    const tasks2 = build({
+    const tasks2 = plugjs({
       ...tasks1,
       async _callee() {
         void calls.push('from the overridden callee')
@@ -159,7 +159,7 @@ describe('Build Invocation', () => {
     let after2Calls = 0
     let after3Calls = 0
 
-    const tasks = build({
+    const tasks = plugjs({
       _task: () => void (taskCalls ++, calls.push('_task')),
       _before1: () => void (before1Calls ++, calls.push('_before1')),
       _before2: () => void (before2Calls ++, calls.push('_before2')),
@@ -198,21 +198,21 @@ describe('Build Invocation', () => {
   })
 
   it('should fail with an invalid task name', async () => {
-    const tasks = build({ myTask: () => void 0 })
+    const tasks = plugjs({ myTask: () => void 0 })
 
     await expect(invokeTasks(tasks, [ 'wrongTask' as any ]))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
   it('should fail when a task fails', async () => {
-    const tasks = build({ myTask: () => Promise.reject(new Error('Foo!')) })
+    const tasks = plugjs({ myTask: () => Promise.reject(new Error('Foo!')) })
 
     await expect(invokeTasks(tasks, [ 'myTask' ]))
         .toBeRejectedWithError(BuildFailure, '')
   })
 
   it('should detect recursion between tasks', async () => {
-    const tasks = build({
+    const tasks = plugjs({
       async task1() {
         void await this.task2()
       },
@@ -231,7 +231,7 @@ describe('Build Invocation', () => {
   it('should fail and not run a task when a before hook fails', async () => {
     let taskCalls = 0
 
-    const tasks = build({
+    const tasks = plugjs({
       hook: () => Promise.reject(new Error('Nope!')),
       task: () => void taskCalls++,
     })
@@ -247,7 +247,7 @@ describe('Build Invocation', () => {
     let taskCalls = 0
     let defaultCalls = 0
 
-    const tasks = build({
+    const tasks = plugjs({
       hook: () => Promise.reject(new Error('Nope!')),
       task: () => void taskCalls++,
       async default() {
@@ -265,7 +265,7 @@ describe('Build Invocation', () => {
   })
 
   it('should detect recursion between before hooks', async () => {
-    const tasks = build({
+    const tasks = plugjs({
       _task1: () => void 0,
       _task2: () => void 0,
       _task3: () => void 0,
@@ -280,7 +280,7 @@ describe('Build Invocation', () => {
   })
 
   it('should detect recursion between after hooks', async () => {
-    const tasks = build({
+    const tasks = plugjs({
       _task1: () => void 0,
       _task2: () => void 0,
       _task3: () => void 0,

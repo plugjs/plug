@@ -1,6 +1,6 @@
-import { assert } from './asserts'
+import { BuildFailure, assert } from './asserts'
 import { runAsync } from './async'
-import { $gry, $ms, $p, $plur, $t, NOTICE, getLogger, logOptions } from './logging'
+import { $grn, $gry, $ms, $p, $plur, $t, $ylw, NOTICE, getLogger, log, logOptions } from './logging'
 import { Context, ContextPromises, PipeImpl } from './pipe'
 import { findCaller } from './utils/caller'
 import { getSingleton } from './utils/singleton'
@@ -142,7 +142,8 @@ class TaskImpl<R extends Result> implements Task<R> {
       return result
     }).catch((error) => {
       state.fails.add(this)
-      throw context.log.fail(`Failure ${$ms(Date.now() - now)}`, error)
+      context.log.error(`Failure ${$ms(Date.now() - now)}`, error)
+      throw BuildFailure.fail()
     }).finally(async () => {
       await ContextPromises.wait(context)
     }).then(async (result) => {
@@ -161,10 +162,10 @@ class TaskImpl<R extends Result> implements Task<R> {
  * ========================================================================== */
 
 /** Compile a {@link BuildDef | build definition} into a {@link Build} */
-export function build<
+export function plugjs<
   D extends BuildDef, B extends ThisBuild<D>
 >(def: D & ThisType<B>): Build<D> {
-  const buildFile = findCaller(build)
+  const buildFile = findCaller(plugjs)
   const tasks: Record<string, Task> = {}
   const props: Record<string, string> = {}
 
@@ -247,6 +248,14 @@ export function build<
   const compiled = merge(props, callables)
   Object.defineProperty(compiled, buildMarker, { value: invoke })
   return compiled as Build<D>
+}
+
+/** @deprecated Please use the new {@link plugjs} export */
+export const build: typeof plugjs = function<
+  D extends BuildDef, B extends ThisBuild<D>
+>(def: D & ThisType<B>): Build<D> {
+  log.warn(`Use of deprecated ${$ylw('build')} entry point, please use ${$grn('plugjs')}`)
+  return plugjs(def)
 }
 
 /** Check if the specified build is actually a {@link Build} */

@@ -1,9 +1,11 @@
-import { build, find, invokeTasks, type Files, type Pipe } from '@plugjs/plug'
+import { find, invokeTasks, plugjs } from '@plugjs/plug'
 import { expectAssignable, expectError, expectType, printType } from 'tsd'
+
+import type { Files, Pipe } from '@plugjs/plug'
 
 printType('__file_marker__')
 
-const tasks = build({
+const tasks = plugjs({
   prop_a: 'prop a',
   prop_b: 'prop b',
 

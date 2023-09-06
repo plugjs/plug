@@ -1,13 +1,13 @@
 import { Expectations } from './expectations'
 import { isMatcher } from './types'
 
-import type { Matcher } from './matchers'
 import type {
-  AssertionFunction,
   AssertedType,
-  InferToEqual,
+  AssertionFunction,
   InferMatcher,
+  InferToEqual,
 } from './expectations'
+import type { Matcher } from './matchers'
 import type { Constructor } from './types'
 
 

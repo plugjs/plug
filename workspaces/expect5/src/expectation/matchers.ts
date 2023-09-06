@@ -1,7 +1,8 @@
 import { Expectations } from './expectations'
 import { matcherMarker } from './types'
 
-import type { AssertedType,
+import type {
+  AssertedType,
   AssertionFunction,
   ExpectationsParent,
   InferMatcher,

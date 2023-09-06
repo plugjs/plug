@@ -1,5 +1,4 @@
 import { EventEmitter } from 'node:events'
-import { Socket } from 'node:net'
 
 import { getSingleton } from '../utils/singleton'
 import { getLevelNumber, NOTICE } from './levels'
@@ -30,15 +29,11 @@ export interface LogOptions {
   indentSize: number,
   /** Whether to show sources in reports or not. */
   showSources: boolean,
-  /** The task name to be used by default if a task is not contextualized. */
-  defaultTaskName: string,
   /** Whether GitHub annotations are enabled or not. */
   githubAnnotations: boolean,
+
   /** The options used by NodeJS for object inspection. */
   readonly inspectOptions: InspectOptions,
-
-  /** Set an inspect option in {@link LogOptions.inspectOptions}). */
-  setInspectOption<K extends keyof InspectOptions>(key: K, value: InspectOptions[K]): void
 
   /** Add an event listener for the specified event. */
   on(eventName: 'changed', listener: (logOptions: this) => void): this;
@@ -51,9 +46,8 @@ export interface LogOptions {
    * Return a record of environment variables for forking.
    *
    * @param taskName The default task name of the forked process
-   * @param logFd A file descriptor where logs should be sinked to
    */
-  forkEnv(taskName?: string, logFd?: number): Record<string, string>
+  forkEnv(taskName?: string): Record<string, string>
 }
 
 /* ========================================================================== *
@@ -72,7 +66,6 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   private _showSources = true // by default, always show source snippets
   private _githubAnnotations = false // ultimately set by the constructor
   private _inspectOptions: InspectOptions = {}
-  private _defaultTaskName = ''
   private _taskLength = 0
   private _indentSize = 2
 
@@ -104,12 +97,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
      * and it's processed _last_ as it's normally only created by fork below
      * and consumed by the `Exec` plug (which has no other way of communicating)
      */
-    const { fd, ...options } = JSON.parse(process.env.__LOG_OPTIONS || '{}')
-    if (fd) {
-      const output = new Socket({ fd, readable: false, writable: true }).unref()
-      process.on('beforeExit', () => output.end())
-      this._output = output
-    }
+    const options = JSON.parse(process.env.__LOG_OPTIONS || '{}')
     Object.assign(this, options)
   }
 
@@ -117,17 +105,19 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
     super.emit('changed', this)
   }
 
-  forkEnv(taskName?: string, fd?: number): Record<string, string> {
+  forkEnv(taskName?: string): Record<string, string> {
+    void taskName
     return {
       __LOG_OPTIONS: JSON.stringify({
         level: this._level,
         colors: this._colors,
+        format: this._format,
         lineLength: this._lineLength,
         taskLength: this._taskLength,
+        showSources: this._showSources,
         githubAnnotations: this.githubAnnotations,
-        defaultTaskName: taskName || this._defaultTaskName,
+        indentSize: this.indentSize,
         spinner: false, // forked spinner is always false
-        fd, // file descriptor for logs
       }),
     }
   }
@@ -159,6 +149,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   set colors(color: boolean) {
     this._colors = color
     this._colorsSet = true
+    this._inspectOptions.colors = color
     this._notifyListeners()
   }
 
@@ -218,15 +209,6 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
     this._notifyListeners()
   }
 
-  get defaultTaskName(): string {
-    return this._defaultTaskName
-  }
-
-  set defaultTaskName(defaultTaskName: string) {
-    this._defaultTaskName = defaultTaskName
-    this._notifyListeners()
-  }
-
   get githubAnnotations(): boolean {
     return this._githubAnnotations
   }
@@ -237,16 +219,26 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   }
 
   get inspectOptions(): InspectOptions {
-    return {
-      colors: this._colors,
-      breakLength: this._lineLength,
-      ...this._inspectOptions,
-    }
-  }
-
-  setInspectOption<K extends keyof InspectOptions>(key: K, value: InspectOptions[K]): void {
-    this._inspectOptions[key] = value
-    this._notifyListeners()
+    return new Proxy(this._inspectOptions, {
+      get: (target, prop): any => {
+        if (prop === 'colors') return this.colors
+        if (prop === 'breakLength') return this._lineLength
+        return (target as any)[prop]
+      },
+      set: (target, prop, value): boolean => {
+        if (prop === 'colors') {
+          this.colors = !! value
+        } else if (prop === 'breakLength') {
+          const length = parseInt(value)
+          if (isNaN(length)) return false
+          this.lineLength = length
+        } else {
+          (target as any)[prop] = value
+        }
+        this._notifyListeners()
+        return true
+      },
+    })
   }
 }
 

@@ -1,8 +1,10 @@
 import { formatWithOptions } from 'node:util'
 
 import { BuildFailure } from '../asserts'
+import { currentContext } from '../async'
+import { stripAnsi } from '../utils/ansi'
 import { $gry } from './colors'
-import { emitFancy, emitPlain } from './emit'
+import { emit } from './emit'
 import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
 import { ReportImpl } from './report'
@@ -16,11 +18,7 @@ import type { Report } from './report'
 
 /* Initial value of log colors, and subscribe to changes */
 let _level = logOptions.level
-let _format = logOptions.format
-let _defaultTaskName = logOptions.defaultTaskName
-logOptions.on('changed', ({ defaultTaskName, format, level }) => {
-  _defaultTaskName = defaultTaskName
-  _format = format
+logOptions.on('changed', ({ level }) => {
   _level = level
 })
 
@@ -50,6 +48,8 @@ export interface Log {
 export interface Logger extends Log {
   /** The current level for logging. */
   level: LogLevel,
+  /** The current indent level for logging. */
+  indent: number,
 
   /** Enter a sub-level of logging, increasing indent */
   enter(): void
@@ -64,36 +64,31 @@ export interface Logger extends Log {
 }
 
 /** Return a {@link Logger} associated with the specified task name. */
-export function getLogger(task: string = _defaultTaskName): Logger {
-  let logger = _loggers.get(task)
-  if (! logger) {
-    const emitter = _format === 'fancy' ? emitFancy : emitPlain
-    logger = new LoggerImpl(task, emitter)
-    _loggers.set(task, logger)
-  }
-  return logger
+export function getLogger(task?: string, indent?: number): Logger {
+  const context = currentContext()
+  const taskName = task === undefined ? (context?.taskName || '') : task
+  const indentLevel = indent === undefined ? (context?.log.indent || 0) : 0
+  return new LoggerImpl(taskName, emit, indentLevel)
 }
 
 /* ========================================================================== */
 
-/** Cache of loggers by task-name. */
-const _loggers = new Map<string, Logger>()
 /** Weak set of already logged build failures */
 const _loggedFailures = new WeakSet<BuildFailure>()
 
 /** Default implementation of the {@link Logger} interface. */
 class LoggerImpl implements Logger {
   private readonly _stack: { level: LogLevel, message: string, indent: number }[] = []
-  private _level = _level
-  private _indent = 0
+  public level = _level
 
   constructor(
       private readonly _task: string,
       private readonly _emitter: LogEmitter,
+      public indent: number,
   ) {}
 
-  private _emit(level: LogLevel, args: [ any, ...any ]): void {
-    if (this._level > level) return
+  private _emit(level: LogLevel, args: [ any, ...any ], taskName = this._task): void {
+    if (this.level > level) return
 
     // The `BuildFailure` is a bit special case
     const params = args.filter((arg) => {
@@ -123,7 +118,7 @@ class LoggerImpl implements Logger {
     if (params.length === 0) return
 
     // Prepare our options for logging
-    const options = { level, taskName: this._task, indent: this._indent }
+    const options = { level, taskName, indent: this.indent }
 
     // Dump any existing stack entry
     if (this._stack.length) {
@@ -135,14 +130,6 @@ class LoggerImpl implements Logger {
 
     // Emit our log lines and return
     this._emitter(options, params)
-  }
-
-  get level(): LogLevel {
-    return this._level
-  }
-
-  set level(level: LogLevel) {
-    this._level = level
   }
 
   trace(...args: [ any, ...any ]): void {
@@ -179,19 +166,19 @@ class LoggerImpl implements Logger {
   enter(...args: [] | [ level: LogLevel, message: string ]): void {
     if (args.length) {
       const [ level, message ] = args
-      this._stack.push({ level, message, indent: this._indent })
+      this._stack.push({ level, message, indent: this.indent })
     }
 
-    this._indent ++
+    this.indent ++
   }
 
   leave(): void
   leave(level: LogLevel, message: string): void
   leave(...args: [] | [ level: LogLevel, message: string ]): void {
     this._stack.pop()
-    this._indent --
+    this.indent --
 
-    if (this._indent < 0) this._indent = 0
+    if (this.indent < 0) this.indent = 0
 
     if (args.length) {
       const [ level, message ] = args
@@ -209,8 +196,8 @@ class LoggerImpl implements Logger {
       }
 
       let { indent = 0, prefix = '' } = options
-      prefix = this._indent ? $gry('| ') + prefix : prefix
-      indent += this._indent
+      prefix = this.indent ? $gry('| ') + prefix : prefix
+      indent += this.indent
       this._emitter({ ...options, indent, prefix }, args)
     }
     return new ReportImpl(title, this._task, emitter)
@@ -219,12 +206,7 @@ class LoggerImpl implements Logger {
 
 /* ========================================================================== */
 
-/** Pattern to match ANSI expressions */
-const ansiPattern = '[\\u001b\\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]'
-/** Regular expression matching ANSI */
-const ansiRegExp = new RegExp(ansiPattern, 'g')
-
-/** A test logger, writing to a buffer always _without_ colors */
+/** A test logger, writing to a buffer always _without_ colors/indent */
 export class TestLogger extends LoggerImpl {
   private _lines: string[] = []
 
@@ -236,10 +218,10 @@ export class TestLogger extends LoggerImpl {
       /* Now for the normal logging of all our parameters */
       formatWithOptions({ colors: false, breakLength: 120 }, ...args)
           .split('\n').forEach((line) => {
-            const stripped = line.replaceAll(ansiRegExp, '')
+            const stripped = stripAnsi(line)
             this._lines.push(`${linePrefix}${stripped}`)
           })
-    })
+    }, 0)
   }
 
   /** Return the _current_ buffer for this instance */

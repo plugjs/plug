@@ -1,5 +1,6 @@
 import { formatWithOptions } from 'node:util'
 
+import { fail } from '../asserts'
 import { $blu, $grn, $gry, $red, $t, $ylw } from './colors'
 import { DEBUG, INFO, NOTICE, TRACE, WARN } from './levels'
 import { logOptions } from './options'
@@ -14,13 +15,17 @@ let _output = logOptions.output
 let _indentSize = logOptions.indentSize
 let _taskLength = logOptions.taskLength
 let _lineLength = logOptions.lineLength
-let _inspectOptions = logOptions.inspectOptions
+let _inspectOptions = { ...logOptions.inspectOptions }
 logOptions.on('changed', (options) => {
   _output = options.output
   _indentSize = options.indentSize
   _taskLength = options.taskLength
   _lineLength = options.lineLength
-  _inspectOptions = options.inspectOptions
+  _inspectOptions = { ...options.inspectOptions } // proxy
+  _defaultEmitter =
+    options.format === 'fancy' ? emitFancy :
+    options.format === 'plain' ? emitPlain :
+    fail(`Invalid log format "${logOptions.format}"`)
 })
 
 /* ========================================================================== *
@@ -37,6 +42,12 @@ export interface LogEmitterOptions {
 
 /** Emit a line (or multiple lines) of text to the log */
 export type LogEmitter = (options: LogEmitterOptions, args: any[]) => void
+
+/** A {@link LogEmitter} function configurable with a specific emitter */
+export interface ConfigurableLogEmitter extends LogEmitter {
+  get emitter(): LogEmitter
+  set emitter(emitter: LogEmitter | undefined)
+}
 
 /* ========================================================================== */
 
@@ -120,3 +131,55 @@ export const emitPlain: LogEmitter = (options: LogEmitterOptions, args: any[]): 
     _output.write(`${linePrefix}${line}\n`)
   }
 }
+
+/* ========================================================================== */
+
+export interface ForkedLogMessage {
+  logLevel: LogLevel,
+  taskName: string,
+  lines: string[],
+}
+
+/** Emit to the parent process of a forked child, or to the default emitter */
+export const emitForked: LogEmitter = (options: LogEmitterOptions, args: any[]): void => {
+  if (process.connected && process.send) {
+    const { taskName, level, prefix = '', indent = 0 } = options
+    const linePrefix = ''.padStart(indent * _indentSize) + prefix
+
+    /* Now for the normal logging of all our parameters */
+    const breakLength = _lineLength - _taskLength - linePrefix.length - 20
+    const message = formatWithOptions({ ..._inspectOptions, breakLength }, ...args)
+
+    /* Format each individual line */
+    const lines = message.split('\n').map((line) => `${linePrefix}${line}`)
+
+    /* Send the message to the parent process */
+    process.send({ logLevel: level, taskName, lines })
+  } else {
+    _defaultEmitter(options, args)
+  }
+}
+
+/* ========================================================================== */
+
+/** The _default_ emitter (from `format`) */
+let _defaultEmitter =
+  logOptions.format === 'fancy' ? emitFancy :
+  logOptions.format === 'plain' ? emitPlain :
+  fail(`Invalid log format "${logOptions.format}"`)
+
+/** The _actual_ emitter (either default or configured) */
+let _emitter = _defaultEmitter
+
+/** Our `emit` wrapper function to export */
+const wrapper: LogEmitter = function emit(options: LogEmitterOptions, args: any[]): void {
+  _defaultEmitter(options, args)
+}
+
+/** A _configurable_ {@link LogEmitter} where log should be emitted to */
+export const emit = Object.defineProperty(wrapper, 'emitter', {
+  get: () => _emitter,
+  set: (emitter: LogEmitter | undefined) => {
+    _emitter = emitter || _defaultEmitter
+  },
+}) as ConfigurableLogEmitter

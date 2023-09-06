@@ -1,12 +1,12 @@
 // Reference ourselves, so that the constructor's parameters are correct
 /// <reference path="./index.ts"/>
 
-import ts from 'typescript' // TypeScript does NOT support ESM modules
-import { assertPromises, BuildFailure } from '@plugjs/plug/asserts'
+import { assert, assertPromises, BuildFailure } from '@plugjs/plug/asserts'
 import { Files } from '@plugjs/plug/files'
 import { $p } from '@plugjs/plug/logging'
-import { resolveAbsolutePath, resolveFile } from '@plugjs/plug/paths'
+import { commonPath, getAbsoluteParent, resolveAbsolutePath, resolveFile } from '@plugjs/plug/paths'
 import { parseOptions, walk } from '@plugjs/plug/utils'
+import ts from 'typescript'
 
 import { TypeScriptHost } from './compiler'
 import { getCompilerOptions } from './options'
@@ -21,6 +21,16 @@ import type { ExtendedCompilerOptions } from './index'
  * WORKER PLUG                                                                *
  * ========================================================================== */
 
+function defaultRootDir(paths: AbsolutePath[]): AbsolutePath {
+  const [ firstPath, ...restPaths ] = paths.filter((path) => {
+    return ! path.match(/\.d\.[mc]?ts$/i)
+  })
+
+  assert(firstPath, 'No non-declaration files found to compile')
+  if (restPaths.length) return commonPath(firstPath, ...restPaths)
+  return getAbsoluteParent(firstPath)
+}
+
 export class Tsc implements Plug<Files> {
   private readonly _tsconfig?: string
   private readonly _options: ExtendedCompilerOptions
@@ -32,9 +42,23 @@ export class Tsc implements Plug<Files> {
   }
 
   async pipe(files: Files, context: Context): Promise<Files> {
-    const baseDir = context.resolve('.') // "this" directory, base of all relative paths
-    const report = context.log.report('TypeScript Report') // report used throughout
-    const { extraTypesDir, ...overrides } = { ...this._options } // clone our options
+    const paths = [ ...files.absolutePaths() ]
+
+    /* Start preparing the report that will be used throughout */
+    const report = context.log.report('TypeScript Report')
+
+    /* Clone our options and add extra types to our sources */
+    const { extraTypesDir, ...__overrides } = { ...this._options }
+
+    if (extraTypesDir) {
+      const directory = context.resolve(extraTypesDir)
+
+      for await (const file of walk(directory, [ '**/*.d.ts' ])) {
+        const path = resolveAbsolutePath(directory, file)
+        context.log.debug(`Including extra type file "${$p(path)}"`)
+        paths.push(path)
+      }
+    }
 
     /*
      * The "tsconfig" file is either specified, or (if existing) first checked
@@ -45,44 +69,41 @@ export class Tsc implements Plug<Files> {
       sourcesConfig || resolveFile(context.resolve('tsconfig.json'))
 
     /* Root directory must always exist */
-    let rootDir: AbsolutePath
-    if (overrides.rootDir) {
-      rootDir = overrides.rootDir = context.resolve(overrides.rootDir)
-    } else {
-      rootDir = overrides.rootDir = files.directory
+    // let rootDir: AbsolutePath
+    if (__overrides.rootDir) {
+      __overrides.rootDir = context.resolve(__overrides.rootDir)
     }
 
     /* Output directory _also_ must always exist */
-    let outDir: AbsolutePath
-    if (overrides.outDir) {
-      outDir = overrides.outDir = context.resolve(overrides.outDir)
-    } else {
-      outDir = overrides.outDir = rootDir // default to the root directory
+    // let outDir: AbsolutePath
+    if (__overrides.outDir) {
+      __overrides.outDir = context.resolve(__overrides.outDir)
     }
 
     /* All other root paths */
-    if (overrides.rootDirs) {
-      overrides.rootDirs = overrides.rootDirs.map((dir) => context.resolve(dir))
+    if (__overrides.rootDirs) {
+      __overrides.rootDirs = __overrides.rootDirs.map((dir) => context.resolve(dir))
     }
 
     /* The baseURL is resolved, as well */
-    if (overrides.baseUrl) overrides.baseUrl = context.resolve(overrides.baseUrl)
+    if (__overrides.baseUrl) __overrides.baseUrl = context.resolve(__overrides.baseUrl)
 
     /* The baseURL is resolved, as well */
-    if (overrides.outFile) overrides.outFile = context.resolve(overrides.outFile)
+    if (__overrides.outFile) __overrides.outFile = context.resolve(__overrides.outFile)
 
     /* We can now get our compiler options, and check any and all overrides */
     const { errors, options } = await getCompilerOptions(
         tsconfig, // resolved tsconfig.json from constructor, might be undefined
-        overrides) // overrides from constructor, might be an empty object
+        __overrides,
+        paths,
+    ) // overrides from constructor, might be an empty object
 
     /* Update report and fail on errors */
-    updateReport(report, errors, baseDir)
+    updateReport(report, errors, context.resolve('.'))
     if (report.errors) report.done(true)
 
     /* Prep for compilation */
-    const paths = [ ...files.absolutePaths() ]
-    for (const path of paths) context.log.trace(`Compiling "${$p(path)}"`)
+    for (const path of paths) context.log.debug(`Compiling "${$p(path)}"`)
     context.log.info('Compiling', paths.length, 'files')
 
     /* If we have an extra types directory, add all the .d.ts files in there */
@@ -96,8 +117,18 @@ export class Tsc implements Plug<Files> {
       }
     }
 
+    /* Figure out the root directory, either from the options, or default */
+    const rootDir = options.rootDir ?
+        context.resolve(options.rootDir) :
+        defaultRootDir(paths)
+    if (!(options.rootDir || options.rootDirs)) options.rootDir = rootDir
+
+    /* Figure out the output directory, either from the options or same as root */
+    const outDir = options.outDir ? context.resolve(options.outDir) : rootDir
+    if (!(options.outDir || options.outFile)) options.outDir = outDir
+
     /* Log out what we'll be our final compilation options */
-    context.log.debug('Compliation options', options)
+    context.log.info('Compliation options', options)
 
     /* Typescript host, create program and compile */
     const host = new TypeScriptHost(rootDir)

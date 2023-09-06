@@ -2,7 +2,6 @@ import {
   $gry,
   $p,
   banner,
-  build,
   find,
   fixExtensions,
   fork,
@@ -12,6 +11,7 @@ import {
   merge,
   parseJson,
   paths,
+  plugjs,
   resolve,
   rmrf,
 } from './workspaces/plug/src/index'
@@ -19,8 +19,8 @@ import {
 import type { ESLint } from './workspaces/eslint/src/eslint'
 import type { Test } from './workspaces/expect5/src/test'
 import type { ESBuildOptions, Files } from './workspaces/plug/src/index'
-import type { Tsc } from './workspaces/typescript/src/typescript'
 import type { Tsd } from './workspaces/tsd/src/tsd'
+import type { Tsc } from './workspaces/typescript/src/typescript'
 
 logging.logOptions.githubAnnotations = false
 
@@ -120,7 +120,7 @@ const ForkingTsd = class extends fork.ForkingPlug {
  * ========================================================================== *
  * ========================================================================== */
 
-export default build({
+export default plugjs({
   workspace: '',
 
   /* ======================================================================== *

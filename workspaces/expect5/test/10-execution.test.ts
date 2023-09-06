@@ -1,4 +1,4 @@
-import { Suite, skip, Spec, Hook } from '../src/execution/executable'
+import { Hook, Spec, Suite, skip } from '../src/execution/executable'
 import { runSuite } from '../src/execution/executor'
 
 import type { Execution } from '../src/execution/executor'

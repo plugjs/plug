@@ -1,20 +1,15 @@
 import { EOL } from 'node:os'
 import { formatWithOptions } from 'node:util'
 
+import { stripAnsi } from '../utils/ansi'
 import { logOptions } from './options'
 
 import type { AbsolutePath } from '../paths'
 
-/* Strip ANSI from strings */
-const ansiRegExp = new RegExp([
-  '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-  '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))',
-].join('|'), 'g')
-
 /* Initial values, and subscribe to changes */
 let _output = logOptions.output
-let _inspectOptions = logOptions.inspectOptions
 let _githubAnnotations = logOptions.githubAnnotations
+let _inspectOptions = { ...logOptions.inspectOptions, breakLength: Infinity }
 logOptions.on('changed', (options) => {
   _output = options.output
   _githubAnnotations = options.githubAnnotations
@@ -23,16 +18,14 @@ logOptions.on('changed', (options) => {
 
 
 function escapeData(data: string): string {
-  return data
-      .replace(ansiRegExp, '')
+  return stripAnsi(data)
       .replace(/%/g, '%25')
       .replace(/\r/g, '%0D')
       .replace(/\n/g, '%0A')
 }
 
 function escapeProp(prop: string | number): string {
-  return `${prop}`
-      .replace(ansiRegExp, '')
+  return stripAnsi(`${prop}`)
       .replace(/%/g, '%25')
       .replace(/\r/g, '%0D')
       .replace(/\n/g, '%0A')

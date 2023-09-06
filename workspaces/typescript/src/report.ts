@@ -1,6 +1,6 @@
-import ts from 'typescript' // TypeScript does NOT support ESM modules
 import { ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import { resolveAbsolutePath } from '@plugjs/plug/paths'
+import ts from 'typescript'
 
 import type { Report, ReportLevel, ReportRecord } from '@plugjs/plug/logging'
 import type { AbsolutePath } from '@plugjs/plug/paths'

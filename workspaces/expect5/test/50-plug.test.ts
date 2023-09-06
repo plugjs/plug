@@ -1,6 +1,7 @@
 import { BuildFailure, find, merge } from '@plugjs/plug'
 
-import '../src/globals' // side-effect: when recompiling we don't loose globals
+// side-effect: when recompiling we don't loose globals
+import '../src/globals'
 import { Test } from '../src/test'
 
 describe('Expect5 Plug', async () => {

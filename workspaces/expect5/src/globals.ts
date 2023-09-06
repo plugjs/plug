@@ -1,7 +1,7 @@
 import type { logging, paths } from '@plugjs/plug'
 import type { skip as SkipFunction } from './execution/executable'
-import type { expect as ExpectFunction } from './expectation/expect'
 import type * as setup from './execution/setup'
+import type { expect as ExpectFunction } from './expectation/expect'
 
 declare global {
   const describe: setup.SuiteFunction
