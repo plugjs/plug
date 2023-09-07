@@ -141,7 +141,7 @@ export function stringifyValue(value: unknown): string {
 
   // specific object types
   if (value instanceof RegExp) return String(value)
-  if (value instanceof Date) return `[${constructorName(value)}: ${value.toISOString()}]`
+  if (value instanceof Date) return `[${constructorName(value)}: ${isNaN(value.getTime()) ? 'Invalid date' : value.toISOString()}]`
   if (value instanceof Boolean) return `[${constructorName(value)}: ${value.valueOf()}]`
   if (value instanceof Number) return `[${constructorName(value)}: ${stringifyValue(value.valueOf())}]`
   if (value instanceof String) return `[${constructorName(value)}: ${stringifyValue(value.valueOf())}]`

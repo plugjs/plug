@@ -56,6 +56,13 @@ type Remarks = { actualMemos: any[], expectedMemos: any[] }
 
 /* ========================================================================== */
 
+/** Compare two numbers, making NaNs equivalent */
+function isSameNumberOrBothNaN(a: number, b: number): boolean {
+  return a === b ? true : isNaN(a) ? isNaN(b) : false
+}
+
+/* ========================================================================== */
+
 function errorDiff(value: any, message: string): ValueDiff {
   const error = `Expected ${stringifyValue(value)} ${message}`
   return { diff: true, value, error }
@@ -331,7 +338,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
   switch (actualType) {
     // numbers are one-of-a-kind as NaN !== NaN
     case 'number':
-      if (isNaN(expected as number) && isNaN(actual as number)) {
+      if (isSameNumberOrBothNaN(actual, expected)) {
         return { diff: false, value: NaN }
       }
     // primitives always must be strict ===
@@ -405,7 +412,7 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
 
     /* == DATES ============================================================= */
     checkInstance(Date, (act, exp) =>
-      (act.getTime() !== exp.getTime()) ? {
+      (! isSameNumberOrBothNaN(act.getTime(), exp.getTime())) ? {
         diff: true,
         value: act,
         expected: exp,
