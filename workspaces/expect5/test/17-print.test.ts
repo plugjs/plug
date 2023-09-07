@@ -100,6 +100,9 @@ describe('Diff Printer', () => {
         boexd_with_propx: Object.assign(new String('baz'), { extra: true }),
         regexp: /abc/gi,
         regexp_with_propx: Object.assign(/abc/gi, { extra: true }),
+        matcher: expect.toBeA('string'), // matcher
+        date: new Date(),
+        date_invalid: new Date(Infinity),
         circular: { deep: {} },
       }
       value.circular.deep = value

@@ -910,6 +910,18 @@ describe('Differences', () => {
       })
     })
 
+    it('should diff with invalid dates', () => {
+      // strictly starting from two different date points, but for us
+      // they are both "invalid" dates, and therefore equivalent...
+      const act = new Date(-Infinity)
+      const exp = new Date(+Infinity)
+
+      deepEqual(diff(act, exp), {
+        diff: false,
+        value: act,
+      })
+    })
+
     it('should fail when a date is not expected', () => {
       const date = new Date(1681223640879)
 
