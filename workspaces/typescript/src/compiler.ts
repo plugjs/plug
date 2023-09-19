@@ -20,6 +20,22 @@ implements ts.CompilerHost {
     return ts.createSourceFile(fileName, code, languageVersion)
   }
 
+  readDirectory(
+      rootDir: string,
+      extensions: readonly string[],
+      excludes: readonly string[] | undefined,
+      includes: readonly string[],
+      depth?: number | undefined,
+  ): string[] {
+    return ts.sys.readDirectory(
+        resolveAbsolutePath(this._directory, rootDir),
+        extensions,
+        excludes,
+        includes,
+        depth,
+    )
+  }
+
   /* coverage ignore next */
   /** Never write any files */
   writeFile(fileName: string): void {
@@ -38,12 +54,12 @@ implements ts.CompilerHost {
 
   /** Check for the existence of a given file */
   fileExists(fileName: string): boolean {
-    return ts.sys.fileExists(resolveAbsolutePath(this.getCurrentDirectory(), fileName))
+    return ts.sys.fileExists(resolveAbsolutePath(this._directory, fileName))
   }
 
   /** Read the file if it exists, otherwise return undefined */
   readFile(fileName: string): string | undefined {
-    return ts.sys.readFile(resolveAbsolutePath(this.getCurrentDirectory(), fileName))
+    return ts.sys.readFile(resolveAbsolutePath(this._directory, fileName))
   }
 
   /** Return the current working directory */
