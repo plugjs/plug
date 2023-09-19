@@ -92,7 +92,7 @@ export class Tsc implements Plug<Files> {
     if (__overrides.outFile) __overrides.outFile = context.resolve(__overrides.outFile)
 
     /* We can now get our compiler options, and check any and all overrides */
-    const { errors, options } = await getCompilerOptions(
+    const { errors, options, projectReferences } = await getCompilerOptions(
         tsconfig, // resolved tsconfig.json from constructor, might be undefined
         __overrides,
         paths,
@@ -129,10 +129,17 @@ export class Tsc implements Plug<Files> {
 
     /* Log out what we'll be our final compilation options */
     context.log.info('Compliation options', options)
+    if (projectReferences?.length) context.log.info('Project references', projectReferences)
 
     /* Typescript host, create program and compile */
     const host = new TypeScriptHost(rootDir)
-    const program = ts.createProgram(paths, options, host, undefined, errors)
+    const program = ts.createProgram({
+      configFileParsingDiagnostics: errors,
+      rootNames: paths,
+      projectReferences,
+      options,
+      host,
+    })
     const diagnostics = ts.getPreEmitDiagnostics(program)
 
     /* Update report and fail on errors */
