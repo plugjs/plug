@@ -8,6 +8,10 @@ import { logOptions } from './options'
 
 /* Clear the current line and set column to zero */
 export const zapSpinner = '\u001b[0G\u001b[2K'
+/* Disable word wrap (when running lotsa tasks) */
+export const disableWrap = '\u001b[?7l'
+/* Enable word wrap (after printing lotsa tasks) */
+export const enableWrap = '\u001b[?7h'
 
 /* ========================================================================== */
 
@@ -64,7 +68,7 @@ function spin(): void {
 
   _nextSpin = (++ _nextSpin) % _spins.length
 
-  _output.write(`${zapSpinner}${pad} ${_spins[_nextSpin]}  Running ${task}: ${$gry(names)}`)
+  _output.write(`${zapSpinner}${disableWrap}${pad} ${_spins[_nextSpin]}  Running ${task}: ${$gry(names)}${enableWrap}`)
 }
 
 /* Start or stop the spinner */
