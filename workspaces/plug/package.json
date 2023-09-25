@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/plug",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -120,7 +120,7 @@
     "picomatch": "^2.3.1"
   },
   "devDependencies": {
-    "@types/picomatch": "^2.3.0"
+    "@types/picomatch": "^2.3.1"
   },
   "files": [
     "*.md",
