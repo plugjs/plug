@@ -2,9 +2,7 @@
 
 set -e
 
-npx '@juit/check-updates@latest' \
-	package.json workspaces/*/package.json \
-	|| exit $(( $? == 255 ? 0 : $? ))
+npx '@juit/check-updates@latest' || exit $(( $? == 255 ? 0 : $? ))
 
 # If still here, bump the version and reinstall dependencies
 npm version patch --no-git-tag
