@@ -1,5 +1,4 @@
 import {
-  $gry,
   $p,
   banner,
   find,
@@ -321,9 +320,7 @@ export default plugjs({
 
   /* Prepare exports in our "package.json" files */
   async exports(): Promise<void> {
-    const version = parseJson('package.json').version
-
-    banner(`Updating package.json files (version=${version})`)
+    banner('Updating exports')
 
     for (const workspace of workspaces) {
       const globs = workspaceExports[workspace]
@@ -332,15 +329,6 @@ export default plugjs({
             packageJson: `${workspace}/package.json`,
             cjsExtension: '.cjs',
             esmExtension: '.mjs',
-          })
-          .edit((contents, filename) => {
-            const packageData = JSON.parse(contents)
-            log.notice($gry('* Updating'), packageData.name, $gry('in'), $p(filename))
-            packageData.version = version
-            if (workspace !== 'workspaces/plug') {
-              packageData.peerDependencies['@plugjs/plug'] = version
-            }
-            return JSON.stringify(packageData, null, 2) + '\n'
           })
     }
   },
