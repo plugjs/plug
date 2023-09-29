@@ -51,7 +51,7 @@ const _spins = [
 /* The index in our `_spins` */
 let _nextSpin = 0
 /* The interval running the spinner */
-let _interval: NodeJS.Timer | undefined
+let _interval: NodeJS.Timeout | undefined
 
 /* Spin the spinner! */
 function spin(): void {
