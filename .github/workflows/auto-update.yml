@@ -25,7 +25,7 @@ jobs:
       - name: Check and apply dependencies updates
         run: |
           # Check for updates, and exit script on error / no updates found
-          npx '@juit/check-updates --bump' || exit $(( $? == 255 ? 0 : $? ))
+          npx '@juit/check-updates' --bump || exit $(( $? == 255 ? 0 : $? ))
 
           # If still here, reinstall dependencies
           rm -rf node_modules package-lock.json
