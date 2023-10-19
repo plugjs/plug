@@ -100,6 +100,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
     /* Run our script in a _separate_ process */
     const child = fork(script, {
       stdio: [ 'ignore', 'inherit', 'inherit', 'ipc' ],
+      serialization: 'advanced',
       env,
     })
 
