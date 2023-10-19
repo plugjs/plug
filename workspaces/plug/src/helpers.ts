@@ -33,6 +33,18 @@ import type { WalkOptions } from './utils/walk'
  * EXTERNAL HELPERS                                                           *
  * ========================================================================== */
 
+/**
+ * The {@link UsingOptions} interface defines the options for building
+ * {@link Files} instances from a static list of paths.
+ */
+export interface UsingOptions {
+  /**
+   * The directory the {@link Files} instance will be rooted into (defaults to
+   * the _current working directory_).
+   */
+  directory?: string
+}
+
 /** The {@link FindOptions} interface defines the options for finding files. */
 export interface FindOptions extends WalkOptions {
   /** The directory where to start looking for files. */
@@ -186,6 +198,27 @@ export function merge(pipes: (Pipe | Files | Promise<Files>)[]): Pipe {
 export function noop(): Pipe {
   const context = requireContext()
   return new PipeImpl(context, Promise.resolve(new Files()))
+}
+
+/**
+ * Create a {@link Pipe} from a static set of files.
+ *
+ * The default directory where the {@link Files} instance will be rooted into
+ * is the _current working directory_.
+ *
+ * If _relative_ each file specified will be resolved relatively to the base
+ * {@link Files} directory.
+ */
+export function using(...args: [ ...string[] ]): Pipe
+export function using(...args: [ ...string[], options: UsingOptions ]): Pipe
+export function using(...args: ParseOptions<UsingOptions>): Pipe {
+  const { options, params } = parseOptions(args, { directory: '.' })
+
+  const context = requireContext()
+  const directory = context.resolve(options.directory)
+
+  const files = Files.builder(directory).add(...params).build()
+  return new PipeImpl(context, Promise.resolve(files))
 }
 
 /**
