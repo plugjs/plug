@@ -9,6 +9,7 @@ import { ZipFile } from 'yazl'
 
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
 import type EventEmitter from 'node:events'
+import type { ZipOptions } from '.'
 
 
 // The "yazl" types don't define "ZipFile" as an "EventEmitter"
@@ -21,7 +22,10 @@ declare module 'yazl' {
 /** Writes some info about the current {@link Files} being passed around. */
 export class Zip implements Plug<Files> {
   constructor(...args: PipeParameters<'zip'>)
-  constructor(private readonly _filename: string) {
+  constructor(
+      private readonly _filename: string,
+      private readonly _options: ZipOptions = {},
+  ) {
     assert(_filename, 'No filename specified for ZIP file')
   }
 
@@ -37,7 +41,7 @@ export class Zip implements Plug<Files> {
     context.log.info(`Packaging ${$ylw(files.length)} files`)
     for (const [ relative, absolute ] of files.pathMappings()) {
       context.log.debug(`Adding file ${$p(absolute)}`)
-      zipfile.addFile(absolute, relative)
+      zipfile.addFile(absolute, relative, this._options)
     }
 
     /* All files are added, just compute our return */
