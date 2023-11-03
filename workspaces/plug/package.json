@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/plug",
-  "version": "0.5.10",
+  "version": "0.5.11",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -117,7 +117,7 @@
     "@types/node": "<19",
     "esbuild": "^0.19.5",
     "jsonc-parser": "^3.2.0",
-    "picomatch": "^2.3.1"
+    "picomatch": "^3.0.1"
   },
   "devDependencies": {
     "@types/picomatch": "^2.3.2"
