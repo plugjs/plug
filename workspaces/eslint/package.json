@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/eslint",
-  "version": "0.5.14",
+  "version": "0.5.15",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -33,10 +33,10 @@
     "eslint": "^8.54.0"
   },
   "devDependencies": {
-    "@types/eslint": "^8.44.7"
+    "@types/eslint": "^8.44.8"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.5.14"
+    "@plugjs/plug": "0.5.15"
   },
   "files": [
     "*.md",
