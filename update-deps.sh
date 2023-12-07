@@ -1,14 +1,11 @@
-#!/bin/bash
+#!/bin/bash -e
 
-set -e
+# Check for updates, and exit script on error / no updates found
+npx '@juit/check-updates' --bump || exit $(( $? == 255 ? 0 : $? ))
 
-npx '@juit/check-updates@latest' || exit $(( $? == 255 ? 0 : $? ))
-
-# If still here, bump the version and reinstall dependencies
-npm version patch --no-git-tag
-rm -rf node_modules/ package-lock.json
+# If still here, reinstall dependencies
+rm -rf node_modules package-lock.json
 npm install --workspaces --include-workspace-root
 
-# Bump all packages versions
-npm run build transpile
-npm run build exports
+# Build our package
+npm run build
