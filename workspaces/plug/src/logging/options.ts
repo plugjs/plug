@@ -72,6 +72,9 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
   constructor() {
     super()
 
+    /* Lotsa subscribers... */
+    this.setMaxListeners(20)
+
     /* The `LOG_LEVEL` variable is one of our `debug`, `info`, ... */
     if (process.env.LOG_LEVEL) {
       this._level = getLevelNumber(process.env.LOG_LEVEL as LogLevelString)
