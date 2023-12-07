@@ -7,6 +7,10 @@ import { expectFail, expectPass } from './utils'
 describe('Expectation Matchers', () => {
   it('should expect with matchers', () => {
     expectPass(() => expect.toBeA('string').expect('foo'))
+    expectPass(() => expect.toBeAfter(0).expect(1))
+    expectPass(() => expect.toBeAfterOrEqual(0).expect(0))
+    expectPass(() => expect.toBeBefore(1).expect(0))
+    expectPass(() => expect.toBeBeforeOrEqual(0).expect(0))
     expectPass(() => expect.toBeCloseTo(100, 10).expect(99))
     expectPass(() => expect.toBeError().expect(new SyntaxError('Foo')))
     expectPass(() => expect.toBeGreaterThan(100).expect(101))
@@ -53,6 +57,10 @@ describe('Expectation Matchers', () => {
 
   it('should expect failures with matchers', () => {
     expectFail(() => expect.toBeA('string').expect(123), 'Expected 123 to be a <string>')
+    expectFail(() => expect.toBeAfter(1).expect(0), 'Expected 0 to be after [Date: 1970-01-01T00:00:00.001Z]')
+    expectFail(() => expect.toBeAfterOrEqual(1).expect(0), 'Expected 0 to be after [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect.toBeBefore(0).expect(1), 'Expected 1 to be before [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect.toBeBeforeOrEqual(0).expect(1), 'Expected 1 to be before [Date: 1970-01-01T00:00:00.001Z]')
     expectFail(() => expect.toBeCloseTo(100, 10).expect(50), 'Expected 50 to be within 90...110')
     expectFail(() => expect.toBeError().expect({}), 'Expected [Object] to be an instance of [Error]')
     expectFail(() => expect.toBeGreaterThan(100).expect(100), 'Expected 100 to be greater than 100')

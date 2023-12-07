@@ -83,7 +83,9 @@ export class Expectations<T = unknown> {
 
   /** Throw an {@link ExpectationError} associated with _this_ */
   protected _fail(details: string, diff?: Diff): never {
-    throw new ExpectationError(this, details, diff)
+    const error = new ExpectationError(this, details, diff)
+    Error.captureStackTrace(error, this._fail)
+    throw error
   }
 
   /* ------------------------------------------------------------------------ *
@@ -141,6 +143,108 @@ export class Expectations<T = unknown> {
     }
 
     this._fail(`to be ${prefixType(type)}`)
+  }
+
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * Expects the value to be a `Date`, a `string` parseable into a `Date`, or a
+   * `number` indicating the milliseconds from the epoch, _strictly after_
+   * the specified date.
+   *
+   * Negation: {@link Expectations.toBeBeforeOrEqual `toBeBeforeOrEqual(...)`}
+   */
+  toBeAfter(value: Date | number | string, deltaMs?: number): Expectations<T> {
+    const after =
+      value instanceof Date ? value.getTime() :
+      typeof value === 'number' ? value : new Date(value).getTime()
+
+    const timestamp =
+      this.value instanceof Date ? this.value.getTime() :
+      typeof this.value === 'string' ? new Date(this.value).getTime() :
+      typeof this.value === 'number' ? this.value :
+      undefined
+
+    if (typeof timestamp !== 'number') {
+      this._fail(`to be a string, a number or an instance of ${stringifyConstructor(Date)}`)
+    } else if (isNaN(timestamp)) {
+      this._fail('to be a valid date')
+    }
+
+    if (timestamp <= after) {
+      this._fail(`to be after ${stringifyValue(new Date(after))}`)
+    }
+
+    if (deltaMs !== undefined) return this.toBeBefore(after + deltaMs + 1)
+    return this
+  }
+
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * Expects the value to be a `Date`, a `string` parseable into a `Date`, or a
+   * `number` indicating the milliseconds from the epoch, _after or equal_
+   * the specified date.
+   *
+   * Negation: {@link Expectations.toBeBefore `toBeBefore(...)`}
+   */
+  toBeAfterOrEqual(value: Date | number | string, deltaMs?: number): Expectations<T> {
+    const after =
+      value instanceof Date ? value.getTime() :
+      typeof value === 'number' ? value : new Date(value).getTime()
+    const delta = deltaMs === undefined ? undefined : deltaMs + 1
+    return this.toBeAfter(after - 1, delta)
+  }
+
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * Expects the value to be a `Date`, a `string` parseable into a `Date`, or a
+   * `number` indicating the milliseconds from the epoch, _strictly before_
+   * the specified date.
+   *
+   * Negation: {@link Expectations.toBeAfterOrEqual `toBeAfterOrEqual(...)`}
+   */
+  toBeBefore(value: Date | number | string, deltaMs?: number): Expectations<T> {
+    const before =
+      value instanceof Date ? value.getTime() :
+      typeof value === 'number' ? value : new Date(value).getTime()
+
+    const timestamp =
+      this.value instanceof Date ? this.value.getTime() :
+      typeof this.value === 'string' ? new Date(this.value).getTime() :
+      typeof this.value === 'number' ? this.value :
+      undefined
+
+    if (typeof timestamp !== 'number') {
+      this._fail(`to be a string, a number or an instance of ${stringifyConstructor(Date)}`)
+    } else if (isNaN(timestamp)) {
+      this._fail('to be a valid date')
+    }
+
+    if (timestamp >= before) {
+      this._fail(`to be before ${stringifyValue(new Date(before))}`)
+    }
+
+    if (deltaMs !== undefined) return this.toBeAfter(before - deltaMs - 1)
+    return this
+  }
+
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * Expects the value to be a `Date`, a `string` parseable into a `Date`, or a
+   * `number` indicating the milliseconds from the epoch, _before or equal_
+   * the specified date.
+   *
+   * Negation: {@link Expectations.toBeAfter `toBeAfter(...)`}
+   */
+  toBeBeforeOrEqual(value: Date | number | string, deltaMs?: number): Expectations<T> {
+    const before =
+      value instanceof Date ? value.getTime() :
+      typeof value === 'number' ? value : new Date(value).getTime()
+    const delta = deltaMs === undefined ? undefined : deltaMs + 1
+    return this.toBeBefore(before + 1, delta)
   }
 
   /* ------------------------------------------------------------------------ */

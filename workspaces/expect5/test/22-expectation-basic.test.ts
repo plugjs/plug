@@ -8,7 +8,9 @@ describe('Basic Expectations', () => {
     expectPass(() => expect('foo').toBeA('string'))
     expectPass(() => expect('foo').toBeA('string', expect.toStrictlyEqual('foo')))
     expectPass(() => expect('foo').toBeA('string', (assert) => assert.toStrictlyEqual('foo')))
+    expectPass(() => expect(new Date()).toBeA('date'))
 
+    expectFail(() => expect('foo').toBeA('date'), 'Expected "foo" to be a <date>')
     expectFail(() => expect('foo').toBeA('number'), 'Expected "foo" to be a <number>')
     expectFail(() => expect('foo').toBeA('string', expect.toStrictlyEqual('bar')),
         'Expected "foo" to strictly equal "bar"', {
@@ -25,6 +27,72 @@ describe('Basic Expectations', () => {
 
     expectPass(() => expect('foo').not.toBeA('number'))
     expectFail(() => expect('foo').not.toBeA('string'), 'Expected "foo" not to be a <string>')
+  })
+
+  it('should expect "toBeAfter(...)"', () => {
+    expectPass(() => expect(1).toBeAfter(0))
+    expectPass(() => expect(new Date(1)).toBeAfter(new Date(0)))
+    expectPass(() => expect('1970-01-01T00:00:00.001Z').toBeAfter('1970-01-01T00:00:00.000Z'))
+
+    expectFail(() => expect({}).toBeAfter(0), 'Expected [Object] to be a string, a number or an instance of [Date]')
+    expectFail(() => expect('nope').toBeAfter(0), 'Expected "nope" to be a valid date')
+
+    expectFail(() => expect(0).toBeAfter(0), 'Expected 0 to be after [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect(0).toBeAfter(1), 'Expected 0 to be after [Date: 1970-01-01T00:00:00.001Z]')
+    expectFail(() => expect(new Date(0)).toBeAfter(new Date(0)), 'Expected [Date: 1970-01-01T00:00:00.000Z] to be after [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect(new Date(0)).toBeAfter(new Date(1)), 'Expected [Date: 1970-01-01T00:00:00.000Z] to be after [Date: 1970-01-01T00:00:00.001Z]')
+    expectFail(() => expect('1970-01-01T00:00:00.000Z').toBeAfter('1970-01-01T00:00:00.000Z'), 'Expected "1970-01-01T00:00:00.000Z" to be after [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect('1970-01-01T00:00:00.000Z').toBeAfter('1970-01-01T00:00:00.001Z'), 'Expected "1970-01-01T00:00:00.000Z" to be after [Date: 1970-01-01T00:00:00.001Z]')
+
+    expectPass(() => expect(1001).toBeAfter(1000, 1))
+    expectFail(() => expect(1002).toBeAfter(1000, 1), 'Expected 1002 to be before [Date: 1970-01-01T00:00:01.002Z]')
+  })
+
+  it('should expect "toBeAfterOrEqual(...)"', () => {
+    expectPass(() => expect(0).toBeAfterOrEqual(0))
+    expectPass(() => expect(new Date(0)).toBeAfterOrEqual(new Date(0)))
+    expectPass(() => expect('1970-01-01T00:00:00.000Z').toBeAfterOrEqual('1970-01-01T00:00:00.000Z'))
+
+    expectFail(() => expect(0).toBeAfterOrEqual(1), 'Expected 0 to be after [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect(new Date(0)).toBeAfterOrEqual(new Date(1)), 'Expected [Date: 1970-01-01T00:00:00.000Z] to be after [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect('1970-01-01T00:00:00.000Z').toBeAfterOrEqual('1970-01-01T00:00:00.001Z'), 'Expected "1970-01-01T00:00:00.000Z" to be after [Date: 1970-01-01T00:00:00.000Z]')
+
+    expectPass(() => expect(1001).toBeAfterOrEqual(1001, 1))
+    expectPass(() => expect(1002).toBeAfterOrEqual(1001, 1))
+    expectFail(() => expect(1003).toBeAfterOrEqual(1001, 1), 'Expected 1003 to be before [Date: 1970-01-01T00:00:01.003Z]')
+  })
+
+  it('should expect "toBeBefore(...)"', () => {
+    expectPass(() => expect(0).toBeBefore(1))
+    expectPass(() => expect(new Date(0)).toBeBefore(new Date(1)))
+    expectPass(() => expect('1970-01-01T00:00:00.000Z').toBeBefore('1970-01-01T00:00:00.001Z'))
+
+    expectFail(() => expect({}).toBeBefore(0), 'Expected [Object] to be a string, a number or an instance of [Date]')
+    expectFail(() => expect('nope').toBeBefore(0), 'Expected "nope" to be a valid date')
+
+    expectFail(() => expect(1).toBeBefore(0), 'Expected 1 to be before [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect(0).toBeBefore(0), 'Expected 0 to be before [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect(new Date(1)).toBeBefore(new Date(0)), 'Expected [Date: 1970-01-01T00:00:00.001Z] to be before [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect(new Date(0)).toBeBefore(new Date(0)), 'Expected [Date: 1970-01-01T00:00:00.000Z] to be before [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect('1970-01-01T00:00:00.001Z').toBeBefore('1970-01-01T00:00:00.000Z'), 'Expected "1970-01-01T00:00:00.001Z" to be before [Date: 1970-01-01T00:00:00.000Z]')
+    expectFail(() => expect('1970-01-01T00:00:00.000Z').toBeBefore('1970-01-01T00:00:00.000Z'), 'Expected "1970-01-01T00:00:00.000Z" to be before [Date: 1970-01-01T00:00:00.000Z]')
+
+    expectPass(() => expect(1001).toBeBefore(1002, 1))
+    expectFail(() => expect(1000).toBeBefore(1002, 1), 'Expected 1000 to be after [Date: 1970-01-01T00:00:01.000Z]')
+  })
+
+  it('should expect "toBeBeforeOrEqual(...)"', () => {
+    expectPass(() => expect(0).toBeBeforeOrEqual(0))
+    expectPass(() => expect(new Date(0)).toBeBeforeOrEqual(new Date(0)))
+    expectPass(() => expect('1970-01-01T00:00:00.000Z').toBeBeforeOrEqual('1970-01-01T00:00:00.000Z'))
+
+    expectFail(() => expect(1).toBeBeforeOrEqual(0), 'Expected 1 to be before [Date: 1970-01-01T00:00:00.001Z]')
+    expectFail(() => expect(new Date(1)).toBeBeforeOrEqual(new Date(0)), 'Expected [Date: 1970-01-01T00:00:00.001Z] to be before [Date: 1970-01-01T00:00:00.001Z]')
+    expectFail(() => expect('1970-01-01T00:00:00.001Z').toBeBeforeOrEqual('1970-01-01T00:00:00.000Z'), 'Expected "1970-01-01T00:00:00.001Z" to be before [Date: 1970-01-01T00:00:00.001Z]')
+
+    expectPass(() => expect(1003).toBeBeforeOrEqual(1003, 1))
+    expectPass(() => expect(1002).toBeBeforeOrEqual(1003, 1))
+    expectFail(() => expect(1001).toBeBeforeOrEqual(1003, 1), 'Expected 1001 to be after [Date: 1970-01-01T00:00:01.001Z]')
   })
 
   it('should expect "toBeCloseTo(...)"', () => {

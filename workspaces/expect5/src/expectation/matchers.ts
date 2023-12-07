@@ -101,6 +101,58 @@ export class Matcher<T = unknown> {
   /* ------------------------------------------------------------------------ */
 
   /**
+   * Expects the value to be a `Date`, a `string` parseable into a `Date`, or a
+   * `number` indicating the milliseconds from the epoch, _strictly after_
+   * the specified date.
+   *
+   * Negation: {@link Matcher.toBeBeforeOrEqual `toBeBeforeOrEqual(...)`}
+   */
+  toBeAfter(value: Date | number | string, deltaMs?: number): Matcher<T> {
+    return this._push((e) => e.toBeAfter(value, deltaMs))
+  }
+
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * Expects the value to be a `Date`, a `string` parseable into a `Date`, or a
+   * `number` indicating the milliseconds from the epoch, _after or equal_
+   * the specified date.
+   *
+   * Negation: {@link Matcher.toBeBefore `toBeBefore(...)`}
+   */
+  toBeAfterOrEqual(value: Date | number | string, deltaMs?: number): Matcher<T> {
+    return this._push((e) => e.toBeAfterOrEqual(value, deltaMs))
+  }
+
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * Expects the value to be a `Date`, a `string` parseable into a `Date`, or a
+   * `number` indicating the milliseconds from the epoch, _strictly before_
+   * the specified date.
+   *
+   * Negation: {@link Matcher.toBeAfterOrEqual `toBeAfterOrEqual(...)`}
+   */
+  toBeBefore(value: Date | number | string, deltaMs?: number): Matcher<T> {
+    return this._push((e) => e.toBeBefore(value, deltaMs))
+  }
+
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * Expects the value to be a `Date`, a `string` parseable into a `Date`, or a
+   * `number` indicating the milliseconds from the epoch, _before or equal_
+   * the specified date.
+   *
+   * Negation: {@link Matcher.toBeAfter `toBeAfter(...)`}
+   */
+  toBeBeforeOrEqual(value: Date | number | string, deltaMs?: number): Matcher<T> {
+    return this._push((e) => e.toBeBeforeOrEqual(value, deltaMs))
+  }
+
+  /* ------------------------------------------------------------------------ */
+
+  /**
    * Expects the value to be a `number` within a given +/- _delta_ range of the
    * specified expected value.
    *
