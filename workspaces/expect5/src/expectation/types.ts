@@ -32,6 +32,7 @@ export type TypeMappings = {
   // specialized object types
   array: readonly any [],
   buffer: Buffer,
+  date: Date,
   map: Map<any, any>,
   promise: PromiseLike<any>,
   regexp: RegExp,
@@ -72,6 +73,7 @@ export function typeOf(value: unknown): TypeName {
   if (value instanceof Promise) return 'promise'
   if (typeof (value as any)['then'] === 'function') return 'promise'
 
+  if (value instanceof Date) return 'date'
   if (value instanceof Buffer) return 'buffer'
   if (value instanceof RegExp) return 'regexp'
   if (value instanceof Map) return 'map'
@@ -165,6 +167,7 @@ export function prefixType(type: TypeName): string {
     case 'bigint':
     case 'boolean':
     case 'buffer':
+    case 'date':
     case 'function':
     case 'map':
     case 'number':

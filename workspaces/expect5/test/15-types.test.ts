@@ -22,6 +22,7 @@ describe('Type Utilities', () => {
     assert.strictEqual(typeOf(/abc/), 'regexp')
     assert.strictEqual(typeOf(new Map()), 'map')
     assert.strictEqual(typeOf(new Set()), 'set')
+    assert.strictEqual(typeOf(new Date()), 'date')
 
     assert.strictEqual(typeOf({}), 'object')
     assert.strictEqual(typeOf(new class {}), 'object')
