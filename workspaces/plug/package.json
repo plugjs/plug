@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/plug",
-  "version": "0.5.17",
+  "version": "0.5.18",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -113,9 +113,9 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@plugjs/tsrun": "^0.5.1",
+    "@plugjs/tsrun": "^0.5.2",
     "@types/node": "<19",
-    "esbuild": "^0.19.8",
+    "esbuild": "^0.19.9",
     "jsonc-parser": "^3.2.0",
     "picomatch": "^3.0.1"
   },
