@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/expect5",
-  "version": "0.5.24",
+  "version": "0.5.25",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -44,10 +44,10 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@types/chai": "^4.3.11",
-    "chai": "^5.0.3"
+    "chai": "^5.1.0"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.5.24"
+    "@plugjs/plug": "0.5.25"
   },
   "files": [
     "*.md",
