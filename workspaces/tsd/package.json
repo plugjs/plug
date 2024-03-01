@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/tsd",
-  "version": "0.5.26",
+  "version": "0.5.27",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -30,10 +30,10 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "tsd": "^0.30.6"
+    "tsd": "^0.30.7"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.5.26"
+    "@plugjs/plug": "0.5.27"
   },
   "files": [
     "*.md",
