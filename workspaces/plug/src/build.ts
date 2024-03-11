@@ -290,7 +290,7 @@ export function hookBefore<B extends Build, T extends keyof B>(
   assert(isTaskCall(taskCall), `Task "${$t(taskName)}" not found in build`)
 
   for (const hook of hooks) {
-    const beforeHook = build[hook]
+    const beforeHook = build[hook] as any
     assert(isTaskCall(beforeHook), `Task "${$t(hook)}" to hook before "${$t(taskName)}" not found in build`)
     if (taskCall.task.before.includes(beforeHook.task)) continue
     taskCall.task.before.push(beforeHook.task)
@@ -307,7 +307,7 @@ export function hookAfter<B extends Build, T extends keyof B>(
   assert(isTaskCall(taskCall), `Task "${$t(taskName)}" not found in build`)
 
   for (const hook of hooks) {
-    const afterHook = build[hook]
+    const afterHook = build[hook] as any
     assert(isTaskCall(afterHook), `Task "${$t(hook)}" to hook after "${$t(taskName)}" not found in build`)
     if (taskCall.task.after.includes(afterHook.task)) continue
     taskCall.task.after.push(afterHook.task)
