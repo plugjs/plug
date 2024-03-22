@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/tsd",
-  "version": "0.5.29",
+  "version": "0.5.30",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -33,7 +33,7 @@
     "tsd": "^0.30.7"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.5.29"
+    "@plugjs/plug": "0.5.30"
   },
   "files": [
     "*.md",
