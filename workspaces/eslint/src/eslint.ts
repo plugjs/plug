@@ -37,7 +37,7 @@ export class ESLint implements Plug<void> {
       /* Pass our logger function to ESLint's parser (for warnings) */
       baseConfig: {
         'parserOptions': {
-          loggerFn: (arg: any, ...args: any[]) => context.log.warn(arg, ...args),
+          loggerFn: (arg: any, ...args: any[]): void => context.log.warn(arg, ...args),
         },
       },
       overrideConfigFile,
