@@ -678,8 +678,16 @@ export class Expectations<T = unknown> {
     this.toBeDefined()
 
     const propertyValue = (this.value as any)[property]
+    let hasProperty: boolean
+    try {
+      // this is for "normal" objects
+      hasProperty = property in (this.value as any)
+    } catch (error) {
+      // when "in" doesn't apply (primitives) use the value
+      hasProperty = propertyValue !== undefined
+    }
 
-    if (propertyValue === undefined) {
+    if (! hasProperty) {
       this._fail(`to have property "${String(property)}"`)
     }
 
@@ -1098,9 +1106,15 @@ export class NegativeExpectations<T = unknown> {
   toHaveProperty(property: string | number | symbol): Expectations<T> {
     this._expectations.toBeDefined()
 
-    const propertyValue = (this._value as any)[property]
-    if (propertyValue === undefined) return this._expectations
-    this._fail(`not to have property "${String(property)}"`)
+    let hasProperty: boolean
+    try {
+      hasProperty = property in (this._value as any)
+    } catch (error) {
+      hasProperty = (this._value as any)[property] !== undefined
+    }
+
+    if (hasProperty) this._fail(`not to have property "${String(property)}"`)
+    return this._expectations
   }
 
   /* ------------------------------------------------------------------------ */
