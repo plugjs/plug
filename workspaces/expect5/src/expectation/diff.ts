@@ -52,7 +52,21 @@ export type Diff =
 
 type Binary = Buffer | Uint8Array | ArrayBuffer | SharedArrayBuffer
 type BoxedPrimitive = Boolean | String | Number
-type Remarks = { actualMemos: any[], expectedMemos: any[] }
+type Remarks = { actualMemos: any[], expectedMemos: any[], strict: boolean }
+
+/* ========================================================================== */
+
+/** Find all enumerable keys of a number of objects */
+function findEnumerableKeys(...objects: object[]): Set<string> {
+  const keys = new Set<string>()
+  for (const object of objects) {
+    for (const key in object) {
+      keys.add(key)
+    }
+  }
+
+  return keys
+}
 
 /* ========================================================================== */
 
@@ -77,7 +91,7 @@ function objectDiff<T extends Record<string, any>>(
     keys?: Set<string>,
 ): ObjectDiff | ValueDiff {
   // default keys: all keys from both actual and expected objects
-  if (! keys) keys = new Set([ ...Object.keys(actual), ...Object.keys(expected) ])
+  if (! keys) keys = findEnumerableKeys(actual, expected)
 
   // no keys? no diff!
   if (! keys.size) return { diff: false, value: actual }
@@ -91,7 +105,9 @@ function objectDiff<T extends Record<string, any>>(
 
     // check for missing/extra property or differences
     let result: Diff
-    if ((key in expected) && (!(key in actual))) {
+    if ((act === undefined) && (exp === undefined) && (!(key in expected)) && (! remarks.strict)) {
+      result = { diff: false, value: undefined }
+    } else if ((key in expected) && (!(key in actual))) {
       result = { diff: true, missing: exp }
     } else if ((key in actual) && (!(key in expected))) {
       result = { diff: true, extra: act }
@@ -120,7 +136,7 @@ function arrayDiff<T extends Record<number, any> & { length: number }>(
   }
 
   // prepare a set with _all_ keys from both expected and actual object
-  const keys = new Set([ ...Object.keys(expected), ...Object.keys(actual) ])
+  const keys = findEnumerableKeys(actual, expected)
 
   // iterate through the array, checking equality for each item ad the given
   // index, and _removing_ the index from the set of keys to further analyse
@@ -230,7 +246,13 @@ function binaryDiff<T extends Binary>(
   }
 
   // remember keys
-  const keys = new Set([ ...Object.keys(expected), ...Object.keys(actual) ])
+  const keys = findEnumerableKeys(actual, expected)
+  // buffers have a ton of *enumerable* props we don't want to consider...
+  if (actual instanceof Buffer) {
+    for (const key in Buffer.prototype) {
+      keys.delete(key)
+    }
+  }
 
   // check for equality
   const length = expectedData.length
@@ -272,7 +294,7 @@ function primitiveDiff<T extends BoxedPrimitive>(
   }
 
   // remove string indexes from properties
-  const keys = new Set([ ...Object.keys(actual), ...Object.keys(expected) ])
+  const keys = findEnumerableKeys(actual, expected)
   if (actual instanceof String) {
     const length = actual.valueOf().length
     for (let i = 0; i < length; i ++) {
@@ -452,6 +474,6 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
  * EXPORTS                                                                    *
  * ========================================================================== */
 
-export function diff(actual: any, expected: any): Diff {
-  return diffValues(actual, expected, { actualMemos: [], expectedMemos: [] })
+export function diff(actual: any, expected: any, strict: boolean = false): Diff {
+  return diffValues(actual, expected, { actualMemos: [], expectedMemos: [], strict })
 }

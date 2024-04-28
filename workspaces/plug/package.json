@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/plug",
-  "version": "0.5.34",
+  "version": "0.5.35",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

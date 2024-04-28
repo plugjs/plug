@@ -580,12 +580,25 @@ export class Expectations<T = unknown> {
   /**
    * Expects the value to be _deep equal to_ the specified expected one.
    *
+   * When `strict` is `true` (defaults to `false`) enumerable keys associated
+   * with an `undefined` value found in the _actual_ object will have to be
+   * also defined in the _expected_ object.
+   *
+   * For example:
+   *
+   * ```ts
+   * expect({ foo: undefined }).toEqual({}) // will pass
+   * expect({ foo: undefined }).toEqual({}, true) // will fail ("foo" is extra)
+   * expect({ foo: undefined }).toEqual({ foo: undefined }, true) // will pass
+   * expect({}).toEqual({ foo: undefined }) // will fail ("foo" is missing, whether "strict" is true or false)
+   * ```
+   *
    * Negation: {@link NegativeExpectations.toEqual `not.toEqual(...)`}
    */
-  toEqual<Type>(expected: Type): Expectations<InferToEqual<Type>> {
+  toEqual<Type>(expected: Type, strict: boolean = false): Expectations<InferToEqual<Type>> {
     if ((this.value as any) === expected) return this as Expectations<any>
 
-    const result = diff(this.value, expected)
+    const result = diff(this.value, expected, strict)
 
     if (result.diff) {
       if (isMatcher(expected)) {
@@ -624,6 +637,15 @@ export class Expectations<T = unknown> {
   /**
    * Expects the value to have the specified _property_.
    *
+   * The value associated with the property should not be `undefined`.
+   *
+   * For example:
+   *
+   * ```ts
+   * expect({}).toHaveProperty('foo') // fails
+   * expect({ foo: undefined }).toHaveProperty('foo') // fails
+   * ```
+   *
    * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
    */
   toHaveProperty<Prop extends string | number | symbol>(
@@ -631,8 +653,14 @@ export class Expectations<T = unknown> {
   ): Expectations<T & { [keyt in Prop] : unknown }>
 
   /**
-   * Expects the value to have the specified _property_ and (if specified)
+   * Expects the value to have the specified _property_ and (if found)
    * further validates its value with a {@link Matcher}.
+   *
+   * This also works with `undefined` values, for example:
+   * ```ts
+   * expect({ foo: undefined }).toHaveProperty('foo') // no matcher, fails
+   * expect({ foo: undefined }).toHaveProperty('foo', expect.toBeUndefined()) // works!
+   * ```
    *
    * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
    */
@@ -665,8 +693,16 @@ export class Expectations<T = unknown> {
     this.toBeDefined()
 
     const propertyValue = (this.value as any)[property]
+    let hasProperty: boolean
+    try {
+      // this is for "normal" objects
+      hasProperty = property in (this.value as any)
+    } catch (error) {
+      // when "in" doesn't apply (primitives) use the value
+      hasProperty = propertyValue !== undefined
+    }
 
-    if (propertyValue === undefined) {
+    if (! hasProperty) {
       this._fail(`to have property "${String(property)}"`)
     }
 
@@ -692,7 +728,10 @@ export class Expectations<T = unknown> {
         // re-throw
         throw error
       }
+    } else if (propertyValue === undefined) {
+      this._fail(`has property "${String(property)}" with value ${stringifyValue(undefined)}`)
     }
+
     return this as Expectations<any>
   }
 
@@ -1040,10 +1079,10 @@ export class NegativeExpectations<T = unknown> {
    *
    * Negates: {@link Expectations.toEqual `toEqual(...)`}
    */
-  toEqual(expected: any): Expectations<T> {
+  toEqual(expected: any, strict: boolean = false): Expectations<T> {
     let result: Diff = { diff: false, value: this._value }
     if (this._value !== expected) {
-      result = diff(this._value, expected)
+      result = diff(this._value, expected, strict)
       if (result.diff) return this._expectations
     }
 
@@ -1085,9 +1124,15 @@ export class NegativeExpectations<T = unknown> {
   toHaveProperty(property: string | number | symbol): Expectations<T> {
     this._expectations.toBeDefined()
 
-    const propertyValue = (this._value as any)[property]
-    if (propertyValue === undefined) return this._expectations
-    this._fail(`not to have property "${String(property)}"`)
+    let hasProperty: boolean
+    try {
+      hasProperty = property in (this._value as any)
+    } catch (error) {
+      hasProperty = (this._value as any)[property] !== undefined
+    }
+
+    if (hasProperty) this._fail(`not to have property "${String(property)}"`)
+    return this._expectations
   }
 
   /* ------------------------------------------------------------------------ */

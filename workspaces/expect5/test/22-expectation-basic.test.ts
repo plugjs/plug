@@ -264,6 +264,21 @@ describe('Basic Expectations', () => {
     expectPass(() => expect('foo').toEqual('foo'))
     expectPass(() => expect({ foo: 'bar' }).toEqual({ foo: 'bar' }))
     expectPass(() => expect([ 'foo', 'bar' ]).toEqual([ 'foo', 'bar' ]))
+    expectPass(() => expect({
+      foo: undefined,
+      bar: 'foobar',
+    }).toEqual({
+      // foo: undefined, // implicit (no key) so ignore it!
+      bar: 'foobar',
+    }))
+
+    expectPass(() => expect({
+      foo: undefined,
+      bar: 'foobar',
+    }).toEqual({
+      foo: undefined,
+      bar: 'foobar',
+    }, true))
 
     expectPass(() => expect('foo').not.toEqual('bar'))
     expectPass(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'baz' }))
@@ -293,6 +308,37 @@ describe('Basic Expectations', () => {
       diff: true,
       value: 'foo',
       expected: 'bar',
+    })
+
+    expectFail(() => expect({
+      bar: 'foobar',
+    }).toEqual({
+      foo: undefined, // explicit (has key), so must be defined!
+      bar: 'foobar',
+    }), 'Expected [Object] to equal [Object]', {
+      diff: true,
+      value: { bar: 'foobar' },
+      props: {
+        bar: { diff: false, value: 'foobar' },
+        foo: { diff: true, missing: undefined },
+      },
+    })
+
+    expectFail(() => expect({
+      foo: undefined, // explicit (has key), so must be defined in strict mode!
+      bar: 'foobar',
+    }).toEqual({
+      bar: 'foobar',
+    }, true), 'Expected [Object] to equal [Object]', {
+      diff: true,
+      value: {
+        foo: undefined,
+        bar: 'foobar',
+      },
+      props: {
+        bar: { diff: false, value: 'foobar' },
+        foo: { diff: true, extra: undefined },
+      },
     })
 
     expectFail(() => expect({ foo: 'bar' }).toEqual({ foo: 'baz' }), 'Expected [Object] to equal [Object]', {
@@ -336,10 +382,17 @@ describe('Basic Expectations', () => {
     expectPass(() => expect('foo').toHaveProperty('length', (assert) => assert.toEqual(3)))
     expectPass(() => expect([ 0 ]).toHaveProperty(0))
     expectPass(() => expect({ [s]: 'foo' }).toHaveProperty(s))
+    expectPass(() => expect({ foo: '' }).toHaveProperty('foo'))
+    expectPass(() => expect({ foo: undefined }).toHaveProperty('foo', expect.toBeUndefined()))
+    expectPass(() => expect({ foo: undefined }).not.toHaveProperty('bar'))
 
     expectFail(() => expect('foo').not.toHaveProperty('length'), 'Expected "foo" not to have property "length"')
     expectFail(() => expect([ 0 ]).not.toHaveProperty(0), 'Expected [Array (1)] not to have property "0"')
     expectFail(() => expect({ [s]: 'foo' }).not.toHaveProperty(s), 'Expected [Object] not to have property "Symbol()"')
+    expectFail(() => expect({ foo: undefined }).toHaveProperty('foo'), 'Expected [Object] has property "foo" with value <undefined>')
+    expectFail(() => expect({ foo: undefined }).toHaveProperty('bar'), 'Expected [Object] to have property "bar"')
+    expectFail(() => expect({ foo: undefined }).toHaveProperty('bar', expect.toBeUndefined()), 'Expected [Object] to have property "bar"')
+    expectFail(() => expect({ foo: undefined }).not.toHaveProperty('foo'), 'Expected [Object] not to have property "foo"')
 
     expectFail(() => expect('foo').toHaveProperty('length', (assert) => assert.toEqual(0)), 'Expected property ["length"] of "foo" (3) to equal 0', {
       diff: true,
