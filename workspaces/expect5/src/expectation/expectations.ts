@@ -637,6 +637,15 @@ export class Expectations<T = unknown> {
   /**
    * Expects the value to have the specified _property_.
    *
+   * The value associated with the property should not be `undefined`.
+   *
+   * For example:
+   *
+   * ```ts
+   * expect({}).toHaveProperty('foo') // fails
+   * expect({ foo: undefined }).toHaveProperty('foo') // fails
+   * ```
+   *
    * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
    */
   toHaveProperty<Prop extends string | number | symbol>(
@@ -644,8 +653,14 @@ export class Expectations<T = unknown> {
   ): Expectations<T & { [keyt in Prop] : unknown }>
 
   /**
-   * Expects the value to have the specified _property_ and (if specified)
+   * Expects the value to have the specified _property_ and (if found)
    * further validates its value with a {@link Matcher}.
+   *
+   * This also works with `undefined` values, for example:
+   * ```ts
+   * expect({ foo: undefined }).toHaveProperty('foo') // no matcher, fails
+   * expect({ foo: undefined }).toHaveProperty('foo', expect.toBeUndefined()) // works!
+   * ```
    *
    * Negation: {@link NegativeExpectations.toHaveProperty `not.toHaveProperty(...)`}
    */
