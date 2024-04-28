@@ -713,7 +713,10 @@ export class Expectations<T = unknown> {
         // re-throw
         throw error
       }
+    } else if (propertyValue === undefined) {
+      this._fail(`has property "${String(property)}" with value ${stringifyValue(undefined)}`)
     }
+
     return this as Expectations<any>
   }
 
