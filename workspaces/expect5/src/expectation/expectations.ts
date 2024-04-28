@@ -580,12 +580,25 @@ export class Expectations<T = unknown> {
   /**
    * Expects the value to be _deep equal to_ the specified expected one.
    *
+   * When `strict` is `true` (defaults to `false`) enumerable keys associated
+   * with an `undefined` value found in the _actual_ object will have to be
+   * also defined in the _expected_ object.
+   *
+   * For example:
+   *
+   * ```ts
+   * expect({ foo: undefined }).toEqual({}) // will pass
+   * expect({ foo: undefined }).toEqual({}, true) // will fail ("foo" is extra)
+   * expect({ foo: undefined }).toEqual({ foo: undefined }, true) // will pass
+   * expect({}).toEqual({ foo: undefined }) // will fail ("foo" is missing, whether "strict" is true or false)
+   * ```
+   *
    * Negation: {@link NegativeExpectations.toEqual `not.toEqual(...)`}
    */
-  toEqual<Type>(expected: Type): Expectations<InferToEqual<Type>> {
+  toEqual<Type>(expected: Type, strict: boolean = false): Expectations<InferToEqual<Type>> {
     if ((this.value as any) === expected) return this as Expectations<any>
 
-    const result = diff(this.value, expected)
+    const result = diff(this.value, expected, strict)
 
     if (result.diff) {
       if (isMatcher(expected)) {
@@ -1040,10 +1053,10 @@ export class NegativeExpectations<T = unknown> {
    *
    * Negates: {@link Expectations.toEqual `toEqual(...)`}
    */
-  toEqual(expected: any): Expectations<T> {
+  toEqual(expected: any, strict: boolean = false): Expectations<T> {
     let result: Diff = { diff: false, value: this._value }
     if (this._value !== expected) {
-      result = diff(this._value, expected)
+      result = diff(this._value, expected, strict)
       if (result.diff) return this._expectations
     }
 

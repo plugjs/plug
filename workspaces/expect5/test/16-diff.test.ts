@@ -263,7 +263,7 @@ describe('Differences', () => {
       const act = { a: true, b: 123, c: undefined }
       const exp = { a: true, b: 123 }
 
-      deepEqual(diff(act, exp), {
+      deepEqual(diff(act, exp, true), {
         diff: true,
         value: act,
         props: {
