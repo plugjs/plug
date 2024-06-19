@@ -1,7 +1,7 @@
 import { Files } from '@plugjs/plug'
 
-import { BuildFailure } from '../src/asserts'
 import { currentContext, requireContext, runningTasks } from '../src/async'
+import { BuildFailure } from '../src/asserts'
 import { hookAfter, hookBefore, invokeTasks, isBuild, plugjs } from '../src/build'
 
 describe('Build Invocation', () => {
