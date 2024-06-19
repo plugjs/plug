@@ -28,10 +28,26 @@
     "@stylistic/eslint-plugin-js": "^2.2.2",
     "@types/node": "<19",
     "eslint": "^9.5.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import-x": "^0.5.1",
     "eslint-plugin-unicorn": "^54.0.0",
     "globals": "^15.6.0",
     "typescript": "^5.4.5",
-    "typescript-eslint": "^8.0.0-alpha.30"
+    "typescript-eslint": "rc-v8"
+  },
+  "overrides": {
+    "@stylistic/eslint-plugin-plus": {
+      "@typescript-eslint/utils": "rc-v8"
+    },
+    "@stylistic/eslint-plugin-ts": {
+      "@typescript-eslint/utils": "rc-v8"
+    },
+    "eslint-plugin-import": {
+      "eslint": "^9.5.0"
+    },
+    "eslint-plugin-import-x": {
+      "@typescript-eslint/utils": "rc-v8"
+    }
   },
   "files": []
 }
