@@ -2,43 +2,21 @@ import js from '@eslint/js'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 import stylistic from '@stylistic/eslint-plugin'
+import unicorn from 'eslint-plugin-unicorn'
+import importx from 'eslint-plugin-import-x'
 
 export default [
   js.configs.recommended,
 
   // ======================================================================== //
-  // BASIC STYLE, COMMON BETWEEN JAVASCRIPT AND TYPESCRIPT                    //
+  // BASICS, COMMON BETWEEN JAVASCRIPT AND TYPESCRIPT                         //
   // ======================================================================== //
 
   {
-    plugins: {
-      '@stylistic': stylistic,
-    },
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        // Expect5 test globals
-        describe: false,
-        fdescribe: false,
-        xdescribe: false,
-        it: false,
-        fit: false,
-        xit: false,
-        afterAll: false,
-        afterEach: false,
-        beforeAll: false,
-        beforeEach: false,
-        xafterAll: false,
-        xafterEach: false,
-        xbeforeAll: false,
-        xbeforeEach: false,
-        skip: false,
-        expect: false,
-        log: false,
-        dirnameFromUrl: false,
-        filenameFromUrl: false,
+    name: 'plugjs-base',
 
-      },
+    languageOptions: {
+      globals: globals.es2024,
     },
 
     rules: {
@@ -76,9 +54,21 @@ export default [
       'prefer-promise-reject-errors': 'error',
       'prefer-rest-params': 'error',
       'prefer-spread': 'error',
+    },
+  },
 
-      // ===== STYLISTIC  =================================================== //
+  // ======================================================================== //
+  // BASICS, COMMON BETWEEN JAVASCRIPT AND TYPESCRIPT                         //
+  // ======================================================================== //
 
+  {
+    name: 'plugjs-stylistic',
+
+    plugins: {
+      '@stylistic': stylistic,
+    },
+
+    rules: {
       '@stylistic/array-bracket-newline': 'off',
       '@stylistic/array-bracket-spacing': [ 'error', 'always' ],
       '@stylistic/arrow-parens': [ 'error', 'always' ],
@@ -139,11 +129,69 @@ export default [
   },
 
   // ======================================================================== //
+  // UNICORN FOR EXTRA NICETIES                                               //
+  // ======================================================================== //
+
+  {
+    name: 'plugjs-unicorn',
+
+    plugins: {
+      'unicorn': unicorn,
+    },
+
+    rules: {
+      'unicorn/empty-brace-spaces': 'error',
+      'unicorn/no-instanceof-array': 'error',
+      'unicorn/prefer-node-protocol': 'error',
+    },
+  },
+
+  // ======================================================================== //
+  // IMPORTS                                                                  //
+  // ======================================================================== //
+
+  {
+    name: 'plugjs-imports',
+
+    plugins: {
+      'import-x': importx,
+    },
+
+    settings: {
+      'import-x/extensions': [ '.ts', '.cts', '.mts', '.js', '.cjs', '.mjs' ],
+      'import-x/external-module-folders': [ 'node_modules', 'node_modules/@types' ],
+      'import-x/parsers': {
+        '@typescript-eslint/parser': [ '.ts', '.cts', '.mts' ],
+        'espree': [ '.js', '.mjs', '.cjs' ],
+      },
+      'import-x/resolver': {
+        'typescript': true,
+        'node': true,
+      },
+    },
+
+    rules: {
+      'import-x/consistent-type-specifier-style': [ 'error', 'prefer-top-level' ],
+      'import-x/no-cycle': [ 'error' ],
+      'import-x/no-duplicates': [ 'error' ],
+      'import-x/no-extraneous-dependencies': [ 'off' ],
+      'import-x/order': [ 'error', {
+        'groups': [ 'builtin', 'external', 'internal', [ 'parent', 'sibling' ], 'index', 'object', 'type' ],
+        'newlines-between': 'always',
+        'warnOnUnassignedImports': true,
+      } ],
+    },
+  },
+
+  // ======================================================================== //
   // JAVASCRIPT SPECIFIC                                                      //
   // ======================================================================== //
 
   {
+    name: 'plugjs-javascript',
+
     files: [ '*.js', '*.cjs', '*.mjs' ],
+
     rules: {
       'guard-for-in': 'error',
       'no-array-constructor': 'error',
@@ -154,6 +202,26 @@ export default [
         argsIgnorePattern: '^_',
       } ],
       'strict': [ 'error', 'global' ],
+    },
+  },
+
+  {
+    name: 'plugjs-javascript-cjs',
+
+    files: [ '*.cjs' ],
+
+    languageOptions: {
+      sourceType: 'commonjs',
+    },
+  },
+
+  {
+    name: 'plugjs-javascript-esm',
+
+    files: [ '*.mjs' ],
+
+    languageOptions: {
+      sourceType: 'module',
     },
   },
 
@@ -175,7 +243,10 @@ export default [
 
   // Clone of "typescript-eslint/recommended", but only for typescript
   {
+    name: '@typescript-eslint/recommended',
+
     files: [ '**/*.ts', '**/*.cts', '**/*.mts' ],
+
     rules: {
       '@typescript-eslint/ban-ts-comment': 'error',
       '@typescript-eslint/ban-types': 'error',
@@ -201,6 +272,8 @@ export default [
 
   // Our own rules overriding "typescript-eslint/recommended"
   {
+    name: 'plugjs-typescript',
+
     files: [ '**/*.ts', '**/*.cts', '**/*.mts' ],
 
     rules: {
@@ -226,13 +299,48 @@ export default [
   },
 
   // ======================================================================== //
+  // PLUGJS GENERIC PROJECT                                                   //
+  // ======================================================================== //
+
+  {
+    name: 'plugjs-project',
+
+    files: [ '**/*.ts', '**/*.cts', '**/*.mts' ],
+
+    languageOptions: {
+      parserOptions: {
+        createDefaultProgram: false,
+        project: [
+          './tsconfig.json',
+          './test/tsconfig.json',
+        ],
+      },
+    },
+  },
+
+  {
+    name: 'plugjs-project-src',
+
+    files: [ 'src/**' ],
+
+    rules: {
+      // Turn _ON_ dependencies checks only for sources
+      'import-x/no-extraneous-dependencies': [ 'error', {
+        'devDependencies': true,
+        'peerDependencies': true,
+        'optionalDependencies': true,
+        'bundledDependencies': false,
+      } ],
+    },
+  },
+
+  // ======================================================================== //
   // LOCAL TO THE PROJECT                                                     //
   // ======================================================================== //
 
   {
     languageOptions: {
       parserOptions: {
-        createDefaultProgram: false,
         project: [
           './tsconfig.json',
           './test-d/tsconfig.json',
@@ -255,6 +363,22 @@ export default [
     },
     rules: {
       '@typescript-eslint/triple-slash-reference': 'off',
+    },
+  },
+
+  {
+    name: 'plugjs-project-src',
+
+    files: [ 'workspaces/*/src/**' ],
+
+    rules: {
+      // Turn _ON_ dependencies checks only for sources
+      'import-x/no-extraneous-dependencies': [ 'error', {
+        'devDependencies': true,
+        'peerDependencies': true,
+        'optionalDependencies': true,
+        'bundledDependencies': false,
+      } ],
     },
   },
 ]
