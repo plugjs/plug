@@ -7,7 +7,9 @@ describe('ESLint Plug', () => {
 
   it('should lint some files', async () => {
     await find('test.js', { directory: dataDir })
-        .plug(new ESLint())
+        .plug(new ESLint({
+          directory: dataDir,
+        }))
   })
 
   it('should lint some files with warnings', async () => {
