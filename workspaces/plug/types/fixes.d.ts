@@ -5,5 +5,6 @@
  * https://github.com/evanw/esbuild/issues/2388
  */
 declare namespace WebAssembly {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface Module {} // just define an empty interface...
 }
