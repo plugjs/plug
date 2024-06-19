@@ -150,7 +150,8 @@ export default [
       'no-invalid-this': 'error',
       'no-unused-expressions': 'error',
       'no-unused-vars': [ 'error', {
-        args: 'none',
+        args: 'after-used',
+        argsIgnorePattern: '^_',
       } ],
       'strict': [ 'error', 'global' ],
     },
@@ -216,6 +217,11 @@ export default [
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/no-invalid-this': 'error',
+      '@typescript-eslint/no-unused-vars': [ 'error', {
+        args: 'after-used',
+        argsIgnorePattern: '^_',
+      } ],
+
     },
   },
 
