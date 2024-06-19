@@ -131,7 +131,7 @@ function convertMessage(level: ReportLevel, message: Message, directory: Absolut
   record.tags = [ message.id, message.pluginName ].filter((tag) => !! tag)
 
   if (message.location) {
-    record.line = message.location.line,
+    record.line = message.location.line
     record.column = message.location.column + 1
     record.length = message.location.length
     record.file = resolveAbsolutePath(directory, message.location.file)

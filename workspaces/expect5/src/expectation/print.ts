@@ -219,6 +219,7 @@ function printObjectDiff(
  * ========================================================================== */
 
 function stringify(
+    // eslint-disable-next-line @typescript-eslint/ban-types
     value: null | undefined | string | number | boolean | bigint | symbol | Function,
 ): string {
   if (typeof value === 'string') return JSON.stringify(value)

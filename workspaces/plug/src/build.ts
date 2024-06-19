@@ -163,7 +163,7 @@ class TaskImpl<R extends Result> implements Task<R> {
 
 /** Compile a {@link BuildDef | build definition} into a {@link Build} */
 export function plugjs<
-  D extends BuildDef, B extends ThisBuild<D>
+  D extends BuildDef, B extends ThisBuild<D>,
 >(def: D & ThisType<B>): Build<D> {
   const buildFile = findCaller(plugjs)
   const tasks: Record<string, Task> = {}
@@ -252,7 +252,7 @@ export function plugjs<
 
 /** @deprecated Please use the new {@link plugjs} export */
 export const build: typeof plugjs = function<
-  D extends BuildDef, B extends ThisBuild<D>
+  D extends BuildDef, B extends ThisBuild<D>,
 >(def: D & ThisType<B>): Build<D> {
   log.warn(`Use of deprecated ${$ylw('build')} entry point, please use ${$grn('plugjs')}`)
   return plugjs(def)

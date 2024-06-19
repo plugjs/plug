@@ -101,7 +101,7 @@ export type Tasks<D extends BuildDef = BuildDef> = {
  * all its properties and tasks.
  */
 export interface BuildDef {
-  [ k : string ] : string | TaskDef | TaskCall
+  [ k : string ]: string | TaskDef | TaskCall
 }
 
 /**
@@ -130,7 +130,7 @@ export type ThisBuild<D extends BuildDef> = {
 export type Build<D extends BuildDef = BuildDef> = Props<D> & Tasks<D>
 /** A type identifying all _task names_ in a {@link Build}. */
 export type BuildTasks<B extends Build> = string & keyof {
-  [ name in keyof B as B[name] extends Function ? name : never ] : any
+  [ name in keyof B as B[name] extends (() => any) ? name : never ] : any
 }
 
 /** A type identifying a subset of _properties_ for a {@link Build}. */

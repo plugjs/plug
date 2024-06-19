@@ -51,6 +51,7 @@ export type Diff =
  * ========================================================================== */
 
 type Binary = Buffer | Uint8Array | ArrayBuffer | SharedArrayBuffer
+// eslint-disable-next-line @typescript-eslint/ban-types
 type BoxedPrimitive = Boolean | String | Number
 type Remarks = { actualMemos: any[], expectedMemos: any[], strict: boolean }
 
