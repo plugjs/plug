@@ -5,7 +5,7 @@ import { assert } from '@plugjs/plug'
 import { BuildFailure } from '@plugjs/plug/asserts'
 import { readFile } from '@plugjs/plug/fs'
 import { $p, $grn, $ylw, ERROR, WARN, $gry } from '@plugjs/plug/logging'
-import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory } from '@plugjs/plug/paths'
+import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from '@plugjs/plug/paths'
 import { ESLint as RealESLint } from 'eslint'
 
 import type { Files } from '@plugjs/plug/files'
@@ -17,19 +17,25 @@ export class ESLint implements Plug<void> {
   private readonly _options: Readonly<ESLintOptions>
 
   constructor(...arg: PipeParameters<'eslint'>)
-  constructor(options: ESLintOptions = {}) {
-    this._options = options
+  constructor(arg: string | ESLintOptions = {}) {
+    this._options = typeof arg === 'string' ? { configFile: arg } : arg
   }
 
   async pipe(files: Files, context: Context): Promise<void> {
-    const { directory, ingoreDeprecatedRules } = this._options
+    const { directory, configFile, ingoreDeprecatedRules } = this._options
 
     const cwd = directory ? context.resolve(directory) : getCurrentWorkingDirectory()
     assert(resolveDirectory(cwd), `ESLint directory ${$p(cwd)} does not exist`)
 
+    const overrideConfigFile = configFile ? context.resolve(configFile) : undefined
+    if (overrideConfigFile) {
+      assert(resolveFile(overrideConfigFile), `ESLint configuration ${$p(overrideConfigFile)} does not exist`)
+    }
+
     /* Create our ESLint instance */
     const eslint = new RealESLint({
       globInputPaths: false, // we already have all globs resolved
+      overrideConfigFile, // if any override config file was supplied...
       cwd, // current working directory for eslint (where everything starts)
     })
 
@@ -84,7 +90,7 @@ export class ESLint implements Plug<void> {
           severity,
           message: msg,
           ruleId: tags,
-          suggestions,
+          suggestions = [],
           line,
           column,
           endLine = line,
@@ -92,7 +98,7 @@ export class ESLint implements Plug<void> {
         } = record
 
         const message = [ msg ]
-        for (const suggestion of suggestions || []) {
+        for (const suggestion of suggestions) {
           message.push(`- ${suggestion.desc}`)
         }
 
