@@ -6,11 +6,8 @@ export interface ESLintOptions {
   directory?: string
   /** Show sources in report? */
   showSources?: boolean
-  /**
-   * ESLint's _override_ configuration file: configurations specified in this
-   * file will override any other configuration specified elsewhere.
-   */
-  configFile?: string
+  /** Do not warn about ESLint deprecated rule? */
+  ingoreDeprecatedRules?: boolean
 }
 
 declare module '@plugjs/plug' {
@@ -20,15 +17,6 @@ declare module '@plugjs/plug' {
      * using the configuration from the local `.eslintrc.*` file.
      */
     eslint(): Promise<undefined>
-
-    /**
-     * Run {@link https://eslint.org/ _ESlint_} over the input source files,
-     * using the configuration from the specified `configFile` (this wil
-     * override any `.eslintrc.*` file).
-     *
-     * @param configFile The configuration file to use
-     */
-    eslint(configFile: string): Promise<undefined>
 
     /**
      * Run {@link https://eslint.org/ _ESlint_} over the input source files..

@@ -4,8 +4,8 @@
 import { assert } from '@plugjs/plug'
 import { BuildFailure } from '@plugjs/plug/asserts'
 import { readFile } from '@plugjs/plug/fs'
-import { $p, ERROR, WARN } from '@plugjs/plug/logging'
-import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from '@plugjs/plug/paths'
+import { $p, $grn, $ylw, ERROR, WARN, $gry } from '@plugjs/plug/logging'
+import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory } from '@plugjs/plug/paths'
 import { ESLint as RealESLint } from 'eslint'
 
 import type { Files } from '@plugjs/plug/files'
@@ -17,31 +17,20 @@ export class ESLint implements Plug<void> {
   private readonly _options: Readonly<ESLintOptions>
 
   constructor(...arg: PipeParameters<'eslint'>)
-  constructor(arg: string | ESLintOptions = {}) {
-    this._options = typeof arg === 'string' ? { configFile: arg } : arg
+  constructor(options: ESLintOptions = {}) {
+    this._options = options
   }
 
   async pipe(files: Files, context: Context): Promise<void> {
-    const { directory, configFile } = this._options
+    const { directory, ingoreDeprecatedRules } = this._options
 
     const cwd = directory ? context.resolve(directory) : getCurrentWorkingDirectory()
     assert(resolveDirectory(cwd), `ESLint directory ${$p(cwd)} does not exist`)
 
-    const overrideConfigFile = configFile ? context.resolve(configFile) : undefined
-    if (overrideConfigFile) {
-      assert(resolveFile(overrideConfigFile), `ESLint configuration ${$p(overrideConfigFile)} does not exist`)
-    }
-
     /* Create our ESLint instance */
     const eslint = new RealESLint({
-      /* Pass our logger function to ESLint's parser (for warnings) */
-      baseConfig: {
-        'parserOptions': {
-          loggerFn: (arg: any, ...args: any[]): void => context.log.warn(arg, ...args),
-        },
-      },
-      overrideConfigFile,
-      cwd,
+      globInputPaths: false, // we already have all globs resolved
+      cwd, // current working directory for eslint (where everything starts)
     })
 
     /* Lint all files in parallel */
@@ -78,10 +67,17 @@ export class ESLint implements Plug<void> {
     /* Create our report */
     const report = context.log.report('ESLint Report')
 
+    /* Keep an eye on deprecated rules */
+    const deprecated: Record<string, string[]> = {}
+
     /* Convert ESLint results into our report records */
     for (const result of results) {
       const { filePath, source, messages } = result
       const file = resolveAbsolutePath(getCurrentWorkingDirectory(), filePath)
+
+      for (const deprecation of result.usedDeprecatedRules) {
+        deprecated[deprecation.ruleId] = deprecation.replacedBy
+      }
 
       for (const record of messages) {
         const {
@@ -108,6 +104,20 @@ export class ESLint implements Plug<void> {
 
         /* Add our report */
         report.add({ level, message, tags, line, column, length, file, source })
+      }
+    }
+
+    /* Report ESLint deprecated rules */
+    if (! ingoreDeprecatedRules) {
+      for (const [ rule, replacedBy ] of Object.entries(deprecated)) {
+        if (replacedBy.length) {
+          const replacements = replacedBy.map($grn)
+          replacements.unshift('')
+          const repl = replacements.join(`\n${$gry('*')} `)
+          report.add({ level: WARN, message: `Rule ${$ylw(rule)} was deprecated and replaced by ${repl}` })
+        } else {
+          report.add({ level: WARN, message: `Rule ${$ylw(rule)} was deprecated without replacement` })
+        }
       }
     }
 
