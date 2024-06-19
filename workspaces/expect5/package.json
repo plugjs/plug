@@ -42,6 +42,9 @@
   },
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
+  "dependencies": {
+    "@plugjs/tsrun": "^0.5.22"
+  },
   "devDependencies": {
     "@types/chai": "^4.3.16",
     "chai": "<5"
