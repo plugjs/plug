@@ -23,9 +23,6 @@ export default [
 
       // ===== ORIGINALLY FROM GOOGLE'S STYLE GUIDE ========================= //
 
-      'no-tabs': 'error',
-      'no-new-object': 'error',
-
       'camelcase': [ 'error', {
         properties: 'never',
 
@@ -58,7 +55,7 @@ export default [
   },
 
   // ======================================================================== //
-  // BASICS, COMMON BETWEEN JAVASCRIPT AND TYPESCRIPT                         //
+  // STYLE: STYLISTIC SUPPORTS BOTH JS AND TS IN ONE GO                       //
   // ======================================================================== //
 
   {
