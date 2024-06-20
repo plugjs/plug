@@ -13,6 +13,7 @@ import {
   plugjs,
   resolve,
   rmrf,
+  using,
 } from './workspaces/plug/src/index'
 
 import type { ESLint } from './workspaces/eslint/src/eslint'
@@ -307,11 +308,12 @@ export default plugjs({
   async lint(): Promise<void> {
     banner('Linting Sources')
 
-    const pipe = this.workspace ?
+    const sources = this.workspace ?
       find('(src|extra|test|types)/**/*.([cm])?ts', { directory: `workspaces/${this.workspace}` }) :
       find('*/(src|extra|test|types)/**/*.([cm])?ts', { directory: 'workspaces' })
 
-    await pipe.plug(new ForkingESLint())
+    await merge([ sources, using('build.ts', 'eslint.config.mjs') ])
+        .plug(new ForkingESLint())
   },
 
   /* ======================================================================== *
