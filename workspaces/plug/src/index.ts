@@ -1,6 +1,4 @@
-// Reference our globals and type fixes
-import '../types/globals.d.ts'
-import '../types/fixes.d.ts'
+import './globals'
 
 // This is a main constituent of our build system!
 import type { Files } from './files'

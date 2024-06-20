@@ -20,6 +20,18 @@ export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' 
 export * from './esbuild/bundle-locals'
 export * from './esbuild/fix-extensions'
 
+/*
+ * Type definition for `WebAssembly`. This is normally provided to TypeScript
+ * by `lib.dom.d.ts`, and is not defined by Node's own types.
+ *
+ * https://github.com/evanw/esbuild/issues/2388
+ */
+// eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars
+declare namespace WebAssembly {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  interface Module {} // just define an empty interface...
+}
+
 declare module '../index' {
   export interface Pipe {
     /**
