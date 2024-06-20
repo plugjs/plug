@@ -27,10 +27,6 @@ export default [
         ],
       },
     },
-    rules: {
-      // we use triple-slashes in our plugin system...
-      '@typescript-eslint/triple-slash-reference': 'off',
-    },
   },
 
   // ===== MAKE SURE WE DECLARE OUR DEPENDENCIES IN WORKSPACES =================
