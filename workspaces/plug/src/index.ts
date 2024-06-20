@@ -1,9 +1,6 @@
-// Re-refence our global exports
-/// <reference path="../types/globals.d.ts" />
-
-// Reference our extra "webassembly" type fix here. As we're using esbuild
-// everywhere, we want our dependants to have this type known...
-/// <reference path="../types/fixes.d.ts" />
+// Reference our globals and type fixes
+import '../types/globals.d.ts'
+import '../types/fixes.d.ts'
 
 // This is a main constituent of our build system!
 import type { Files } from './files'

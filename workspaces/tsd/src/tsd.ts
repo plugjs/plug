@@ -1,6 +1,3 @@
-// Reference ourselves, so that the constructor's parameters are correct
-/// <reference path="./index.ts" />
-
 import { Files, resolve } from '@plugjs/plug'
 import { ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import { assertRelativeChildPath, getCurrentWorkingDirectory, resolveAbsolutePath } from '@plugjs/plug/paths'
