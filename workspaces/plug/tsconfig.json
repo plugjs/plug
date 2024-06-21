@@ -3,6 +3,5 @@
   "include": [
     "./extra",
     "./src",
-    "./types",
   ],
 }

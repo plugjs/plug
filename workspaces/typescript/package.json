@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/typescript",
-  "version": "0.5.42",
+  "version": "0.6.0",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -30,10 +30,10 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.2"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.5.42"
+    "@plugjs/plug": "0.6.0"
   },
   "files": [
     "*.md",

@@ -1,6 +1,3 @@
-// Reference ourselves, so that the constructor's parameters are correct
-/// <reference path="./index.ts" />
-
 import { Files, resolve } from '@plugjs/plug'
 import { ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import { assertRelativeChildPath, getCurrentWorkingDirectory, resolveAbsolutePath } from '@plugjs/plug/paths'
@@ -30,7 +27,6 @@ export class Tsd implements Plug<void> {
 
     // Convert incoming files, relativizing them to the `cwd` specified in options
     const testFiles = [ ...Files.builder(cwd).add(...files.absolutePaths()).build() ]
-    void files, context, this._options
 
     // Let TSD do its thing
     const diagnostics = await tsd({

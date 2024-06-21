@@ -697,7 +697,7 @@ export class Expectations<T = unknown> {
     try {
       // this is for "normal" objects
       hasProperty = property in (this.value as any)
-    } catch (error) {
+    } catch {
       // when "in" doesn't apply (primitives) use the value
       hasProperty = propertyValue !== undefined
     }
@@ -1127,7 +1127,7 @@ export class NegativeExpectations<T = unknown> {
     let hasProperty: boolean
     try {
       hasProperty = property in (this._value as any)
-    } catch (error) {
+    } catch {
       hasProperty = (this._value as any)[property] !== undefined
     }
 
@@ -1229,7 +1229,7 @@ export class NegativeExpectations<T = unknown> {
     try {
       expectations.value()
       return expectations
-    } catch (caught) {
+    } catch {
       this._fail('not to throw')
     }
   }

@@ -40,7 +40,7 @@ export function toMatchContents(
   try {
     actual = new Set(expectations.value as any)
     expected = new Set(contents)
-  } catch (error) {
+  } catch {
     throw new ExpectationError(expectations, 'to be an iterable object')
   }
 

@@ -6,6 +6,10 @@ export interface ESLintOptions {
   directory?: string
   /** Show sources in report? */
   showSources?: boolean
+  /** Do not warn about ESLint deprecated rule? */
+  ingoreDeprecatedRules?: boolean
+  /** Warn when trying to lint ignored files (default: `false`) */
+  warnIgnored?: boolean
   /**
    * ESLint's _override_ configuration file: configurations specified in this
    * file will override any other configuration specified elsewhere.

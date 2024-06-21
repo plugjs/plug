@@ -1,6 +1,3 @@
-// Reference ourselves, so that the constructor's parameters are correct
-/// <reference path="./index.ts"/>
-
 import { sep } from 'node:path'
 
 import { html, initFunction } from '@plugjs/cov8-html'

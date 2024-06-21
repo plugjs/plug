@@ -1,3 +1,6 @@
-// Re-refence our global exports. This is exported "as is" so that we can
-// more simply add "@plugjs/plug/globals" in "tsconfig.json"'s own "types"
-/// <reference path="../types/globals.d.ts" />
+/**
+ * A pseudo-variable replaced by `ESBuild` resolving to either `__filename`
+ * in CJS modules, or to `import.meta.url` in ESM modules.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+declare const __fileurl: string

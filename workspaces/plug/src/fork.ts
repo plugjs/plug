@@ -1,9 +1,11 @@
 import { fork } from 'node:child_process'
+import { Console } from 'node:console'
+import { Writable } from 'node:stream'
 
 import { assert, BuildFailure } from './asserts'
 import { runAsync } from './async'
 import { Files } from './files'
-import { $gry, $p, $red, logOptions } from './logging'
+import { $gry, $p, $red, logOptions, NOTICE, WARN } from './logging'
 import { emit, emitForked } from './logging/emit'
 import { requireFilename, resolveFile } from './paths'
 import { Context, install } from './pipe'
@@ -185,10 +187,12 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
  * for the message and respond once the plug returns _something_!
  */
 if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
+  /* Save the original console, we'll replace it on "message" */
+  const originalConsole = globalThis.console
+
   /* Unhandled exceptions and graceful termination */
   process.on('uncaughtException', (error, origin) => {
-    // eslint-disable-next-line no-console
-    console.error(
+    originalConsole.error(
         $red('\n= UNCAUGHT EXCEPTION ========================================='),
         `\nError (${origin}):`, error,
         `\nNode.js ${process.version} (pid=${process.pid})\n`)
@@ -197,8 +201,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
 
   /* If we haven't processed our message in 5 seconds, fail _badly_ */
   const timeout = setTimeout(() => {
-    // eslint-disable-next-line no-console
-    console.error('Fork not initialized in 5 seconds')
+    originalConsole.error('Fork not initialized in 5 seconds')
     process.exit(2)
   }, 5000).unref()
 
@@ -219,6 +222,24 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
 
     /* Before anything else, capture logs! */
     emit.emitter = emitForked // replace the log emitter...
+
+    /* Create a couple of writers for our fake "stdout" and "stderr" */
+    const stdout = new class extends Writable {
+      _write(chunk: any, _: BufferEncoding, callback: (error?: Error | null) => void): void {
+        emit.emitter({ level: NOTICE, taskName }, [ chunk.toString() ])
+        callback()
+      }
+    }
+
+    const stderr = new class extends Writable {
+      _write(chunk: any, _: BufferEncoding, callback: (error?: Error | null) => void): void {
+        emit.emitter({ level: WARN, taskName }, [ chunk.toString() ])
+        callback()
+      }
+    }
+
+    /* Replace the console with our own sending messages as logs */
+    globalThis.console = new Console(stdout, stderr)
 
     /* First of all, our plug context */
     const context = new Context(buildFile, taskName)
@@ -271,8 +292,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
     promise.then(() => {
       context.log.debug('Forked plug with pid', process.pid, 'exiting')
     }, (error) => {
-      // eslint-disable-next-line no-console
-      console.error('\n\nError sending message back to parent process', error)
+      originalConsole.error('\n\nError sending message back to parent process', error)
       process.exitCode = 1
     }).finally(() => {
       process.disconnect()

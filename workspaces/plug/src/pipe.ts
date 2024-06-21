@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 import { sep } from 'node:path'
 
 import { assert, assertPromises } from './asserts'

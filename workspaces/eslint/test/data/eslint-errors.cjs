@@ -1,9 +1,8 @@
 'use strict'
 
-module.exports = {
-  root: true,
+module.exports = [ {
   rules: {
     'no-console': 'error',
     'radix': [ 'error', 'always' ],
   },
-}
+} ]

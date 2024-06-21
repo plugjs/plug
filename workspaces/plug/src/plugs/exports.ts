@@ -55,7 +55,7 @@ install('exports', class Exports implements Plug<Files> {
       cjsExtension,
       esmExtension,
     } = options
-    this._packageJson = packageJson,
+    this._packageJson = packageJson
     this._outputPackageJson = outputPackageJson
     this._cjsExtension = cjsExtension
     this._esmExtension = esmExtension

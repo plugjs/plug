@@ -1,6 +1,3 @@
-// Reference ourselves, so that the constructor's parameters are correct
-/// <reference path="./index.ts" />
-
 import { createWriteStream } from 'node:fs'
 
 import { $p, $ylw, assert, Files } from '@plugjs/plug'

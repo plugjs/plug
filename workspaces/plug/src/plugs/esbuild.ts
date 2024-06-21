@@ -20,6 +20,17 @@ export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' 
 export * from './esbuild/bundle-locals'
 export * from './esbuild/fix-extensions'
 
+/*
+ * Type definition for `WebAssembly`. This is normally provided to TypeScript
+ * by `lib.dom.d.ts`, and is not defined by Node's own types.
+ *
+ * https://github.com/evanw/esbuild/issues/2388
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+declare const WebAssembly: {
+  Module: any,
+}
+
 declare module '../index' {
   export interface Pipe {
     /**
@@ -131,7 +142,7 @@ function convertMessage(level: ReportLevel, message: Message, directory: Absolut
   record.tags = [ message.id, message.pluginName ].filter((tag) => !! tag)
 
   if (message.location) {
-    record.line = message.location.line,
+    record.line = message.location.line
     record.column = message.location.column + 1
     record.length = message.location.length
     record.file = resolveAbsolutePath(directory, message.location.file)

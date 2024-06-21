@@ -130,8 +130,7 @@ describe('Pipes and Context', () => {
       constructor(...options: any[]) {
         this._options = options
       }
-      pipe(files: Files, context: Context): void {
-        void files, context
+      pipe(_files: Files, _context: Context): void {
         options = this._options
       }
     }
