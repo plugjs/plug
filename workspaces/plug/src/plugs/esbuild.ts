@@ -26,10 +26,9 @@ export * from './esbuild/fix-extensions'
  *
  * https://github.com/evanw/esbuild/issues/2388
  */
-// eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/no-unused-vars
-declare namespace WebAssembly {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface Module {} // just define an empty interface...
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+declare const WebAssembly: {
+  Module: any,
 }
 
 declare module '../index' {

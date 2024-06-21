@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
-/* eslint-disable @typescript-eslint/no-empty-object-type */
 import { sep } from 'node:path'
 
 import { assert, assertPromises } from './asserts'
