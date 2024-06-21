@@ -19,7 +19,7 @@ export class ESLint implements Plug<void> {
   }
 
   async pipe(files: Files, context: Context): Promise<void> {
-    const { directory, configFile, ingoreDeprecatedRules } = this._options
+    const { directory, configFile, ingoreDeprecatedRules, warnIgnored } = this._options
 
     const cwd = directory ? context.resolve(directory) : getCurrentWorkingDirectory()
     assert(resolveDirectory(cwd), `ESLint directory ${$p(cwd)} does not exist`)
@@ -40,7 +40,7 @@ export class ESLint implements Plug<void> {
     const paths = [ ...files.absolutePaths() ]
     const promises = paths.map(async (filePath) => {
       const code = await readFile(filePath, 'utf-8')
-      return eslint.lintText(code, { filePath })
+      return eslint.lintText(code, { filePath, warnIgnored: !!warnIgnored })
     })
 
     /* Await for all promises to be settled */
