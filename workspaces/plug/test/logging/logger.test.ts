@@ -151,4 +151,14 @@ describe('Logger', () => {
       logOptions.indentSize = _indent
     }
   })
+
+  it('should correctly emit console logs in forked plugs', () => {
+    /* eslint-disable no-console */
+    console.log('First')
+    console.log('Second')
+    console.error('To standard error')
+    console.error('To standard error again')
+    console.log('Third')
+    console.log('Fourth')
+  })
 })

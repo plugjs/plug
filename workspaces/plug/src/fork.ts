@@ -10,6 +10,7 @@ import { emit, emitForked } from './logging/emit'
 import { requireFilename, resolveFile } from './paths'
 import { Context, install } from './pipe'
 
+import type { LogLevel } from './logging'
 import type { ForkedLogMessage } from './logging/emit'
 import type { AbsolutePath } from './paths'
 import type { Plug, PlugName, PlugResult } from './pipe'
@@ -224,22 +225,17 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
     emit.emitter = emitForked // replace the log emitter...
 
     /* Create a couple of writers for our fake "stdout" and "stderr" */
-    const stdout = new class extends Writable {
+    const makeWritable = (level: LogLevel): Writable => new class extends Writable {
       _write(chunk: any, _: BufferEncoding, callback: (error?: Error | null) => void): void {
-        emit.emitter({ level: NOTICE, taskName }, [ chunk.toString() ])
-        callback()
-      }
-    }
-
-    const stderr = new class extends Writable {
-      _write(chunk: any, _: BufferEncoding, callback: (error?: Error | null) => void): void {
-        emit.emitter({ level: WARN, taskName }, [ chunk.toString() ])
+        const string: string = chunk.toString()
+        const message = string.endsWith('\n') ? string.slice(0, -1) : string
+        emit.emitter({ level, taskName }, [ message ])
         callback()
       }
     }
 
     /* Replace the console with our own sending messages as logs */
-    globalThis.console = new Console(stdout, stderr)
+    globalThis.console = new Console(makeWritable(NOTICE), makeWritable(WARN))
 
     /* First of all, our plug context */
     const context = new Context(buildFile, taskName)
