@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/plug",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -116,7 +116,7 @@
     "@plugjs/tsrun": "^0.5.23",
     "@types/node": "<19",
     "esbuild": "^0.21.5",
-    "jsonc-parser": "^3.2.1",
+    "jsonc-parser": "^3.3.1",
     "picomatch": "^4.0.2"
   },
   "devDependencies": {
