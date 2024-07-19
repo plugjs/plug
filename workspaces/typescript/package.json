@@ -46,18 +46,13 @@
   },
   "keywords": [
     "build",
-    "check",
     "compile",
     "ecmascript",
     "javascript",
     "node",
     "plugjs",
     "transpile",
-    "tsd",
-    "typedefs",
-    "types",
-    "typescript",
-    "typings"
+    "typescript"
   ],
   "bugs": {
     "url": "https://github.com/plugjs/plug/issues"
