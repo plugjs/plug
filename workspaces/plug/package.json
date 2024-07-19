@@ -113,7 +113,7 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@plugjs/tsrun": "^0.5.29",
+    "@plugjs/tsrun": "^0.5.31",
     "@types/node": "<19",
     "esbuild": "^0.23.0",
     "jsonc-parser": "^3.3.1",
@@ -128,5 +128,23 @@
     "dist/",
     "extra/",
     "src/"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/plugjs/plug.git"
+  },
+  "keywords": [
+    "build",
+    "compile",
+    "ecmascript",
+    "javascript",
+    "node",
+    "plugjs",
+    "transpile",
+    "typescript"
+  ],
+  "bugs": {
+    "url": "https://github.com/plugjs/plug/issues"
+  },
+  "homepage": "https://github.com/plugjs/plug/blob/main/workspaces/plug/#readme"
 }

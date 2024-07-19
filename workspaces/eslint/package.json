@@ -39,5 +39,24 @@
     "*.md",
     "dist/",
     "src/"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/plugjs/plug.git"
+  },
+  "keywords": [
+    "build",
+    "compile",
+    "ecmascript",
+    "eslint",
+    "javascript",
+    "node",
+    "plugjs",
+    "transpile",
+    "typescript"
+  ],
+  "bugs": {
+    "url": "https://github.com/plugjs/plug/issues"
+  },
+  "homepage": "https://github.com/plugjs/plug/blob/main/workspaces/eslint/#readme"
 }

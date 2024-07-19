@@ -44,5 +44,26 @@
     "*.md",
     "dist/",
     "src/"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/plugjs/plug.git"
+  },
+  "keywords": [
+    "archive",
+    "build",
+    "compile",
+    "ecmascript",
+    "javascript",
+    "node",
+    "plugjs",
+    "transpile",
+    "typescript",
+    "yazl",
+    "zip"
+  ],
+  "bugs": {
+    "url": "https://github.com/plugjs/plug/issues"
+  },
+  "homepage": "https://github.com/plugjs/plug/blob/main/workspaces/zip/#readme"
 }

@@ -36,7 +36,7 @@
     "@babel/parser": "^7.24.8",
     "@babel/types": "^7.24.9",
     "@plugjs/cov8-html": "^0.1.75",
-    "@plugjs/tsrun": "^0.5.29",
+    "@plugjs/tsrun": "^0.5.31",
     "source-map": "^0.7.4"
   },
   "peerDependencies": {
@@ -46,5 +46,26 @@
     "*.md",
     "dist/",
     "src/"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/plugjs/plug.git"
+  },
+  "keywords": [
+    "build",
+    "compile",
+    "coverage",
+    "ecmascript",
+    "istanbul",
+    "javascript",
+    "node",
+    "nyc",
+    "plugjs",
+    "transpile",
+    "typescript"
+  ],
+  "bugs": {
+    "url": "https://github.com/plugjs/plug/issues"
+  },
+  "homepage": "https://github.com/plugjs/plug/blob/main/workspaces/cov8/#readme"
 }

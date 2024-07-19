@@ -43,7 +43,7 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@plugjs/tsrun": "^0.5.29"
+    "@plugjs/tsrun": "^0.5.31"
   },
   "devDependencies": {
     "@types/chai": "^4.3.16",
@@ -56,5 +56,30 @@
     "*.md",
     "dist/",
     "src/"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/plugjs/plug.git"
+  },
+  "keywords": [
+    "assert",
+    "assertion",
+    "build",
+    "compile",
+    "ecmascript",
+    "expect",
+    "expectation",
+    "javascript",
+    "node",
+    "plugjs",
+    "tdd",
+    "test",
+    "testing",
+    "transpile",
+    "typescript"
+  ],
+  "bugs": {
+    "url": "https://github.com/plugjs/plug/issues"
+  },
+  "homepage": "https://github.com/plugjs/plug/blob/main/workspaces/expect5/#readme"
 }
