@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/cov8",
-  "version": "0.6.10",
+  "version": "0.6.11",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -33,14 +33,14 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@babel/parser": "^7.25.3",
-    "@babel/types": "^7.25.2",
-    "@plugjs/cov8-html": "^0.1.79",
-    "@plugjs/tsrun": "^0.5.35",
+    "@babel/parser": "^7.25.4",
+    "@babel/types": "^7.25.4",
+    "@plugjs/cov8-html": "^0.1.80",
+    "@plugjs/tsrun": "^0.5.36",
     "source-map": "^0.7.4"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.6.10"
+    "@plugjs/plug": "0.6.11"
   },
   "files": [
     "*.md",
