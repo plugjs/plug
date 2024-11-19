@@ -291,7 +291,7 @@ function dumpAndContinue(
   const keys = new Set(Object.keys(value))
 
   // prepare first line of output
-  let line = string ? `${prefix}${$wht(string)} ` : prefix
+  let line = string ? `${prefix}${color(string)} ` : prefix
   let marked = false
 
   // arrays (will remove keys for properties)
