@@ -583,6 +583,7 @@ describe('Diff Printer Format', () => {
       print(diff(
           { foo: 123 },
           { foo: 123, missing: undefined },
+          true,
       ), [
         '{',
         '  "foo": 123,',

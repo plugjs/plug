@@ -6,7 +6,7 @@ import { printDiff } from '../src/expectation/print'
 
 import type { Diff } from '../src/expectation/diff'
 
-describe('Diff Printer', () => {
+fdescribe('Diff Printer', () => {
   function map(object: Record<string, any>): Map<any, any> {
     return new Map(Object.entries(object))
   }
@@ -206,8 +206,8 @@ describe('Diff Printer', () => {
 
     it('should print the difference between two different objects (1)', () => {
       print(diff(
-          { foo: 123, bar: true, baz: { hello: 'planet' } },
-          { foo: 321, bar: false, baz: { hello: 'world' } },
+          { foo: 123, bar: true, baz: { hello: 'planet' }, extra: new Date(0) },
+          { foo: 321, bar: false, baz: { hello: 'world' }, extra: new Date(1) },
       ))
     })
 
@@ -254,6 +254,10 @@ describe('Diff Printer', () => {
       const foo = Object.assign(map({ foo: 123, bar: false, baz: { hello: 'world' } }), { extra: true })
       const bar = Object.assign(map({ foo: 123, bar: true, baz: { hello: 'world' } }), { extra: false })
       print(diff(foo, bar))
+    })
+
+    it('should print the difference between two different dates', () => {
+      print(diff(new Date(0), new Date(1)))
     })
   })
 

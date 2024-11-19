@@ -587,9 +587,14 @@ export class Expectations<T = unknown> {
    * For example:
    *
    * ```ts
+   * // non-strict mode
    * expect({ foo: undefined }).toEqual({}) // will pass
-   * expect({ foo: undefined }).toEqual({}, true) // will fail ("foo" is extra)
-   * expect({ foo: undefined }).toEqual({ foo: undefined }, true) // will pass
+   * expect({}).toEqual({ foo: undefined }) // will pass
+   * expect({ foo: undefined }).toEqual({ foo: undefined }) // will pass
+   *
+   * // strict mode
+   * expect({ foo: undefined }).toEqual({}, true) // will fail
+   * expect({}).toEqual({ foo: undefined }, true) // will fail
    * expect({}).toEqual({ foo: undefined }) // will fail ("foo" is missing, whether "strict" is true or false)
    * ```
    *

@@ -106,7 +106,7 @@ function objectDiff<T extends Record<string, any>>(
 
     // check for missing/extra property or differences
     let result: Diff
-    if ((act === undefined) && (exp === undefined) && (!(key in expected)) && (! remarks.strict)) {
+    if ((act === undefined) && (exp === undefined) && (! remarks.strict)) {
       result = { diff: false, value: undefined }
     } else if ((key in expected) && (!(key in actual))) {
       result = { diff: true, missing: exp }

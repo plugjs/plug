@@ -264,21 +264,6 @@ describe('Basic Expectations', () => {
     expectPass(() => expect('foo').toEqual('foo'))
     expectPass(() => expect({ foo: 'bar' }).toEqual({ foo: 'bar' }))
     expectPass(() => expect([ 'foo', 'bar' ]).toEqual([ 'foo', 'bar' ]))
-    expectPass(() => expect({
-      foo: undefined,
-      bar: 'foobar',
-    }).toEqual({
-      // foo: undefined, // implicit (no key) so ignore it!
-      bar: 'foobar',
-    }))
-
-    expectPass(() => expect({
-      foo: undefined,
-      bar: 'foobar',
-    }).toEqual({
-      foo: undefined,
-      bar: 'foobar',
-    }, true))
 
     expectPass(() => expect('foo').not.toEqual('bar'))
     expectPass(() => expect({ foo: 'bar' }).not.toEqual({ foo: 'baz' }))
@@ -308,37 +293,6 @@ describe('Basic Expectations', () => {
       diff: true,
       value: 'foo',
       expected: 'bar',
-    })
-
-    expectFail(() => expect({
-      bar: 'foobar',
-    }).toEqual({
-      foo: undefined, // explicit (has key), so must be defined!
-      bar: 'foobar',
-    }), 'Expected [Object] to equal [Object]', {
-      diff: true,
-      value: { bar: 'foobar' },
-      props: {
-        bar: { diff: false, value: 'foobar' },
-        foo: { diff: true, missing: undefined },
-      },
-    })
-
-    expectFail(() => expect({
-      foo: undefined, // explicit (has key), so must be defined in strict mode!
-      bar: 'foobar',
-    }).toEqual({
-      bar: 'foobar',
-    }, true), 'Expected [Object] to equal [Object]', {
-      diff: true,
-      value: {
-        foo: undefined,
-        bar: 'foobar',
-      },
-      props: {
-        bar: { diff: false, value: 'foobar' },
-        foo: { diff: true, extra: undefined },
-      },
     })
 
     expectFail(() => expect({ foo: 'bar' }).toEqual({ foo: 'baz' }), 'Expected [Object] to equal [Object]', {
@@ -372,6 +326,72 @@ describe('Basic Expectations', () => {
       ],
     })
   })
+
+  it('should expect "toEqual(...)" (non-strict mode)', () => {
+    expectPass(() => expect({
+      foo: undefined, // explicit, but non strict mode, so pass!
+      bar: 'foobar',
+    }).toEqual({
+      bar: 'foobar',
+    }))
+
+    expectPass(() => expect({
+      bar: 'foobar',
+    }).toEqual({
+      foo: undefined, // explicit, but non strict mode, so pass!
+      bar: 'foobar',
+    }))
+
+    expectPass(() => expect({
+      foo: undefined,
+      bar: 'foobar',
+    }).toEqual({
+      foo: undefined,
+      bar: 'foobar',
+    }))
+  })
+
+  it('should expect "toEqual(...)" (strict mode)', () => {
+    expectPass(() => expect({
+      foo: undefined,
+      bar: 'foobar',
+    }).toEqual({
+      foo: undefined,
+      bar: 'foobar',
+    }, true)) // strict mode
+
+    expectFail(() => expect({
+      bar: 'foobar',
+    }).toEqual({
+      foo: undefined, // strict mode: missing!
+      bar: 'foobar',
+    }, true), 'Expected [Object] to equal [Object]', {
+      diff: true,
+      value: { bar: 'foobar' },
+      props: {
+        bar: { diff: false, value: 'foobar' },
+        foo: { diff: true, missing: undefined },
+      },
+    })
+
+    expectFail(() => expect({
+      foo: undefined, // strict mode: extra!
+      bar: 'foobar',
+    }).toEqual({
+      bar: 'foobar',
+    }, true), 'Expected [Object] to equal [Object]', {
+      diff: true,
+      value: {
+        foo: undefined,
+        bar: 'foobar',
+      },
+      props: {
+        bar: { diff: false, value: 'foobar' },
+        foo: { diff: true, extra: undefined },
+      },
+    })
+  })
+
 
   it('should expect "toHaveProperty(...)"', () => {
     const s = Symbol()
