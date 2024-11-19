@@ -29,7 +29,6 @@ const _squares = $gry('[]')
 
 const _slash = $gry('/')
 const _tilde = $gry('~')
-const _hellip = $gry('\u2026')
 
 const _error = `${_opnPar}${$gry($und('error'))}${_clsPar}`
 const _string = `${_opnPar}${$gry($und('string'))}${_clsPar}`
@@ -67,6 +66,41 @@ function printBaseDiff(
 
 /* ========================================================================== */
 
+function formatString(
+    value: string,
+    color: ((string: string) => string),
+): string {
+  // determine the color of each character
+  const characters: [ (string: string) => string, string ][] = []
+  for (let i = 0; i < value.length; i ++) {
+    const c = value.charCodeAt(i)
+    if (c === 0x20) { // space
+      characters.push([ $gry, '\u00b7' ])
+    } else if (c === 0x09) { // tab
+      characters.push([ $gry, ' \u2192 ' ])
+    } else if (c < 0x10) { // control characters (1 hex digit)
+      characters.push([ $gry, `\\0${c.toString(16).toUpperCase()}` ])
+    } else if (c < 0x20) { // control characters (2 hex digits)
+      characters.push([ $gry, `\\${c.toString(16).toUpperCase()}` ])
+    } else if ((c >= 0x7F) && (c <= 0xA0)) { // del and non-printable latin 1
+      characters.push([ $gry, `\\${c.toString(16).toUpperCase()}` ])
+    } else { // anything else
+      characters.push([ color, value[i]! ])
+    }
+  }
+
+  // group characters by color
+  const chunks = characters.reduce((acc, [ color, c ]) => {
+    const prev = acc[acc.length - 1]
+    if (prev?.[0] === color) prev[1] += c
+    else acc.push([ color, c ])
+    return acc
+  }, [] as typeof characters)
+
+  // join chunks together colorizing each one
+  return chunks.map(([ color, c ]) => color(c)).join('')
+}
+
 function printExpectedDiff(
     log: Logger,
     diff: ExpectedDiff,
@@ -79,9 +113,12 @@ function printExpectedDiff(
     const { prefix, suffix } = fixups(prop, mapping, false, diff.error)
 
     log.warn(`${prefix}${_string}${suffix}`)
-    textDiff(diff.value, diff.expected).split('\n').forEach((line) => {
-      log.warn(`  ${_hellip} ${line}`)
-    })
+    log.warn(textDiff(
+        diff.value,
+        diff.expected,
+        (add: string) => `  ${$gry('+')} ${formatString(add, $grn)}`,
+        (del: string) => `  ${$gry('-')} ${formatString(del, $red)}`,
+        (txt: string) => `    ${formatString(txt, (s) => s)}`))
 
   // if "value" is not an object (can fit on one line) we use it as prefix
   } else if ((diff.value === null) || (typeof diff.value !== 'object')) {

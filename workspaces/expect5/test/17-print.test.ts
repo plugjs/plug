@@ -6,7 +6,7 @@ import { printDiff } from '../src/expectation/print'
 
 import type { Diff } from '../src/expectation/diff'
 
-fdescribe('Diff Printer', () => {
+describe('Diff Printer', () => {
   function map(object: Record<string, any>): Map<any, any> {
     return new Map(Object.entries(object))
   }
@@ -185,7 +185,11 @@ fdescribe('Diff Printer', () => {
     })
 
     it('should print the difference between two different multiline strings', () => {
-      print(diff('one\ntwo\nthree', '1\ntwo\n3'))
+      print(diff('one for\xA0all\ntwo\nthree\x1A', 'all for\vone\ntwo\n3\t4'))
+    })
+
+    it('should print the difference between two different multiline strings (diffing in whitespace)', () => {
+      print(diff('one\n\ntwo', 'one\n  \ntwo'))
     })
 
     it('should print the difference between a primitive and an object (1)', () => {
