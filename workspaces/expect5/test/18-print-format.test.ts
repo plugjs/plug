@@ -360,19 +360,19 @@ describe('Diff Printer Format', () => {
     it('should print the difference between two different strings', () => {
       print(diff('hello', 'world'), [
         '(string)',
-        '  … - hello',
-        '  … + world',
+        '  - hello',
+        '  + world',
       ])
     })
 
     it('should print the difference between two different multiline strings', () => {
-      print(diff('one\ntwo\nthree', '1\ntwo\n3'), [
+      print(diff('one for\xA0all\ntwo\nthree\x1A', 'all for\vone\ntwo\n3\t4'), [
         '(string)',
-        '  … - one',
-        '  … + 1',
-        '  …   two',
-        '  … - three',
-        '  … + 3',
+        '  - one\u00b7for\\A0all',
+        '  + all\u00b7for\\0Bone',
+        '    two',
+        '  - three\\1A',
+        '  + 3 \u2192 4',
       ])
     })
 
@@ -422,8 +422,8 @@ describe('Diff Printer Format', () => {
         '  "bar": true ~ false,',
         '  "baz": {',
         '    "hello": (string)',
-        '      … - planet',
-        '      … + world',
+        '      - planet',
+        '      + world',
         '  },',
         '}',
       ])
@@ -487,8 +487,8 @@ describe('Diff Printer Format', () => {
         '  true ~ false,',
         '  {',
         '    "hello": (string)',
-        '      … - planet',
-        '      … + world',
+        '      - planet',
+        '      + world',
         '  },',
         ']',
       ])
@@ -504,8 +504,8 @@ describe('Diff Printer Format', () => {
         '  "bar" => true ~ false,',
         '  "baz" => {',
         '    "hello": (string)',
-        '      … - planet',
-        '      … + world',
+        '      - planet',
+        '      + world',
         '  },',
         '}',
       ])
