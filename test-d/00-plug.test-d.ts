@@ -40,9 +40,9 @@ const tasks = plugjs({
 expectAssignable<{
   readonly prop_a: string,
   readonly prop_b: string,
-  readonly task_a:() => Promise<undefined>,
-  readonly task_b:() => Promise<Files>,
-  readonly task_c:() => Promise<Files>,
+  readonly task_a: () => Promise<undefined>,
+  readonly task_b: () => Promise<Files>,
+  readonly task_c: () => Promise<Files>,
 }>(tasks)
 
 expectType<string>(tasks.prop_a)

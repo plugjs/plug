@@ -169,7 +169,7 @@ expectType<Expectations<TestType>>(expectations.toMatchContents(new Set<string>(
 expectType<Expectations<123>>(expectations.toStrictlyEqual(123))
 expectType<Expectations<unknown>>(expectations.toStrictlyEqual(true as unknown))
 expectType<Expectations<number[]>>(expectations.toStrictlyEqual([ 123 ]))
-expectType<Expectations<{ foo: string}>>(expectations.toStrictlyEqual({ foo: 'bar' }))
+expectType<Expectations<{ foo: string }>>(expectations.toStrictlyEqual({ foo: 'bar' }))
 
 /* === TO THROW ============================================================= */
 
