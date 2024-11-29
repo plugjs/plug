@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/zip",
-  "version": "0.6.25",
+  "version": "0.6.26",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -30,7 +30,7 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "yazl": "^3.3.0"
+    "yazl": "^3.3.1"
   },
   "devDependencies": {
     "@types/yauzl": "^2.10.3",
@@ -38,7 +38,7 @@
     "yauzl": "^3.2.0"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.6.25"
+    "@plugjs/plug": "0.6.26"
   },
   "files": [
     "*.md",
