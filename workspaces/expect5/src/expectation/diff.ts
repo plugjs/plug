@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-instanceof-builtins */
 /* eslint-disable no-fallthrough */
 import {
   ExpectationError,

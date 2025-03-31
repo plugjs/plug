@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-instanceof-builtins */
 import type { Diff } from './diff'
 import type { Expectations } from './expectations'
 import type { Matcher } from './matchers'

@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/no-instanceof-builtins */
 import { $grn, $gry, $red, $und, $wht, $ylw } from '@plugjs/plug/logging'
 import { textDiff } from '@plugjs/plug/utils'
 
