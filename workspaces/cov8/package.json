@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/cov8",
-  "version": "0.6.42",
+  "version": "0.6.43",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -35,12 +35,12 @@
   "dependencies": {
     "@babel/parser": "^7.27.0",
     "@babel/types": "^7.27.0",
-    "@plugjs/cov8-html": "^0.1.112",
-    "@plugjs/tsrun": "^0.5.70",
+    "@plugjs/cov8-html": "^0.1.114",
+    "@plugjs/tsrun": "^0.5.72",
     "source-map": "^0.7.4"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.6.42"
+    "@plugjs/plug": "0.6.43"
   },
   "files": [
     "*.md",
