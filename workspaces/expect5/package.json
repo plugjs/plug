@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/expect5",
-  "version": "0.6.50",
+  "version": "0.6.51",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -50,7 +50,7 @@
     "chai": "<5"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.6.50"
+    "@plugjs/plug": "0.6.51"
   },
   "files": [
     "*.md",
