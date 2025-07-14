@@ -16,6 +16,7 @@ import { ExpectationError, stringifyValue } from './expectation/types'
 import type { Files } from '@plugjs/plug/files'
 import type { Logger } from '@plugjs/plug/logging'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
+import type { Record } from './execution/executor'
 import type { TestOptions } from './index'
 
 const _pending = '\u22EF' // middle ellipsis
@@ -35,6 +36,7 @@ export class Test implements Plug<void> {
       globals = true,
       genericErrorDiffs = true,
       maxFailures = Number.POSITIVE_INFINITY,
+      summary = false,
     } = this._options
 
     // Inject globals if we were told to do so...
@@ -110,8 +112,8 @@ export class Test implements Plug<void> {
       context.log.leave(WARN, `${$ylw(_pending)} ${spec.name} ${$ms(ms, $ylw('skipped'))}`)
     })
 
-    execution.on('spec:pass', (spec, ms) => {
-      if (ms >= (spec.timeout * 0.75)) {
+    execution.on('spec:pass', (spec, ms, slow) => {
+      if (slow) {
         context.log.leave(WARN, `${$ylw(_success)} ${spec.name} ${$ms(ms, $ylw('slow'))}`)
       } else {
         context.log.leave(NOTICE, `${$grn(_success)} ${spec.name} ${$ms(ms)}`)
@@ -130,7 +132,7 @@ export class Test implements Plug<void> {
     })
 
     // Await execution
-    const { failed, passed, skipped, failures, time } = await execution.result
+    const { failed, passed, skipped, failures, time, records } = await execution.result
 
     // Dump all (or a limited number of) failures
     const limit = Math.min(failures.length, maxFailures)
@@ -149,13 +151,20 @@ export class Test implements Plug<void> {
       context.log.leave()
     }
 
-    // Epilogue
-    const summary: string[] = [ `${passed} ${$gry('passed')}` ]
-    if (skipped) summary.push(`${skipped} ${$gry('skipped')}`)
-    if (failed) summary.push(`${failed} ${$gry('failed')}`)
-    if (failures.length) summary.push(`${failures.length} ${$gry('total failures')}`)
+    // Summary
+    if (summary) {
+      context.log.notice('')
+      context.log.notice($wht('Test execution summary:'))
+      records.forEach((record) => dumpRecords(context.log, record))
+    }
 
-    const epilogue = `${$gry('(')}${summary.join($gry(', '))}${$gry(')')}`
+    // Epilogue
+    const totals: string[] = [ `${passed} ${$gry('passed')}` ]
+    if (skipped) totals.push(`${skipped} ${$gry('skipped')}`)
+    if (failed) totals.push(`${failed} ${$gry('failed')}`)
+    if (failures.length) totals.push(`${failures.length} ${$gry('total failures')}`)
+
+    const epilogue = `${$gry('(')}${totals.join($gry(', '))}${$gry(')')}`
     const message = `Ran ${smsg} from ${fmsg} ${epilogue} ${$ms(time)}`
 
     if (failures.length) {
@@ -174,6 +183,40 @@ export class Test implements Plug<void> {
     }
   }
 }
+
+/* ========================================================================== *
+ * RECORDS REPORTING                                                          *
+ * ========================================================================== */
+
+function dumpRecords(log: Logger, record: Record): void {
+  if (record.type === 'suite') {
+    log.enter(NOTICE, `${$wht(record.name)}`)
+    for (const r of record.records) dumpRecords(log, r)
+    log.leave()
+  } else if (record.type === 'spec') {
+    switch (record.result) {
+      case 'passed':
+        if (record.slow) {
+          log.notice(`${$ylw(_success)} ${record.name} ${$ms(record.ms, $ylw('slow'))}`)
+        } else {
+          log.notice(`${$grn(_success)} ${record.name} ${$ms(record.ms)}`)
+        }
+        break
+
+      case 'skipped':
+        log.notice(`${$ylw(_pending)} ${record.name} ${$ms(record.ms, $ylw('skipped'))}`)
+        break
+      case 'failed':
+        log.notice(
+            `${$red(_failure)} ${record.name} ${$ms(record.ms)} ` +
+            `${$gry('[')}${$red('failed')}${$gry('|')}${$red(`${record.failure}`)}${$gry(']')}`)
+        break
+    }
+  } else if (record.type === 'hook') {
+    log.error(`${$red(_failure)} Hook "${record.name}" ${$gry('[')}${$red('failed')}${$gry('|')}${$red(`${record.failure}`)}${$gry(']')}`)
+  }
+}
+
 
 /* ========================================================================== *
  * ERROR REPORTING                                                            *

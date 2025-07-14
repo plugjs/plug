@@ -45,6 +45,10 @@ export interface TestOptions extends ForkOptions {
    * (e.g. `AssertionError` or _Chai_ expectations) (default: `true`)
    */
   genericErrorDiffs?: boolean,
+  /**
+   * Dump an extended summary of the text execution (default: `false`).
+   */
+  summary?: boolean,
 }
 
 declare module '@plugjs/plug' {
