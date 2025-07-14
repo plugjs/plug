@@ -61,28 +61,28 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number'), false ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 1' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
-      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number'), false ],
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
-      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number'), false ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
-      [ 'hook:pass', 'afterAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterAll', expect.toBeA('number'), false ],
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
@@ -92,6 +92,7 @@ describe('Executor', () => {
       failed: 0,
       skipped: 0,
       failures: [],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -132,12 +133,12 @@ describe('Executor', () => {
       [ 'spec:start', 'spec 0' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach 0' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 0' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach 0' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
-      [ 'spec:pass', 'spec 0', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
+      [ 'spec:pass', 'spec 0', expect.toBeA('number'), false ],
 
       // child suite, execute:
       // "beforeEach 0"
@@ -149,18 +150,18 @@ describe('Executor', () => {
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach 0' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach 1' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 1' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach 1' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach 0' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
-      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number'), false ],
 
       // sub-child suite, execute:
       // "beforeEach 0"
@@ -174,24 +175,24 @@ describe('Executor', () => {
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach 0' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach 1' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach 2' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach 2' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach 1' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach 0' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
-      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number'), false ],
 
       [ 'suite:done', 'suite 2', expect.toBeA('number') ],
       [ 'suite:done', 'suite 1', expect.toBeA('number') ],
@@ -204,6 +205,7 @@ describe('Executor', () => {
       failed: 0,
       skipped: 0,
       failures: [],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -254,6 +256,7 @@ describe('Executor', () => {
       failed: 0,
       skipped: 2,
       failures: [ { number: 1, source: hook, type: 'hook', error } ],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -291,25 +294,25 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number'), false ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 1' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
-      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number'), false ],
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
-      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number'), false ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:fail', 'afterAll', expect.toBeA('number'), { number: 1, source: hook, type: 'hook', error } ],
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
@@ -321,6 +324,7 @@ describe('Executor', () => {
       failed: 0,
       skipped: 0,
       failures: [ { number: 1, source: hook, type: 'hook', error } ],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -369,7 +373,7 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number'), false ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:fail', 'beforeEach', expect.toBeA('number'), { number: 1, source: hook1, type: 'hook', error } ],
@@ -380,7 +384,7 @@ describe('Executor', () => {
       [ 'spec:skip', 'spec 2', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
-      [ 'hook:pass', 'afterAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterAll', expect.toBeA('number'), false ],
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
@@ -393,6 +397,7 @@ describe('Executor', () => {
         { number: 1, source: hook1, type: 'hook', error },
         { number: 2, source: hook2, type: 'hook', error },
       ],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -442,26 +447,26 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number'), false ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 1' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:fail', 'afterEach', expect.toBeA('number'), { number: 1, source: hook1, type: 'hook', error } ],
-      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number'), false ],
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:fail', 'afterEach', expect.toBeA('number'), { number: 2, source: hook2, type: 'hook', error } ],
-      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number'), false ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
-      [ 'hook:pass', 'afterAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterAll', expect.toBeA('number'), false ],
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
@@ -474,6 +479,7 @@ describe('Executor', () => {
         { number: 1, source: hook1, type: 'hook', error },
         { number: 2, source: hook2, type: 'hook', error },
       ],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -511,27 +517,27 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number'), false ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
       [ 'spec:fail', 'spec 1', expect.toBeA('number'), { number: 1, source: spec, type: 'spec', error } ], // reported _after_ hooks
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
-      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number'), false ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
-      [ 'hook:pass', 'afterAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterAll', expect.toBeA('number'), false ],
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
@@ -541,6 +547,7 @@ describe('Executor', () => {
       failed: 1,
       skipped: 0,
       failures: [ { number: 1, source: spec, type: 'spec', error } ],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -604,11 +611,11 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number'), false ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'hook:start', 'afterEach' ],
       // remember, the "spec:fail" event is emitted _after_ hooks, so here numbers are inverted!
       [ 'hook:fail', 'afterEach', expect.toBeA('number'), { number: 2, source: hook1, type: 'hook', error: errorAfterEach } ],
@@ -616,11 +623,11 @@ describe('Executor', () => {
       [ 'spec:start', 'spec 2' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 2' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:fail', 'afterEach', expect.toBeA('number'), { number: 3, source: hook2, type: 'hook', error: errorAfterEach } ],
-      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number'), false ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:fail', 'afterAll', expect.toBeA('number'), { number: 4, source: hook, type: 'hook', error: errorAfterAll } ],
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
@@ -637,6 +644,7 @@ describe('Executor', () => {
         { number: 3, source: hook2, type: 'hook', error: errorAfterEach },
         { number: 4, source: hook, type: 'hook', error: errorAfterAll },
       ],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -684,16 +692,16 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 0' ],
       [ 'hook:start', 'beforeAll' ],
       [ 'hook:exec', 'beforeAll' ],
-      [ 'hook:pass', 'beforeAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeAll', expect.toBeA('number'), false ],
       [ 'spec:start', 'spec 1' ],
       [ 'hook:start', 'beforeEach' ],
       [ 'hook:exec', 'beforeEach' ],
-      [ 'hook:pass', 'beforeEach', expect.toBeA('number') ],
+      [ 'hook:pass', 'beforeEach', expect.toBeA('number'), false ],
       [ 'spec:exec', 'spec 1' ],
       [ 'hook:start', 'afterEach' ],
       [ 'hook:exec', 'afterEach' ],
-      [ 'hook:pass', 'afterEach', expect.toBeA('number') ],
-      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterEach', expect.toBeA('number'), false ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number'), false ],
       [ 'spec:start', 'spec 2' ],
       [ 'spec:skip', 'spec 2', expect.toBeA('number') ],
       [ 'spec:start', 'spec 3' ],
@@ -704,7 +712,7 @@ describe('Executor', () => {
       [ 'suite:done', 'suite 1', expect.toBeA('number') ],
       [ 'hook:start', 'afterAll' ],
       [ 'hook:exec', 'afterAll' ],
-      [ 'hook:pass', 'afterAll', expect.toBeA('number') ],
+      [ 'hook:pass', 'afterAll', expect.toBeA('number'), false ],
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
     ])
 
@@ -714,6 +722,7 @@ describe('Executor', () => {
       failed: 0,
       skipped: 3,
       failures: [],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -743,6 +752,7 @@ describe('Executor', () => {
       failed: 0,
       skipped: 0,
       failures: [],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -784,6 +794,7 @@ describe('Executor', () => {
       failed: 0,
       skipped: 3,
       failures: [],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -828,11 +839,11 @@ describe('Executor', () => {
 
       [ 'spec:start', 'spec 1' ],
       [ 'spec:exec', 'fit spec 1' ],
-      [ 'spec:pass', 'spec 1', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 1', expect.toBeA('number'), false ],
 
       [ 'spec:start', 'spec 2' ],
       [ 'spec:exec', 'only spec 2' ],
-      [ 'spec:pass', 'spec 2', expect.toBeA('number') ],
+      [ 'spec:pass', 'spec 2', expect.toBeA('number'), false ],
 
       [ 'spec:start', 'spec 3' ],
       [ 'spec:skip', 'spec 3', expect.toBeA('number') ],
@@ -847,7 +858,7 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 2' ],
       /* */ [ 'spec:start', 'spec 6' ],
       /* */ [ 'spec:exec', 'it spec 6' ],
-      /* */ [ 'spec:pass', 'spec 6', expect.toBeA('number') ],
+      /* */ [ 'spec:pass', 'spec 6', expect.toBeA('number'), false ],
       /* */ [ 'spec:start', 'spec 7' ],
       /* */ [ 'spec:skip', 'spec 7', expect.toBeA('number') ],
       [ 'suite:done', 'suite 2', expect.toBeA('number') ],
@@ -855,7 +866,7 @@ describe('Executor', () => {
       [ 'suite:start', 'suite 3' ],
       /* */ [ 'spec:start', 'spec 8' ],
       /* */ [ 'spec:exec', 'it spec 8' ],
-      /* */ [ 'spec:pass', 'spec 8', expect.toBeA('number') ],
+      /* */ [ 'spec:pass', 'spec 8', expect.toBeA('number'), false ],
       /* */ [ 'spec:start', 'spec 9' ],
       /* */ [ 'spec:skip', 'spec 9', expect.toBeA('number') ],
       [ 'suite:done', 'suite 3', expect.toBeA('number') ],
@@ -865,10 +876,10 @@ describe('Executor', () => {
       /* */ [ 'spec:skip', 'spec 10', expect.toBeA('number') ],
       /* */ [ 'spec:start', 'spec 11' ],
       /* */ [ 'spec:exec', 'only spec 11' ],
-      /* */ [ 'spec:pass', 'spec 11', expect.toBeA('number') ],
+      /* */ [ 'spec:pass', 'spec 11', expect.toBeA('number'), false ],
       /* */ [ 'spec:start', 'spec 12' ],
       /* */ [ 'spec:exec', 'fit spec 12' ],
-      /* */ [ 'spec:pass', 'spec 12', expect.toBeA('number') ],
+      /* */ [ 'spec:pass', 'spec 12', expect.toBeA('number'), false ],
       [ 'suite:done', 'suite 4', expect.toBeA('number') ],
 
       [ 'suite:done', 'suite 0', expect.toBeA('number') ],
@@ -880,6 +891,7 @@ describe('Executor', () => {
       failed: 0,
       skipped: 6,
       failures: [],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -928,6 +940,7 @@ describe('Executor', () => {
         }),
         error: expect.toBeError(Error, 'fail with a string!'),
       } ],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -1008,6 +1021,7 @@ describe('Executor', () => {
         }),
         error: expect.toBeError(Error, 'Whatever...'),
       } ],
+      records: expect.toBeA('array'),
     })
   })
 
@@ -1094,6 +1108,7 @@ describe('Executor', () => {
         }),
         error: expect.toBeError(SyntaxError, 'Whatever...'),
       } ],
+      records: expect.toBeA('array'),
     })
   })
 
