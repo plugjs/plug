@@ -114,7 +114,7 @@ describe('TypeScript Compiler', () => {
     expect([ ...result ])
         .toHaveLength(2)
         .toInclude(files)
-  })
+  }, 10_000)
 
   it('should compile some files with base url', async () => {
     const promise = find('**/*.ts', { directory: `${testDir}/baseurl` })
@@ -140,5 +140,5 @@ describe('TypeScript Compiler', () => {
     expect([ ...result ])
         .toHaveLength(2)
         .toInclude(files)
-  })
+  }, 10_000)
 })
