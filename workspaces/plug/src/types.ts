@@ -84,12 +84,12 @@ export type Props<D extends BuildDef = BuildDef> = {
 /** A type identifying all _tasks_ in a {@link Build} */
 export type Tasks<D extends BuildDef = BuildDef> = {
   readonly [ k in string & keyof D as D[k] extends TaskDef | TaskCall ? k : never ] :
-    D[k] extends TaskDef<infer R> ?
-      R extends void | undefined ? TaskCall<D, undefined> :
+  D[k] extends TaskDef<infer R> ?
+    R extends void | undefined ? TaskCall<D, undefined> :
       R extends Pipe | Files ? TaskCall<D, Files> :
-      never :
+        never :
     D[k] extends TaskCall ? D[k] :
-    never
+      never
 }
 
 /* ========================================================================== *
@@ -110,17 +110,17 @@ export interface BuildDef {
  */
 export type ThisBuild<D extends BuildDef> = {
   readonly [ k in keyof D as k extends string ? k : never ] :
-    D[k] extends TaskDef<infer R> ?
-      R extends Promise<undefined> | void | undefined ? () => Promise<undefined> :
+  D[k] extends TaskDef<infer R> ?
+    R extends Promise<undefined> | void | undefined ? () => Promise<undefined> :
       R extends Pipe | Files ? () => Pipe :
-      never :
+        never :
     D[k] extends TaskCall<any, infer R> ?
       R extends undefined ? () => Promise<undefined> :
-      R extends Files ? () => Pipe :
-      never :
-    D[k] extends string ?
-      string :
-    never
+        R extends Files ? () => Pipe :
+          never :
+      D[k] extends string ?
+        string :
+        never
 }
 
 /**

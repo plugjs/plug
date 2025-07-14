@@ -16,10 +16,10 @@ export function toInclude(
     expectations: Expectations,
     negative: boolean,
     contents:
-    | Record<string, any>
-    | Map<any, any>
-    | Set<any>
-    | any [],
+      Record<string, any> |
+      Map<any, any> |
+      Set<any> |
+      any [],
 ): void {
   // get diff depending on type of "expected"
   if (contents instanceof Map) return includesMappings(expectations, negative, contents)

@@ -41,11 +41,11 @@ export interface ObjectDiff extends ValueDiff {
 }
 
 export type Diff =
-  | ValueDiff
-  | ExpectedDiff
-  | ObjectDiff
-  | ExtraValueDiff
-  | MissingValueDiff
+  ValueDiff |
+  ExpectedDiff |
+  ObjectDiff |
+  ExtraValueDiff |
+  MissingValueDiff
 
 /* ========================================================================== *
  * IMPLEMENTATION INTERNALS                                                   *

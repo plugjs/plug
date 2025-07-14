@@ -240,44 +240,40 @@ type PipeOverloads<Name extends PlugName> =
     (...args: infer A3): infer R3
     (...args: infer A4): infer R4
   } ?
-    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never)
-    | (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never)
-    | (R2 extends (Pipe | Promise<undefined>) ? { args: A2, ret: R2 } : never)
-    | (R3 extends (Pipe | Promise<undefined>) ? { args: A3, ret: R3 } : never)
-    | (R4 extends (Pipe | Promise<undefined>) ? { args: A4, ret: R4 } : never)
-  :
-  Pipe[Name] extends {
-    (...args: infer A0): infer R0
-    (...args: infer A1): infer R1
-    (...args: infer A2): infer R2
-    (...args: infer A3): infer R3
-  } ?
-    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never)
-    | (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never)
-    | (R2 extends (Pipe | Promise<undefined>) ? { args: A2, ret: R2 } : never)
-    | (R3 extends (Pipe | Promise<undefined>) ? { args: A3, ret: R3 } : never)
-  :
-  Pipe[Name] extends {
-    (...args: infer A0): infer R0
-    (...args: infer A1): infer R1
-    (...args: infer A2): infer R2
-  } ?
-    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never)
-    | (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never)
-    | (R2 extends (Pipe | Promise<undefined>) ? { args: A2, ret: R2 } : never)
-  :
-  Pipe[Name] extends {
-    (...args: infer A0): infer R0
-    (...args: infer A1): infer R1
-  } ?
-    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never)
-    | (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never)
-  :
-  Pipe[Name] extends {
-    (...args: infer A0): infer R0
-  } ?
-    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never)
-  : never
+    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never) |
+    (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never) |
+    (R2 extends (Pipe | Promise<undefined>) ? { args: A2, ret: R2 } : never) |
+    (R3 extends (Pipe | Promise<undefined>) ? { args: A3, ret: R3 } : never) |
+    (R4 extends (Pipe | Promise<undefined>) ? { args: A4, ret: R4 } : never) :
+    Pipe[Name] extends {
+      (...args: infer A0): infer R0
+      (...args: infer A1): infer R1
+      (...args: infer A2): infer R2
+      (...args: infer A3): infer R3
+    } ?
+    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never) |
+    (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never) |
+    (R2 extends (Pipe | Promise<undefined>) ? { args: A2, ret: R2 } : never) |
+    (R3 extends (Pipe | Promise<undefined>) ? { args: A3, ret: R3 } : never) :
+      Pipe[Name] extends {
+        (...args: infer A0): infer R0
+        (...args: infer A1): infer R1
+        (...args: infer A2): infer R2
+      } ?
+    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never) |
+    (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never) |
+    (R2 extends (Pipe | Promise<undefined>) ? { args: A2, ret: R2 } : never) :
+        Pipe[Name] extends {
+          (...args: infer A0): infer R0
+          (...args: infer A1): infer R1
+        } ?
+    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never) |
+    (R1 extends (Pipe | Promise<undefined>) ? { args: A1, ret: R1 } : never) :
+          Pipe[Name] extends {
+            (...args: infer A0): infer R0
+          } ?
+    | (R0 extends (Pipe | Promise<undefined>) ? { args: A0, ret: R0 } : never) :
+            never
 
 /** The parameters of the plug extension with the given name */
 type PipeResult<Name extends PlugName> = PipeOverloads<Name>['ret']
@@ -289,11 +285,11 @@ type PipeResult<Name extends PlugName> = PipeOverloads<Name>['ret']
 type PlugConstructor<Name extends PlugName> =
   PipeResult<Name> extends Pipe ?
     new (...args: PipeParameters<Name>) => Plug<Files> :
-  PipeResult<Name> extends Promise<undefined> ?
-    new (...args: PipeParameters<Name>) => Plug<void | undefined> :
-  PipeResult<Name> extends (Pipe | Promise<undefined>) ?
-    new (...args: PipeParameters<Name>) => Plug<Files | void | undefined> :
-  never
+    PipeResult<Name> extends Promise<undefined> ?
+      new (...args: PipeParameters<Name>) => Plug<void | undefined> :
+      PipeResult<Name> extends (Pipe | Promise<undefined>) ?
+        new (...args: PipeParameters<Name>) => Plug<Files | void | undefined> :
+        never
 
 /**
  * Install a {@link Plug} into our {@link Pipe} prototype.

@@ -41,8 +41,8 @@ export type InferMatcher<T, M extends Matcher> =
 /** Recursively infer the type of a {@link Matcher} in a `Record`  */
 export type InferToEqual<T> =
   T extends Matcher<infer V> ? V :
-  T extends Record<any, any> ? { [ k in keyof T ] : InferToEqual<T[k]> } :
-  T
+    T extends Record<any, any> ? { [ k in keyof T ] : InferToEqual<T[k]> } :
+      T
 
 /** Simple wrapper defining the _parent_ instance of an {@link Expectations}. */
 export type ExpectationsParent = {

@@ -5,11 +5,11 @@ export type ParsedParams<Args extends readonly any[]> =
     First extends string ? [ First, ...ParsedParams<Rest> ] : [] :
 
   // If not caught above, here "first" is the rest parameter in the tuple
-  Args extends readonly [ ...infer First, infer Rest ] ?
-    Rest extends string ? [ ...ParsedParams<First>, Rest ] : [ ...ParsedParams<First> ] :
+    Args extends readonly [ ...infer First, infer Rest ] ?
+      Rest extends string ? [ ...ParsedParams<First>, Rest ] : [ ...ParsedParams<First> ] :
 
-  // Not a tuple: normal string array or the end of our arguments
-  Args extends readonly string[] ? [ ...Args ] : []
+    // Not a tuple: normal string array or the end of our arguments
+      Args extends readonly string[] ? [ ...Args ] : []
 
 /** A type extacting the (last) options type from an arguments array */
 export type ParsedOptions<Args extends readonly any[]> = // , Defaults> =
@@ -17,7 +17,7 @@ export type ParsedOptions<Args extends readonly any[]> = // , Defaults> =
     Last extends object ? // Record<any, any> ?
       Last : // last arg is a record, defaults is null or undefined
       never : // last arg is a string, defaults is null or undefined
-  never // args is not an array
+    never // args is not an array
 
 /** Parserable arguments: a number of strings, followed by optional options */
 export type ParseOptions<Options extends Record<any, any>> =
