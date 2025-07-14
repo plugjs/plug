@@ -244,6 +244,7 @@ export default plugjs({
     })).plug(new ForkingTest({
       forceModule: 'commonjs',
       coverageDir,
+      summary: true,
     }))
   },
 
@@ -258,6 +259,7 @@ export default plugjs({
     })).plug(new ForkingTest({
       forceModule: 'module',
       coverageDir,
+      summary: true,
     }))
   },
 
