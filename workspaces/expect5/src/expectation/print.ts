@@ -57,10 +57,10 @@ function printBaseDiff(
 
   const { prefix, suffix } =
       diff.error ? // default style if error is the only property
-          fixups(prop, mapping, comma, diff.error) :
-      diff.diff ? // label as "differs" if no error was found
+        fixups(prop, mapping, comma, diff.error) :
+        diff.diff ? // label as "differs" if no error was found
           fixups(prop, mapping, comma, diff.error, $red, 'differs') :
-      fixups(prop, mapping, comma, diff.error)
+          fixups(prop, mapping, comma, diff.error)
 
   dump(log, diff.value, prefix, suffix, diff.diff ? $red : $wht)
 }
@@ -277,12 +277,12 @@ function fixups(
   const lbl = label ? `${_opnPar}${$gry($und(label))}${_clsPar} ` : ''
   const sep = mapping ? ' => ': ': '
   const prefix = prop ?
-      color ?
-          `${$gry(lbl)}${color(prop)}${$gry(sep)}` :
-          `${$gry(lbl)}${prop}${$gry(sep)}` :
-      label ?
-          `${$gry(lbl)}` :
-          ''
+    color ?
+      `${$gry(lbl)}${color(prop)}${$gry(sep)}` :
+      `${$gry(lbl)}${prop}${$gry(sep)}` :
+    label ?
+      `${$gry(lbl)}` :
+      ''
   error = error ? ` ${_error} ${$ylw(error)}` : ''
   const suffix = `${comma ? $gry(',') : ''}${error}`
   return { prefix, suffix }

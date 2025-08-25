@@ -116,8 +116,8 @@ export class Tsc implements Plug<Files> {
 
     /* Figure out the root directory, either from the options, or default */
     const rootDir = options.rootDir ?
-        context.resolve(options.rootDir) :
-        defaultRootDir(paths)
+      context.resolve(options.rootDir) :
+      defaultRootDir(paths)
     if (!(options.rootDir || options.rootDirs)) options.rootDir = rootDir
 
     /* Figure out the output directory, either from the options or same as root */

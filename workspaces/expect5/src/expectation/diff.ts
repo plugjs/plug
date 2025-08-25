@@ -41,11 +41,11 @@ export interface ObjectDiff extends ValueDiff {
 }
 
 export type Diff =
-  ValueDiff |
-  ExpectedDiff |
-  ObjectDiff |
-  ExtraValueDiff |
-  MissingValueDiff
+  | ValueDiff
+  | ExpectedDiff
+  | ObjectDiff
+  | ExtraValueDiff
+  | MissingValueDiff
 
 /* ========================================================================== *
  * IMPLEMENTATION INTERNALS                                                   *
@@ -412,9 +412,9 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
   ): Diff | undefined =>
     (expected instanceof ctor) ?
       callback(actual as InstanceType<typeof ctor>, expected, remarks) :
-    (actual instanceof ctor) ?
-      { diff: true, value: actual, expected } :
-    undefined
+      (actual instanceof ctor) ?
+        { diff: true, value: actual, expected } :
+        undefined
 
   return (
     /* == ARRAYS ============================================================ */

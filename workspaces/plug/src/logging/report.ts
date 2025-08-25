@@ -199,8 +199,8 @@ export class ReportImpl implements Report {
       /* Normalize the basic entries in this message */
       let messages =
         Array.isArray(record.message) ?
-            [ ...record.message.map((msg) => msg.split('\n')).flat(1) ] :
-            record.message.split('\n')
+          [ ...record.message.map((msg) => msg.split('\n')).flat(1) ] :
+          record.message.split('\n')
       messages = messages.filter((message) => !! message)
       if (! messages.length) {
         const options = { taskName: this._task, level: ERROR }
@@ -213,9 +213,9 @@ export class ReportImpl implements Report {
       const source = record.source || undefined
       const tags = record.tags ?
         Array.isArray(record.tags) ?
-            [ ...record.tags ] :
-            [ record.tags ] :
-            []
+          [ ...record.tags ] :
+          [ record.tags ] :
+        []
 
       switch (level) {
         case NOTICE: this._noticeRecords ++; break
@@ -460,7 +460,7 @@ export class ReportImpl implements Report {
             report.column ?
               report.length >= Number.MAX_SAFE_INTEGER ? undefined :
               ((report.column + report.length) || undefined) :
-            undefined
+              undefined
           const message = report.messages.join('\n')
 
           githubAnnotation({ type, title, file, col, line, endColumn }, message)

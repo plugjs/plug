@@ -96,11 +96,11 @@ function constructorName(value: Record<any, any>): string {
 /** Format binary data for {@link stringifyValue} */
 function formatBinaryData(value: Record<any, any>, buffer: Buffer): string {
   const binary = buffer.length > 20 ?
-      `${buffer.toString('hex', 0, 20)}\u2026, length=${value.length}` :
-      buffer.toString('hex')
+    `${buffer.toString('hex', 0, 20)}\u2026, length=${value.length}` :
+    buffer.toString('hex')
   return binary ?
-      `[${constructorName(value)}: ${binary}]` :
-      `[${constructorName(value)}: empty]`
+    `[${constructorName(value)}: ${binary}]` :
+    `[${constructorName(value)}: empty]`
 }
 
 /* ========================================================================== */
@@ -235,8 +235,8 @@ export class ExpectationError extends Error {
 
       // type of root value is constructor without details
       const type = typeof expectations.value === 'object' ?
-          stringifyObjectType(expectations.value as object) : // parent values can not be null!
-          stringifyValue(expectations.value)
+        stringifyObjectType(expectations.value as object) : // parent values can not be null!
+        stringifyValue(expectations.value)
 
       // assemble the preamble
       preamble = `property ${preamble} of ${type} (${stringifyValue(value)})`

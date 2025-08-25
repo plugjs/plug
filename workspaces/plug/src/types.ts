@@ -86,10 +86,10 @@ export type Tasks<D extends BuildDef = BuildDef> = {
   readonly [ k in string & keyof D as D[k] extends TaskDef | TaskCall ? k : never ] :
   D[k] extends TaskDef<infer R> ?
     R extends void | undefined ? TaskCall<D, undefined> :
-      R extends Pipe | Files ? TaskCall<D, Files> :
-        never :
+    R extends Pipe | Files ? TaskCall<D, Files> :
+    never :
     D[k] extends TaskCall ? D[k] :
-      never
+    never
 }
 
 /* ========================================================================== *
@@ -112,12 +112,12 @@ export type ThisBuild<D extends BuildDef> = {
   readonly [ k in keyof D as k extends string ? k : never ] :
   D[k] extends TaskDef<infer R> ?
     R extends Promise<undefined> | void | undefined ? () => Promise<undefined> :
-      R extends Pipe | Files ? () => Pipe :
-        never :
+    R extends Pipe | Files ? () => Pipe :
+    never :
     D[k] extends TaskCall<any, infer R> ?
       R extends undefined ? () => Promise<undefined> :
-        R extends Files ? () => Pipe :
-          never :
+      R extends Files ? () => Pipe :
+      never :
       D[k] extends string ?
         string :
         never
