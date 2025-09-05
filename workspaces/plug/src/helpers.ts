@@ -98,13 +98,13 @@ export async function invokeBuild(
     maybeOptions?: InvokeBuildOptions,
 ): Promise<void> {
   const [ tasks, options = {} ] =
-      typeof tasksOrOptions === 'string' ?
-        [ [ tasksOrOptions ], maybeOptions ] :
-        Array.isArray(tasksOrOptions) ?
-          [ tasksOrOptions, maybeOptions ] :
-          typeof tasksOrOptions === 'object' ?
-            [ [ 'default' ], tasksOrOptions ] :
-            [ [ 'default' ], {} ]
+    typeof tasksOrOptions === 'string' ?
+      [ [ tasksOrOptions ], maybeOptions ] :
+      Array.isArray(tasksOrOptions) ?
+        [ tasksOrOptions, maybeOptions ] :
+        typeof tasksOrOptions === 'object' ?
+          [ [ 'default' ], tasksOrOptions ] :
+          [ [ 'default' ], {} ]
 
   if (tasks.length === 0) tasks.push('default')
 

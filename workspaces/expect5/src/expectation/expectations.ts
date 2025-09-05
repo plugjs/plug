@@ -312,9 +312,9 @@ export class Expectations<T = unknown> {
       maybeMessage?: string | RegExp,
   ): Expectations {
     const [ constructor, message ] =
-    typeof constructorOrMessage === 'function' ?
-      [ constructorOrMessage, maybeMessage ] :
-      [ Error, constructorOrMessage ]
+      typeof constructorOrMessage === 'function' ?
+        [ constructorOrMessage, maybeMessage ] :
+        [ Error, constructorOrMessage ]
 
     if (message === undefined) return this.toBeInstanceOf(constructor)
 
@@ -928,9 +928,9 @@ export class Expectations<T = unknown> {
       maybeMessage?: string | RegExp,
   ): Expectations {
     const [ constructor, message ] =
-     typeof constructorOrMessage === 'function' ?
-       [ constructorOrMessage, maybeMessage ] :
-       [ Error, constructorOrMessage ]
+      typeof constructorOrMessage === 'function' ?
+        [ constructorOrMessage, maybeMessage ] :
+        [ Error, constructorOrMessage ]
 
     return this.toThrow((assert) =>
       assert.toBeError(constructor, message))

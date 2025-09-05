@@ -270,8 +270,8 @@ function dumpError(log: Logger, error: any, genericErrorDiffs: boolean): void {
 
     // Chai calls its own assertion errors "AssertionError"
     const type =
-        string === 'AssertionError' ? `${$gry('Assertion Error')}: ` :
-        string === 'Error' ? '' : `${$gry(string)}: `
+      string === 'AssertionError' ? `${$gry('Assertion Error')}: ` :
+      string === 'Error' ? '' : `${$gry(string)}: `
 
     log.enter(ERROR, `${type}${$red(message)}`)
     githubAnnotation({ type: 'error', title: string }, message)

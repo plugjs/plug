@@ -222,9 +222,9 @@ export class Matcher<T = unknown> {
       maybeMessage?: string | RegExp,
   ): Matcher {
     const [ constructor, message ] =
-    typeof constructorOrMessage === 'function' ?
-      [ constructorOrMessage, maybeMessage ] :
-      [ Error, constructorOrMessage ]
+      typeof constructorOrMessage === 'function' ?
+        [ constructorOrMessage, maybeMessage ] :
+        [ Error, constructorOrMessage ]
     return this._push((e) => e.toBeError(constructor, message))
   }
 

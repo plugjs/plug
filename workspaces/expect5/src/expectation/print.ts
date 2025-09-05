@@ -56,11 +56,11 @@ function printBaseDiff(
   if ('extra' in diff) return printExtraDiff(log, diff, prop, mapping, comma)
 
   const { prefix, suffix } =
-      diff.error ? // default style if error is the only property
-        fixups(prop, mapping, comma, diff.error) :
-        diff.diff ? // label as "differs" if no error was found
-          fixups(prop, mapping, comma, diff.error, $red, 'differs') :
-          fixups(prop, mapping, comma, diff.error)
+    diff.error ? // default style if error is the only property
+      fixups(prop, mapping, comma, diff.error) :
+      diff.diff ? // label as "differs" if no error was found
+        fixups(prop, mapping, comma, diff.error, $red, 'differs') :
+        fixups(prop, mapping, comma, diff.error)
 
   dump(log, diff.value, prefix, suffix, diff.diff ? $red : $wht)
 }
