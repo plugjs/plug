@@ -10,7 +10,6 @@ import type {
 import type { Matcher } from './matchers'
 import type { Constructor } from './types'
 
-
 /**
  * Extension to {@link Expectations} adding support for {@link Promise}s.
  *
@@ -106,7 +105,8 @@ export class AsyncExpectations<T = unknown> extends Expectations<T> {
    * Negation: {@link Expectations.toBeResolved `toBeResolved(...)`}
    */
   toBeRejectedWithError(
-    message?: string | RegExp
+    message?: string | RegExp,
+    substring?: boolean,
   ): Promise<Expectations<PromiseLike<Awaited<T>>>>
 
   /**
@@ -123,18 +123,20 @@ export class AsyncExpectations<T = unknown> extends Expectations<T> {
   toBeRejectedWithError(
     constructor: Constructor<Error>,
     message?: string | RegExp,
+    substring?: boolean,
   ): Promise<Expectations<PromiseLike<Awaited<T>>>>
 
   toBeRejectedWithError(
       constructorOrMessage?: string | RegExp | Constructor,
-      maybeMessage?: string | RegExp,
+      maybeMessageOrSubstring?: string | RegExp | boolean,
+      maybeSubstring?: boolean,
   ): Promise<Expectations> {
-    const [ constructor, message ] =
+    const [ constructor, message, substring = false ] =
       typeof constructorOrMessage === 'function' ?
-        [ constructorOrMessage, maybeMessage ] :
-        [ Error, constructorOrMessage ]
+        [ constructorOrMessage, maybeMessageOrSubstring as string | RegExp, maybeSubstring ] :
+        [ Error, constructorOrMessage as string | RegExp, maybeMessageOrSubstring as boolean ]
 
-    return this.toBeRejected((assert) => assert.toBeError(constructor, message))
+    return this.toBeRejected((assert) => assert.toBeError(constructor, message, substring))
   }
 
   /* ------------------------------------------------------------------------ */

@@ -292,7 +292,8 @@ export class Expectations<T = unknown> {
    * either match the specified {@link RegExp}, or equal the specified `string`.
    */
   toBeError(
-    message?: string | RegExp
+    message?: string | RegExp,
+    substring?: boolean,
   ): Expectations<Error>
 
   /**
@@ -305,24 +306,29 @@ export class Expectations<T = unknown> {
   toBeError<Class extends Constructor<Error>>(
     constructor: Class,
     message?: string | RegExp,
+    substring?: boolean,
   ): Expectations<InstanceType<Class>>
 
   toBeError(
       constructorOrMessage?: string | RegExp | Constructor,
-      maybeMessage?: string | RegExp,
+      maybeMessageOrSubstring?: string | RegExp | boolean,
+      maybeSubstring?: boolean,
   ): Expectations {
-    const [ constructor, message ] =
+    const [ constructor, message, substring = false ] =
       typeof constructorOrMessage === 'function' ?
-        [ constructorOrMessage, maybeMessage ] :
-        [ Error, constructorOrMessage ]
+        [ constructorOrMessage, maybeMessageOrSubstring as string | RegExp, maybeSubstring ] :
+        [ Error, constructorOrMessage as string | RegExp, maybeMessageOrSubstring as boolean ]
 
     if (message === undefined) return this.toBeInstanceOf(constructor)
 
     return this.toBeInstanceOf(constructor, (assert) => {
       assert.toHaveProperty('message', (assertMessage) => {
         assertMessage.toBeA('string')
-        if (typeof message === 'string') assertMessage.toStrictlyEqual(message)
-        else assertMessage.toMatch(message)
+        if ((typeof message === 'string') && (substring === false)) {
+          assertMessage.toStrictlyEqual(message)
+        } else {
+          assertMessage.toMatch(message)
+        }
       })
     })
   }
@@ -816,7 +822,11 @@ export class Expectations<T = unknown> {
   ): Expectations<string> {
     const expectations = this.toBeA('string')
 
-    if (expectations.value.match(matcher)) return expectations
+    if (typeof matcher === 'string') {
+      if (expectations.value.includes(matcher)) return expectations
+    } else {
+      if (expectations.value.match(matcher)) return expectations
+    }
 
     this._fail(`to match ${stringifyValue(matcher)}`)
   }
@@ -905,7 +915,8 @@ export class Expectations<T = unknown> {
    * Negation: {@link NegativeExpectations.toThrow `not.toThrow()`}
    */
   toThrowError(
-    message?: string | RegExp
+    message?: string | RegExp,
+    substring?: boolean,
   ): Expectations<() => any>
 
   /**
@@ -921,19 +932,21 @@ export class Expectations<T = unknown> {
   toThrowError<Class extends Constructor<Error>>(
     constructor: Class,
     message?: string | RegExp,
+    substring?: boolean,
   ): Expectations<() => any>
 
   toThrowError(
       constructorOrMessage?: string | RegExp | Constructor,
-      maybeMessage?: string | RegExp,
+      maybeMessageOrSubstring?: string | RegExp | boolean,
+      maybeSubstring?: boolean,
   ): Expectations {
-    const [ constructor, message ] =
+    const [ constructor, message, substring = false ] =
       typeof constructorOrMessage === 'function' ?
-        [ constructorOrMessage, maybeMessage ] :
-        [ Error, constructorOrMessage ]
+        [ constructorOrMessage, maybeMessageOrSubstring as string | RegExp, maybeSubstring ] :
+        [ Error, constructorOrMessage as string | RegExp, maybeMessageOrSubstring as boolean ]
 
     return this.toThrow((assert) =>
-      assert.toBeError(constructor, message))
+      assert.toBeError(constructor, message, substring))
   }
 }
 
