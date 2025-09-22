@@ -26,6 +26,7 @@ describe('Expectation Matchers', () => {
     expectPass(() => expect.toHaveProperty('a', expect.toBeA('string')).expect({ a: 'foo' }))
     expectPass(() => expect.toHaveSize(1).expect(new Set([ 'foo' ])))
     expectPass(() => expect.toMatch(/^foo$/i).expect('FOO'))
+    expectPass(() => expect.toMatch('f+o').expect('xf+ox')) // special characters
     expectPass(() => expect.toStrictlyEqual('foo').expect('foo'))
     expectPass(() => expect.toBeDefined().expect('foo'))
     expectPass(() => expect.toBeFalse().expect(false))
@@ -49,6 +50,7 @@ describe('Expectation Matchers', () => {
     expectPass(() => expect.not.toHaveProperty('a').expect({ b: 'foo' }))
     expectPass(() => expect.not.toHaveSize(2).expect(new Set([ 'foo' ])))
     expectPass(() => expect.not.toMatch(/^foo$/i).expect('bar'))
+    expectPass(() => expect.not.toMatch('foo').expect('bar'))
     expectPass(() => expect.not.toStrictlyEqual('foo').expect('bar'))
     expectPass(() => expect.not.toBeDefined().expect(null))
     expectPass(() => expect.not.toBeNaN().expect(123))
@@ -93,6 +95,7 @@ describe('Expectation Matchers', () => {
         })
     expectFail(() => expect.toHaveSize(2).expect(new Set([ 'foo' ])), 'Expected [Set (1)] to have size 2')
     expectFail(() => expect.toMatch(/^foo$/i).expect('bar'), 'Expected "bar" to match /^foo$/i')
+    expectFail(() => expect.toMatch('foo').expect('bar'), 'Expected "bar" to match "foo"')
     expectFail(() => expect.toStrictlyEqual('foo').expect('bar'), 'Expected "bar" to strictly equal "foo"', {
       diff: true,
       value: 'bar',
@@ -137,6 +140,7 @@ describe('Expectation Matchers', () => {
     expectFail(() => expect.not.toHaveProperty('a').expect({ a: 'foo' }), 'Expected [Object] not to have property "a"')
     expectFail(() => expect.not.toHaveSize(1).expect(new Set([ 'foo' ])), 'Expected [Set (1)] not to have size 1')
     expectFail(() => expect.not.toMatch(/^foo$/i).expect('FOO'), 'Expected "FOO" not to match /^foo$/i')
+    expectFail(() => expect.not.toMatch('f+o').expect('xfoox'), 'Expected "xfoox" not to match "f+o"')
     expectFail(() => expect.not.toStrictlyEqual('foo').expect('foo'), 'Expected "foo" not to strictly equal "foo"')
     expectFail(() => expect.not.toBeDefined().expect('foo'), 'Expected "foo" to be <null> or <undefined>')
     expectFail(() => expect.not.toBeNaN().expect(NaN), 'Expected NaN not to be NaN')

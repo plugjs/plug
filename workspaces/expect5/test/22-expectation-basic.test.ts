@@ -126,12 +126,25 @@ describe('Basic Expectations', () => {
     expectPass(() => expect(error).toBeError())
     expectPass(() => expect(error).toBeError('Foo!'))
     expectPass(() => expect(error).toBeError(/foo/i))
+    expectPass(() => expect(error).toBeError('oo', true))
     expectPass(() => expect(error).toBeError(SyntaxError))
     expectPass(() => expect(error).toBeError(SyntaxError, 'Foo!'))
     expectPass(() => expect(error).toBeError(SyntaxError, /foo/i))
+    expectPass(() => expect(error).toBeError(SyntaxError, 'oo', true))
     expectPass(() => expect({ message: 'foo' }).toBeError(Object as any, 'foo'))
 
     expectFail(() => expect('foo').toBeError(), 'Expected "foo" to be an instance of [Error]')
+    expectFail(() => expect(error).toBeError('oo', false), 'Expected property ["message"] of [SyntaxError] ("Foo!") to strictly equal "oo"', {
+      diff: true,
+      value: error,
+      props: {
+        message: {
+          diff: true,
+          value: 'Foo!',
+          expected: 'oo',
+        },
+      },
+    })
     expectFail(() => expect(error).toBeError('Bar!'), 'Expected property ["message"] of [SyntaxError] ("Foo!") to strictly equal "Bar!"', {
       diff: true,
       value: error,
@@ -495,14 +508,13 @@ describe('Basic Expectations', () => {
 
   it('should expect "toMatch(...)"', () => {
     expectPass(() => expect('foo').toMatch(/^foo$/))
-    expectPass(() => expect('foo').toMatch('^foo$'))
+    expectPass(() => expect('xf+ox').toMatch('f+o')) // special chars, substring
     expectFail(() => expect('foo').toMatch(/^bar$/), 'Expected "foo" to match /^bar$/')
-    expectFail(() => expect('foo').toMatch('^bar$'), 'Expected "foo" to match "^bar$"')
+    expectFail(() => expect('foo').toMatch('f+o'), 'Expected "foo" to match "f+o"')
 
     expectFail(() => expect('foo').not.toMatch(/^foo$/), 'Expected "foo" not to match /^foo$/')
-    expectFail(() => expect('foo').not.toMatch('^foo$'), 'Expected "foo" not to match "^foo$"')
+    expectFail(() => expect('xfoox').not.toMatch('f.o'), 'Expected "xfoox" not to match "f.o"')
     expectPass(() => expect('foo').not.toMatch(/^bar$/))
-    expectPass(() => expect('foo').not.toMatch('^bar$'))
 
     expectFail(() => expect({}).toMatch(/^.*$/), 'Expected [Object] to be a <string>')
     expectFail(() => expect({}).not.toMatch(/^.*$/), 'Expected [Object] to be a <string>')

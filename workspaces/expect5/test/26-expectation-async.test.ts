@@ -75,6 +75,7 @@ describe('Asynchronous Expectations', () => {
     // passing...
     await expect(Promise.reject(error)).toBeRejectedWithError('foo')
     await expect(Promise.reject(error)).toBeRejectedWithError(/foo/)
+    await expect(Promise.reject(error)).toBeRejectedWithError('o', true) // substring
     await expect(Promise.reject(error)).toBeRejectedWithError(SyntaxError)
     await expect(Promise.reject(error)).toBeRejectedWithError(SyntaxError, 'foo')
     await expect(Promise.reject(error)).toBeRejectedWithError(SyntaxError, /foo/)

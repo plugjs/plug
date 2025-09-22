@@ -55,6 +55,7 @@ describe('Throwing Expectations', () => {
     expectPass(() => expect(throwing).toThrowError(SyntaxError))
     expectPass(() => expect(throwing).toThrowError('Whatever'))
     expectPass(() => expect(throwing).toThrowError(/Whatever/))
+    expectPass(() => expect(throwing).toThrowError('hateve', true)) // substring
     expectPass(() => expect(throwing).toThrowError(Error, 'Whatever'))
     expectPass(() => expect(throwing).toThrowError(Error, /Whatever/))
     expectPass(() => expect(throwing).toThrowError(SyntaxError, 'Whatever'))
