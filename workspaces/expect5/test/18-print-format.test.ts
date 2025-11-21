@@ -9,7 +9,7 @@ import type { Diff } from '../src/expectation/diff'
 describe('Diff Printer Format', () => {
   const logger = new TestLogger()
 
-  afterEach(() => void logger.reset())
+  afterEach(() => logger.reset())
 
   function map(object: Record<string, any>): Map<any, any> {
     return new Map(Object.entries(object))

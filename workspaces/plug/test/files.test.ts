@@ -10,7 +10,7 @@ import type { AbsolutePath } from '../src/paths'
 describe('Files Collection', () => {
   let tempdir: AbsolutePath
 
-  beforeAll(() => void (tempdir = mkdtemp()))
+  beforeAll(() => tempdir = mkdtemp())
   afterAll(() => rmrf(tempdir))
 
   it('should create an empty Files instance', () => {

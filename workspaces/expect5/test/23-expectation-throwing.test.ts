@@ -25,7 +25,7 @@ describe('Throwing Expectations', () => {
 
     // with assertion function
     let asserted: any = undefined
-    expectPass(() => expect(throwing).toThrow((e) => void (asserted = e.value)))
+    expectPass(() => expect(throwing).toThrow((e) => asserted = e.value))
     assert.strictEqual(asserted, error)
 
     // even when throwing undefined
@@ -36,7 +36,7 @@ describe('Throwing Expectations', () => {
 
     asserted = 'bogus!'
     expectPass(() => expect(throwUndefined).toThrow(expect.toBeUndefined()))
-    expectPass(() => expect(throwUndefined).toThrow((assert) => void (asserted = assert.value)))
+    expectPass(() => expect(throwUndefined).toThrow((assert) => asserted = assert.value))
     assert.strictEqual(asserted, undefined)
   })
 

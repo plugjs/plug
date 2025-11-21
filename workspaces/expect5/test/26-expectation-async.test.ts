@@ -15,7 +15,7 @@ describe('Asynchronous Expectations', () => {
 
     // should also pass assertions through
     let assertions: any = undefined
-    await expectation.toBeRejected((assert) => void (assertions = assert))
+    await expectation.toBeRejected((assert) => assertions = assert)
     assert.strictEqual(assertions.value, error)
 
     // rejections
@@ -113,7 +113,7 @@ describe('Asynchronous Expectations', () => {
 
     // should also pass assertions through
     let assertions: any = undefined
-    await expectation.toBeResolved((assert) => void (assertions = assert))
+    await expectation.toBeResolved((assert) => assertions = assert)
     assert.strictEqual(assertions.value, 'foo')
 
     // rejections

@@ -442,7 +442,7 @@ describe('Basic Expectations', () => {
 
     const object = { foo: { bar: 'baz' } }
     let value: any = undefined
-    expectPass(() => expect(object).toHaveProperty('foo', (assert) => void (value = assert.value)))
+    expectPass(() => expect(object).toHaveProperty('foo', (assert) => value = assert.value))
     assert.strictEqual(value, object.foo)
   })
 

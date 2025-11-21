@@ -34,13 +34,13 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
-      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      beforeAll(() => calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => calls.push([ 'hook:exec', 'afterEach' ]))
+      afterAll(() => calls.push([ 'hook:exec', 'afterAll' ]))
 
-      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 1', () => calls.push([ 'spec:exec', 'spec 1' ]))
+      it('spec 2', () => calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const execution = runSuite(suite)
@@ -102,19 +102,19 @@ describe('Executor', () => {
     const calls: any[][] = []
 
     const suite = new Suite(undefined, 'suite 0', () => {
-      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach 0' ]))
-      afterEach(() => void calls.push([ 'hook:exec', 'afterEach 0' ]))
-      it('spec 0', () => void calls.push([ 'spec:exec', 'spec 0' ]))
+      beforeEach(() => calls.push([ 'hook:exec', 'beforeEach 0' ]))
+      afterEach(() => calls.push([ 'hook:exec', 'afterEach 0' ]))
+      it('spec 0', () => calls.push([ 'spec:exec', 'spec 0' ]))
 
       describe('suite 1', () => {
-        beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach 1' ]))
-        afterEach(() => void calls.push([ 'hook:exec', 'afterEach 1' ]))
-        it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
+        beforeEach(() => calls.push([ 'hook:exec', 'beforeEach 1' ]))
+        afterEach(() => calls.push([ 'hook:exec', 'afterEach 1' ]))
+        it('spec 1', () => calls.push([ 'spec:exec', 'spec 1' ]))
 
         describe('suite 2', () => {
-          beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach 2' ]))
-          afterEach(() => void calls.push([ 'hook:exec', 'afterEach 2' ]))
-          it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+          beforeEach(() => calls.push([ 'hook:exec', 'beforeEach 2' ]))
+          afterEach(() => calls.push([ 'hook:exec', 'afterEach 2' ]))
+          it('spec 2', () => calls.push([ 'spec:exec', 'spec 2' ]))
         })
       })
     })
@@ -221,12 +221,12 @@ describe('Executor', () => {
       beforeAll(() => {
         throw error
       })
-      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
-      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      beforeEach(() => calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => calls.push([ 'hook:exec', 'afterEach' ]))
+      afterAll(() => calls.push([ 'hook:exec', 'afterAll' ]))
 
-      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 1', () => calls.push([ 'spec:exec', 'spec 1' ]))
+      it('spec 2', () => calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const hook = expect.toBeInstanceOf(Hook).toInclude({
@@ -269,15 +269,15 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
+      beforeAll(() => calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => calls.push([ 'hook:exec', 'afterEach' ]))
       afterAll(() => {
         throw error
       })
 
-      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 1', () => calls.push([ 'spec:exec', 'spec 1' ]))
+      it('spec 2', () => calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const hook = expect.toBeInstanceOf(Hook).toInclude({
@@ -337,15 +337,15 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeAll(() => calls.push([ 'hook:exec', 'beforeAll' ]))
       beforeEach(() => {
         throw error
       })
-      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
-      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      afterEach(() => calls.push([ 'hook:exec', 'afterEach' ]))
+      afterAll(() => calls.push([ 'hook:exec', 'afterAll' ]))
 
-      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 1', () => calls.push([ 'spec:exec', 'spec 1' ]))
+      it('spec 2', () => calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const hook1 = expect.toBeInstanceOf(Hook).toInclude({
@@ -410,15 +410,15 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
+      beforeAll(() => calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => calls.push([ 'hook:exec', 'beforeEach' ]))
       afterEach(() => {
         throw error
       })
-      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      afterAll(() => calls.push([ 'hook:exec', 'afterAll' ]))
 
-      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 1', () => calls.push([ 'spec:exec', 'spec 1' ]))
+      it('spec 2', () => calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const hook1 = expect.toBeInstanceOf(Hook).toInclude({
@@ -492,15 +492,15 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
-      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      beforeAll(() => calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => calls.push([ 'hook:exec', 'afterEach' ]))
+      afterAll(() => calls.push([ 'hook:exec', 'afterAll' ]))
 
       it('spec 1', () => {
         throw error
       })
-      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 2', () => calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const spec = expect.toBeInstanceOf(Spec).toInclude({
@@ -562,8 +562,8 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
+      beforeAll(() => calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => calls.push([ 'hook:exec', 'beforeEach' ]))
       afterEach(() => {
         throw errorAfterEach
       })
@@ -573,7 +573,7 @@ describe('Executor', () => {
       it('spec 1', () => {
         throw errorSpec
       })
-      it('spec 2', () => void calls.push([ 'spec:exec', 'spec 2' ]))
+      it('spec 2', () => calls.push([ 'spec:exec', 'spec 2' ]))
     })
 
     const spec = expect.toBeInstanceOf(Spec).toInclude({
@@ -656,29 +656,29 @@ describe('Executor', () => {
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
 
-      beforeAll(() => void calls.push([ 'hook:exec', 'beforeAll' ]))
-      beforeEach(() => void calls.push([ 'hook:exec', 'beforeEach' ]))
-      afterEach(() => void calls.push([ 'hook:exec', 'afterEach' ]))
-      afterAll(() => void calls.push([ 'hook:exec', 'afterAll' ]))
+      beforeAll(() => calls.push([ 'hook:exec', 'beforeAll' ]))
+      beforeEach(() => calls.push([ 'hook:exec', 'beforeEach' ]))
+      afterEach(() => calls.push([ 'hook:exec', 'afterEach' ]))
+      afterAll(() => calls.push([ 'hook:exec', 'afterAll' ]))
 
-      beforeAll.skip(() => void calls.push([ 'hook:exec', 'skip.beforeAll' ]))
-      beforeEach.skip(() => void calls.push([ 'hook:exec', 'skip.beforeEach' ]))
-      afterEach.skip(() => void calls.push([ 'hook:exec', 'skip.afterEach' ]))
-      afterAll.skip(() => void calls.push([ 'hook:exec', 'skip.afterAll' ]))
+      beforeAll.skip(() => calls.push([ 'hook:exec', 'skip.beforeAll' ]))
+      beforeEach.skip(() => calls.push([ 'hook:exec', 'skip.beforeEach' ]))
+      afterEach.skip(() => calls.push([ 'hook:exec', 'skip.afterEach' ]))
+      afterAll.skip(() => calls.push([ 'hook:exec', 'skip.afterAll' ]))
 
-      xbeforeAll(() => void calls.push([ 'hook:exec', 'xbeforeAll' ]))
-      xbeforeEach(() => void calls.push([ 'hook:exec', 'xbeforeEach' ]))
-      xafterEach(() => void calls.push([ 'hook:exec', 'xafterEach' ]))
-      xafterAll(() => void calls.push([ 'hook:exec', 'xafterAll' ]))
+      xbeforeAll(() => calls.push([ 'hook:exec', 'xbeforeAll' ]))
+      xbeforeEach(() => calls.push([ 'hook:exec', 'xbeforeEach' ]))
+      xafterEach(() => calls.push([ 'hook:exec', 'xafterEach' ]))
+      xafterAll(() => calls.push([ 'hook:exec', 'xafterAll' ]))
 
-      it('spec 1', () => void calls.push([ 'spec:exec', 'spec 1' ]))
-      it.skip('spec 2', () => void calls.push([ 'spec:exec', 'skip spec 2' ]))
-      xit('spec 3', () => void calls.push([ 'spec:exec', 'xit spec 2' ]))
+      it('spec 1', () => calls.push([ 'spec:exec', 'spec 1' ]))
+      it.skip('spec 2', () => calls.push([ 'spec:exec', 'skip spec 2' ]))
+      xit('spec 3', () => calls.push([ 'spec:exec', 'xit spec 2' ]))
 
       xdescribe('suite 1', () => {
         calls.push([ 'suite:exec', 'suite 1' ])
 
-        it('spec 4', () => void calls.push([ 'spec:exec', 'spec 4' ]))
+        it('spec 4', () => calls.push([ 'spec:exec', 'spec 4' ]))
       })
     })
 
@@ -733,7 +733,7 @@ describe('Executor', () => {
 
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
-      // xit('spec 1', () => void calls.push([ 'spec:exec', 'xit spec 1' ]))
+      // xit('spec 1', () => calls.push([ 'spec:exec', 'xit spec 1' ]))
     })
 
     const execution = runSuite(suite)
@@ -763,11 +763,11 @@ describe('Executor', () => {
 
     const suite = new Suite(undefined, 'suite 0', () => {
       calls.push([ 'suite:exec', 'suite 0' ])
-      xit('spec 1', () => void calls.push([ 'spec:exec', 'xit spec 1' ]))
+      xit('spec 1', () => calls.push([ 'spec:exec', 'xit spec 1' ]))
       describe('suite 1', () => {
-        xit('spec 2', () => void calls.push([ 'spec:exec', 'xit spec 2' ]))
+        xit('spec 2', () => calls.push([ 'spec:exec', 'xit spec 2' ]))
       })
-      xit('spec 3', () => void calls.push([ 'spec:exec', 'xit spec 3' ]))
+      xit('spec 3', () => calls.push([ 'spec:exec', 'xit spec 3' ]))
     })
 
     const execution = runSuite(suite)
@@ -804,29 +804,29 @@ describe('Executor', () => {
     const calls: any[][] = []
 
     const suite = new Suite(undefined, 'suite 0', () => {
-      fit('spec 1', () => void calls.push([ 'spec:exec', 'fit spec 1' ]))
-      it.only('spec 2', () => void calls.push([ 'spec:exec', 'only spec 2' ]))
-      it('spec 3', () => void calls.push([ 'spec:exec', 'it spec 3' ]))
+      fit('spec 1', () => calls.push([ 'spec:exec', 'fit spec 1' ]))
+      it.only('spec 2', () => calls.push([ 'spec:exec', 'only spec 2' ]))
+      it('spec 3', () => calls.push([ 'spec:exec', 'it spec 3' ]))
 
       describe('suite 1', () => {
-        it('spec 4', () => void calls.push([ 'spec:exec', 'it spec 4' ]))
-        it('spec 5', () => void calls.push([ 'spec:exec', 'it spec 5' ]))
+        it('spec 4', () => calls.push([ 'spec:exec', 'it spec 4' ]))
+        it('spec 5', () => calls.push([ 'spec:exec', 'it spec 5' ]))
       })
 
       fdescribe('suite 2', () => {
-        it('spec 6', () => void calls.push([ 'spec:exec', 'it spec 6' ]))
-        xit('spec 7', () => void calls.push([ 'spec:exec', 'xit spec 7' ]))
+        it('spec 6', () => calls.push([ 'spec:exec', 'it spec 6' ]))
+        xit('spec 7', () => calls.push([ 'spec:exec', 'xit spec 7' ]))
       })
 
       describe.only('suite 3', () => {
-        it('spec 8', () => void calls.push([ 'spec:exec', 'it spec 8' ]))
-        it.skip('spec 9', () => void calls.push([ 'spec:exec', 'skip spec 9' ]))
+        it('spec 8', () => calls.push([ 'spec:exec', 'it spec 8' ]))
+        it.skip('spec 9', () => calls.push([ 'spec:exec', 'skip spec 9' ]))
       })
 
       describe('suite 4', () => {
-        it('spec 10', () => void calls.push([ 'spec:exec', 'it spec 10' ]))
-        it.only('spec 11', () => void calls.push([ 'spec:exec', 'only spec 11' ]))
-        fit('spec 12', () => void calls.push([ 'spec:exec', 'fit spec 12' ]))
+        it('spec 10', () => calls.push([ 'spec:exec', 'it spec 10' ]))
+        it.only('spec 11', () => calls.push([ 'spec:exec', 'only spec 11' ]))
+        fit('spec 12', () => calls.push([ 'spec:exec', 'fit spec 12' ]))
       })
     })
 
@@ -1117,12 +1117,12 @@ describe('Executor', () => {
   it('should register and unregister listeners', async () => {
     const calls: string[] = []
 
-    const listener1 = (spec: Spec): void => void calls.push(`L1:${spec.name}`)
-    const listener2 = (spec: Spec): void => void calls.push(`L2:${spec.name}`)
+    const listener1 = (spec: Spec): any => calls.push(`L1:${spec.name}`)
+    const listener2 = (spec: Spec): any => calls.push(`L2:${spec.name}`)
 
     const suite = new Suite(undefined, 'suite 0', async () => {
       it('one', () => {})
-      it('two', () => void execution.off('spec:start', listener2))
+      it('two', () => execution.off('spec:start', listener2))
       it('three', () => skip())
     })
 
