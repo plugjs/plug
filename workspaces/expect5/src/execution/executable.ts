@@ -8,7 +8,7 @@ import { getSingleton } from '@plugjs/plug/utils'
  *
  * When the timeout configured is reached, the passed `signal` will be aborted.
  */
-export type Call = (this: undefined, signal: AbortSignal) => void | Promise<void>
+export type Call = (this: undefined, signal: AbortSignal) => any | Promise<any>
 
 /** Flag types for an {@link Executable} */
 export type Flag = 'skip' | 'only' | undefined

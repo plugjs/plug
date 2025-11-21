@@ -22,7 +22,7 @@ import type {
  * ========================================================================== */
 
 /** An assertion function, for sub-expectations and value introspection */
-export type AssertionFunction<T = unknown> = (assert: Expectations<T>) => void | Expectations
+export type AssertionFunction<T = unknown> = (assert: Expectations<T>) => any
 
 /** Return the type asserted by an {@link AssertionFunction} or `T` */
 export type AssertedType<T, F extends AssertionFunction<any>, R = ReturnType<F>> =
