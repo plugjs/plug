@@ -142,7 +142,7 @@ export async function coverageReport(
         sourceFilename: file,
         startLine: 1,
         startColumn: 0,
-        plugins: [ 'typescript' ],
+        plugins: [ 'typescript', 'decorators' ],
         strictMode: false,
         ranges: false,
         tokens: false,
