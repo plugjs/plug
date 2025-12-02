@@ -1,4 +1,4 @@
-import { assert, assertPromises, BuildFailure } from '@plugjs/plug/asserts'
+import { assert } from '@plugjs/plug/asserts'
 import { Files } from '@plugjs/plug/files'
 import { $p } from '@plugjs/plug/logging'
 import { commonPath, getAbsoluteParent, resolveAbsolutePath, resolveFile } from '@plugjs/plug/paths'
@@ -8,6 +8,7 @@ import ts from 'typescript'
 import { TypeScriptHost } from './compiler'
 import { getCompilerOptions } from './options'
 import { updateReport } from './report'
+import { buildWriteFile } from './writefile'
 
 import type { AbsolutePath } from '@plugjs/plug/paths'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
@@ -145,19 +146,8 @@ export class Tsc implements Plug<Files> {
 
     /* Write out all files asynchronously */
     const builder = Files.builder(outDir)
-    const promises: Promise<void>[] = []
-    const result = program.emit(undefined, (fileName, code) => {
-      promises.push(builder.write(fileName, code).then((file) => {
-        context.log.trace('Written', $p(file))
-      }).catch(/* coverage ignore next */ (error) => {
-        const outFile = resolveAbsolutePath(outDir, fileName)
-        context.log.error('Error writing to', $p(outFile), error)
-        throw BuildFailure.fail()
-      }))
-    })
-
-    /* Await for all files to be written and check */
-    await assertPromises(promises)
+    const writeFile = buildWriteFile(builder, context)
+    const result = program.emit(undefined, writeFile)
 
     /* Update report and fail on errors */
     updateReport(report, result.diagnostics, rootDir)
