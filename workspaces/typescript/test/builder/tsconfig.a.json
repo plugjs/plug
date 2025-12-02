@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.options.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "a",
+    "types": [],
+    "tsBuildInfoFile": "./tmp/tsconfig.a.tsbuildinfo",
+  },
+  "include": [
+    "./a",
+  ],
+}
