@@ -2,7 +2,7 @@ import { ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import { resolveAbsolutePath } from '@plugjs/plug/paths'
 import ts from 'typescript'
 
-import type { Report, ReportLevel, ReportRecord } from '@plugjs/plug/logging'
+import type { Logger, Report, ReportLevel, ReportRecord } from '@plugjs/plug/logging'
 import type { AbsolutePath } from '@plugjs/plug/paths'
 
 
@@ -69,12 +69,34 @@ function convertDiagnostics(
   })
 }
 
-/** Update a report, adding records from an array of {@link ts.Diagnostic} */
+/**
+ * Update a report, adding records from an array of {@link ts.Diagnostic}
+ *
+ * When a `logger` is provided, diagnostics without a file will be logged
+ * directly to the logger instead of being added to the report (therefore the
+ * report will not _fail_ in case of such diagnostics).
+ */
 export function updateReport(
     report: Report,
     diagnostics: readonly ts.Diagnostic[],
     directory: AbsolutePath,
+    logger?: Logger,
 ): void {
   const records = convertDiagnostics(diagnostics, directory)
-  report.add(...records)
+  if (! logger) {
+    report.add(...records)
+    return
+  }
+
+  for (const record of records) {
+    if (record.file) {
+      report.add(record)
+    } else {
+      switch (record.level) {
+        case ERROR: logger.error(record.message); break
+        case WARN: logger.warn(record.message); break
+        case NOTICE: logger.info(record.message); break
+      }
+    }
+  }
 }
