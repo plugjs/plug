@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/expect5",
-  "version": "0.6.81",
+  "version": "0.6.83",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -43,14 +43,14 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@plugjs/tsrun": "^0.6.26"
+    "@plugjs/tsrun": "^0.6.28"
   },
   "devDependencies": {
     "@types/chai": "<5",
     "chai": "<5"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.6.81"
+    "@plugjs/plug": "0.6.83"
   },
   "files": [
     "*.md",
