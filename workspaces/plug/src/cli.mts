@@ -231,8 +231,6 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
       const path = resolveAbsolutePath(cwd, watchDir)
       console.log(`Specified watch directory "${$p(path)}" was not found`)
       process.exit(1)
-    } else {
-      watchDir = absolute
     }
   })
 

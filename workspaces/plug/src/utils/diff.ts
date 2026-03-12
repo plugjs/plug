@@ -28,8 +28,8 @@ export interface Change {
  * ========================================================================== */
 
 function compareLongestCommonSubsequence(lhsCtx: Context, rhsCtx: Context): Change[] {
-  let lhsStart = 0
-  let rhsStart = 0
+  let lhsStart
+  let rhsStart
   let lhsItem = 0
   let rhsItem = 0
 

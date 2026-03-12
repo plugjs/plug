@@ -246,7 +246,6 @@ function printObjectDiff(
       }
       line = _clsCrl
     }
-    marked = true
   }
 
   log.warn(`${line}${suffix}`)
