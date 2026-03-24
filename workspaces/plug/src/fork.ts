@@ -277,12 +277,12 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
         { failed: false, filesDir: result.directory, filesList: [ ...result.absolutePaths() ] } :
         { failed: false }
       return new Promise<void>((resolve, reject) => {
-        process.send!(message, (err: Error) => err ? reject(err) : resolve())
+        process.send!(message, (err?: Error | null) => err ? reject(err) : resolve())
       })
     }, (error) => {
       context.log.error(error)
       return new Promise<void>((resolve, reject) => {
-        process.send!({ failed: true }, (err: Error) => err ? reject(err) : resolve())
+        process.send!({ failed: true }, (err?: Error | null) => err ? reject(err) : resolve())
       })
     })
 
