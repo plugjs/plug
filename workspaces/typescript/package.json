@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/typescript",
-  "version": "0.6.103",
+  "version": "0.6.104",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -33,7 +33,7 @@
     "typescript": "<6"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.6.103"
+    "@plugjs/plug": "0.6.104"
   },
   "files": [
     "*.md",
