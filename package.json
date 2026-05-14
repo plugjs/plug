@@ -1,7 +1,7 @@
 {
   "name": "@plugjs/monorepo",
   "private": true,
-  "version": "0.6.106",
+  "version": "0.6.107",
   "type": "module",
   "workspaces": [
     "workspaces/cov8",
@@ -22,8 +22,8 @@
     "updates": "check-updates package.json workspaces/*/package.json"
   },
   "devDependencies": {
-    "@plugjs/eslint-plugin": "^0.6.8",
-    "@plugjs/tsrun": "^0.6.51",
+    "@plugjs/eslint-plugin": "^0.6.9",
+    "@plugjs/tsrun": "^0.6.52",
     "@types/node": "<23",
     "typescript": "<6"
   },
