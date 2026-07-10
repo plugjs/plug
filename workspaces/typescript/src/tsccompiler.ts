@@ -1,4 +1,4 @@
-import { $p } from '@plugjs/plug'
+import { $p, assert, find } from '@plugjs/plug'
 import { Files } from '@plugjs/plug/files'
 import { getAbsoluteParent } from '@plugjs/plug/paths'
 import ts from 'typescript'
@@ -6,7 +6,9 @@ import ts from 'typescript'
 import { updateReport } from './report'
 import { buildWriteFile } from './writefile'
 
+import type { Pipe } from '@plugjs/plug'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
+import type { TscCompilerOptions } from './index'
 
 export class TscCompiler implements Plug<Files> {
   private readonly _options: ts.CompilerOptions
@@ -74,4 +76,57 @@ export class TscCompiler implements Plug<Files> {
     context.log.info('TSC Build produced', result.length, 'files into', $p(result.directory))
     return result
   }
+}
+
+/* ========================================================================== */
+
+/** Options available for the TypeScript Compiler. */
+export interface ExtendedTscCompilerOptions extends TscCompilerOptions {
+  /** The directory where to look for the `tsconfig.json` files. */
+  directory?: string
+}
+
+/**
+ * Run `tsc --project` using `tsconfig.json` from the current directory.
+ */
+export function tsc(): Pipe
+/**
+ * Run `tsc --project` using the specified `tsconfig.json` file.
+ */
+export function tsc(tsconfig: string): Pipe
+/**
+ * Run `tsc --project` using the specified options.
+ *
+ * The `directory` option specifies where to look for the `tsconfig.json` files,
+ * and defaults to the current directory, `verbose` and `force` default to
+ * `true`.
+ */
+export function tsc(options: ExtendedTscCompilerOptions): Pipe
+/**
+ * Run `tsc --project` using the specified `tsconfig.json` and options.
+ *
+ * The `directory` option specifies where to look for the `tsconfig.json` files,
+ * and defaults to the current directory, `verbose` and `force` default to
+ * `true`.
+ *
+ * @deprecated Use {@link tsc} instead.
+ */
+export function tsc(tsconfig: string, options?: ExtendedTscCompilerOptions): Pipe
+// Implementation overload
+export function tsc(
+    tsconfigOrOptions?: string | ExtendedTscCompilerOptions,
+    maybeOptions?: ExtendedTscCompilerOptions,
+): Pipe {
+  const [ tsconfig, tscCompilerOptions ] =
+    typeof tsconfigOrOptions === 'string'
+      ? [ tsconfigOrOptions, maybeOptions ]
+      : [ 'tsconfig.json', tsconfigOrOptions ]
+
+  const { directory, ...compilerOptions } = tscCompilerOptions || {}
+  return find(tsconfig, { directory })
+      .plug((files) => {
+        assert(files.length > 0, `No match for "${tsconfig}" in directory "${files.directory}"`)
+        return files
+      })
+      .plug(new TscCompiler(compilerOptions))
 }
