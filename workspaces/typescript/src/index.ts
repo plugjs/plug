@@ -4,12 +4,16 @@ import { requireResolve } from '@plugjs/plug/paths'
 import type { BuildOptions, CompilerOptions } from 'typescript'
 
 /** Remove the mapped `[option: string]: ...` from `CompilerOptions`. */
-type KnownCompilerOptions = {
-  [ k in keyof CompilerOptions as string extends k ? never : k ]: CompilerOptions[k]
+type RemoveIndexSignature<T> = {
+  [ k in keyof T as
+  string extends k ? never :
+  number extends k ? never :
+  symbol extends k ? never :
+  k ]: T[k]
 }
 
 /** TypeScript Compiler options with some additional properties */
-export interface ExtendedCompilerOptions extends KnownCompilerOptions {
+export interface ExtendedCompilerOptions extends RemoveIndexSignature<CompilerOptions> {
   /**
    * An additional directory containing a set of `.d.ts` files which will
    * be part of the compilation input, but not of the output.
@@ -21,10 +25,12 @@ export interface ExtendedCompilerOptions extends KnownCompilerOptions {
   extraTypesDir?: string | undefined
 }
 
-/* Exports for "tsc" / "tscBuild" */
-export { tsc, tscBuild } from './tscbuild'
-export type { TscOptions } from './tscbuild'
-export interface TscBuildOptions extends BuildOptions {}
+export interface TscBuildOptions extends RemoveIndexSignature<BuildOptions> {}
+export interface TscCompileOptions extends RemoveIndexSignature<CompilerOptions> {}
+
+/* Exports for "tscBuild" */
+export { tscBuild } from './tscbuild'
+export type { ExtendedTscBuildOptions } from './tscbuild'
 
 declare module '@plugjs/plug' {
   export interface Pipe {
@@ -66,12 +72,16 @@ declare module '@plugjs/plug' {
     /**
      * Run the {@link https://www.typescriptlang.org/ TypeScript Builder}
      * over the specified project `tsconfig.json` files.
+     *
+     * This is equivalent to running `tsc --build` from the command line.
      */
     tscBuild(): Pipe
 
     /**
      * Run the {@link https://www.typescriptlang.org/ TypeScript Builder}
      * over the specified project `tsconfig.json` files.
+     *
+     * This is equivalent to running `tsc --build ...` from the command line.
      *
      * With regards to `options`, the defaults are:
      * - `verbose: true`
@@ -80,8 +90,27 @@ declare module '@plugjs/plug' {
      * @param options {@link BuildOptions} to use for the build.
      */
     tscBuild(options: TscBuildOptions): Pipe
+
+    /**
+     * Run the {@link https://www.typescriptlang.org/ TypeScript Compiler}
+     * over the specified project `tsconfig.json` files.
+     *
+     * This is equivalent to running `tsc --project ...` from the command line.
+     */
+    tscCompiler(): Pipe
+
+    /**
+     * Run the {@link https://www.typescriptlang.org/ TypeScript Builder}
+     * over the specified project `tsconfig.json` files.
+     *
+     * This is equivalent to running `tsc --project ...` from the command line.
+     *
+     * @param options {@link CompilerOptions} to use for the build.
+     */
+    tscCompiler(options: TscBuildOptions): Pipe
   }
 }
 
 installForking('tsc', requireResolve(__fileurl, './typescript'), 'Tsc')
 installForking('tscBuild', requireResolve(__fileurl, './tscbuild'), 'TscBuild')
+installForking('tscCompiler', requireResolve(__fileurl, './tsccompiler'), 'TscCompiler')
