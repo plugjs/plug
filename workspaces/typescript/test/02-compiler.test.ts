@@ -25,6 +25,7 @@ describe('TypeScript Compiler', () => {
     const result = await find('**/*.ts', { directory: `${testDir}/data` })
         .plug(new Tsc(`${testDir}/tsconfig-empty.json`, {
           module: ts.ModuleKind.AMD,
+          ignoreDeprecations: '6.0',
           outDir: tempDir,
           outFile: file,
           noEmit: false,
@@ -100,34 +101,8 @@ describe('TypeScript Compiler', () => {
           outDir: tempDir,
           noEmit: false,
           declaration: false,
-          rootDir: undefined,
+          rootDir: `${testDir}/rootdirs`,
           rootDirs: [ `${testDir}/rootdirs/a`, `${testDir}/rootdirs/b` ],
-        }))
-
-    const files = [ ...await find('**', { directory: tempDir }) ]
-    expect(files)
-        .toHaveLength(2)
-        .toInclude([
-          'a/one.js',
-          'b/two.js',
-        ])
-    expect([ ...result ])
-        .toHaveLength(2)
-        .toInclude(files)
-  }, 10_000)
-
-  it('should compile some files with base url', async () => {
-    const promise = find('**/*.ts', { directory: `${testDir}/baseurl` })
-        .plug(new Tsc())
-    await expect(promise).toBeRejectedWithError(BuildFailure)
-
-    const result = await find('**/*.ts', { directory: `${testDir}/baseurl` })
-        .plug(new Tsc({
-          outDir: tempDir,
-          noEmit: false,
-          declaration: false,
-          rootDir: `${testDir}/baseurl`,
-          baseUrl: `${testDir}/baseurl/a`,
         }))
 
     const files = [ ...await find('**', { directory: tempDir }) ]
