@@ -7,7 +7,7 @@ import { buildWriteFile } from './writefile'
 
 import type { Pipe } from '@plugjs/plug'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
-import type { TscBuildOptions } from '.'
+import type { TscBuildOptions } from './index'
 
 export class TscBuild implements Plug<Files> {
   private readonly _options: ts.BuildOptions
