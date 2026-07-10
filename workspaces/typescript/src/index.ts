@@ -28,9 +28,11 @@ export interface ExtendedCompilerOptions extends RemoveIndexSignature<CompilerOp
 export interface TscBuildOptions extends RemoveIndexSignature<BuildOptions> {}
 export interface TscCompilerOptions extends RemoveIndexSignature<CompilerOptions> {}
 
-/* Exports for "tscBuild" */
+/* Exports for "tscBuild" and "tsc" */
 export { tscBuild } from './tscbuild'
 export type { ExtendedTscBuildOptions } from './tscbuild'
+export { tsc } from './tsccompiler'
+export type { ExtendedTscCompilerOptions } from './tsccompiler'
 
 declare module '@plugjs/plug' {
   export interface Pipe {
