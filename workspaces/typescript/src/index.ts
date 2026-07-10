@@ -26,7 +26,7 @@ export interface ExtendedCompilerOptions extends RemoveIndexSignature<CompilerOp
 }
 
 export interface TscBuildOptions extends RemoveIndexSignature<BuildOptions> {}
-export interface TscCompileOptions extends RemoveIndexSignature<CompilerOptions> {}
+export interface TscCompilerOptions extends RemoveIndexSignature<CompilerOptions> {}
 
 /* Exports for "tscBuild" */
 export { tscBuild } from './tscbuild'
@@ -87,7 +87,7 @@ declare module '@plugjs/plug' {
      * - `verbose: true`
      * - `force: true`
      *
-     * @param options {@link BuildOptions} to use for the build.
+     * @param options {@link TscBuildOptions} to use for the build.
      */
     tscBuild(options: TscBuildOptions): Pipe
 
@@ -100,14 +100,14 @@ declare module '@plugjs/plug' {
     tscCompiler(): Pipe
 
     /**
-     * Run the {@link https://www.typescriptlang.org/ TypeScript Builder}
+     * Run the {@link https://www.typescriptlang.org/ TypeScript Compiler}
      * over the specified project `tsconfig.json` files.
      *
      * This is equivalent to running `tsc --project ...` from the command line.
      *
-     * @param options {@link CompilerOptions} to use for the build.
+     * @param options {@link TscCompilerOptions} to use for the build.
      */
-    tscCompiler(options: TscBuildOptions): Pipe
+    tscCompiler(options: TscCompilerOptions): Pipe
   }
 }
 
