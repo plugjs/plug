@@ -89,7 +89,7 @@ export class TscBuild implements Plug<Files> {
 /* ========================================================================== */
 
 /** Options available for the TypeScript Builder. */
-export interface TscBuildOptions extends ts.BuildOptions {
+export interface TscOptions extends ts.BuildOptions {
   /** The directory where to look for the `tsconfig.json` files. */
   directory?: string
 }
@@ -115,7 +115,7 @@ export function tscBuild(tsconfig: string): Pipe
  *
  * @deprecated Use {@link tsc} instead.
  */
-export function tscBuild(options: TscBuildOptions): Pipe
+export function tscBuild(options: TscOptions): Pipe
 /**
  * Run `tsc --build` using the specified `tsconfig.json` and options.
  *
@@ -125,13 +125,13 @@ export function tscBuild(options: TscBuildOptions): Pipe
  *
  * @deprecated Use {@link tsc} instead.
  */
-export function tscBuild(tsconfig: string, options?: TscBuildOptions): Pipe
+export function tscBuild(tsconfig: string, options?: TscOptions): Pipe
 // Implementation overload
 export function tscBuild(
-    tsconfigOrOptions?: string | TscBuildOptions,
-    maybeOptions?: TscBuildOptions,
+    tsconfigOrOptions?: string | TscOptions,
+    maybeOptions?: TscOptions,
 ): Pipe {
-  return tsc(tsconfigOrOptions as string, maybeOptions as TscBuildOptions)
+  return tsc(tsconfigOrOptions as string, maybeOptions as TscOptions)
 }
 
 /**
@@ -149,7 +149,7 @@ export function tsc(tsconfig: string): Pipe
  * and defaults to the current directory, `verbose` and `force` default to
  * `true`.
  */
-export function tsc(options: TscBuildOptions): Pipe
+export function tsc(options: TscOptions): Pipe
 /**
  * Run `tsc --build` using the specified `tsconfig.json` and options.
  *
@@ -157,12 +157,12 @@ export function tsc(options: TscBuildOptions): Pipe
  * and defaults to the current directory, `verbose` and `force` default to
  * `true`.
  */
-export function tsc(tsconfig: string, options?: TscBuildOptions): Pipe
+export function tsc(tsconfig: string, options?: TscOptions): Pipe
 
 // Implementation overload
 export function tsc(
-    tsconfigOrOptions?: string | TscBuildOptions,
-    maybeOptions?: TscBuildOptions,
+    tsconfigOrOptions?: string | TscOptions,
+    maybeOptions?: TscOptions,
 ): Pipe {
   const [ tsconfig, tscBuildOptions ] =
     typeof tsconfigOrOptions === 'string'

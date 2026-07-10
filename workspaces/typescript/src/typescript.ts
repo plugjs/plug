@@ -14,7 +14,6 @@ import type { AbsolutePath } from '@plugjs/plug/paths'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
 import type { ExtendedCompilerOptions } from './index'
 
-
 /* ========================================================================== *
  * WORKER PLUG                                                                *
  * ========================================================================== */

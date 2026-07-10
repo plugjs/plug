@@ -23,7 +23,8 @@ export interface ExtendedCompilerOptions extends KnownCompilerOptions {
 
 /* Exports for "tsc" / "tscBuild" */
 export { tsc, tscBuild } from './tscbuild'
-export type { TscBuildOptions } from './tscbuild'
+export type { TscOptions } from './tscbuild'
+export interface TscBuildOptions extends BuildOptions {}
 
 declare module '@plugjs/plug' {
   export interface Pipe {
@@ -78,7 +79,7 @@ declare module '@plugjs/plug' {
      *
      * @param options {@link BuildOptions} to use for the build.
      */
-    tscBuild(options: BuildOptions): Pipe
+    tscBuild(options: TscBuildOptions): Pipe
   }
 }
 
