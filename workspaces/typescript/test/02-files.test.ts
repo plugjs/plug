@@ -5,7 +5,7 @@ import { Tsc } from '../src/typescript'
 
 import type { AbsolutePath } from '@plugjs/plug'
 
-describe('TypeScript Compiler', () => {
+describe('TypeScript Files Compilation', () => {
   const testDir = '@/workspaces/typescript/test'
   let tempDir: AbsolutePath
 

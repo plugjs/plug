@@ -4,7 +4,7 @@ import { tscBuild, TscBuild } from '../src/tscbuild'
 
 import type { AbsolutePath } from '@plugjs/plug'
 
-describe('TypeScript Compiler', () => {
+describe('TypeScript Builder', () => {
   const testDir = '@/workspaces/typescript/test'
   let tempDir: AbsolutePath
 
@@ -50,7 +50,7 @@ describe('TypeScript Compiler', () => {
     expect([ ...targets ]).toMatchContents([ ...sources, ...result ])
   })
 
-  it('should build a full project using "tsc"', async () => {
+  it('should build a full project using "tscBuild"', async () => {
     // Copy our builder test files to a temp directory
     const sources = await find('**/*', { directory: `${testDir}/builder` }).copy(tempDir)
 

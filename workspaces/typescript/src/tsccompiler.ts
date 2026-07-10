@@ -25,6 +25,7 @@ export class TscCompiler implements Plug<Files> {
     const writeFile = buildWriteFile(builder, context)
 
     for (const absoluteConfigPath of files.absolutePaths()) {
+      context.log.notice('Compiling TypeScript project', $p(absoluteConfigPath))
       const configDir = getAbsoluteParent(absoluteConfigPath)
 
       /* Read the config file */
