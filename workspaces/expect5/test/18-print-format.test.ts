@@ -368,8 +368,8 @@ describe('Diff Printer Format', () => {
     it('should print the difference between two different multiline strings', () => {
       print(diff('one for\xA0all\ntwo\nthree\x1A', 'all for\vone\ntwo\n3\t4'), [
         '(string)',
-        '  - one\u00b7for\\A0all',
-        '  + all\u00b7for\\0Bone',
+        '  - one for\\A0all',
+        '  + all for\\0Bone',
         '    two',
         '  - three\\1A',
         '  + 3 \u2192 4',
