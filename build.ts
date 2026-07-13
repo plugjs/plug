@@ -20,7 +20,7 @@ import type { ESLint } from './workspaces/eslint/src/eslint'
 import type { Test } from './workspaces/expect5/src/test'
 import type { ESBuildOptions, Files } from './workspaces/plug/src/index'
 import type { Tsd } from './workspaces/tsd/src/tsd'
-import type { Tsc } from './workspaces/typescript/src/typescript'
+import type { TscCompiler } from './workspaces/typescript/src/tsccompiler'
 
 logging.logOptions.githubAnnotations = false
 
@@ -100,10 +100,10 @@ const ForkingTest = class extends fork.ForkingPlug {
   }
 }
 
-const ForkingTsc = class extends fork.ForkingPlug {
-  constructor(...args: ConstructorParameters<typeof Tsc>) {
-    const scriptFile = paths.requireResolve(__fileurl, './workspaces/typescript/src/typescript')
-    super(scriptFile, args, 'Tsc')
+const ForkingTscCompiler = class extends fork.ForkingPlug {
+  constructor(...args: ConstructorParameters<typeof TscCompiler>) {
+    const scriptFile = paths.requireResolve(__fileurl, './workspaces/typescript/src/tsccompiler')
+    super(scriptFile, args, 'TscCompiler')
   }
 }
 
@@ -165,13 +165,13 @@ export default plugjs({
   async transpile_dts(): Promise<void> {
     // call tsc, forking out the process (for parallelisation below)
     const transpile = async (workspace: string): Promise<void> => {
-      log.notice(`Transpiling sources to DTS from ${$p(resolve(workspace))}`)
-      await find('**/*.([cm])?ts', { directory: `${workspace}/src` })
-          .plug(new ForkingTsc(`${workspace}/tsconfig-base.json`, {
+      await using(`${workspace}/tsconfig-base.json`)
+          .plug(new ForkingTscCompiler({
             noEmit: false,
             declaration: true,
             emitDeclarationOnly: true,
             outDir: `${workspace}/dist`,
+            rootDir: `${workspace}/src`,
           }))
     }
 
@@ -207,17 +207,14 @@ export default plugjs({
   async check_tests(): Promise<void> {
     banner('Cheking TypeScript for Tests')
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
-    const globals = find('globals.ts', { directory: 'workspaces/expect5/src' })
 
     await Promise.all(selection.map((workspace) => {
-      log.notice(`Checking test types in ${$p(resolve(workspace))}`)
-      const specs = find('**/*.test.([cm])?ts', { directory: `${workspace}/test` })
-      return merge([ specs, globals ])
-          .plug(new ForkingTsc(`${workspace}/test/tsconfig.json`, {
-            rootDir: '.',
+      return using(`${workspace}/test/tsconfig.json`)
+          .plug(new ForkingTscCompiler({
             noEmit: true,
             declaration: false,
             emitDeclarationOnly: false,
+            rootDir: '.',
           }))
     }))
   },
@@ -311,10 +308,13 @@ export default plugjs({
     banner('Linting Sources')
 
     const sources = this.workspace ?
-      find('(src|extra|test|types)/**/*.([cm])?ts', { directory: `workspaces/${this.workspace}` }) :
-      find('*/(src|extra|test|types)/**/*.([cm])?ts', { directory: 'workspaces' })
+      find('src/**/*.([cm])?ts', { directory: `workspaces/${this.workspace}` }) :
+      find('*/src/**/*.([cm])?ts', { directory: 'workspaces' })
+    const tests = this.workspace ?
+      find('test/*.([cm])?ts', { directory: `workspaces/${this.workspace}` }) :
+      find('*/test/*.([cm])?ts', { directory: 'workspaces' })
 
-    const lintables = [ sources, using('build.ts', 'eslint.config.mjs') ]
+    const lintables = [ sources, tests, using('build.ts', 'eslint.config.mjs') ]
     if (! this.workspace) lintables.push(find('**/*.ts', { directory: 'test-d' }))
 
     await merge(lintables).plug(new ForkingESLint())

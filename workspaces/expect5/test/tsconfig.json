@@ -3,7 +3,7 @@
   "compilerOptions": {
     "types": [ "node" ], // do not include "@plugjs/expect5/globals" here...
   },
-  // but include "../src/globals.ts" here, so that when recompiling
+  // but include "../../expect5/src/globals.ts" here, so that when recompiling
   // vscode doesn't go nuts and reports all sorts of missing defs!
-  "include": [ ".", "../src/globals.ts" ],
+  "include": [ "*.ts", "../../expect5/src/globals.ts" ],
 }
