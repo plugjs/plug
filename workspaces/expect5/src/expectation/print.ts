@@ -11,7 +11,7 @@ import type {
   ExtraValueDiff,
   MissingValueDiff,
   ObjectDiff,
-} from './diff'
+} from './diff.ts'
 
 /* ========================================================================== *
  * CONSTANT LABELS FOR PRINTING                                               *

@@ -1,6 +1,6 @@
 import { BuildFailure, Files, find, merge, resolve } from '@plugjs/plug'
 
-import { Tsc } from '../src/typescript'
+import { Tsc } from '../src/typescript.ts'
 
 describe('TypeScript Basics', () => {
   const testDir = '@/workspaces/typescript/test'

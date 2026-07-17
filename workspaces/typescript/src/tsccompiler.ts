@@ -3,12 +3,12 @@ import { Files } from '@plugjs/plug/files'
 import { getAbsoluteParent } from '@plugjs/plug/paths'
 import ts from 'typescript'
 
-import { updateReport } from './report'
-import { buildWriteFile } from './writefile'
+import { updateReport } from './report.ts'
+import { buildWriteFile } from './writefile.ts'
 
 import type { Pipe } from '@plugjs/plug'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
-import type { TscCompilerOptions } from './index'
+import type { TscCompilerOptions } from './index.ts'
 
 export class TscCompiler implements Plug<Files> {
   private readonly _options: ts.CompilerOptions

@@ -1,6 +1,6 @@
 import { find, mkdtemp, rmrf } from '@plugjs/plug'
 
-import { TscCompiler, tsc } from '../src/tsccompiler'
+import { TscCompiler, tsc } from '../src/tsccompiler.ts'
 
 import type { AbsolutePath } from '@plugjs/plug'
 

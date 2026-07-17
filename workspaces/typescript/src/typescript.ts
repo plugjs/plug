@@ -5,14 +5,14 @@ import { commonPath, getAbsoluteParent, resolveAbsolutePath, resolveFile } from 
 import { parseOptions, walk } from '@plugjs/plug/utils'
 import ts from 'typescript'
 
-import { TypeScriptHost } from './compiler'
-import { getCompilerOptions } from './options'
-import { updateReport } from './report'
-import { buildWriteFile } from './writefile'
+import { TypeScriptHost } from './compiler.ts'
+import { getCompilerOptions } from './options.ts'
+import { updateReport } from './report.ts'
+import { buildWriteFile } from './writefile.ts'
 
 import type { AbsolutePath } from '@plugjs/plug/paths'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
-import type { ExtendedCompilerOptions } from './index'
+import type { ExtendedCompilerOptions } from './index.ts'
 
 /* ========================================================================== *
  * WORKER PLUG                                                                *

@@ -1,7 +1,7 @@
 import { BuildFailure, find, mkdtemp, resolve, rmrf } from '@plugjs/plug'
 import ts from 'typescript'
 
-import { Tsc } from '../src/typescript'
+import { Tsc } from '../src/typescript.ts'
 
 import type { AbsolutePath } from '@plugjs/plug'
 

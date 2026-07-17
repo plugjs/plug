@@ -2,12 +2,12 @@ import { $p, assert, fail, find } from '@plugjs/plug'
 import { Files } from '@plugjs/plug/files'
 import ts from 'typescript'
 
-import { updateReport } from './report'
-import { buildWriteFile } from './writefile'
+import { updateReport } from './report.ts'
+import { buildWriteFile } from './writefile.ts'
 
 import type { Pipe } from '@plugjs/plug'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
-import type { TscBuildOptions } from './index'
+import type { TscBuildOptions } from './index.ts'
 
 export class TscBuild implements Plug<Files> {
   private readonly _options: ts.BuildOptions

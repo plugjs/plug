@@ -5,7 +5,7 @@ describe('TypeScript Plug installation', () => {
     expect(merge([]).tsc).toBeUndefined()
     expect(merge([]).tscBuild).toBeUndefined()
     expect(merge([]).tscCompiler).toBeUndefined()
-    await import('../src/index')
+    await import('../src/index.ts')
     expect(merge([]).tsc).toBeA('function')
     expect(merge([]).tscBuild).toBeA('function')
     expect(merge([]).tscCompiler).toBeA('function')

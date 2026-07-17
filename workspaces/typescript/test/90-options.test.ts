@@ -1,7 +1,7 @@
 import { resolve } from '@plugjs/plug'
 import ts from 'typescript'
 
-import { getCompilerOptions } from '../src/options'
+import { getCompilerOptions } from '../src/options.ts'
 
 describe('TypeScript Compiler Options', () => {
   const testDir = '@/workspaces/typescript/test'

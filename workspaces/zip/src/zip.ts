@@ -6,7 +6,7 @@ import { ZipFile } from 'yazl'
 
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
 import type EventEmitter from 'node:events'
-import type { ZipOptions } from '.'
+import type { ZipOptions } from './index.ts'
 
 
 // The "yazl" types don't define "ZipFile" as an "EventEmitter"
