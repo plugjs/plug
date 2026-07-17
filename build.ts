@@ -242,7 +242,7 @@ export default plugjs({
       find('test/*.ts', 'test/**/*.test.ts', { directory: `workspaces/${this.workspace}` }) :
       find('*/test/*.ts', '*/test/**/*.test.ts', { directory: 'workspaces' })
 
-    const lintables = [ sources, tests, using('build.ts', 'eslint.config.mjs') ]
+    const lintables = [ sources, tests, using('build.ts', 'eslint.config.js') ]
     if (! this.workspace) lintables.push(find('**/*.ts', { directory: 'test-d' }))
 
     await merge(lintables).plug(new ForkingESLint())
