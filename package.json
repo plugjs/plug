@@ -21,6 +21,9 @@
     "transpile": "tsrun ./workspaces/plug/src/cli.ts transpile",
     "updates": "check-updates package.json workspaces/*/package.json"
   },
+  "engines": {
+    "node": ">=22.16.0"
+  },
   "devDependencies": {
     "@plugjs/eslint-plugin": "^0.7.1",
     "@plugjs/tsrun": "^0.7.1",

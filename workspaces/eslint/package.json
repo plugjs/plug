@@ -16,6 +16,9 @@
   },
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.16.0"
+  },
   "dependencies": {
     "eslint": "^10.7.0"
   },
