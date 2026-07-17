@@ -1,13 +1,13 @@
 import { assert } from '@plugjs/plug'
 import { BuildFailure } from '@plugjs/plug/asserts'
 import { readFile } from '@plugjs/plug/fs'
-import { $p, $grn, $ylw, ERROR, WARN, $gry } from '@plugjs/plug/logging'
+import { $grn, $gry, $p, $ylw, ERROR, WARN } from '@plugjs/plug/logging'
 import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from '@plugjs/plug/paths'
 import { ESLint as RealESLint } from 'eslint'
 
 import type { Files } from '@plugjs/plug/files'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
-import type { ESLintOptions } from './index'
+import type { ESLintOptions } from './index.ts'
 
 /** Runner implementation for the `ESLint` plug. */
 export class ESLint implements Plug<void> {
