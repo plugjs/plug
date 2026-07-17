@@ -2,29 +2,16 @@
   "name": "@plugjs/typescript",
   "version": "0.7.0",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.cjs"
-      },
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.mjs"
-      }
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./typescript": {
-      "require": {
-        "types": "./dist/typescript.d.ts",
-        "default": "./dist/typescript.cjs"
-      },
-      "import": {
-        "types": "./dist/typescript.d.ts",
-        "default": "./dist/typescript.mjs"
-      }
+      "types": "./dist/typescript.d.ts",
+      "default": "./dist/typescript.js"
     }
   },
   "author": "Juit Developers <developers@juit.com>",
