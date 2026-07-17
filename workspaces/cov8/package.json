@@ -2,32 +2,19 @@
   "name": "@plugjs/cov8",
   "version": "0.7.0",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "cov8": "./dist/cli.mjs"
+    "cov8": "./dist/cli.js"
   },
   "exports": {
     ".": {
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.cjs"
-      },
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.mjs"
-      }
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./coverage": {
-      "require": {
-        "types": "./dist/coverage.d.ts",
-        "default": "./dist/coverage.cjs"
-      },
-      "import": {
-        "types": "./dist/coverage.d.ts",
-        "default": "./dist/coverage.mjs"
-      }
+      "types": "./dist/coverage.d.ts",
+      "default": "./dist/coverage.js"
     }
   },
   "author": "Juit Developers <developers@juit.com>",
