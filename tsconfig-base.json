@@ -7,11 +7,18 @@
     "moduleResolution": "bundler",
     "types": [ "node" ],
     "esModuleInterop": true,
+
+    // Import relative files as "file.ts"
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true,
 
-    // No emit (done with "bootstrap")
-    "noEmit": true,
+    // Emit transpiled files and declarations
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "sourceMap": true,
+    "inlineSourceMap": false,
+    "inlineSources": false,
 
     // Ultra strict
     "strict": true,
