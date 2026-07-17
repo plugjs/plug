@@ -13,12 +13,12 @@
     "workspaces/zip"
   ],
   "scripts": {
-    "clean": "tsrun ./workspaces/plug/src/cli.mts clean",
-    "dev": "ls -1d workspaces/*/src workspaces/*/test | sed 's|^|-w |g' | xargs tsrun ./workspaces/plug/src/cli.mts dev -w test-d",
-    "build": "tsrun ./workspaces/plug/src/cli.mts",
-    "lint": "tsrun ./workspaces/plug/src/cli.mts lint",
-    "test": "tsrun ./workspaces/plug/src/cli.mts transpile test",
-    "transpile": "tsrun ./workspaces/plug/src/cli.mts transpile",
+    "clean": "tsrun ./workspaces/plug/src/cli.ts clean",
+    "dev": "ls -1d workspaces/*/src workspaces/*/test | sed 's|^|-w |g' | xargs tsrun ./workspaces/plug/src/cli.ts dev -w test-d",
+    "build": "tsrun ./workspaces/plug/src/cli.ts",
+    "lint": "tsrun ./workspaces/plug/src/cli.ts lint",
+    "test": "tsrun ./workspaces/plug/src/cli.ts transpile test",
+    "transpile": "tsrun ./workspaces/plug/src/cli.ts transpile",
     "updates": "check-updates package.json workspaces/*/package.json"
   },
   "devDependencies": {
