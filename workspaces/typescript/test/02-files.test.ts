@@ -47,7 +47,7 @@ describe('TypeScript Files Compilation', () => {
 
   it('should compile some basic sources', async () => {
     const result = await find('**/*.ts', { directory: `${testDir}/data` })
-        .plug(new Tsc({
+        .plug(new Tsc(`${testDir}/tsconfig-base.json`, {
           rootDir: undefined,
           outDir: tempDir,
           noEmit: false,
@@ -70,7 +70,7 @@ describe('TypeScript Files Compilation', () => {
 
   it('should compile some files with a specific root directory', async () => {
     const result = await find('**/*.ts', { directory: `${testDir}/data` })
-        .plug(new Tsc({
+        .plug(new Tsc(`${testDir}/tsconfig-base.json`, {
           outDir: tempDir,
           noEmit: false,
           declaration: true,
@@ -93,11 +93,11 @@ describe('TypeScript Files Compilation', () => {
 
   it('should compile some files with multiple root directories', async () => {
     const promise = find('**/*.ts', { directory: `${testDir}/rootdirs` })
-        .plug(new Tsc())
+        .plug(new Tsc(`${testDir}/tsconfig-base.json`))
     await expect(promise).toBeRejectedWithError(BuildFailure)
 
     const result = await find('**/*.ts', { directory: `${testDir}/rootdirs` })
-        .plug(new Tsc({
+        .plug(new Tsc(`${testDir}/tsconfig-base.json`, {
           outDir: tempDir,
           noEmit: false,
           declaration: false,
