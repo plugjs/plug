@@ -22,8 +22,8 @@
   "dependencies": {
     "@babel/parser": "^8.0.4",
     "@babel/types": "^8.0.4",
-    "@plugjs/cov8-html": "^0.2.0",
-    "@plugjs/tsrun": "^0.7.0",
+    "@plugjs/cov8-html": "^0.2.1",
+    "@plugjs/tsrun": "^0.7.1",
     "source-map": "^0.7.6"
   },
   "peerDependencies": {

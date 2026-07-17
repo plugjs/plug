@@ -52,7 +52,7 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@plugjs/tsrun": "^0.7.0",
+    "@plugjs/tsrun": "^0.7.1",
     "@types/node": "<23",
     "esbuild": "^0.28.1",
     "jsonc-parser": "^3.3.1",

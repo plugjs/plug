@@ -22,8 +22,8 @@
     "updates": "check-updates package.json workspaces/*/package.json"
   },
   "devDependencies": {
-    "@plugjs/eslint-plugin": "^0.7.0",
-    "@plugjs/tsrun": "^0.7.0",
+    "@plugjs/eslint-plugin": "^0.7.1",
+    "@plugjs/tsrun": "^0.7.1",
     "@types/node": "<23",
     "typescript": "<7"
   },

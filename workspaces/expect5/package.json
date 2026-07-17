@@ -24,7 +24,7 @@
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@plugjs/tsrun": "^0.7.0"
+    "@plugjs/tsrun": "^0.7.1"
   },
   "devDependencies": {
     "@types/chai": "<5",
