@@ -1,17 +1,17 @@
-import { currentContext } from './async'
-import { $gry, $wht } from './logging/colors'
-import { getLogger } from './logging/logger'
-import { setupSpinner } from './logging/spinner'
-import { stripAnsi } from './utils/ansi'
+import { currentContext } from './async.ts'
+import { $gry, $wht } from './logging/colors.ts'
+import { getLogger } from './logging/logger.ts'
+import { setupSpinner } from './logging/spinner.ts'
+import { stripAnsi } from './utils/ansi.ts'
 
-import type { Log, Logger } from './logging/logger'
+import type { Log, Logger } from './logging/logger.ts'
 
-export * from './logging/colors'
-export * from './logging/github'
-export * from './logging/levels'
-export * from './logging/logger'
-export * from './logging/options'
-export * from './logging/report'
+export * from './logging/colors.ts'
+export * from './logging/github.ts'
+export * from './logging/levels.ts'
+export * from './logging/logger.ts'
+export * from './logging/options.ts'
+export * from './logging/report.ts'
 
 /* ========================================================================== *
  * INITIALIZATION                                                             *

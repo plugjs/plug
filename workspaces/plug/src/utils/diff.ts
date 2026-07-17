@@ -1,8 +1,8 @@
 import { fail } from 'node:assert'
 import { inspect, isDeepStrictEqual } from 'node:util'
 
-import { assert } from '../asserts'
-import { $grn, $red, logOptions } from '../logging'
+import { assert } from '../asserts.ts'
+import { $grn, $red, logOptions } from '../logging.ts'
 
 import type { InspectOptions } from 'node:util'
 

@@ -2,23 +2,23 @@ import { basename } from 'node:path'
 
 import { build } from 'esbuild'
 
-import { assert } from '../asserts'
-import { Files } from '../files'
-import { readFile } from '../fs'
-import { $p, ERROR, WARN } from '../logging'
-import { getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { install } from '../pipe'
+import { assert } from '../asserts.ts'
+import { Files } from '../files.ts'
+import { readFile } from '../fs.ts'
+import { $p, ERROR, WARN } from '../logging.ts'
+import { getAbsoluteParent, resolveAbsolutePath } from '../paths.ts'
+import { install } from '../pipe.ts'
 
 import type { BuildFailure, BuildOptions, BuildResult, Format, Message, Metafile } from 'esbuild'
-import type { FilesBuilder } from '../files'
-import type { Logger, ReportLevel, ReportRecord } from '../logging'
-import type { AbsolutePath } from '../paths'
-import type { Context, PipeParameters, Plug } from '../pipe'
+import type { FilesBuilder } from '../files.ts'
+import type { Logger, ReportLevel, ReportRecord } from '../logging.ts'
+import type { AbsolutePath } from '../paths.ts'
+import type { Context, PipeParameters, Plug } from '../pipe.ts'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 
-export * from './esbuild/bundle-locals'
-export * from './esbuild/fix-extensions'
+export * from './esbuild/bundle-locals.ts'
+export * from './esbuild/fix-extensions.ts'
 
 /*
  * Type definition for `WebAssembly`. This is normally provided to TypeScript

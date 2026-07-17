@@ -2,13 +2,13 @@ import { spawn } from 'node:child_process'
 import path from 'node:path'
 import readline from 'node:readline'
 
-import { assert, BuildFailure } from '../asserts'
-import { $p, logOptions } from '../logging'
-import { getCurrentWorkingDirectory, resolveDirectory } from '../paths'
+import { assert, BuildFailure } from '../asserts.ts'
+import { $p, logOptions } from '../logging.ts'
+import { getCurrentWorkingDirectory, resolveDirectory } from '../paths.ts'
 
 import type { SpawnOptions } from 'node:child_process'
-import type { AbsolutePath } from '../paths'
-import type { Context } from '../pipe'
+import type { AbsolutePath } from '../paths.ts'
+import type { Context } from '../pipe.ts'
 
 /** Options for executing scripts */
 export interface ExecChildOptions {

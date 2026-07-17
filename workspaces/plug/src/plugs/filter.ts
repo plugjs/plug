@@ -1,11 +1,11 @@
-import { Files } from '../files'
-import { resolveRelativeChildPath } from '../paths'
-import { install } from '../pipe'
-import { match } from '../utils/match'
-import { parseOptions } from '../utils/options'
+import { Files } from '../files.ts'
+import { resolveRelativeChildPath } from '../paths.ts'
+import { install } from '../pipe.ts'
+import { match } from '../utils/match.ts'
+import { parseOptions } from '../utils/options.ts'
 
-import type { Context, PipeParameters, Plug } from '../pipe'
-import type { MatchOptions } from '../utils/match'
+import type { Context, PipeParameters, Plug } from '../pipe.ts'
+import type { MatchOptions } from '../utils/match.ts'
 
 /** Options for filtering {@link Files}. */
 export interface FilterOptions extends MatchOptions {

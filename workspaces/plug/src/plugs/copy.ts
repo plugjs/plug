@@ -1,11 +1,11 @@
-import { assert } from '../asserts'
-import { Files } from '../files'
-import { chmod, copyFile, fsConstants, mkdir } from '../fs'
-import { $p } from '../logging'
-import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { install } from '../pipe'
+import { assert } from '../asserts.ts'
+import { Files } from '../files.ts'
+import { chmod, copyFile, fsConstants, mkdir } from '../fs.ts'
+import { $p } from '../logging.ts'
+import { assertAbsolutePath, getAbsoluteParent, resolveAbsolutePath } from '../paths.ts'
+import { install } from '../pipe.ts'
 
-import type { Context, PipeParameters, Plug } from '../pipe'
+import type { Context, PipeParameters, Plug } from '../pipe.ts'
 
 /** Options for copying files */
 export interface CopyOptions {

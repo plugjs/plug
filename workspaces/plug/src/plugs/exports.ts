@@ -1,14 +1,14 @@
 import { EOL } from 'node:os'
 import { sep } from 'node:path'
 
-import { assert } from '../asserts'
-import { Files } from '../files'
-import { readFile, writeFile } from '../fs'
-import { $p } from '../logging'
-import { assertRelativeChildPath, getAbsoluteParent } from '../paths'
-import { install } from '../pipe'
+import { assert } from '../asserts.ts'
+import { Files } from '../files.ts'
+import { readFile, writeFile } from '../fs.ts'
+import { $p } from '../logging.ts'
+import { assertRelativeChildPath, getAbsoluteParent } from '../paths.ts'
+import { install } from '../pipe.ts'
 
-import type { Context, PipeParameters, Plug } from '../pipe'
+import type { Context, PipeParameters, Plug } from '../pipe.ts'
 
 /** Options for our `exports` plug. */
 export interface ExportsOptions {

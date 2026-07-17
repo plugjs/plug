@@ -6,17 +6,17 @@ import _fs from 'node:fs'
 
 import { main, yargsParser } from '@plugjs/tsrun'
 
-import { BuildFailure } from './asserts'
-import { runAsync } from './async'
-import { invokeTasks, isBuild } from './build'
-import { $blu, $gry, $p, $red, $t, $und, $wht } from './logging/colors'
-import { logLevels } from './logging/levels'
-import { logOptions } from './logging/options'
-import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from './paths'
-import { Context } from './pipe'
+import { BuildFailure } from './asserts.ts'
+import { runAsync } from './async.ts'
+import { invokeTasks, isBuild } from './build.ts'
+import { $blu, $gry, $p, $red, $t, $und, $wht } from './logging/colors.ts'
+import { logLevels } from './logging/levels.ts'
+import { logOptions } from './logging/options.ts'
+import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from './paths.ts'
+import { Context } from './pipe.ts'
 
-import type { AbsolutePath } from './paths'
-import type { Build } from './types'
+import type { AbsolutePath } from './paths.ts'
+import type { Build } from './types.ts'
 
 /* Log levels */
 const { TRACE, DEBUG, INFO, NOTICE, WARN, ERROR, OFF } = logLevels

@@ -1,9 +1,9 @@
 import { sep } from 'node:path'
 
-import { getCurrentWorkingDirectory, resolveRelativeChildPath } from '../paths'
-import { logOptions } from './options'
+import { getCurrentWorkingDirectory, resolveRelativeChildPath } from '../paths.ts'
+import { logOptions } from './options.ts'
 
-import type { AbsolutePath } from '../paths'
+import type { AbsolutePath } from '../paths.ts'
 
 /* ========================================================================== */
 

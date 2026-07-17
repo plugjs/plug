@@ -1,7 +1,7 @@
 import path from 'node:path'
 
-import { stat } from '../../fs'
-import { assertAbsolutePath, resolveAbsolutePath, resolveFile } from '../../paths'
+import { stat } from '../../fs.ts'
+import { assertAbsolutePath, resolveAbsolutePath, resolveFile } from '../../paths.ts'
 
 import type { Plugin } from 'esbuild'
 
@@ -60,16 +60,14 @@ export function fixExtensions(): Plugin {
         const resolveDir = args.resolveDir
         assertAbsolutePath(resolveDir)
 
-        /* First of all, check if the _real_ filename exists */
-        const resolved = resolveAbsolutePath(resolveDir, args.path)
-        if (resolveFile(resolved)) return { path: args.path, external: true }
-
         /*
-         * Thank you TypeScript 4.7!!! If the file is ".js", ".mjs" or ".cjs" we
-         * need to check if we have the corresponding ".ts", ".mts" or ".cjs"
-         * and return whatever ESBuild maps that particular extension to.
+         * Thank you TypeScript 4.7!!! If the file is ".js", ".mjs" or ".cjs"
+         * (or even ".ts", ".mts" or ".cts" when "allowImportingTsExtensions"
+         * is enabled), we need to check if we have the corresponding ".ts",
+         * ".mts" or ".cjs" and return whatever ESBuild maps that particular
+         * extension to.
          */
-        const match = args.path.match(/(.*)(\.[mc]?js$)/)
+        const match = args.path.match(/(.*)(\.[mc]?[jt]s$)/)
         if (match) {
           const [ , name, ext ] = match
           const tspath = name + ext!.replace('js', 'ts')

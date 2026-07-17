@@ -2,7 +2,7 @@
  * BUILD FAILURES                                                             *
  * ========================================================================== */
 
-import { githubAnnotation } from './logging/github'
+import { githubAnnotation } from './logging/github.ts'
 
 /** A symbol marking {@link BuildFailure} instances */
 const buildFailure = Symbol.for('plugjs:plug:types:BuildFailure')

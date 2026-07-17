@@ -1,11 +1,11 @@
 import { EventEmitter } from 'node:events'
 
-import { getSingleton } from '../utils/singleton'
-import { getLevelNumber, NOTICE } from './levels'
+import { getSingleton } from '../utils/singleton.ts'
+import { getLevelNumber, NOTICE } from './levels.ts'
 
 import type { Writable } from 'node:stream'
 import type { InspectOptions } from 'node:util'
-import type { LogLevel, LogLevelString } from './levels'
+import type { LogLevel, LogLevelString } from './levels.ts'
 
 /* ========================================================================== */
 

@@ -1,11 +1,11 @@
-import { invokeTasks, isBuild } from '../build'
-import { ForkingPlug } from '../fork'
-import { $p } from '../logging/colors'
-import { requireFilename } from '../paths'
+import { invokeTasks, isBuild } from '../build.ts'
+import { ForkingPlug } from '../fork.ts'
+import { $p } from '../logging/colors.ts'
+import { requireFilename } from '../paths.ts'
 
-import type { Files } from '../files'
-import type { ForkOptions } from '../fork'
-import type { Context, Plug } from '../pipe'
+import type { Files } from '../files.ts'
+import type { ForkOptions } from '../fork.ts'
+import type { Context, Plug } from '../pipe.ts'
 
 export interface RunBuildOptions extends ForkOptions {
   /** The _current working directory_ to be set when running the build */
@@ -55,6 +55,6 @@ export class RunBuild extends ForkingPlug {
       props: Readonly<Record<string, string>>,
       options: ForkOptions,
   ) {
-    super(requireFilename(__fileurl), [ tasks, props, options ], RunBuildInternal.name)
+    super(requireFilename(import.meta.filename), [ tasks, props, options ], RunBuildInternal.name)
   }
 }

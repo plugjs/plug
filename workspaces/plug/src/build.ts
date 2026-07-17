@@ -1,12 +1,12 @@
-import { BuildFailure, assert } from './asserts'
-import { runAsync } from './async'
-import { $grn, $gry, $ms, $p, $plur, $t, $ylw, NOTICE, getLogger, log, logOptions } from './logging'
-import { Context, ContextPromises, PipeImpl } from './pipe'
-import { findCaller } from './utils/caller'
-import { getSingleton } from './utils/singleton'
+import { BuildFailure, assert } from './asserts.ts'
+import { runAsync } from './async.ts'
+import { $grn, $gry, $ms, $p, $plur, $t, $ylw, NOTICE, getLogger, log, logOptions } from './logging.ts'
+import { Context, ContextPromises, PipeImpl } from './pipe.ts'
+import { findCaller } from './utils/caller.ts'
+import { getSingleton } from './utils/singleton.ts'
 
-import type { Pipe } from './index'
-import type { AbsolutePath } from './paths'
+import type { Pipe } from './index.ts'
+import type { AbsolutePath } from './paths.ts'
 import type {
   Build,
   BuildDef,
@@ -20,7 +20,7 @@ import type {
   TaskDef,
   Tasks,
   ThisBuild,
-} from './types'
+} from './types.ts'
 
 /* ========================================================================== *
  * INTERNAL UTILITIES                                                         *

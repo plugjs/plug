@@ -1,6 +1,6 @@
-import type { Files } from './files'
-import type { Pipe } from './index'
-import type { AbsolutePath } from './paths'
+import type { Files } from './files.ts'
+import type { Pipe } from './index.ts'
+import type { AbsolutePath } from './paths.ts'
 
 /**
  * A type describing the ultimate result of a {@link Plug}, {@link Pipe} or
