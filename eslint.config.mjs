@@ -42,6 +42,17 @@ export default [
     },
   },
 
+  // ===== MAKE SURE WE IMPORT FILES PROPERLY ==================================
+  {
+    files: [ 'workspaces/*/src/**', 'workspaces/*/test/*.ts', 'workspaces/*/test/**/*.test.ts' ],
+    rules: {
+      'import-x/extensions': [ 'error', 'always', {
+        'ignorePackages': true,
+        'checkTypeImports': true,
+      } ],
+    },
+  },
+
   // ===== IGNORED FILES =======================================================
   // REMEMBER! Ignores *must* be in its own configuration, they can not coexist
   // with "rules", "languageOptions", "files", ... or anything else, otherwise
