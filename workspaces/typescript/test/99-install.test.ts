@@ -1,7 +1,7 @@
 import { merge } from '@plugjs/plug'
 
 describe('TypeScript Plug installation', () => {
-  it('should install the "tsc" and "tscBuild" plugs', async () => {
+  it('should install the "tsc", "tscBuild" and "tscCompiler" plugs', async () => {
     expect(merge([]).tsc).toBeUndefined()
     expect(merge([]).tscBuild).toBeUndefined()
     expect(merge([]).tscCompiler).toBeUndefined()
