@@ -1,8 +1,8 @@
 import { BuildFailure, find, merge } from '@plugjs/plug'
 
 // side-effect: when recompiling we don't loose globals
-import '../src/globals'
-import { Test } from '../src/test'
+import '../src/globals.ts'
+import { Test } from '../src/test.ts'
 
 describe('Expect5 Plug', async () => {
   const directory = '@/workspaces/expect5/test/data'

@@ -1,6 +1,6 @@
 import { BuildFailure, find, merge } from '@plugjs/plug'
 
-import { Tsd } from '../src/tsd'
+import { Tsd } from '../src/tsd.ts'
 
 describe('Tsd Plug', () => {
   const dataDir = '@/workspaces/tsd/test/data'
@@ -24,7 +24,7 @@ describe('Tsd Plug', () => {
 
   it('should install the "tsd" plug', async () => {
     expect(merge([]).tsd).toBeUndefined()
-    await import('../src/index')
+    await import('../src/index.ts')
     expect(merge([]).tsd).toBeA('function')
   }, 10_000)
 })

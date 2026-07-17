@@ -1,10 +1,10 @@
 /* eslint-disable no-new-wrappers */
 import { TestLogger, logOptions } from '@plugjs/plug/logging'
 
-import { diff } from '../src/expectation/diff'
-import { printDiff } from '../src/expectation/print'
+import { diff } from '../src/expectation/diff.ts'
+import { printDiff } from '../src/expectation/print.ts'
 
-import type { Diff } from '../src/expectation/diff'
+import type { Diff } from '../src/expectation/diff.ts'
 
 describe('Diff Printer Format', () => {
   const logger = new TestLogger()

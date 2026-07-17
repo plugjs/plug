@@ -2,7 +2,7 @@
 import { $grn, $gry, $red, $und, $wht, $ylw } from '@plugjs/plug/logging'
 import { textDiff } from '@plugjs/plug/utils'
 
-import { isMatcher, stringifyValue } from './types'
+import { isMatcher, stringifyValue } from './types.ts'
 
 import type { Logger } from '@plugjs/plug/logging'
 import type {

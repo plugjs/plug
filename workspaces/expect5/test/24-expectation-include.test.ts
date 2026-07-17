@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 
-import { expectFail, expectPass } from './utils'
+import { expectFail, expectPass } from './utils.ts'
 
 describe('Inclusion Expectations', () => {
   it('should fail when the expectation is not recognized', () => {

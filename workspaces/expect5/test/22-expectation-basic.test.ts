@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 
-import { expect } from '../src/expectation/expect'
-import { expectFail, expectPass } from './utils'
+import { expect } from '../src/expectation/expect.ts'
+import { expectFail, expectPass } from './utils.ts'
 
 describe('Basic Expectations', () => {
   it('should expect "toBeA(...)"', () => {

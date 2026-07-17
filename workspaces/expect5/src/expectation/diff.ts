@@ -5,9 +5,9 @@ import {
   isMatcher,
   stringifyConstructor,
   stringifyValue,
-} from './types'
+} from './types.ts'
 
-import type { Constructor } from './types'
+import type { Constructor } from './types.ts'
 
 export interface BaseDiff {
   diff: boolean,

@@ -1,7 +1,7 @@
-import { Hook, Spec, Suite, skip } from '../src/execution/executable'
-import { runSuite } from '../src/execution/executor'
+import { Hook, Spec, Suite, skip } from '../src/execution/executable.ts'
+import { runSuite } from '../src/execution/executor.ts'
 
-import type { Execution } from '../src/execution/executor'
+import type { Execution } from '../src/execution/executor.ts'
 
 
 function setupListeners(execution: Execution, calls: any[][]): void {

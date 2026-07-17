@@ -2,42 +2,23 @@
   "name": "@plugjs/expect5",
   "version": "0.7.0",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "expect5": "./dist/cli.mjs"
+    "expect5": "./dist/cli.js"
   },
   "exports": {
     ".": {
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.cjs"
-      },
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.mjs"
-      }
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./globals": {
-      "require": {
-        "types": "./dist/globals.d.ts",
-        "default": "./dist/globals.cjs"
-      },
-      "import": {
-        "types": "./dist/globals.d.ts",
-        "default": "./dist/globals.mjs"
-      }
+      "types": "./dist/globals.d.ts",
+      "default": "./dist/globals.js"
     },
     "./test": {
-      "require": {
-        "types": "./dist/test.d.ts",
-        "default": "./dist/test.cjs"
-      },
-      "import": {
-        "types": "./dist/test.d.ts",
-        "default": "./dist/test.mjs"
-      }
+      "types": "./dist/test.d.ts",
+      "default": "./dist/test.js"
     }
   },
   "author": "Juit Developers <developers@juit.com>",

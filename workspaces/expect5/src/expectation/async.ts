@@ -1,14 +1,14 @@
-import { Expectations } from './expectations'
-import { isMatcher } from './types'
+import { Expectations } from './expectations.ts'
+import { isMatcher } from './types.ts'
 
 import type {
   AssertedType,
   AssertionFunction,
   InferMatcher,
   InferToEqual,
-} from './expectations'
-import type { Matcher } from './matchers'
-import type { Constructor } from './types'
+} from './expectations.ts'
+import type { Matcher } from './matchers.ts'
+import type { Constructor } from './types.ts'
 
 /**
  * Extension to {@link Expectations} adding support for {@link Promise}s.

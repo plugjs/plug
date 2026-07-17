@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 
-import { ExpectationError } from '../src/expectation/types'
+import { ExpectationError } from '../src/expectation/types.ts'
 
-import type { Diff } from '../src/expectation/diff'
+import type { Diff } from '../src/expectation/diff.ts'
 
 export function expectPass(expectation: () => void): void {
   try {

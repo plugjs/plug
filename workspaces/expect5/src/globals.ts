@@ -1,7 +1,7 @@
 import type { logging, paths } from '@plugjs/plug'
-import type { skip as SkipFunction } from './execution/executable'
-import type * as setup from './execution/setup'
-import type { expect as ExpectFunction } from './expectation/expect'
+import type { skip as SkipFunction } from './execution/executable.ts'
+import type * as setup from './execution/setup.ts'
+import type { expect as ExpectFunction } from './expectation/expect.ts'
 
 declare global {
   const describe: setup.SuiteFunction

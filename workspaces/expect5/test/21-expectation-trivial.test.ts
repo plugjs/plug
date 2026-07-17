@@ -1,5 +1,5 @@
-import { expect } from '../src/expectation/expect'
-import { expectFail, expectPass } from './utils'
+import { expect } from '../src/expectation/expect.ts'
+import { expectFail, expectPass } from './utils.ts'
 
 describe('Trivial Expectations', () => {
   const positivePassing = {

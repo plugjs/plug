@@ -1,5 +1,5 @@
-import { diff } from './diff'
-import { toInclude, toMatchContents } from './include'
+import { diff } from './diff.ts'
+import { toInclude, toMatchContents } from './include.ts'
 import {
   ExpectationError,
   isMatcher,
@@ -7,15 +7,15 @@ import {
   stringifyConstructor,
   stringifyValue,
   typeOf,
-} from './types'
+} from './types.ts'
 
-import type { Diff } from './diff'
-import type { Matcher } from './matchers'
+import type { Diff } from './diff.ts'
+import type { Matcher } from './matchers.ts'
 import type {
   Constructor,
   TypeMappings,
   TypeName,
-} from './types'
+} from './types.ts'
 
 /* ========================================================================== *
  * TYPES SUPPORTING EXPECTATIONS                                              *

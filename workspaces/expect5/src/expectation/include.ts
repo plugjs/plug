@@ -1,14 +1,14 @@
 import { $plur } from '@plugjs/plug/logging'
 
-import { diff } from './diff'
+import { diff } from './diff.ts'
 import {
   ExpectationError,
   stringifyObjectType,
   stringifyValue,
-} from './types'
+} from './types.ts'
 
-import type { Diff } from './diff'
-import type { Expectations } from './expectations'
+import type { Diff } from './diff.ts'
+import type { Expectations } from './expectations.ts'
 
 /* === TO INCLUDE =========================================================== */
 

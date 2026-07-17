@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/no-instanceof-builtins */
-import type { Diff } from './diff'
-import type { Expectations } from './expectations'
-import type { Matcher } from './matchers'
+import type { Diff } from './diff.ts'
+import type { Expectations } from './expectations.ts'
+import type { Matcher } from './matchers.ts'
 
 /* ========================================================================== *
  * INTERNAL TYPES FOR EXPECTATIONS                                            *
