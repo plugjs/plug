@@ -56,6 +56,11 @@ export class Context {
     this.log = getLogger(taskName)
   }
 
+  /** Return a new {@link Context} with the specified task name */
+  withTaskName(taskName: string): Context {
+    return new Context(this.buildFile, taskName)
+  }
+
   /**
    * Resolve a (set of) path(s) in this {@link Context}.
    *
