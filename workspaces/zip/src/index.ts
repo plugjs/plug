@@ -32,4 +32,4 @@ declare module '@plugjs/plug' {
   }
 }
 
-installForking('zip', requireResolve(__fileurl, './zip'), 'Zip')
+installForking('zip', requireResolve(import.meta.filename, './zip'), 'Zip')

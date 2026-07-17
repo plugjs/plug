@@ -43,4 +43,4 @@ declare module '@plugjs/plug' {
   }
 }
 
-installForking('eslint', requireResolve(__fileurl, './eslint'), 'ESLint')
+installForking('eslint', requireResolve(import.meta.filename, './eslint'), 'ESLint')

@@ -113,6 +113,6 @@ declare module '@plugjs/plug' {
   }
 }
 
-installForking('tsc', requireResolve(__fileurl, './typescript'), 'Tsc')
-installForking('tscBuild', requireResolve(__fileurl, './tscbuild'), 'TscBuild')
-installForking('tscCompiler', requireResolve(__fileurl, './tsccompiler'), 'TscCompiler')
+installForking('tsc', requireResolve(import.meta.filename, './typescript'), 'Tsc')
+installForking('tscBuild', requireResolve(import.meta.filename, './tscbuild'), 'TscBuild')
+installForking('tscCompiler', requireResolve(import.meta.filename, './tsccompiler'), 'TscCompiler')

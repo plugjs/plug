@@ -66,4 +66,4 @@ declare module '@plugjs/plug' {
  * INSTALL FORKING PLUG                                                       *
  * ========================================================================== */
 
-installForking('test', requireResolve(__fileurl, './test'), 'Test')
+installForking('test', requireResolve(import.meta.filename, './test'), 'Test')
