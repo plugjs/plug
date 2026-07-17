@@ -1,9 +1,22 @@
 import { basename } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-import { BuildFailure } from '../src/asserts'
-import { requireContext } from '../src/async'
-import { assertAbsolutePath, assertRelativeChildPath, commonPath, getAbsoluteParent, getCurrentWorkingDirectory, isAbsolutePath, requireFilename, requireResolve, resolveAbsolutePath, resolveDirectory, resolveFile, resolveRelativeChildPath } from '../src/paths'
+import { BuildFailure } from '../src/asserts.ts'
+import { requireContext } from '../src/async.ts'
+import {
+  assertAbsolutePath,
+  assertRelativeChildPath,
+  commonPath,
+  getAbsoluteParent,
+  getCurrentWorkingDirectory,
+  isAbsolutePath,
+  requireFilename,
+  requireResolve,
+  resolveAbsolutePath,
+  resolveDirectory,
+  resolveFile,
+  resolveRelativeChildPath,
+} from '../src/paths.ts'
 
 describe('Paths Utilities', () => {
   const { buildFile, buildDir } = requireContext()

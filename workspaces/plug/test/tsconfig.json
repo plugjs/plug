@@ -5,5 +5,5 @@
   },
   // but include "../../expect5/src/globals.ts" here, so that when recompiling
   // vscode doesn't go nuts and reports all sorts of missing defs!
-  "include": [ "*.ts", "../../expect5/src/globals.ts" ],
+  "include": [ "**/*.test.ts", "test.ts", "../../expect5/src/globals.ts" ],
 }

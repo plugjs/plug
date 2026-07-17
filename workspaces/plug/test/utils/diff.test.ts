@@ -1,5 +1,5 @@
-import { $grn, $red, logOptions } from '../../src/logging'
-import { diff, textDiff } from '../../src/utils/diff'
+import { $grn, $red, logOptions } from '../../src/logging.ts'
+import { diff, textDiff } from '../../src/utils/diff.ts'
 
 describe('Myers Diff Algorithm', function() {
   describe('Primitives (strings)', () => {

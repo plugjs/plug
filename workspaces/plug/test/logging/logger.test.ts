@@ -1,9 +1,9 @@
 import { Writable } from 'node:stream'
 
-import { BuildFailure } from '../../src'
-import { getLogger, logLevels } from '../../src/logging.js'
-import { logOptions } from '../../src/logging/options.js'
-import { zapSpinner } from '../../src/logging/spinner.js'
+import { BuildFailure } from '../../src/asserts.ts'
+import { getLogger, logLevels } from '../../src/logging.ts'
+import { logOptions } from '../../src/logging/options.ts'
+import { zapSpinner } from '../../src/logging/spinner.ts'
 
 describe('Logger', () => {
   it('should emit a build failure only once', () => {

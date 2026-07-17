@@ -1,13 +1,13 @@
 import assert from 'node:assert'
 import { Writable } from 'node:stream'
 
-import { currentContext } from '../../src/async.js'
-import { log } from '../../src/logging.js'
-import { $gry } from '../../src/logging/colors.js'
-import { emitFancy, emitPlain } from '../../src/logging/emit.js'
-import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from '../../src/logging/levels.js'
-import { logOptions } from '../../src/logging/options.js'
-import { zapSpinner } from '../../src/logging/spinner.js'
+import { currentContext } from '../../src/async.ts'
+import { log } from '../../src/logging.ts'
+import { $gry } from '../../src/logging/colors.ts'
+import { emitFancy, emitPlain } from '../../src/logging/emit.ts'
+import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from '../../src/logging/levels.ts'
+import { logOptions } from '../../src/logging/options.ts'
+import { zapSpinner } from '../../src/logging/spinner.ts'
 
 describe('Emit', () => {
   it('should log some messages', () => {

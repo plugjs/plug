@@ -1,4 +1,4 @@
-import { assert, assertPromises, BuildFailure, fail } from '../src/asserts'
+import { assert, assertPromises, BuildFailure, fail } from '../src/asserts.ts'
 
 describe('Assertions', () => {
   it('should create a build failure', () => {

@@ -1,6 +1,6 @@
-import { log, logOptions } from '../../src/logging.js'
-import * as colors from '../../src/logging/colors.js'
-import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../../src/paths.js'
+import { log, logOptions } from '../../src/logging.ts'
+import * as colors from '../../src/logging/colors.ts'
+import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../../src/paths.ts'
 
 describe('Colors', () => {
   const cwd = getCurrentWorkingDirectory()
