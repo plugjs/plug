@@ -3,6 +3,7 @@
 /* eslint-disable no-console */
 
 import _fs from 'node:fs'
+import _path from 'node:path'
 
 import { main, yargsParser } from '@plugjs/tsrun'
 
@@ -26,9 +27,18 @@ const $bnd = (s: string): string => $blu($und(s))
 const $gnd = (s: string): string => $gry($und(s))
 const $wnd = (s: string): string => $wht($und(s))
 
-/** Version injected by esbuild, defaulted in case of dynamic transpilation */
-const version = typeof __version === 'string' ? __version : '0.0.0-dev'
-declare const __version: string | undefined
+/** Version resolved from "package.json" */
+function version(): string {
+  try {
+    const packageJsonPath = _path.resolve(import.meta.dirname, '..', 'package.json')
+    const packageJson = JSON.parse(_fs.readFileSync(packageJsonPath, 'utf-8'))
+    return (typeof packageJson.version === 'string' && packageJson.version)
+      ? packageJson.version
+      : '0.0.0-dev'
+  } catch {
+    return '0.0.0-dev'
+  }
+}
 
 /* ========================================================================== *
  * HELP SCREEN                                                                *
@@ -49,7 +59,7 @@ function help(): void {
       ${$wht('-c --colors')}     Force colorful output (use ${$wnd('--no-colors')} to force plain text)
       ${$wht('-l --list')}       Only list the tasks defined by the build, nothing more!
       ${$wht('-h --help')}       Help! You're reading it now!
-      ${$wht('   --version')}    Version! This one: ${version}!
+      ${$wht('   --version')}    Version! This one: ${version()}!
 
   ${$bnd('Properties:')}
 
@@ -163,7 +173,7 @@ export function parseCommandLine(args: string[]): CommandLineOptions {
         help()
         process.exit(0)
       case 'version':
-        console.log(`PlugJS ${$gry('ver.')} ${$wnd(version)}`)
+        console.log(`PlugJS ${$gry('ver.')} ${$wnd(version())}`)
         process.exit(0)
       default:
         console.log(`Unsupported option ${$wnd(key)} (try ${$wnd('--help')})`)
