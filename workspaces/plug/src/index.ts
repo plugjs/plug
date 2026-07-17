@@ -1,4 +1,4 @@
-import './globals.d.ts'
+import './globals.ts'
 
 // This is a main constituent of our build system!
 import type { Files } from './files.ts'
