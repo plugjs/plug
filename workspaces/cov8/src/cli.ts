@@ -3,7 +3,7 @@
 import { async, find, logging, mkdtemp, paths, pipe, rmrf, utils } from '@plugjs/plug'
 import { main, yargsParser } from '@plugjs/tsrun'
 
-import { Coverage } from './coverage'
+import { Coverage } from './coverage.ts'
 
 const { $blu, $und, $gry, $wht, $p } = logging
 const $gnd = (s: string): string => $gry($und(s))

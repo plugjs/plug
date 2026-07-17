@@ -21,7 +21,7 @@ import type { ParseResult } from '@babel/parser'
 import type { Comment, File, Node } from '@babel/types'
 import type { Logger } from '@plugjs/plug/logging'
 import type { AbsolutePath } from '@plugjs/plug/paths'
-import type { CoverageAnalyser } from './analysis'
+import type { CoverageAnalyser } from './analysis.ts'
 
 /* ========================================================================== *
  * EXPORTED CONSTANTS AND TYPES                                               *

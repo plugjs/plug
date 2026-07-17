@@ -7,13 +7,13 @@ import { $gry, $ms, $p, $plur, $red, $ylw, ERROR, NOTICE, WARN } from '@plugjs/p
 import { resolveAbsolutePath } from '@plugjs/plug/paths'
 import { walk } from '@plugjs/plug/utils'
 
-import { createAnalyser } from './analysis'
-import { coverageReport } from './report'
+import { createAnalyser } from './analysis.ts'
+import { coverageReport } from './report.ts'
 
 import type { AbsolutePath } from '@plugjs/plug/paths'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
-import type { CoverageReportOptions } from './index'
-import type { CoverageResult } from './report'
+import type { CoverageReportOptions } from './index.ts'
+import type { CoverageResult } from './report.ts'
 
 export class Coverage implements Plug<Files | undefined> {
   constructor(...args: PipeParameters<'coverage'>)
