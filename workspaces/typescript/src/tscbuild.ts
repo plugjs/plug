@@ -117,8 +117,6 @@ export function tscBuild(options: ExtendedTscBuildOptions): Pipe
  * The `directory` option specifies where to look for the `tsconfig.json` files,
  * and defaults to the current directory, `verbose` and `force` default to
  * `true`.
- *
- * @deprecated Use {@link tsc} instead.
  */
 export function tscBuild(tsconfig: string, options?: ExtendedTscBuildOptions): Pipe
 // Implementation overload
