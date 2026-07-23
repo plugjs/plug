@@ -7,6 +7,8 @@ import { find, invokeBuild, merge, resolve, rmrf, using } from './workspaces/plu
 import { $p, banner, log, logOptions } from './workspaces/plug/src/logging'
 import { requireResolve } from './workspaces/plug/src/paths'
 import { fixExtensions } from './workspaces/plug/src/plugs/esbuild'
+// side-effect, install all build-in plugs
+import './workspaces/plug/src/plugs'
 
 import type { ESLint } from './workspaces/eslint/src/eslint'
 import type { Test } from './workspaces/expect5/src/test'
@@ -51,6 +53,29 @@ function validateWorkspace(workspace: string): AbsolutePath {
 
   throw new Error(`Invalid workspace: "${workspace}"`)
 }
+
+/** Exports for our "package.json" files */
+const workspaceExports: Record<string, [ string, ...string[] ]> = {
+  'plug': [
+    'index.*',
+    'asserts.*',
+    'files.*',
+    'fork.*',
+    'fs.*',
+    'globals.*',
+    'logging.*',
+    'paths.*',
+    'pipe.*',
+    'utils.*',
+  ],
+  'cov8': [ 'index.*', 'coverage.*' ],
+  'eslint': [ 'index.*', 'eslint.*' ],
+  'expect5': [ 'index.*', 'globals.*', 'test.*' ],
+  'tsd': [ 'index.*', 'tsd.*' ],
+  'typescript': [ 'index.*', 'typescript.*' ],
+  'zip': [ 'index.*', 'zip.*' ],
+} as const
+
 
 /* ========================================================================== *
  * PLUGS DEFINITIONS                                                          *
@@ -251,6 +276,22 @@ export default plugjs({
   /* ======================================================================== *
    * OTHER TASKS                                                              *
    * ======================================================================== */
+
+  /* Prepare exports in our "package.json" files */
+  async exports(): Promise<void> {
+    // We need to have the transpiled sources...
+    await this.transpile()
+
+    banner('Updating exports')
+
+    for (const [ name, globs ] of Object.entries(workspaceExports)) {
+      log.notice(`Updating exports for workspace "${name}"`)
+      const workspace = validateWorkspace(name)
+      await find(...globs, { directory: `${workspace}/dist` })
+          .exports({ packageJson: `${workspace}/package.json` })
+          .debug()
+    }
+  },
 
   /* Only transpile and coverage (no linting) */
   async dev(): Promise<void> {
