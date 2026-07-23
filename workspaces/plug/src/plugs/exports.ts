@@ -100,7 +100,7 @@ install('exports', class Exports implements Plug<Files> {
     }
 
     // all extensions to match in the incoming files
-    const exts = [ '.d.ts', cjsExtension, esmExtension ]
+    const exts = [ '.d.ts', '.d.cts', '.d.mts', cjsExtension, esmExtension ]
 
     // look up all the files we were piped in
     for (const [ name, absolute ] of files.pathMappings()) {
@@ -118,6 +118,12 @@ install('exports', class Exports implements Plug<Files> {
             break
           case esmExtension:
             addExport(exp, type === 'module' ? 'default' : 'import', `.${sep}${relative}`)
+            break
+          case '.d.cts':
+            addExport(exp, 'types', `.${sep}${relative}`)
+            break
+          case '.d.mts':
+            addExport(exp, 'types', `.${sep}${relative}`)
             break
           case '.d.ts':
             addExport(exp, 'types', `.${sep}${relative}`)
