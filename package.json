@@ -25,8 +25,8 @@
     "node": ">=22.16.0"
   },
   "devDependencies": {
-    "@plugjs/eslint-plugin": "^0.7.1",
-    "@plugjs/tsrun": "^0.7.1",
+    "@plugjs/eslint-plugin": "^0.7.2",
+    "@plugjs/tsrun": "^0.7.2",
     "@types/node": "<23",
     "typescript": "<7"
   },
