@@ -289,7 +289,6 @@ export default plugjs({
       const workspace = validateWorkspace(name)
       await find(...globs, { directory: `${workspace}/dist` })
           .exports({ packageJson: `${workspace}/package.json` })
-          .debug()
     }
   },
 
