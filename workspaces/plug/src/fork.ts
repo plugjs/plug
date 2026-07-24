@@ -228,7 +228,7 @@ if ((process.argv[1] === requireFilename(import.meta.filename)) && (process.send
 
     /* Create a couple of writers for our fake "stdout" and "stderr" */
     const makeWritable = (level: LogLevel): Writable => new class extends Writable {
-      _write(chunk: any, _: BufferEncoding, callback: (error?: Error | null) => void): void {
+      override _write(chunk: any, _: BufferEncoding, callback: (error?: Error | null) => void): void {
         const string: string = chunk.toString()
         const message = string.endsWith('\n') ? string.slice(0, -1) : string
         emit.emitter({ level, taskName }, [ message ])

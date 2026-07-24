@@ -37,7 +37,7 @@ export class BuildFailure extends Error {
     return new BuildFailure(undefined, errors)
   }
 
-  static [Symbol.hasInstance](instance: any): boolean {
+  static override [Symbol.hasInstance](instance: any): boolean {
     return instance && instance[buildFailure] === buildFailure
   }
 

@@ -180,7 +180,7 @@ class CoverageSitemapAnalyser extends CoverageResultAnalyser {
     return `${line}:${column}:${source}`
   }
 
-  async init(): Promise<this> {
+  override async init(): Promise<this> {
     const sourceMap = this._sourceMapCache.data
     assert(sourceMap, 'Missing source map data from cache')
     this._sourceMap = await new SourceMapConsumer(sourceMap)
@@ -196,11 +196,11 @@ class CoverageSitemapAnalyser extends CoverageResultAnalyser {
     return this
   }
 
-  destroy(): void {
+  override destroy(): void {
     this._sourceMap?.destroy()
   }
 
-  coverage(source: string, line: number, column: number): number {
+  override coverage(source: string, line: number, column: number): number {
     assert(this._sourceMap, 'Analyser not initialized')
 
     if (this._sourceMapBias === 'none') {
