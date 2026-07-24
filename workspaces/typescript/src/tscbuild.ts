@@ -34,7 +34,6 @@ export class TscBuild implements Plug<Files> {
         undefined, // createProgram
         reporter, // reportDiagnostic
         reporter, // reportSolutionBuilderStatus
-        undefined, // reportSolutionBuilderErrorSummary
     )
 
     const solutionBuilder = ts.createSolutionBuilder(
