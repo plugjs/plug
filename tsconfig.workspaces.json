@@ -1,0 +1,12 @@
+{
+  "references": [
+    { "path": "./workspaces/cov8/tsconfig.json" },
+    { "path": "./workspaces/eslint/tsconfig.json" },
+    { "path": "./workspaces/expect5/tsconfig.json" },
+    { "path": "./workspaces/plug/tsconfig.json" },
+    { "path": "./workspaces/tsd/tsconfig.json" },
+    { "path": "./workspaces/typescript/tsconfig.json" },
+    { "path": "./workspaces/zip/tsconfig.json" },
+  ],
+  "include": [],
+}
