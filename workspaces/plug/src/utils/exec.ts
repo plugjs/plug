@@ -51,7 +51,7 @@ export async function execChild(
   if (resolveDirectory(buildNodePath)) childPaths.push(buildNodePath)
 
   // Any other paths either from `process.env` or `env` (which overrides it)
-  const extraPath = env.PATH || process.env.PATH
+  const extraPath = env['PATH'] || process.env['PATH']
   if (extraPath) childPaths.push(extraPath)
 
   // Build our environment variables record
@@ -64,7 +64,7 @@ export async function execChild(
   }
 
   // Instrument coverage directory if needed
-  if (coverageDir) childEnv.NODE_V8_COVERAGE = context.resolve(coverageDir)
+  if (coverageDir) childEnv['NODE_V8_COVERAGE'] = context.resolve(coverageDir)
 
   // Prepare the options for calling `spawn`
   const childOptions: SpawnOptions = {

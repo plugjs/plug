@@ -90,11 +90,11 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
       if (this._arguments[i] == null) continue // null or undefined... optionals
       if (typeof this._arguments[i] === 'object') {
         if (typeof this._arguments[i].coverageDir === 'string') {
-          const dir = env.NODE_V8_COVERAGE = context.resolve(this._arguments[i].coverageDir)
+          const dir = env['NODE_V8_COVERAGE'] = context.resolve(this._arguments[i].coverageDir)
           context.log.debug('Forked process will produce coverage in', $p(dir))
         }
         if (typeof this._arguments[i].forceModule === 'string') {
-          const force = env.__TS_LOADER_FORCE_TYPE = this._arguments[i].forceModule
+          const force = env['__TS_LOADER_FORCE_TYPE'] = this._arguments[i].forceModule
           context.log.debug('Forked process will force module type as', $p(force))
         }
       }

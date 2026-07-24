@@ -96,7 +96,7 @@ function constructorName(value: Record<any, any>): string {
 /** Format binary data for {@link stringifyValue} */
 function formatBinaryData(value: Record<any, any>, buffer: Buffer): string {
   const binary = buffer.length > 20 ?
-    `${buffer.toString('hex', 0, 20)}\u2026, length=${value.length}` :
+    `${buffer.toString('hex', 0, 20)}\u2026, length=${buffer.length}` :
     buffer.toString('hex')
   return binary ?
     `[${constructorName(value)}: ${binary}]` :

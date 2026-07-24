@@ -26,7 +26,7 @@ const ylw = '\u001b[38;5;220m' // yellow
 const blu = '\u001b[38;5;69m' // brighter blue
 const mgt = '\u001b[38;5;213m' // pinky magenta
 const cyn = '\u001b[38;5;81m' // darker cyan
-const wht = process.env.GITHUB_ACTIONS === 'true' ?
+const wht = process.env['GITHUB_ACTIONS'] === 'true' ?
   '\u001b[1;38;5;240m' : // bold gray (GitHub Actions's new white background)
   '\u001b[1;38;5;255m' // full-bright white
 

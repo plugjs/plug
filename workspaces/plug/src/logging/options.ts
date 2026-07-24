@@ -76,19 +76,19 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
     this.setMaxListeners(20)
 
     /* The `LOG_LEVEL` variable is one of our `debug`, `info`, ... */
-    if (process.env.LOG_LEVEL) {
-      this._level = getLevelNumber(process.env.LOG_LEVEL as LogLevelString)
+    if (process.env['LOG_LEVEL']) {
+      this._level = getLevelNumber(process.env['LOG_LEVEL'] as LogLevelString)
     }
 
     /* If the `LOG_COLORS` variable is specified, it should be `true` or `false` */
-    if (process.env.LOG_COLORS) {
-      if (process.env.LOG_COLORS.toLowerCase() === 'true') this.colors = true
-      if (process.env.LOG_COLORS.toLowerCase() === 'false') this.colors = false
+    if (process.env['LOG_COLORS']) {
+      if (process.env['LOG_COLORS'].toLowerCase() === 'true') this.colors = true
+      if (process.env['LOG_COLORS'].toLowerCase() === 'false') this.colors = false
       // Other values don't change the value of `options.colors`
     }
 
     /* If the `GITHUB_ACTIONS` is `true` then enable annotations and use plain logs */
-    this._githubAnnotations = process.env.GITHUB_ACTIONS === 'true'
+    this._githubAnnotations = process.env['GITHUB_ACTIONS'] === 'true'
     if (this._githubAnnotations) {
       this._colors = true
       this._format = 'plain'
@@ -100,7 +100,7 @@ class LogOptionsImpl extends EventEmitter implements LogOptions {
      * and it's processed _last_ as it's normally only created by fork below
      * and consumed by the `Exec` plug (which has no other way of communicating)
      */
-    const options = JSON.parse(process.env.__LOG_OPTIONS || '{}')
+    const options = JSON.parse(process.env['__LOG_OPTIONS'] || '{}')
     Object.assign(this, options)
   }
 
