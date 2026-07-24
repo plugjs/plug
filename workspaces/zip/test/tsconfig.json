@@ -4,7 +4,7 @@
     "rootDir": "..",
     "noEmit": true,
     "composite": false,
-    "tsBuildInfoFile": "../../../.tsbuildinfo/zip.test.tsbuildinfo",
+    "tsBuildInfoFile": "../../../.caches/zip.test.tsbuildinfo",
     "types": [ "node", "@plugjs/expect5/globals" ],
   },
   "include": [

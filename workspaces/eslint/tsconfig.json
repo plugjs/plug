@@ -4,7 +4,7 @@
     "rootDir": "src",
     "outDir": "dist",
     "composite": true,
-    "tsBuildInfoFile": "../../.tsbuildinfo/eslint.tsbuildinfo",
+    "tsBuildInfoFile": "../../.caches/eslint.tsbuildinfo",
   },
   "references": [
     { "path": "../plug/tsconfig.json" },

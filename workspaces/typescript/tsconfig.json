@@ -4,7 +4,7 @@
     "rootDir": "src",
     "outDir": "dist",
     "composite": true,
-    "tsBuildInfoFile": "../../.tsbuildinfo/typescript.tsbuildinfo",
+    "tsBuildInfoFile": "../../.caches/typescript.tsbuildinfo",
   },
   "references": [
     { "path": "../plug/tsconfig.json" },

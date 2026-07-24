@@ -8,7 +8,7 @@
   "compilerOptions": {
     "noEmit": true,
     "composite": false,
-    "tsBuildInfoFile": "../../../.tsbuildinfo/plug.test.tsbuildinfo",
+    "tsBuildInfoFile": "../../../.caches/plug.test.tsbuildinfo",
     "types": [ "node" ],
   },
   "include": [

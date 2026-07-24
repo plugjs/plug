@@ -4,7 +4,7 @@
     "rootDir": "src",
     "outDir": "dist",
     "composite": true,
-    "tsBuildInfoFile": "../../.tsbuildinfo/expect5.tsbuildinfo",
+    "tsBuildInfoFile": "../../.caches/expect5.tsbuildinfo",
   },
   "references": [
     { "path": "../plug/tsconfig.json" },
