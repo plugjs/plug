@@ -1,6 +1,7 @@
-*.tgz
 .coverage-data/
 .coverage-test-data/
+.tsbuildinfo/
+*.tgz
 bootstrap/
 coverage/
 node_modules/
