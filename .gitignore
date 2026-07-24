@@ -1,5 +1,6 @@
 .coverage-data/
 .coverage-test-data/
+.eslintcache
 .tsbuildinfo/
 *.tgz
 bootstrap/
