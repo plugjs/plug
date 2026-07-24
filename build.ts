@@ -3,7 +3,7 @@ import _fs from 'node:fs'
 import { ForkingPlug } from './workspaces/plug/src/fork.ts'
 import { find, invokeBuild, merge, resolve, rmrf, using } from './workspaces/plug/src/helpers.ts'
 import { plugjs } from './workspaces/plug/src/index.ts'
-import { $p, banner, log, logOptions } from './workspaces/plug/src/logging.ts'
+import { $gry, $p, banner, log, logOptions } from './workspaces/plug/src/logging.ts'
 import { requireResolve } from './workspaces/plug/src/paths.ts'
 import { fixExtensions } from './workspaces/plug/src/plugs/esbuild.ts'
 
@@ -24,8 +24,8 @@ logOptions.githubAnnotations = false
 /** Coverage Data Directory */
 const coverageDir = resolve('.coverage-data')
 
-/** Typescript Build-Info Driectory */
-const tsBuildInfoDir = resolve('.tsbuildinfo')
+/** Build caches dir */
+const cachesDir = resolve('.caches')
 
 /** The "plug" workspace */
 const plugWorkspace = resolve('workspaces/plug')
@@ -128,6 +128,7 @@ const ForkingTsd = class extends ForkingPlug {
 
 export default plugjs({
   workspace: '',
+  watchmode: 'false',
 
   /* ======================================================================== *
    * CLEANUP                                                                  *
@@ -138,8 +139,8 @@ export default plugjs({
 
     await Promise.all([
       ...workspaces.map((workspace) => rmrf(`${workspace}/dist`)),
-      rmrf(tsBuildInfoDir),
       rmrf(coverageDir),
+      rmrf(cachesDir),
     ])
   },
 
@@ -149,8 +150,11 @@ export default plugjs({
 
   /** Transpile all source code */
   async transpile(): Promise<void> {
+    // force full rebuild if watch mode is "false"
+    const force = this.watchmode === 'false'
+
     // cleanup everything first...
-    await this.clean()
+    if (force) await this.clean()
 
     // our nice banner...
     banner('Transpiling Sources')
@@ -171,8 +175,8 @@ export default plugjs({
     // option) because testing here depends on "expect5", and "expect5" depends
     // on "plug" (a circular dependency when only testing "plug" itself), anyhow
     // with TypeScript 7 this will basically be immediate!
-    log.notice('Transpiling all workspaces')
-    await using('tsconfig.workspaces.json').plug(new ForkingTscBuild())
+    log.notice(`Transpiling all workspaces ${$gry(`(force=${force})`)}`)
+    await using('tsconfig.workspaces.json').plug(new ForkingTscBuild({ force }))
   },
 
   /* ======================================================================== *
@@ -254,7 +258,10 @@ export default plugjs({
     const lintables = [ sources, tests, using('build.ts', 'eslint.config.js') ]
     if (! this.workspace) lintables.push(find('**/*.ts', { directory: 'test-d' }))
 
-    await merge(lintables).plug(new ForkingESLint())
+    await merge(lintables).plug(new ForkingESLint({
+      cacheLocation: resolve(cachesDir, 'eslint.cache'),
+      cache: this.watchmode === 'true',
+    }))
   },
 
   /* ======================================================================== *
@@ -276,25 +283,44 @@ export default plugjs({
     }
   },
 
+  /* ======================================================================== *
+   * DEV MODE                                                                 *
+   * ======================================================================== */
+
   /* Only transpile and coverage (no linting) */
+  async _dev(): Promise<void> {
+    await this.transpile()
+    await this.test()
+    await this.lint()
+  },
+
+  /* Run all tasks (sequentially) */
   async dev(): Promise<void> {
+    log.notice('Forking to collect self coverage')
+
     let error: any = undefined
 
-    await rmrf(coverageDir)
-    await this.transpile()
     try {
-      await this.test()
+      await rmrf(coverageDir)
+      await invokeBuild('./build.ts', '_dev', {
+        workspace: this.workspace,
+        watchmode: 'true',
+      })
     } catch (err) {
       error = err
     } finally {
-      await this.coverage().catch((err) => {
-        throw error || err
-      })
+      await this.coverage().catch((err) => error = error || err)
     }
+
+    if (error) throw error
   },
 
+  /* ======================================================================== *
+   * BUILD MODE                                                               *
+   * ======================================================================== */
+
   /* Build everything (forked from "default" to collect coverage) */
-  async build(): Promise<void> {
+  async _default(): Promise<void> {
     await this.clean()
     await this.transpile()
     await this.test()
@@ -306,9 +332,9 @@ export default plugjs({
   async default(): Promise<void> {
     log.notice('Forking to collect self coverage')
 
-    await invokeBuild('./build.ts', 'build', {
+    await invokeBuild('./build.ts', '_default', {
       workspace: this.workspace,
-      coverageDir,
+      watchmode: 'false',
     })
 
     await this.coverage()
