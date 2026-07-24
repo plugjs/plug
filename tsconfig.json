@@ -1,23 +1,42 @@
 {
   "extends": "./tsconfig.options.json",
   "compilerOptions": {
+    // No emit for anything in this project...
     "rootDir": ".",
     "noEmit": true,
-    "declaration": false,
-    "declarationMap": false,
-    "emitDeclarationOnly": false,
-    "tsBuildInfoFile": ".tsbuildinfo/monorepo.tsbuildinfo",
+
+    // Root dirs include *all* the source codes
+    "rootDirs": [
+      ".",
+      "workspaces/cov8/src",
+      "workspaces/eslint/src",
+      "workspaces/expect5/src",
+      "workspaces/plug/src",
+      "workspaces/tsd/src",
+      "workspaces/typescript/src",
+      "workspaces/zip/src"
+    ],
+    "paths": {
+      "@plugjs/plug": ["./workspaces/plug/src/index.ts"],
+      "@plugjs/plug/asserts": ["./workspaces/plug/src/asserts.ts"],
+      "@plugjs/plug/files": ["./workspaces/plug/src/files.ts"],
+      "@plugjs/plug/fork": ["./workspaces/plug/src/fork.ts"],
+      "@plugjs/plug/fs": ["./workspaces/plug/src/fs.ts"],
+      "@plugjs/plug/globals": ["./workspaces/plug/src/globals.ts"],
+      "@plugjs/plug/logging": ["./workspaces/plug/src/logging.ts"],
+      "@plugjs/plug/paths": ["./workspaces/plug/src/paths.ts"],
+      "@plugjs/plug/pipe": [ "./workspaces/plug/src/pipe.ts"],
+      "@plugjs/plug/utils": [ "./workspaces/plug/src/utils.ts"],
+    }
   },
-  "references": [
-    { "path": "./workspaces/cov8/tsconfig.json" },
-    { "path": "./workspaces/eslint/tsconfig.json" },
-    { "path": "./workspaces/expect5/tsconfig.json" },
-    { "path": "./workspaces/plug/tsconfig.json" },
-    { "path": "./workspaces/tsd/tsconfig.json" },
-    { "path": "./workspaces/typescript/tsconfig.json" },
-    { "path": "./workspaces/zip/tsconfig.json" },
-  ],
   "include": [
-    // "build.ts",
+    "build.ts",
+    "workspaces/cov8/src",
+    "workspaces/eslint/src",
+    "workspaces/expect5/src",
+    "workspaces/plug/src",
+    "workspaces/tsd/src",
+    "workspaces/typescript/src",
+    "workspaces/zip/src"
   ]
 }
