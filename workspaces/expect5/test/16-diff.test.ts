@@ -406,7 +406,7 @@ describe('Differences', () => {
         constructor(public foo: string) {}
       }
       class Act extends Exp {
-        constructor(public foo: string) {
+        constructor(public override foo: string) {
           super(foo)
         }
       }
