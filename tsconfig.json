@@ -1,31 +1,23 @@
 {
-  "extends": "./tsconfig-build.json",
+  "extends": "./tsconfig.options.json",
   "compilerOptions": {
-    // root of the monorepo
     "rootDir": ".",
-    // never emit files...
     "noEmit": true,
     "declaration": false,
+    "declarationMap": false,
     "emitDeclarationOnly": false,
-    // path mapping for all workspaces
-    "paths": {
-      "@plugjs/cov8": [ "./workspaces/cov8/src" ],
-      "@plugjs/cov8/*": [ "./workspaces/cov8/src/*" ],
-      "@plugjs/eslint": [ "./workspaces/eslint/src" ],
-      "@plugjs/eslint/*": [ "./workspaces/eslint/src/*" ],
-      "@plugjs/expect5": [ "./workspaces/expect5/src" ],
-      "@plugjs/expect5/*": [ "./workspaces/expect5/src/*" ],
-      "@plugjs/plug": [ "./workspaces/plug/src" ],
-      "@plugjs/plug/*": [ "./workspaces/plug/src/*" ],
-      "@plugjs/tsd": [ "./workspaces/tsd/src" ],
-      "@plugjs/tsd/*": [ "./workspaces/tsd/src/*" ],
-      "@plugjs/typescript": [ "./workspaces/typescript/src" ],
-      "@plugjs/typescript/*": [ "./workspaces/typescript/src/*" ],
-      "@plugjs/zip": [ "./workspaces/zip/src" ],
-      "@plugjs/zip/*": [ "./workspaces/zip/src/*" ],
-    },
+    "tsBuildInfoFile": ".tsbuildinfo/monorepo.tsbuildinfo",
   },
+  "references": [
+    { "path": "./workspaces/cov8/tsconfig.json" },
+    { "path": "./workspaces/eslint/tsconfig.json" },
+    { "path": "./workspaces/expect5/tsconfig.json" },
+    { "path": "./workspaces/plug/tsconfig.json" },
+    { "path": "./workspaces/tsd/tsconfig.json" },
+    { "path": "./workspaces/typescript/tsconfig.json" },
+    { "path": "./workspaces/zip/tsconfig.json" },
+  ],
   "include": [
-    "build.ts",
+    // "build.ts",
   ]
 }

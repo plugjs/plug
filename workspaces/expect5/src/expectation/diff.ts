@@ -1,5 +1,5 @@
 /* eslint-disable unicorn/no-instanceof-builtins */
-/* eslint-disable no-fallthrough */
+
 import {
   ExpectationError,
   isMatcher,
@@ -362,9 +362,10 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
   switch (actualType) {
     // numbers are one-of-a-kind as NaN !== NaN
     case 'number':
-      if (isSameNumberOrBothNaN(actual, expected)) {
-        return { diff: false, value: NaN }
-      }
+      return isSameNumberOrBothNaN(actual, expected)
+        ? { diff: false, value: NaN }
+        : { diff: true, value: actual, expected: expected }
+
     // primitives always must be strict ===
     case 'bigint':
     case 'boolean':
@@ -377,7 +378,8 @@ function diffValues(actual: any, expected: any, remarks: Remarks): Diff {
         value: actual,
         expected: expected,
       }
-    // everything else is an object and must be checked
+
+      // everything else is an object and must be checked
   }
 
   // check for cyclical dependencies, see node's commit here:
