@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* coverage-ignore-file / not tested in unit tests */
+/* coverage ignore file / not tested in unit tests */
 /* eslint-disable no-console */
 
 import _fs from 'node:fs'

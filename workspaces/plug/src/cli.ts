@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* coverage-ignore-file / not tested in unit tests */
+/* coverage ignore file / not tested in unit tests */
 /* eslint-disable no-fallthrough */ // process.exit(...) is not caught
 /* eslint-disable no-console */
 
