@@ -55,7 +55,7 @@
     "node": ">=22.16.0"
   },
   "dependencies": {
-    "@plugjs/tsrun": "^0.7.2",
+    "@plugjs/tsrun": "^0.7.3",
     "@types/node": "<23",
     "esbuild": "^0.28.1",
     "jsonc-parser": "^3.3.1",

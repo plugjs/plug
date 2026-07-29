@@ -20,7 +20,7 @@
     "node": ">=22.16.0"
   },
   "dependencies": {
-    "eslint": "^10.7.0"
+    "eslint": "^10.8.0"
   },
   "peerDependencies": {
     "@plugjs/plug": "0.7.0"
