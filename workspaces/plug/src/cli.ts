@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/* eslint-disable no-fallthrough */
+/* coverage-ignore-file / not tested in unit tests */
+/* eslint-disable no-fallthrough */ // process.exit(...) is not caught
 /* eslint-disable no-console */
 
 import _fs from 'node:fs'

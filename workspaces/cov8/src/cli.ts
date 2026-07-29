@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* coverage-ignore-file / not tested in unit tests */
+/* eslint-disable no-console */
 
 import _fs from 'node:fs'
 import _path from 'node:path'
@@ -32,7 +34,6 @@ function version(): string {
 
 /** Show help screen */
 function help(): void {
-  // eslint-disable-next-line no-console
   console.log(`${$blu($und('Usage:'))}
 
   ${$wht('cov8')} ${$gry('[')}--options${$gry('] [--] [...')}command${$gry('...]')}
