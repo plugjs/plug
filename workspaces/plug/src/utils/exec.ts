@@ -2,13 +2,13 @@ import { spawn } from 'node:child_process'
 import path from 'node:path'
 import readline from 'node:readline'
 
-import { assert, BuildFailure } from '../asserts'
-import { $p, logOptions } from '../logging'
-import { getCurrentWorkingDirectory, resolveDirectory } from '../paths'
+import { assert, BuildFailure } from '../asserts.ts'
+import { $p, logOptions } from '../logging.ts'
+import { getCurrentWorkingDirectory, resolveDirectory } from '../paths.ts'
 
 import type { SpawnOptions } from 'node:child_process'
-import type { AbsolutePath } from '../paths'
-import type { Context } from '../pipe'
+import type { AbsolutePath } from '../paths.ts'
+import type { Context } from '../pipe.ts'
 
 /** Options for executing scripts */
 export interface ExecChildOptions {
@@ -51,7 +51,7 @@ export async function execChild(
   if (resolveDirectory(buildNodePath)) childPaths.push(buildNodePath)
 
   // Any other paths either from `process.env` or `env` (which overrides it)
-  const extraPath = env.PATH || process.env.PATH
+  const extraPath = env['PATH'] || process.env['PATH']
   if (extraPath) childPaths.push(extraPath)
 
   // Build our environment variables record
@@ -64,7 +64,7 @@ export async function execChild(
   }
 
   // Instrument coverage directory if needed
-  if (coverageDir) childEnv.NODE_V8_COVERAGE = context.resolve(coverageDir)
+  if (coverageDir) childEnv['NODE_V8_COVERAGE'] = context.resolve(coverageDir)
 
   // Prepare the options for calling `spawn`
   const childOptions: SpawnOptions = {

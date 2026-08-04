@@ -20,4 +20,4 @@ declare module '@plugjs/plug' {
   }
 }
 
-installForking('tsd', requireResolve(__fileurl, './tsd'), 'Tsd')
+installForking('tsd', requireResolve(import.meta.filename, './tsd'), 'Tsd')

@@ -1,13 +1,11 @@
 import { assert } from '@plugjs/plug'
-import { BuildFailure } from '@plugjs/plug/asserts'
-import { readFile } from '@plugjs/plug/fs'
-import { $p, $grn, $ylw, ERROR, WARN, $gry } from '@plugjs/plug/logging'
+import { $grn, $gry, $p, $ylw, ERROR, WARN } from '@plugjs/plug/logging'
 import { getCurrentWorkingDirectory, resolveAbsolutePath, resolveDirectory, resolveFile } from '@plugjs/plug/paths'
 import { ESLint as RealESLint } from 'eslint'
 
 import type { Files } from '@plugjs/plug/files'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
-import type { ESLintOptions } from './index'
+import type { ESLintOptions } from './index.ts'
 
 /** Runner implementation for the `ESLint` plug. */
 export class ESLint implements Plug<void> {
@@ -19,7 +17,14 @@ export class ESLint implements Plug<void> {
   }
 
   async pipe(files: Files, context: Context): Promise<void> {
-    const { directory, configFile, ingoreDeprecatedRules, warnIgnored } = this._options
+    const {
+      directory,
+      configFile,
+      ingoreDeprecatedRules,
+      warnIgnored,
+      cacheLocation,
+      cache,
+    } = this._options
 
     const cwd = directory ? context.resolve(directory) : getCurrentWorkingDirectory()
     assert(resolveDirectory(cwd), `ESLint directory ${$p(cwd)} does not exist`)
@@ -34,38 +39,13 @@ export class ESLint implements Plug<void> {
       globInputPaths: false, // we already have all globs resolved
       overrideConfigFile, // if any override config file was supplied...
       cwd, // current working directory for eslint (where everything starts)
+      warnIgnored: !! warnIgnored, // warn when trying to lint ignored files
+      cacheLocation: context.resolve(cacheLocation || '.eslintcache'), // cache
+      cache: !! cache, // enable caching of eslint results or not
     })
 
-    /* Lint all files in parallel */
-    const paths = [ ...files.absolutePaths() ]
-    const promises = paths.map(async (filePath) => {
-      const code = await readFile(filePath, 'utf-8')
-      return eslint.lintText(code, { filePath, warnIgnored: !!warnIgnored })
-    })
-
-    /* Await for all promises to be settled */
-    const settlements = await Promise.allSettled(promises)
-
-    /* Run through all promises settlements */
-    const summary = settlements.reduce((summary, settlement, i) => {
-      /* Promise rejected, meaining hard failure */
-      if (settlement.status === 'rejected') {
-        context.log.error('Error linting', $p(paths[i]!), settlement.reason)
-        summary.failures ++
-        return summary
-      }
-
-      /* Push all our results in the summary */
-      summary.results.push(...settlement.value)
-      return summary
-    }, {
-      results: [] as RealESLint.LintResult[],
-      failures: 0,
-    })
-
-    /* In case of failures from promises, fail! */
-    const { results, failures } = summary
-    if (failures) throw BuildFailure.fail()
+    /* Lint all files */
+    const results = await eslint.lintFiles([ ...files.absolutePaths() ])
 
     /* Create our report */
     const report = context.log.report('ESLint Report')

@@ -2,32 +2,32 @@ import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { BuildFailure, assert, assertPromises } from './asserts'
-import { requireContext } from './async'
-import { Files } from './files'
-import { rm } from './fs'
-import { $gry, $p, $plur, $wht, $ylw, log } from './logging'
+import { BuildFailure, assert, assertPromises } from './asserts.ts'
+import { requireContext } from './async.ts'
+import { Files } from './files.ts'
+import { rm } from './fs.ts'
+import { $gry, $p, $plur, $wht, $ylw, log } from './logging.ts'
 import {
   commonPath,
   getAbsoluteParent,
   getCurrentWorkingDirectory,
   resolveDirectory,
   resolveFile,
-} from './paths'
-import { PipeImpl } from './pipe'
-import { RunBuild } from './plugs/build'
-import { JsoncError, parseJsonc } from './utils'
-import { execChild } from './utils/exec'
-import { parseOptions } from './utils/options'
-import { walk } from './utils/walk'
+} from './paths.ts'
+import { PipeImpl } from './pipe.ts'
+import { RunBuild } from './plugs/build.ts'
+import { JsoncError, parseJsonc } from './utils.ts'
+import { execChild } from './utils/exec.ts'
+import { parseOptions } from './utils/options.ts'
+import { walk } from './utils/walk.ts'
 
-import type { Pipe } from './index'
-import type { AbsolutePath } from './paths'
-import type { Context } from './pipe'
-import type { RunBuildOptions } from './plugs/build'
-import type { ExecChildOptions } from './utils/exec'
-import type { ParseOptions } from './utils/options'
-import type { WalkOptions } from './utils/walk'
+import type { Pipe } from './index.ts'
+import type { AbsolutePath } from './paths.ts'
+import type { Context } from './pipe.ts'
+import type { RunBuildOptions } from './plugs/build.ts'
+import type { ExecChildOptions } from './utils/exec.ts'
+import type { ParseOptions } from './utils/options.ts'
+import type { WalkOptions } from './utils/walk.ts'
 
 /* ========================================================================== *
  * EXTERNAL HELPERS                                                           *

@@ -1,10 +1,10 @@
-import { install } from '../pipe'
-import { execChild } from '../utils/exec'
-import { parseOptions } from '../utils/options'
+import { install } from '../pipe.ts'
+import { execChild } from '../utils/exec.ts'
+import { parseOptions } from '../utils/options.ts'
 
-import type { Files } from '../files'
-import type { Context, PipeParameters, Plug } from '../pipe'
-import type { ExecChildOptions } from '../utils/exec'
+import type { Files } from '../files.ts'
+import type { Context, PipeParameters, Plug } from '../pipe.ts'
+import type { ExecChildOptions } from '../utils/exec.ts'
 
 /** Options for executing scripts */
 export interface ExecOptions extends ExecChildOptions {

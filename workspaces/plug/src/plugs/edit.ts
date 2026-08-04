@@ -1,9 +1,9 @@
-import { readFile, writeFile } from '../fs'
-import { install } from '../pipe'
+import { readFile, writeFile } from '../fs.ts'
+import { install } from '../pipe.ts'
 
-import type { Files } from '../files'
-import type { AbsolutePath } from '../paths'
-import type { PipeParameters, Plug } from '../pipe'
+import type { Files } from '../files.ts'
+import type { AbsolutePath } from '../paths.ts'
+import type { PipeParameters, Plug } from '../pipe.ts'
 
 declare module '../index' {
   export interface Pipe {

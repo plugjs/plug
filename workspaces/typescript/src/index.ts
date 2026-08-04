@@ -1,17 +1,19 @@
-import { find } from '@plugjs/plug'
 import { installForking } from '@plugjs/plug/fork'
 import { requireResolve } from '@plugjs/plug/paths'
 
-import type { Pipe } from '@plugjs/plug'
 import type { BuildOptions, CompilerOptions } from 'typescript'
 
 /** Remove the mapped `[option: string]: ...` from `CompilerOptions`. */
-type KnownCompilerOptions = {
-  [ k in keyof CompilerOptions as string extends k ? never : k ]: CompilerOptions[k]
+type RemoveIndexSignature<T> = {
+  [ k in keyof T as
+  string extends k ? never :
+  number extends k ? never :
+  symbol extends k ? never :
+  k ]: T[k]
 }
 
 /** TypeScript Compiler options with some additional properties */
-export interface ExtendedCompilerOptions extends KnownCompilerOptions {
+export interface ExtendedCompilerOptions extends RemoveIndexSignature<CompilerOptions> {
   /**
    * An additional directory containing a set of `.d.ts` files which will
    * be part of the compilation input, but not of the output.
@@ -22,6 +24,15 @@ export interface ExtendedCompilerOptions extends KnownCompilerOptions {
    */
   extraTypesDir?: string | undefined
 }
+
+export interface TscBuildOptions extends RemoveIndexSignature<BuildOptions> {}
+export interface TscCompilerOptions extends RemoveIndexSignature<CompilerOptions> {}
+
+/* Exports for "tscBuild" and "tsc" */
+export { tscBuild } from './tscbuild.ts'
+export type { ExtendedTscBuildOptions } from './tscbuild.ts'
+export { tsc } from './tsccompiler.ts'
+export type { ExtendedTscCompilerOptions } from './tsccompiler.ts'
 
 declare module '@plugjs/plug' {
   export interface Pipe {
@@ -63,6 +74,8 @@ declare module '@plugjs/plug' {
     /**
      * Run the {@link https://www.typescriptlang.org/ TypeScript Builder}
      * over the specified project `tsconfig.json` files.
+     *
+     * This is equivalent to running `tsc --build` from the command line.
      */
     tscBuild(): Pipe
 
@@ -70,59 +83,36 @@ declare module '@plugjs/plug' {
      * Run the {@link https://www.typescriptlang.org/ TypeScript Builder}
      * over the specified project `tsconfig.json` files.
      *
+     * This is equivalent to running `tsc --build ...` from the command line.
+     *
      * With regards to `options`, the defaults are:
      * - `verbose: true`
      * - `force: true`
      *
-     * @param options {@link BuildOptions} to use for the build.
+     * @param options {@link TscBuildOptions} to use for the build.
      */
-    tscBuild(options: BuildOptions): Pipe
+    tscBuild(options: TscBuildOptions): Pipe
+
+    /**
+     * Run the {@link https://www.typescriptlang.org/ TypeScript Compiler}
+     * over the specified project `tsconfig.json` files.
+     *
+     * This is equivalent to running `tsc --project ...` from the command line.
+     */
+    tscCompiler(): Pipe
+
+    /**
+     * Run the {@link https://www.typescriptlang.org/ TypeScript Compiler}
+     * over the specified project `tsconfig.json` files.
+     *
+     * This is equivalent to running `tsc --project ...` from the command line.
+     *
+     * @param options {@link TscCompilerOptions} to use for the build.
+     */
+    tscCompiler(options: TscCompilerOptions): Pipe
   }
 }
 
-installForking('tsc', requireResolve(__fileurl, './typescript'), 'Tsc')
-installForking('tscBuild', requireResolve(__fileurl, './tscbuild'), 'TscBuild')
-
-export interface TscBuildOptions extends BuildOptions {
-  /** The directory where to look for the `tsconfig.json` files. */
-  directory?: string
-}
-
-/**
- * Run `tsc --build` using `tsconfig.json` from the current directory.
- */
-export function tscBuild(): Pipe
-/**
- * Run `tsc --build` using the specified `tsconfig.json` file.
- */
-export function tscBuild(tsconfig: string): Pipe
-/**
- * Run `tsc --build` using the specified options.
- *
- * The `directory` option specifies where to look for the `tsconfig.json` files,
- * and defaults to the current directory, `verbose` and `force` default to
- * `true`.
- */
-export function tscBuild(options: TscBuildOptions): Pipe
-/**
- * Run `tsc --build` using the specified `tsconfig.json` and options.
- *
- * The `directory` option specifies where to look for the `tsconfig.json` files,
- * and defaults to the current directory, `verbose` and `force` default to
- * `true`.
- */
-export function tscBuild(tsconfig: string, options?: TscBuildOptions): Pipe
-
-// Implementation overload
-export function tscBuild(
-    tsconfigOrOptions?: string | TscBuildOptions,
-    maybeOptions?: TscBuildOptions,
-): Pipe {
-  const [ tsconfig, tscBuildOptions ] =
-    typeof tsconfigOrOptions === 'string'
-      ? [ tsconfigOrOptions, maybeOptions ]
-      : [ 'tsconfig.json', tsconfigOrOptions ]
-
-  const { directory, ...buildOptions } = tscBuildOptions || {}
-  return find(tsconfig, { directory }).tscBuild(buildOptions)
-}
+installForking('tsc', requireResolve(import.meta.filename, './typescript'), 'Tsc')
+installForking('tscBuild', requireResolve(import.meta.filename, './tscbuild'), 'TscBuild')
+installForking('tscCompiler', requireResolve(import.meta.filename, './tsccompiler'), 'TscCompiler')

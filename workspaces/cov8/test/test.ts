@@ -1,6 +1,6 @@
 import { BuildFailure, exec, find, merge, mkdtemp, rmrf } from '@plugjs/plug'
 
-import { Coverage } from '../src/coverage'
+import { Coverage } from '../src/coverage.ts'
 
 import type { AbsolutePath, Files } from '@plugjs/plug'
 
@@ -145,7 +145,7 @@ describe('Cov8 Plug', () => {
 
   it('should install the "coverage" plug', async () => {
     expect(merge([]).coverage).toBeUndefined()
-    await import('../src/index')
+    await import('../src/index.ts')
     expect(merge([]).coverage).toBeA('function')
   })
 })

@@ -2,7 +2,7 @@
  * BUILD FAILURES                                                             *
  * ========================================================================== */
 
-import { githubAnnotation } from './logging/github'
+import { githubAnnotation } from './logging/github.ts'
 
 /** A symbol marking {@link BuildFailure} instances */
 const buildFailure = Symbol.for('plugjs:plug:types:BuildFailure')
@@ -37,7 +37,7 @@ export class BuildFailure extends Error {
     return new BuildFailure(undefined, errors)
   }
 
-  static [Symbol.hasInstance](instance: any): boolean {
+  static override [Symbol.hasInstance](instance: any): boolean {
     return instance && instance[buildFailure] === buildFailure
   }
 

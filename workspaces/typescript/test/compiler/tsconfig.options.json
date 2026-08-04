@@ -1,22 +1,22 @@
 {
   "compilerOptions": {
-    // Setup our compilation type
-    "lib": [ "esnext" ],
+    "lib": [ "esnext", "webworker" ],
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "types": [ "node" ],
+    "types": [ ],
     "esModuleInterop": true,
 
-    // No emit (done with "bootstrap")
-    "noEmit": true,
+    "outDir": "dist",
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "sourceMap": true,
 
-    // Ultra strict
     "strict": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noUncheckedIndexedAccess": true,
     "verbatimModuleSyntax": true,
-  }
+  },
 }

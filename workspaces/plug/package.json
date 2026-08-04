@@ -1,117 +1,59 @@
 {
   "name": "@plugjs/plug",
-  "version": "0.6.117",
+  "version": "0.7.0",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "plug": "./dist/cli.mjs"
+    "plug": "./dist/cli.js"
   },
   "exports": {
     ".": {
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.cjs"
-      },
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.mjs"
-      }
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./asserts": {
-      "require": {
-        "types": "./dist/asserts.d.ts",
-        "default": "./dist/asserts.cjs"
-      },
-      "import": {
-        "types": "./dist/asserts.d.ts",
-        "default": "./dist/asserts.mjs"
-      }
+      "types": "./dist/asserts.d.ts",
+      "default": "./dist/asserts.js"
     },
     "./files": {
-      "require": {
-        "types": "./dist/files.d.ts",
-        "default": "./dist/files.cjs"
-      },
-      "import": {
-        "types": "./dist/files.d.ts",
-        "default": "./dist/files.mjs"
-      }
+      "types": "./dist/files.d.ts",
+      "default": "./dist/files.js"
     },
     "./fork": {
-      "require": {
-        "types": "./dist/fork.d.ts",
-        "default": "./dist/fork.cjs"
-      },
-      "import": {
-        "types": "./dist/fork.d.ts",
-        "default": "./dist/fork.mjs"
-      }
+      "types": "./dist/fork.d.ts",
+      "default": "./dist/fork.js"
     },
     "./fs": {
-      "require": {
-        "types": "./dist/fs.d.ts",
-        "default": "./dist/fs.cjs"
-      },
-      "import": {
-        "types": "./dist/fs.d.ts",
-        "default": "./dist/fs.mjs"
-      }
+      "types": "./dist/fs.d.ts",
+      "default": "./dist/fs.js"
     },
     "./globals": {
-      "require": {
-        "types": "./dist/globals.d.ts",
-        "default": "./dist/globals.cjs"
-      },
-      "import": {
-        "types": "./dist/globals.d.ts",
-        "default": "./dist/globals.mjs"
-      }
+      "types": "./dist/globals.d.ts",
+      "default": "./dist/globals.js"
     },
     "./logging": {
-      "require": {
-        "types": "./dist/logging.d.ts",
-        "default": "./dist/logging.cjs"
-      },
-      "import": {
-        "types": "./dist/logging.d.ts",
-        "default": "./dist/logging.mjs"
-      }
+      "types": "./dist/logging.d.ts",
+      "default": "./dist/logging.js"
     },
     "./paths": {
-      "require": {
-        "types": "./dist/paths.d.ts",
-        "default": "./dist/paths.cjs"
-      },
-      "import": {
-        "types": "./dist/paths.d.ts",
-        "default": "./dist/paths.mjs"
-      }
+      "types": "./dist/paths.d.ts",
+      "default": "./dist/paths.js"
     },
     "./pipe": {
-      "require": {
-        "types": "./dist/pipe.d.ts",
-        "default": "./dist/pipe.cjs"
-      },
-      "import": {
-        "types": "./dist/pipe.d.ts",
-        "default": "./dist/pipe.mjs"
-      }
+      "types": "./dist/pipe.d.ts",
+      "default": "./dist/pipe.js"
     },
     "./utils": {
-      "require": {
-        "types": "./dist/utils.d.ts",
-        "default": "./dist/utils.cjs"
-      },
-      "import": {
-        "types": "./dist/utils.d.ts",
-        "default": "./dist/utils.mjs"
-      }
+      "types": "./dist/utils.d.ts",
+      "default": "./dist/utils.js"
     }
   },
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.16.0"
+  },
   "dependencies": {
     "@plugjs/tsrun": "^0.7.4",
     "@types/node": "<23",
@@ -124,14 +66,12 @@
   },
   "files": [
     "*.md",
-    "cli/",
     "dist/",
-    "extra/",
     "src/"
   ],
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/plugjs/plug.git"
+    "url": "git+https://github.com/plugjs/plug.git"
   },
   "keywords": [
     "build",

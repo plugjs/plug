@@ -1,9 +1,18 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": [ "node" ], // do not include "@plugjs/expect5/globals" here...
+    "rootDir": "..",
+    "noEmit": true,
+    "composite": false,
+    "tsBuildInfoFile": "../../../.caches/cov8.test.tsbuildinfo",
+    "types": [ "node", "@plugjs/expect5/globals" ],
   },
-  // but include "../../expect5/src/globals.ts" here, so that when recompiling
-  // vscode doesn't go nuts and reports all sorts of missing defs!
-  "include": [ ".", "../../expect5/src/globals.ts" ],
+  "include": [
+    "./*.ts",
+    "./**/*.test.ts",
+  ],
+  "references": [
+    { "path": "../../plug/tsconfig.json" },
+    { "path": "../../expect5/tsconfig.json" },
+  ]
 }

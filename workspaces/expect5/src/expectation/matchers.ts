@@ -1,5 +1,5 @@
-import { Expectations } from './expectations'
-import { matcherMarker } from './types'
+import { Expectations } from './expectations.ts'
+import { matcherMarker } from './types.ts'
 
 import type {
   AssertedType,
@@ -8,12 +8,12 @@ import type {
   InferMatcher,
   InferToEqual,
   NegativeExpectations,
-} from './expectations'
+} from './expectations.ts'
 import type {
   Constructor,
   TypeMappings,
   TypeName,
-} from './types'
+} from './types.ts'
 
 type PositiveMatcherFunction = (expectations: Expectations) => Expectations
 type NegativeMatcherFunction = (expectations: NegativeExpectations) => Expectations

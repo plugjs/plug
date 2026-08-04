@@ -1,13 +1,14 @@
 import { join } from 'node:path'
 
-import { BuildFailure } from '../src/asserts'
-import { requireContext } from '../src/async'
-import { Files } from '../src/files'
-import { noop, plugjs } from '../src/index'
-import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../src/paths'
-import { Context, PipeImpl, install } from '../src/pipe'
+import { BuildFailure } from '../src/asserts.ts'
+import { requireContext } from '../src/async.ts'
+import { plugjs } from '../src/build.ts'
+import { Files } from '../src/files.ts'
+import { noop } from '../src/helpers.ts'
+import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../src/paths.ts'
+import { Context, PipeImpl, install } from '../src/pipe.ts'
 
-import type { Plug } from '../src/pipe'
+import type { Plug } from '../src/pipe.ts'
 
 describe('Pipes and Context', () => {
   const { taskName } = requireContext()

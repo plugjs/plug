@@ -4,7 +4,7 @@ import { assertRelativeChildPath, getCurrentWorkingDirectory, resolveAbsolutePat
 import * as tsdLib from 'tsd'
 
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
-import type { TsdOptions } from './index'
+import type { TsdOptions } from './index.ts'
 
 // I _hate_ default exports!
 const tsd: typeof tsdLib.default =

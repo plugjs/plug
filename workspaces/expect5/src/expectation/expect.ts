@@ -1,9 +1,9 @@
-import { AsyncExpectations } from './async'
-import { Matcher } from './matchers'
+import { AsyncExpectations } from './async.ts'
+import { Matcher } from './matchers.ts'
 
-export type { AsyncExpectations } from './async'
-export type { Expectations, NegativeExpectations } from './expectations'
-export type { Matcher as Matchers, NegativeMatchers } from './matchers'
+export type { AsyncExpectations } from './async.ts'
+export type { Expectations, NegativeExpectations } from './expectations.ts'
+export type { Matcher as Matchers, NegativeMatchers } from './matchers.ts'
 
 /* ========================================================================== *
  * EXPECT FUNCTION                                                            *

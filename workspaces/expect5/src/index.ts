@@ -7,7 +7,7 @@ import type { ForkOptions } from '@plugjs/plug/fork'
  * EXPORTED VARIABLES (for when globals is false)                             *
  * ========================================================================== */
 
-export { skip } from './execution/executable'
+export { skip } from './execution/executable.ts'
 export {
   afterAll,
   afterEach,
@@ -23,8 +23,8 @@ export {
   xbeforeEach,
   xdescribe,
   xit,
-} from './execution/setup'
-export * from './expectation/expect'
+} from './execution/setup.ts'
+export * from './expectation/expect.ts'
 
 
 /* ========================================================================== *
@@ -66,4 +66,4 @@ declare module '@plugjs/plug' {
  * INSTALL FORKING PLUG                                                       *
  * ========================================================================== */
 
-installForking('test', requireResolve(__fileurl, './test'), 'Test')
+installForking('test', requireResolve(import.meta.filename, './test'), 'Test')

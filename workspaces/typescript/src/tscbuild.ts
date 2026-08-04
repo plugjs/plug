@@ -1,11 +1,13 @@
-import { $p, fail } from '@plugjs/plug'
+import { $p, assert, fail, find } from '@plugjs/plug'
 import { Files } from '@plugjs/plug/files'
 import ts from 'typescript'
 
-import { updateReport } from './report'
-import { buildWriteFile } from './writefile'
+import { updateReport } from './report.ts'
+import { buildWriteFile } from './writefile.ts'
 
+import type { Pipe } from '@plugjs/plug'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
+import type { TscBuildOptions } from './index.ts'
 
 export class TscBuild implements Plug<Files> {
   private readonly _options: ts.BuildOptions
@@ -32,7 +34,6 @@ export class TscBuild implements Plug<Files> {
         undefined, // createProgram
         reporter, // reportDiagnostic
         reporter, // reportSolutionBuilderStatus
-        undefined, // reportSolutionBuilderErrorSummary
     )
 
     const solutionBuilder = ts.createSolutionBuilder(
@@ -83,4 +84,55 @@ export class TscBuild implements Plug<Files> {
     context.log.info('TSC Build produced', outputs.length, 'files into', $p(outputs.directory))
     return outputs
   }
+}
+
+/* ========================================================================== */
+
+/** Options available for the TypeScript Builder. */
+export interface ExtendedTscBuildOptions extends TscBuildOptions {
+  /** The directory where to look for the `tsconfig.json` files. */
+  directory?: string
+}
+
+/**
+ * Run `tsc --build` using `tsconfig.json` from the current directory.
+ */
+export function tscBuild(): Pipe
+/**
+ * Run `tsc --build` using the specified `tsconfig.json` file.
+ */
+export function tscBuild(tsconfig: string): Pipe
+/**
+ * Run `tsc --build` using the specified options.
+ *
+ * The `directory` option specifies where to look for the `tsconfig.json` files,
+ * and defaults to the current directory, `verbose` and `force` default to
+ * `true`.
+ */
+export function tscBuild(options: ExtendedTscBuildOptions): Pipe
+/**
+ * Run `tsc --build` using the specified `tsconfig.json` and options.
+ *
+ * The `directory` option specifies where to look for the `tsconfig.json` files,
+ * and defaults to the current directory, `verbose` and `force` default to
+ * `true`.
+ */
+export function tscBuild(tsconfig: string, options?: ExtendedTscBuildOptions): Pipe
+// Implementation overload
+export function tscBuild(
+    tsconfigOrOptions?: string | ExtendedTscBuildOptions,
+    maybeOptions?: ExtendedTscBuildOptions,
+): Pipe {
+  const [ tsconfig, tscBuildOptions ] =
+    typeof tsconfigOrOptions === 'string'
+      ? [ tsconfigOrOptions, maybeOptions ]
+      : [ 'tsconfig.json', tsconfigOrOptions ]
+
+  const { directory, ...buildOptions } = tscBuildOptions || {}
+  return find(tsconfig, { directory })
+      .plug((files) => {
+        assert(files.length > 0, `No match for "${tsconfig}" in directory "${files.directory}"`)
+        return files
+      })
+      .plug(new TscBuild(buildOptions))
 }

@@ -1,11 +1,11 @@
 import { statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
-import { assert } from '../asserts'
-import { $p } from '../logging'
-import { assertAbsolutePath } from '../paths'
+import { assert } from '../asserts.ts'
+import { $p } from '../logging.ts'
+import { assertAbsolutePath } from '../paths.ts'
 
-import type { AbsolutePath } from '../paths'
+import type { AbsolutePath } from '../paths.ts'
 
 export function findCaller(of: (...args: any[]) => any): AbsolutePath {
   const oldPrepareStackTrace = Error.prepareStackTrace

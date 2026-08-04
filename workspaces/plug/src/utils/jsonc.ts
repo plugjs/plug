@@ -2,7 +2,7 @@ import { EOL } from 'node:os'
 
 import { parse, printParseErrorCode } from 'jsonc-parser'
 
-import { $plur } from '../logging/colors'
+import { $plur } from '../logging/colors.ts'
 
 import type { ParseError } from 'jsonc-parser'
 

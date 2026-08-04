@@ -1,12 +1,12 @@
-import './globals'
+import './globals.ts'
 
 // This is a main constituent of our build system!
-import type { Files } from './files'
-import type { Plug, PlugFunction } from './pipe'
+import type { Files } from './files.ts'
+import type { Plug, PlugFunction } from './pipe.ts'
 
-export { Files } from './files'
-export type { AbsolutePath } from './paths'
-export type { Plug, PlugFunction } from './pipe'
+export { Files } from './files.ts'
+export type { AbsolutePath } from './paths.ts'
+export type { Plug, PlugFunction } from './pipe.ts'
 
 /**
  * The {@link Pipe} interface defines a processing pipeline where multiple
@@ -25,22 +25,22 @@ export interface Pipe extends Promise<Files> {
 }
 
 // Submodule exports (our package.json exports)
-export * as asserts from './asserts'
-export * as async from './async'
-export * as files from './files'
-export * as fork from './fork'
-export * as fs from './fs'
-export * as logging from './logging'
-export * as paths from './paths'
-export * as pipe from './pipe'
-export * as utils from './utils'
+export * as asserts from './asserts.ts'
+export * as async from './async.ts'
+export * as files from './files.ts'
+export * as fork from './fork.ts'
+export * as fs from './fs.ts'
+export * as logging from './logging.ts'
+export * as paths from './paths.ts'
+export * as pipe from './pipe.ts'
+export * as utils from './utils.ts'
 
 // Individual utilities
-export { BuildFailure, assert, fail } from './asserts'
-export { $blu, $cyn, $grn, $gry, $mgt, $ms, $p, $red, $t, $und, $wht, $ylw, banner, log } from './logging'
+export { assert, BuildFailure, fail } from './asserts.ts'
+export { $blu, $cyn, $grn, $gry, $mgt, $ms, $p, $red, $t, $und, $wht, $ylw, banner, log } from './logging.ts'
 
 // Our minimal exports
-export * from './build'
-export * from './helpers'
-export * from './plugs'
-export * from './types'
+export * from './build.ts'
+export * from './helpers.ts'
+export * from './plugs.ts'
+export * from './types.ts'

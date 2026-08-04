@@ -1,8 +1,8 @@
 import { install } from '@plugjs/plug/pipe'
 
-import { Coverage } from './coverage'
+import { Coverage } from './coverage.ts'
 
-import type { SourceMapBias } from './analysis'
+import type { SourceMapBias } from './analysis.ts'
 
 /** Options to analyse coverage reports */
 export interface CoverageOptions {

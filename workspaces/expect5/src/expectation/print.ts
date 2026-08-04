@@ -2,7 +2,7 @@
 import { $grn, $gry, $red, $und, $wht, $ylw } from '@plugjs/plug/logging'
 import { textDiff } from '@plugjs/plug/utils'
 
-import { isMatcher, stringifyValue } from './types'
+import { isMatcher, stringifyValue } from './types.ts'
 
 import type { Logger } from '@plugjs/plug/logging'
 import type {
@@ -11,7 +11,7 @@ import type {
   ExtraValueDiff,
   MissingValueDiff,
   ObjectDiff,
-} from './diff'
+} from './diff.ts'
 
 /* ========================================================================== *
  * CONSTANT LABELS FOR PRINTING                                               *
@@ -75,9 +75,7 @@ function formatString(
   const characters: [ (string: string) => string, string ][] = []
   for (let i = 0; i < value.length; i ++) {
     const c = value.charCodeAt(i)
-    if (c === 0x20) { // space
-      characters.push([ $gry, '\u00b7' ])
-    } else if (c === 0x09) { // tab
+    if (c === 0x09) { // tab
       characters.push([ $gry, ' \u2192 ' ])
     } else if (c < 0x10) { // control characters (1 hex digit)
       characters.push([ $gry, `\\0${c.toString(16).toUpperCase()}` ])

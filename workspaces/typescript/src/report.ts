@@ -46,7 +46,6 @@ function convertDiagnostics(
     // Simple variables
     const tags = `TS${diagnostic.code}`
 
-
     if (diagnostic.file) {
       const { file: sourceFile, start, length } = diagnostic
       const file = resolveAbsolutePath(directory, sourceFile.fileName)
@@ -89,14 +88,10 @@ export function updateReport(
   }
 
   for (const record of records) {
-    if (record.file) {
+    if ((record.file) || (record.level != NOTICE)) {
       report.add(record)
     } else {
-      switch (record.level) {
-        case ERROR: logger.error(record.message); break
-        case WARN: logger.warn(record.message); break
-        case NOTICE: logger.info(record.message); break
-      }
+      logger.info(record.message)
     }
   }
 }

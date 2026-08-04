@@ -2,18 +2,18 @@ import { fork } from 'node:child_process'
 import { Console } from 'node:console'
 import { Writable } from 'node:stream'
 
-import { assert, BuildFailure } from './asserts'
-import { runAsync } from './async'
-import { Files } from './files'
-import { $gry, $p, $red, logOptions, NOTICE, WARN } from './logging'
-import { emit, emitForked } from './logging/emit'
-import { requireFilename, resolveFile } from './paths'
-import { Context, install } from './pipe'
+import { assert, BuildFailure } from './asserts.ts'
+import { runAsync } from './async.ts'
+import { Files } from './files.ts'
+import { $gry, $p, $red, logOptions, NOTICE, WARN } from './logging.ts'
+import { emit, emitForked } from './logging/emit.ts'
+import { requireFilename, resolveFile } from './paths.ts'
+import { Context, install } from './pipe.ts'
 
-import type { LogLevel } from './logging'
-import type { ForkedLogMessage } from './logging/emit'
-import type { AbsolutePath } from './paths'
-import type { Plug, PlugName, PlugResult } from './pipe'
+import type { LogLevel } from './logging.ts'
+import type { ForkedLogMessage } from './logging/emit.ts'
+import type { AbsolutePath } from './paths.ts'
+import type { Plug, PlugName, PlugResult } from './pipe.ts'
 
 /**
  * Options accepted by {@link ForkingPlug}'s instrumenting how the process
@@ -79,7 +79,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
     }
 
     /* Get _this_ filename to spawn */
-    const script = requireFilename(__fileurl)
+    const script = requireFilename(import.meta.filename)
     context.log.debug('About to fork plug from', $p(this._scriptFile))
 
     /* Environment variables */
@@ -90,11 +90,11 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
       if (this._arguments[i] == null) continue // null or undefined... optionals
       if (typeof this._arguments[i] === 'object') {
         if (typeof this._arguments[i].coverageDir === 'string') {
-          const dir = env.NODE_V8_COVERAGE = context.resolve(this._arguments[i].coverageDir)
+          const dir = env['NODE_V8_COVERAGE'] = context.resolve(this._arguments[i].coverageDir)
           context.log.debug('Forked process will produce coverage in', $p(dir))
         }
         if (typeof this._arguments[i].forceModule === 'string') {
-          const force = env.__TS_LOADER_FORCE_TYPE = this._arguments[i].forceModule
+          const force = env['__TS_LOADER_FORCE_TYPE'] = this._arguments[i].forceModule
           context.log.debug('Forked process will force module type as', $p(force))
         }
       }
@@ -189,7 +189,7 @@ export abstract class ForkingPlug implements Plug<PlugResult> {
  * parent process, we can safely assume we need to run our plug... So we wait
  * for the message and respond once the plug returns _something_!
  */
-if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
+if ((process.argv[1] === requireFilename(import.meta.filename)) && (process.send)) {
   /* Save the original console, we'll replace it on "message" */
   const originalConsole = globalThis.console
 
@@ -228,7 +228,7 @@ if ((process.argv[1] === requireFilename(__fileurl)) && (process.send)) {
 
     /* Create a couple of writers for our fake "stdout" and "stderr" */
     const makeWritable = (level: LogLevel): Writable => new class extends Writable {
-      _write(chunk: any, _: BufferEncoding, callback: (error?: Error | null) => void): void {
+      override _write(chunk: any, _: BufferEncoding, callback: (error?: Error | null) => void): void {
         const string: string = chunk.toString()
         const message = string.endsWith('\n') ? string.slice(0, -1) : string
         emit.emitter({ level, taskName }, [ message ])

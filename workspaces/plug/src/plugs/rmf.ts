@@ -1,9 +1,9 @@
-import { rm } from '../fs'
-import { $gry, $p } from '../logging'
-import { install } from '../pipe'
+import { rm } from '../fs.ts'
+import { $gry, $p } from '../logging.ts'
+import { install } from '../pipe.ts'
 
-import type { Files } from '../files'
-import type { Context, PipeParameters, Plug } from '../pipe'
+import type { Files } from '../files.ts'
+import type { Context, PipeParameters, Plug } from '../pipe.ts'
 
 declare module '../index' {
   export interface Pipe {

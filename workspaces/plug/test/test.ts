@@ -1,4 +1,6 @@
-import { find } from '@plugjs/plug'
+// simply import the globals from "expect5" here...
+import '../../expect5/src/globals.ts'
+import { find } from '../src/helpers.ts'
 
 describe('Plug Build System', async () => {
   describe('core', async () => {

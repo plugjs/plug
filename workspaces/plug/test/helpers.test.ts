@@ -1,9 +1,9 @@
 import { BuildFailure } from '@plugjs/plug'
 
-import { requireContext } from '../src/async'
-import { Files } from '../src/files'
-import { writeFile } from '../src/fs'
-import { exec, find, isDirectory, isFile, merge, mkdtemp, noop, parseJson, resolve, rmrf } from '../src/helpers'
+import { requireContext } from '../src/async.ts'
+import { Files } from '../src/files.ts'
+import { writeFile } from '../src/fs.ts'
+import { exec, find, isDirectory, isFile, merge, mkdtemp, noop, parseJson, resolve, rmrf } from '../src/helpers.ts'
 
 // only the ones we don't normally use in our build
 describe('Helpers Test', () => {

@@ -1,26 +1,42 @@
 {
-  "extends": "./tsconfig-base.json",
+  "extends": "./tsconfig.options.json",
   "compilerOptions": {
-    // Monorepo setup
+    // No emit for anything in this project...
     "rootDir": ".",
+    "noEmit": true,
+
+    // Root dirs include *all* the source codes
+    "rootDirs": [
+      ".",
+      "workspaces/cov8/src",
+      "workspaces/eslint/src",
+      "workspaces/expect5/src",
+      "workspaces/plug/src",
+      "workspaces/tsd/src",
+      "workspaces/typescript/src",
+      "workspaces/zip/src"
+    ],
     "paths": {
-      "@plugjs/cov8": [ "./workspaces/cov8/src" ],
-      "@plugjs/cov8/*": [ "./workspaces/cov8/src/*" ],
-      "@plugjs/eslint": [ "./workspaces/eslint/src" ],
-      "@plugjs/eslint/*": [ "./workspaces/eslint/src/*" ],
-      "@plugjs/expect5": [ "./workspaces/expect5/src" ],
-      "@plugjs/expect5/*": [ "./workspaces/expect5/src/*" ],
-      "@plugjs/plug": [ "./workspaces/plug/src" ],
-      "@plugjs/plug/*": [ "./workspaces/plug/src/*" ],
-      "@plugjs/tsd": [ "./workspaces/tsd/src" ],
-      "@plugjs/tsd/*": [ "./workspaces/tsd/src/*" ],
-      "@plugjs/typescript": [ "./workspaces/typescript/src" ],
-      "@plugjs/typescript/*": [ "./workspaces/typescript/src/*" ],
-      "@plugjs/zip": [ "./workspaces/zip/src" ],
-      "@plugjs/zip/*": [ "./workspaces/zip/src/*" ],
-    },
+      "@plugjs/plug": ["./workspaces/plug/src/index.ts"],
+      "@plugjs/plug/asserts": ["./workspaces/plug/src/asserts.ts"],
+      "@plugjs/plug/files": ["./workspaces/plug/src/files.ts"],
+      "@plugjs/plug/fork": ["./workspaces/plug/src/fork.ts"],
+      "@plugjs/plug/fs": ["./workspaces/plug/src/fs.ts"],
+      "@plugjs/plug/globals": ["./workspaces/plug/src/globals.ts"],
+      "@plugjs/plug/logging": ["./workspaces/plug/src/logging.ts"],
+      "@plugjs/plug/paths": ["./workspaces/plug/src/paths.ts"],
+      "@plugjs/plug/pipe": [ "./workspaces/plug/src/pipe.ts"],
+      "@plugjs/plug/utils": [ "./workspaces/plug/src/utils.ts"],
+    }
   },
   "include": [
     "build.ts",
+    "workspaces/cov8/src",
+    "workspaces/eslint/src",
+    "workspaces/expect5/src",
+    "workspaces/plug/src",
+    "workspaces/tsd/src",
+    "workspaces/typescript/src",
+    "workspaces/zip/src"
   ]
 }

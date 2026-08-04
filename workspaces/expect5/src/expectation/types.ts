@@ -1,7 +1,7 @@
 /* eslint-disable unicorn/no-instanceof-builtins */
-import type { Diff } from './diff'
-import type { Expectations } from './expectations'
-import type { Matcher } from './matchers'
+import type { Diff } from './diff.ts'
+import type { Expectations } from './expectations.ts'
+import type { Matcher } from './matchers.ts'
 
 /* ========================================================================== *
  * INTERNAL TYPES FOR EXPECTATIONS                                            *
@@ -96,7 +96,7 @@ function constructorName(value: Record<any, any>): string {
 /** Format binary data for {@link stringifyValue} */
 function formatBinaryData(value: Record<any, any>, buffer: Buffer): string {
   const binary = buffer.length > 20 ?
-    `${buffer.toString('hex', 0, 20)}\u2026, length=${value.length}` :
+    `${buffer.toString('hex', 0, 20)}\u2026, length=${buffer.length}` :
     buffer.toString('hex')
   return binary ?
     `[${constructorName(value)}: ${binary}]` :

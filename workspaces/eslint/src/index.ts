@@ -10,6 +10,10 @@ export interface ESLintOptions {
   ingoreDeprecatedRules?: boolean
   /** Warn when trying to lint ignored files (default: `false`) */
   warnIgnored?: boolean
+  /** Whether to cache linting results or not (default: `false`) */
+  cache?: boolean
+  /** The file where caching results should be kept (default: `.eslintcache`) */
+  cacheLocation?: string
   /**
    * ESLint's _override_ configuration file: configurations specified in this
    * file will override any other configuration specified elsewhere.
@@ -43,4 +47,4 @@ declare module '@plugjs/plug' {
   }
 }
 
-installForking('eslint', requireResolve(__fileurl, './eslint'), 'ESLint')
+installForking('eslint', requireResolve(import.meta.filename, './eslint'), 'ESLint')

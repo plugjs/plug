@@ -1,9 +1,9 @@
 import { EOL } from 'node:os'
 import { Writable } from 'node:stream'
 
-import { $red } from '../../src/logging/colors'
-import { githubAnnotation } from '../../src/logging/github'
-import { logOptions } from '../../src/logging/options'
+import { $red } from '../../src/logging/colors.ts'
+import { githubAnnotation } from '../../src/logging/github.ts'
+import { logOptions } from '../../src/logging/options.ts'
 
 describe('GitHub Annotations', () => {
   it('should produce some annotations', () => {

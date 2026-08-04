@@ -1,7 +1,7 @@
 /* eslint-disable no-new-wrappers */
 import assert from 'node:assert'
 
-import { prefixType, stringifyConstructor, stringifyValue, typeOf } from '../src/expectation/types'
+import { prefixType, stringifyConstructor, stringifyValue, typeOf } from '../src/expectation/types.ts'
 
 describe('Type Utilities', () => {
   it('should correctly return the extended type of a value', () => {

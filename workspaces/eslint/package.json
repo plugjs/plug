@@ -1,39 +1,29 @@
 {
   "name": "@plugjs/eslint",
-  "version": "0.6.117",
+  "version": "0.7.0",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.cjs"
-      },
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.mjs"
-      }
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./eslint": {
-      "require": {
-        "types": "./dist/eslint.d.ts",
-        "default": "./dist/eslint.cjs"
-      },
-      "import": {
-        "types": "./dist/eslint.d.ts",
-        "default": "./dist/eslint.mjs"
-      }
+      "types": "./dist/eslint.d.ts",
+      "default": "./dist/eslint.js"
     }
   },
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.16.0"
+  },
   "dependencies": {
     "eslint": "^10.8.0"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.6.117"
+    "@plugjs/plug": "0.7.0"
   },
   "files": [
     "*.md",
@@ -42,7 +32,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/plugjs/plug.git"
+    "url": "git+https://github.com/plugjs/plug.git"
   },
   "keywords": [
     "build",

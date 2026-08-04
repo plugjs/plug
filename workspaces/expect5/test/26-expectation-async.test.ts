@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 
-import { expect } from '../src/expectation/expect'
-import { ExpectationError } from '../src/expectation/types'
+import { expect } from '../src/expectation/expect.ts'
+import { ExpectationError } from '../src/expectation/types.ts'
 
 describe('Asynchronous Expectations', () => {
   it('should expect "toBeRejected(...)"', async () => {

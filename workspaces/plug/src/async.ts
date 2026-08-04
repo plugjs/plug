@@ -1,9 +1,9 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 
-import { assert } from './asserts'
-import { getSingleton } from './utils/singleton'
+import { assert } from './asserts.ts'
+import { getSingleton } from './utils/singleton.ts'
 
-import type { Context } from './pipe'
+import type { Context } from './pipe.ts'
 
 /* ========================================================================== *
  * EXPORTED                                                                   *

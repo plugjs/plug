@@ -1,9 +1,18 @@
 {
-  "extends": "../tsconfig.json",
+  // this is _different_ from the other "test" tsconfig.json files, because this
+  // one is for the "plug" workspace itself, which is a bit special: we can not
+  // reference "expect5" here, because "expect5" references "plug" (circular),
+  // and if we do so, TypeScript will complain that files in "src" are not part
+  // of this project (and checking test types here will yield an error)
+  "extends": "../../../tsconfig.json",
   "compilerOptions": {
-    "types": [ "node" ], // do not include "@plugjs/expect5/globals" here...
+    "noEmit": true,
+    "composite": false,
+    "tsBuildInfoFile": "../../../.caches/plug.test.tsbuildinfo",
+    "types": [ "node" ],
   },
-  // but include "../../expect5/src/globals.ts" here, so that when recompiling
-  // vscode doesn't go nuts and reports all sorts of missing defs!
-  "include": [ ".", "../../expect5/src/globals.ts" ],
+  "include": [
+    "./*.ts",
+    "./**/*.test.ts",
+  ],
 }

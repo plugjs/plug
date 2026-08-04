@@ -1,10 +1,10 @@
 import { EOL } from 'node:os'
 import { formatWithOptions } from 'node:util'
 
-import { stripAnsi } from '../utils/ansi'
-import { logOptions } from './options'
+import { stripAnsi } from '../utils/ansi.ts'
+import { logOptions } from './options.ts'
 
-import type { AbsolutePath } from '../paths'
+import type { AbsolutePath } from '../paths.ts'
 
 /* Initial values, and subscribe to changes */
 let _output = logOptions.output

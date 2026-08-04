@@ -2,34 +2,33 @@ import { basename } from 'node:path'
 
 import { build } from 'esbuild'
 
-import { assert } from '../asserts'
-import { Files } from '../files'
-import { readFile } from '../fs'
-import { $p, ERROR, WARN } from '../logging'
-import { getAbsoluteParent, resolveAbsolutePath } from '../paths'
-import { install } from '../pipe'
+import { assert } from '../asserts.ts'
+import { Files } from '../files.ts'
+import { readFile } from '../fs.ts'
+import { $p, ERROR, WARN } from '../logging.ts'
+import { getAbsoluteParent, resolveAbsolutePath } from '../paths.ts'
+import { install } from '../pipe.ts'
 
 import type { BuildFailure, BuildOptions, BuildResult, Format, Message, Metafile } from 'esbuild'
-import type { FilesBuilder } from '../files'
-import type { Logger, ReportLevel, ReportRecord } from '../logging'
-import type { AbsolutePath } from '../paths'
-import type { Context, PipeParameters, Plug } from '../pipe'
+import type { FilesBuilder } from '../files.ts'
+import type { Logger, ReportLevel, ReportRecord } from '../logging.ts'
+import type { AbsolutePath } from '../paths.ts'
+import type { Context, PipeParameters, Plug } from '../pipe.ts'
 
 export type ESBuildOptions = Omit<BuildOptions, 'absWorkingDir' | 'entryPoints' | 'watch'>
 
-export * from './esbuild/bundle-locals'
-export * from './esbuild/fix-extensions'
-
-/*
- * Type definition for `WebAssembly`. This is normally provided to TypeScript
- * by `lib.dom.d.ts`, and is not defined by Node's own types.
- *
- * https://github.com/evanw/esbuild/issues/2388
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-declare const WebAssembly: {
-  Module: any,
+/** Options for converting ESM modules to CommonJS */
+export interface ModuleToCommonJSOptions {
+  /** The extension to use for CommonJS output files (default: `.cjs`) */
+  outExtension?: string,
+  /** The output directory for CommonJS files (default: same as input directory) */
+  outDir?: string,
+  /** Whether to minify the output CJS files (default: `false`) */
+  minify?: boolean,
 }
+
+export * from './esbuild/bundle-locals.ts'
+export * from './esbuild/fix-extensions.ts'
 
 declare module '../index' {
   export interface Pipe {
@@ -43,6 +42,16 @@ declare module '../index' {
      *
      */
     esbuild(options: ESBuildOptions): Pipe
+
+    /**
+     * Transpile EcmaScript Modules (`import`) to CommonJS (`require`) with
+     * {@link https://esbuild.github.io/ esbuild}.
+     *
+     * @param options Minimal options {@link ModuleToCommonJSOptions | options}
+     *                for transpilation of ESM to CJS.
+     *
+     */
+    esm2cjs(options?: ModuleToCommonJSOptions): Pipe
   }
 }
 
@@ -50,11 +59,11 @@ declare module '../index' {
  * INSTALLATION / IMPLEMENTATION                                              *
  * ========================================================================== */
 
-install('esbuild', class ESBuild implements Plug<Files> {
+class ESBuild implements Plug<Files> {
   constructor(...args: PipeParameters<'esbuild'>)
-  constructor(private readonly _options: ESBuildOptions) {}
+  constructor(protected readonly _options: ESBuildOptions) {}
 
-  async pipe(files: Files, context: Context): Promise<Files> {
+  async pipe(files: Files, context: Context, override?: ESBuildOptions): Promise<Files> {
     const entryPoints = [ ...files ]
     const absWorkingDir = files.directory
 
@@ -66,11 +75,12 @@ install('esbuild', class ESBuild implements Plug<Files> {
       /* The default format (if not specified in options) is from package.json */
       format: this._options.format || await _moduleFormat(files.directory, context.log),
 
-      /* Output bese directory */
+      /* Output base directory */
       outbase: absWorkingDir,
 
       /* Merge in the caller's options */
       ...this._options,
+      ...override,
 
       /* Always override */
       absWorkingDir,
@@ -135,7 +145,7 @@ install('esbuild', class ESBuild implements Plug<Files> {
     context.log.info('ESBuild produced', result.length, 'files into', $p(result.directory))
     return result
   }
-})
+}
 
 function convertMessage(level: ReportLevel, message: Message, directory: AbsolutePath): ReportRecord {
   const record: ReportRecord = { level, message: message.text }
@@ -204,3 +214,54 @@ async function _moduleFormat(directory: AbsolutePath, log: Logger): Promise<Form
     return type
   }
 }
+
+/* ========================================================================== *
+ * ESM TO CJS CONVERSION                                                      *
+ * ========================================================================== */
+
+class ModuleToCommonJS extends ESBuild {
+  constructor(...args: PipeParameters<'esm2cjs'>)
+  constructor(options: ModuleToCommonJSOptions = {}) {
+    const { minify, outDir, outExtension = '.cjs' } = options
+
+    super({
+      outdir: outDir,
+      format: 'cjs',
+      platform: 'node',
+      target: 'node22',
+      sourcemap: 'inline',
+      minify: !! minify,
+      outExtension: { '.js': outExtension },
+      banner: {
+        // Our banner for ESM to CJS conversion, to provide a bare-bones
+        // support for `import.meta.url` in CJS modules.
+        js: `var __importMetaStub = {
+            get url() { return require("node:url").pathToFileURL(__filename) }
+          };`.replaceAll(/\n\s+/g, ' '),
+      },
+      define: {
+        'import.meta.url': '__importMetaStub.url',
+        'import.meta.filename': '__filename',
+        'import.meta.dirname': '__dirname',
+      },
+    })
+  }
+
+  override async pipe(files: Files, context: Context): Promise<Files> {
+    // If a directory was not specified at construction time, we default the
+    // output directory to the same as the input files...
+    const override: ESBuildOptions = this._options.outdir ? {} : {
+      outdir: files.directory,
+    }
+
+    // Do It!
+    return super.pipe(files, context, override)
+  }
+}
+
+/* ========================================================================== *
+ * INSTALL PLUGS                                                              *
+ * ========================================================================== */
+
+install('esbuild', ESBuild)
+install('esm2cjs', ModuleToCommonJS)

@@ -1,8 +1,8 @@
 /* coverage ignore file */
 
-import { runningTasks } from '../async'
-import { $cyn, $gry, $plur, $t } from './colors'
-import { logOptions } from './options'
+import { runningTasks } from '../async.ts'
+import { $cyn, $gry, $plur, $t } from './colors.ts'
+import { logOptions } from './options.ts'
 
 /* ========================================================================== */
 

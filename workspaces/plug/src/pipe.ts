@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 import { sep } from 'node:path'
 
-import { assert, assertPromises } from './asserts'
-import { getLogger } from './logging'
-import { getAbsoluteParent, getCurrentWorkingDirectory, resolveAbsolutePath } from './paths'
+import { assert, assertPromises } from './asserts.ts'
+import { getLogger } from './logging.ts'
+import { getAbsoluteParent, getCurrentWorkingDirectory, resolveAbsolutePath } from './paths.ts'
 
-import type { Files } from './files'
-import type { Pipe } from './index'
-import type { Logger } from './logging'
-import type { AbsolutePath } from './paths'
-import type { Result } from './types'
+import type { Files } from './files.ts'
+import type { Pipe } from './index.ts'
+import type { Logger } from './logging.ts'
+import type { AbsolutePath } from './paths.ts'
+import type { Result } from './types.ts'
 
 /* ========================================================================== *
  * PLUGS                                                                      *
@@ -54,6 +54,11 @@ export class Context {
   ) {
     this.buildDir = getAbsoluteParent(buildFile)
     this.log = getLogger(taskName)
+  }
+
+  /** Return a new {@link Context} with the specified task name */
+  withTaskName(taskName: string): Context {
+    return new Context(this.buildFile, taskName)
   }
 
   /**

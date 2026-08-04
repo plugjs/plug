@@ -1,13 +1,13 @@
-import { BuildFailure } from '../asserts'
-import { readFile } from '../fs'
-import { $blu, $cyn, $gry, $plur, $red, $und, $wht, $ylw } from './colors'
-import { githubAnnotation } from './github'
-import { ERROR, NOTICE, WARN, logLevels } from './levels'
-import { logOptions } from './options'
+import { BuildFailure } from '../asserts.ts'
+import { readFile } from '../fs.ts'
+import { $blu, $cyn, $gry, $plur, $red, $und, $wht, $ylw } from './colors.ts'
+import { githubAnnotation } from './github.ts'
+import { ERROR, NOTICE, WARN, logLevels } from './levels.ts'
+import { logOptions } from './options.ts'
 
-import type { AbsolutePath } from '../paths'
-import type { LogEmitter } from './emit'
-import type { LogLevels } from './levels'
+import type { AbsolutePath } from '../paths.ts'
+import type { LogEmitter } from './emit.ts'
+import type { LogLevels } from './levels.ts'
 
 let _showSources = logOptions.showSources
 let _githubAnnotations = logOptions.githubAnnotations

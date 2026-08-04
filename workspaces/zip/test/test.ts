@@ -1,7 +1,7 @@
 import { find, merge, mkdtemp, resolve, rmrf } from '@plugjs/plug'
 import * as yauzl from 'yauzl'
 
-import { Zip } from '../src/zip'
+import { Zip } from '../src/zip.ts'
 
 describe('Zip Plug', () => {
   let outdir: string
@@ -68,7 +68,7 @@ describe('Zip Plug', () => {
 
   it('should install the "zip" plug', async () => {
     expect(merge([]).zip).toBeUndefined()
-    await import('../src/index')
+    await import('../src/index.ts')
     expect(merge([]).zip).toBeA('function')
   })
 })

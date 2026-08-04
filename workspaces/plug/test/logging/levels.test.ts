@@ -1,4 +1,14 @@
-import { DEBUG, ERROR, getLevelName, getLevelNumber, INFO, NOTICE, OFF, TRACE, WARN } from '../../src/logging/levels.js'
+import {
+  DEBUG,
+  ERROR,
+  getLevelName,
+  getLevelNumber,
+  INFO,
+  NOTICE,
+  OFF,
+  TRACE,
+  WARN,
+} from '../../src/logging/levels.ts'
 
 describe('Levels', () => {
   it('should return the proper level name', () => {

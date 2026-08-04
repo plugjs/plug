@@ -1,19 +1,32 @@
 #!/usr/bin/env node
+/* coverage ignore file / not tested in unit tests */
+/* eslint-disable no-console */
+
+import _fs from 'node:fs'
+import _path from 'node:path'
 
 import { async, find, logging, mkdtemp, paths, pipe, rmrf, utils } from '@plugjs/plug'
 import { main, yargsParser } from '@plugjs/tsrun'
 
-import { Coverage } from './coverage'
+import { Coverage } from './coverage.ts'
 
 const { $blu, $und, $gry, $wht, $p } = logging
 const $gnd = (s: string): string => $gry($und(s))
 const $bnd = (s: string): string => $blu($und(s))
 const $wnd = (s: string): string => $wht($und(s))
 
-
-/** Version injected by esbuild, defaulted in case of dynamic transpilation */
-const version = typeof __version === 'string' ? __version : '0.0.0-dev'
-declare const __version: string | undefined
+/** Version resolved from "package.json" */
+function version(): string {
+  try {
+    const packageJsonPath = _path.resolve(import.meta.dirname, '..', 'package.json')
+    const packageJson = JSON.parse(_fs.readFileSync(packageJsonPath, 'utf-8'))
+    return (typeof packageJson.version === 'string' && packageJson.version)
+      ? packageJson.version
+      : '0.0.0-dev'
+  } catch {
+    return '0.0.0-dev'
+  }
+}
 
 /* ========================================================================== *
  * HELP SCREEN                                                                *
@@ -21,7 +34,6 @@ declare const __version: string | undefined
 
 /** Show help screen */
 function help(): void {
-  // eslint-disable-next-line no-console
   console.log(`${$blu($und('Usage:'))}
 
   ${$wht('cov8')} ${$gry('[')}--options${$gry('] [--] [...')}command${$gry('...]')}
@@ -35,7 +47,7 @@ function help(): void {
       ${$wht('-m --minimum')} ${$gnd('num')}         The desired minimum coverage level to achieve
       ${$wht('-o --optimal')} ${$gnd('num')}         The desired optimal coverage level to achieve
       ${$wht('-h --help   ')}             Help! You're reading it now!
-      ${$wht('   --version')}             Version! This one: ${version}!
+      ${$wht('   --version')}             Version! This one: ${version()}!
 
 
   ${$bnd('Usave:')}
@@ -144,7 +156,7 @@ main(import.meta.url, async (args): Promise<void> => {
       case 'help':
         return help()
       case 'version':
-        return context.log.notice(`Cov8 ${$gry('ver.')} ${$wnd(version)}`)
+        return context.log.notice(`Cov8 ${$gry('ver.')} ${$wnd(version())}`)
       default:
         context.log.error(`Unsupported option ${$wnd(key)} (try ${$wnd('--help')})`)
         process.exit(1)

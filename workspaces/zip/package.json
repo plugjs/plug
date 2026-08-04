@@ -1,34 +1,24 @@
 {
   "name": "@plugjs/zip",
-  "version": "0.6.117",
+  "version": "0.7.0",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.cjs"
-      },
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.mjs"
-      }
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./zip": {
-      "require": {
-        "types": "./dist/zip.d.ts",
-        "default": "./dist/zip.cjs"
-      },
-      "import": {
-        "types": "./dist/zip.d.ts",
-        "default": "./dist/zip.mjs"
-      }
+      "types": "./dist/zip.d.ts",
+      "default": "./dist/zip.js"
     }
   },
   "author": "Juit Developers <developers@juit.com>",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.16.0"
+  },
   "dependencies": {
     "yazl": "^3.3.1"
   },
@@ -38,7 +28,7 @@
     "yauzl": "^3.4.0"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.6.117"
+    "@plugjs/plug": "0.7.0"
   },
   "files": [
     "*.md",
@@ -47,7 +37,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/plugjs/plug.git"
+    "url": "git+https://github.com/plugjs/plug.git"
   },
   "keywords": [
     "archive",

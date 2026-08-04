@@ -3,7 +3,7 @@ import { createRequire } from 'node:module'
 import { dirname, extname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-import { assert } from './asserts'
+import { assert } from './asserts.ts'
 
 /** A _branded_ `string` representing an _absolute_ path name */
 export type AbsolutePath = string & { __brand_absolute_path: never }
@@ -109,44 +109,59 @@ export function commonPath(path: AbsolutePath, ...paths: string[]): AbsolutePath
  * MODULE RESOLUTION FUNCTIONS                                                *
  * ========================================================================== */
 
-function resolveFilename(__fileurl: string): AbsolutePath {
-  const file = __fileurl.startsWith('file:') ? fileURLToPath(__fileurl) : __fileurl
+/** Resolve a file URL or a path to an {@link AbsolutePath} */
+function resolveFilename(fileurl: string): AbsolutePath {
+  const file = fileurl.startsWith('file:') ? fileURLToPath(fileurl) : fileurl
   assertAbsolutePath(file)
   return file
 }
 
-/** Return the equivalent of `__filename` from our `__fileurl` pseudo variable */
-export function filenameFromUrl(__fileurl: string): AbsolutePath {
-  const file = resolveFilename(__fileurl)
-  assert(resolveFile(file), `Unable to resolve "${__fileurl}" as a file`)
+/**
+ * Asserts that `fileurl` (a path or a `file:...` URL) resolves to an
+ * existing file.
+ */
+export function filenameFromUrl(fileurl: string): AbsolutePath {
+  const file = resolveFilename(fileurl)
+  assert(resolveFile(file), `Unable to resolve "${fileurl}" as a file`)
   return file
 }
 
 
-/** Return the equivalent of `__dirname` from our `__fileurl` pseudo variable */
-export function dirnameFromUrl(__fileurl: string): AbsolutePath {
-  const dir = getAbsoluteParent(resolveFilename(__fileurl))
-  assert(resolveDirectory(dir), `Unable to resolve "${__fileurl}" as a directory`)
+/**
+ * Asserts that the _parent_ path of `fileurl` (a path or a `file:...` URL)
+ * resolves to an existing directory.
+ */
+export function dirnameFromUrl(fileurl: string): AbsolutePath {
+  const dir = getAbsoluteParent(resolveFilename(fileurl))
+  assert(resolveDirectory(dir), `Unable to resolve "${fileurl}" as a directory`)
   return dir
 }
 
 /**
- * Return the absolute path of a file relative to the given `__fileurl`, where
- * `__fileurl` is either CommonJS's own `__filename` variable, or EcmaScript's
- * `import.meta.url` (so either an absolute path name, or a `file:///...` url).
+ * Return the absolute path of of `fileurl` (a path or a `file:...` URL) or
+ * (if further `paths` are specified) the absolute path of a file relative to
+ * it.
+ *
+ * If no `paths` are specified, this will simply return the {@link AbsolutePath}
+ * of `fileurl`:
+ *
+ * ```ts
+ * const thisFile = requireFilename(import.meta.url)
+ * // if we write this in "/foo/bar/baz.(ts|js|cjs|mjs)"
+ * // `thisFile` will now be "/foo/bar/baz.(ts|js|cjs|mjs)"
+ * ```
  *
  * If further `paths` are specified, those will be resolved as relative paths
- * to the original `__fileurl` so we can easily write something like this:
+ * to the original `fileurl` so we can easily write something like this:
  *
- * ```
- * const dataFile = requireFilename(__fileurl, 'data.json')
+ * ```ts
+ * const dataFile = requireFilename(import.meta.url, 'data.json')
  * // if we write this in "/foo/bar/baz.(ts|js|cjs|mjs)"
  * // `dataFile` will now be "/foo/bar/data.json"
  * ```
  */
-export function requireFilename(__fileurl: string, ...paths: string[]): AbsolutePath {
-  const file = resolveFilename(__fileurl)
-  assertAbsolutePath(file)
+export function requireFilename(fileurl: string, ...paths: string[]): AbsolutePath {
+  const file = resolveFilename(fileurl)
 
   /* No paths? Return the file! */
   if (! paths.length) return file
@@ -161,11 +176,15 @@ export function requireFilename(__fileurl: string, ...paths: string[]): Absolute
  * by Node (or forked to via `child_process.fork`).
  *
  * This leverages {@link requireFilename} to figure out the starting point where
- * to look for files, and will _try_ to match the same extension of `__fileurl`
+ * to look for files, and will _try_ to match the same extension of `fileurl`
  * (so, `.ts` for `ts-node`, `.mjs` for ESM modules, ...).
+ *
+ * Extension matching is performed that the same instruction can be used in
+ * various scenarions (e.g. `.ts` when running dynamically, `.js`, `.mjs` or
+ * `.cjs` after transpilation)
  */
-export function requireResolve(__fileurl: string, module: string): AbsolutePath {
-  const file = resolveFilename(__fileurl)
+export function requireResolve(fileurl: string, module: string): AbsolutePath {
+  const file = resolveFilename(fileurl)
 
   // We do our custom resolution _only_ for local (./foo.bar) files...
   if (module.match(/^\.\.?\//)) {

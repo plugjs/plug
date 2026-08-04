@@ -1,7 +1,7 @@
 /* eslint-disable no-new-wrappers */
 import { deepEqual } from 'node:assert'
 
-import { diff } from '../src/expectation/diff'
+import { diff } from '../src/expectation/diff.ts'
 
 describe('Differences', () => {
   it('should consider strictly equal values', () => {
@@ -406,7 +406,7 @@ describe('Differences', () => {
         constructor(public foo: string) {}
       }
       class Act extends Exp {
-        constructor(public foo: string) {
+        constructor(public override foo: string) {
           super(foo)
         }
       }

@@ -1,9 +1,9 @@
 import { sep } from 'node:path'
 
-import { getCurrentWorkingDirectory, resolveRelativeChildPath } from '../paths'
-import { logOptions } from './options'
+import { getCurrentWorkingDirectory, resolveRelativeChildPath } from '../paths.ts'
+import { logOptions } from './options.ts'
 
-import type { AbsolutePath } from '../paths'
+import type { AbsolutePath } from '../paths.ts'
 
 /* ========================================================================== */
 
@@ -26,7 +26,7 @@ const ylw = '\u001b[38;5;220m' // yellow
 const blu = '\u001b[38;5;69m' // brighter blue
 const mgt = '\u001b[38;5;213m' // pinky magenta
 const cyn = '\u001b[38;5;81m' // darker cyan
-const wht = process.env.GITHUB_ACTIONS === 'true' ?
+const wht = process.env['GITHUB_ACTIONS'] === 'true' ?
   '\u001b[1;38;5;240m' : // bold gray (GitHub Actions's new white background)
   '\u001b[1;38;5;255m' // full-bright white
 

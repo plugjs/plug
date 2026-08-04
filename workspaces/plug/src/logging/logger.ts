@@ -1,17 +1,17 @@
 import { formatWithOptions } from 'node:util'
 
-import { BuildFailure } from '../asserts'
-import { currentContext } from '../async'
-import { stripAnsi } from '../utils/ansi'
-import { $gry } from './colors'
-import { emit } from './emit'
-import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels'
-import { logOptions } from './options'
-import { ReportImpl } from './report'
+import { BuildFailure } from '../asserts.ts'
+import { currentContext } from '../async.ts'
+import { stripAnsi } from '../utils/ansi.ts'
+import { $gry } from './colors.ts'
+import { emit } from './emit.ts'
+import { DEBUG, ERROR, INFO, NOTICE, TRACE, WARN } from './levels.ts'
+import { logOptions } from './options.ts'
+import { ReportImpl } from './report.ts'
 
-import type { LogEmitter, LogEmitterOptions } from './emit'
-import type { LogLevel } from './levels'
-import type { Report } from './report'
+import type { LogEmitter, LogEmitterOptions } from './emit.ts'
+import type { LogLevel } from './levels.ts'
+import type { Report } from './report.ts'
 
 
 /* ========================================================================== */

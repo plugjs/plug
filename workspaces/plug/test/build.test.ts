@@ -1,8 +1,8 @@
 import { Files } from '@plugjs/plug'
 
-import { currentContext, requireContext, runningTasks } from '../src/async'
-import { BuildFailure } from '../src/asserts'
-import { hookAfter, hookBefore, invokeTasks, isBuild, plugjs } from '../src/build'
+import { BuildFailure } from '../src/asserts.ts'
+import { currentContext, requireContext, runningTasks } from '../src/async.ts'
+import { hookAfter, hookBefore, invokeTasks, isBuild, plugjs } from '../src/build.ts'
 
 describe('Build Invocation', () => {
   it('should invoke a build', async () => {

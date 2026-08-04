@@ -1,4 +1,4 @@
-import { JsoncError, parseJsonc } from '../../src/utils/jsonc'
+import { JsoncError, parseJsonc } from '../../src/utils/jsonc.ts'
 
 describe('JSONC parser', () => {
   it('should parse a correct JSONC string', () => {

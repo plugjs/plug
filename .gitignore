@@ -1,6 +1,7 @@
-*.tgz
+.caches/
 .coverage-data/
 .coverage-test-data/
+*.tgz
 bootstrap/
 coverage/
 node_modules/

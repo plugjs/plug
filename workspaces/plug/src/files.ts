@@ -1,15 +1,15 @@
 import { inspect } from 'node:util'
 
-import { assert } from './asserts'
-import { mkdir, writeFile } from './fs'
+import { assert } from './asserts.ts'
+import { mkdir, writeFile } from './fs.ts'
 import {
   assertRelativeChildPath,
   getAbsoluteParent,
   getCurrentWorkingDirectory,
   resolveAbsolutePath,
-} from './paths'
+} from './paths.ts'
 
-import type { AbsolutePath } from './paths'
+import type { AbsolutePath } from './paths.ts'
 
 /** The {@link FilesBuilder} interface defines a builder for {@link Files}. */
 export interface FilesBuilder {

@@ -1,12 +1,12 @@
 import { formatWithOptions } from 'node:util'
 
-import { fail } from '../asserts'
-import { $blu, $grn, $gry, $red, $t, $ylw } from './colors'
-import { DEBUG, INFO, NOTICE, TRACE, WARN } from './levels'
-import { logOptions } from './options'
-import { zapSpinner } from './spinner'
+import { fail } from '../asserts.ts'
+import { $blu, $grn, $gry, $red, $t, $ylw } from './colors.ts'
+import { DEBUG, INFO, NOTICE, TRACE, WARN } from './levels.ts'
+import { logOptions } from './options.ts'
+import { zapSpinner } from './spinner.ts'
 
-import type { LogLevel } from './levels'
+import type { LogLevel } from './levels.ts'
 
 /* ========================================================================== */
 

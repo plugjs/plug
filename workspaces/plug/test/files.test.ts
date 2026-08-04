@@ -1,11 +1,11 @@
 import { inspect } from 'node:util'
 
-import { Files } from '../src/files'
-import { readFile } from '../src/fs'
-import { mkdtemp, rmrf } from '../src/index'
-import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../src/paths'
+import { Files } from '../src/files.ts'
+import { readFile } from '../src/fs.ts'
+import { mkdtemp, rmrf } from '../src/helpers.ts'
+import { getCurrentWorkingDirectory, resolveAbsolutePath } from '../src/paths.ts'
 
-import type { AbsolutePath } from '../src/paths'
+import type { AbsolutePath } from '../src/paths.ts'
 
 describe('Files Collection', () => {
   let tempdir: AbsolutePath

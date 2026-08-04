@@ -1,14 +1,14 @@
 import { EOL } from 'node:os'
 import { sep } from 'node:path'
 
-import { assert } from '../asserts'
-import { Files } from '../files'
-import { readFile, writeFile } from '../fs'
-import { $p } from '../logging'
-import { assertRelativeChildPath, getAbsoluteParent } from '../paths'
-import { install } from '../pipe'
+import { assert } from '../asserts.ts'
+import { Files } from '../files.ts'
+import { readFile, writeFile } from '../fs.ts'
+import { $p } from '../logging.ts'
+import { assertRelativeChildPath, getAbsoluteParent } from '../paths.ts'
+import { install } from '../pipe.ts'
 
-import type { Context, PipeParameters, Plug } from '../pipe'
+import type { Context, PipeParameters, Plug } from '../pipe.ts'
 
 /** Options for our `exports` plug. */
 export interface ExportsOptions {
@@ -35,9 +35,10 @@ declare module '../index' {
 
 type ExportsDeclaration = {
   [ name in string ]? : {
-    [ type in 'require' | 'import' ]? : {
-      [ kind in 'types' | 'default' ]? : string
-    }
+    require?: string
+    import?: string
+    types?: string
+    default?: string
   }
 }
 
@@ -90,17 +91,16 @@ install('exports', class Exports implements Plug<Files> {
     const exports: ExportsDeclaration = {}
     function addExport(
         name: string,
-        type: 'require' | 'import',
-        kind: 'types' | 'default',
+        type: 'require' | 'import' | 'types' | 'default',
         file: string,
     ): void {
       if (! exports[name]) exports[name] = {}
-      if (! exports[name]![type]) exports[name]![type] = {}
-      exports[name]![type]![kind] = file
+      // if (! exports[name]![type]) exports[name]![type] = {}
+      exports[name]![type] = file
     }
 
     // all extensions to match in the incoming files
-    const exts = [ '.d.mts', '.d.cts', '.d.ts', cjsExtension, esmExtension ]
+    const exts = [ '.d.ts', '.d.cts', '.d.mts', cjsExtension, esmExtension ]
 
     // look up all the files we were piped in
     for (const [ name, absolute ] of files.pathMappings()) {
@@ -114,20 +114,19 @@ install('exports', class Exports implements Plug<Files> {
 
         switch (ext) {
           case cjsExtension:
-            addExport(exp, 'require', 'default', `.${sep}${relative}`)
+            addExport(exp, type === 'commonjs' ? 'default' : 'require', `.${sep}${relative}`)
             break
           case esmExtension:
-            addExport(exp, 'import', 'default', `.${sep}${relative}`)
+            addExport(exp, type === 'module' ? 'default' : 'import', `.${sep}${relative}`)
             break
           case '.d.cts':
-            addExport(exp, 'require', 'types', `.${sep}${relative}`)
+            addExport(exp, 'types', `.${sep}${relative}`)
             break
           case '.d.mts':
-            addExport(exp, 'import', 'types', `.${sep}${relative}`)
+            addExport(exp, 'types', `.${sep}${relative}`)
             break
           case '.d.ts':
-            addExport(exp, 'require', 'types', `.${sep}${relative}`)
-            addExport(exp, 'import', 'types', `.${sep}${relative}`)
+            addExport(exp, 'types', `.${sep}${relative}`)
             break
         }
       }
@@ -136,10 +135,12 @@ install('exports', class Exports implements Plug<Files> {
     // if we have a "." export, inject the "main", "module" and "types" fields
     if ('.' in exports) {
       const rootExport = exports['.']
-      packageData['main'] = rootExport?.require?.default
-      packageData['module'] = rootExport?.import?.default
-      packageData['types'] = packageData['type'] === 'module' ?
-        rootExport?.import?.types : rootExport?.require?.types
+      packageData['module'] = undefined // wipe existing...
+      packageData['main'] =
+        type === 'commonjs' ? rootExport?.require || rootExport?.default :
+        type === 'module' ? rootExport?.import || rootExport?.default :
+        undefined
+      packageData['types'] = rootExport?.types
     }
 
     // correctly order the exports record (e.g. types comes before default)
@@ -149,16 +150,12 @@ install('exports', class Exports implements Plug<Files> {
 
       // json serialization will scrub all undefined... here we export the types
       // only if the "default" export is available, or we scrub the whole thing!
-      obj[name] = current.require?.default || current.import?.default ? {
-        require: current.require?.default ? {
-          types: current.require.types || undefined,
-          default: current.require.default || undefined,
-        } : undefined,
-        import: current.import?.default ? {
-          types: current.import.types || undefined,
-          default: current.import.default || undefined,
-        } : undefined,
-      } : undefined
+      obj[name] = {
+        types: current.types,
+        require: current.require,
+        import: current.import,
+        default: current.default,
+      }
 
       return obj
     }, {} as ExportsDeclaration)

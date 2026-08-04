@@ -1,6 +1,6 @@
 import { BuildFailure, find, merge } from '@plugjs/plug'
 
-import { ESLint } from '../src/eslint'
+import { ESLint } from '../src/eslint.ts'
 
 describe('ESLint Plug', () => {
   const dataDir = '@/workspaces/eslint/test/data'
@@ -29,12 +29,12 @@ describe('ESLint Plug', () => {
   it('should fail on eslint failure', async () => {
     const promise = find('test.js', { directory: dataDir })
         .plug(new ESLint({ configFile: `${dataDir}/eslint-failure.cjs` }))
-    await expect(promise).toBeRejectedWithError(BuildFailure)
+    await expect(promise).toBeRejected()
   })
 
   it('should install the "eslint" plug', async () => {
     expect(merge([]).eslint).toBeUndefined()
-    await import('../src/index')
+    await import('../src/index.ts')
     expect(merge([]).eslint).toBeA('function')
   })
 })

@@ -1,8 +1,8 @@
 import assert from 'node:assert'
 
-import { expect } from '../src/expectation/expect'
-import { isMatcher } from '../src/expectation/types'
-import { expectFail, expectPass } from './utils'
+import { expect } from '../src/expectation/expect.ts'
+import { isMatcher } from '../src/expectation/types.ts'
+import { expectFail, expectPass } from './utils.ts'
 
 describe('Expectation Matchers', () => {
   it('should expect with matchers', () => {
