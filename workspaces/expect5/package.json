@@ -27,7 +27,7 @@
     "node": ">=22.16.0"
   },
   "dependencies": {
-    "@plugjs/tsrun": "^0.7.3"
+    "@plugjs/tsrun": "^0.7.4"
   },
   "devDependencies": {
     "chai": "^6.2.2"
