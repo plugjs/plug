@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/expect5",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -27,13 +27,13 @@
     "node": ">=22.16.0"
   },
   "dependencies": {
-    "@plugjs/tsrun": "^0.7.5"
+    "@plugjs/tsrun": "^0.7.6"
   },
   "devDependencies": {
     "chai": "^6.2.2"
   },
   "peerDependencies": {
-    "@plugjs/plug": "0.7.1"
+    "@plugjs/plug": "0.7.2"
   },
   "files": [
     "*.md",
