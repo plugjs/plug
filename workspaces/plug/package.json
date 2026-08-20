@@ -1,6 +1,6 @@
 {
   "name": "@plugjs/plug",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -55,7 +55,7 @@
     "node": ">=22.16.0"
   },
   "dependencies": {
-    "@plugjs/tsrun": "^0.7.6",
+    "@plugjs/tsrun": "^0.7.7",
     "@types/node": "<23",
     "esbuild": "^0.28.2",
     "jsonc-parser": "^3.3.1",
