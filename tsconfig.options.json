@@ -3,8 +3,8 @@
     // Setup our compilation type
     "lib": [ "esnext" ],
     "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "types": [ "node" ],
 
     // ES modules interoperability and preserve import/export statements
