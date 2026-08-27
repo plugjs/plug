@@ -27,6 +27,24 @@ declare global {
   const expect: typeof ExpectFunction
 
   const log: logging.LogFunction
+
+  /**
+   * Either `import.meta.url` or `__filename` depending on whether we are in
+   * an ES module or CommonJS module.
+   *
+   * @deprecated Use `import.meta.filename` or `__filename`
+   */
+  const __fileurl: string
+  /**
+   * Get the directory name from a file URL.
+   *
+   * @deprecated Use `import.meta.dirname`
+   */
   const dirnameFromUrl: typeof paths.dirnameFromUrl
+  /**
+   * Get the directory name from a file URL.
+   *
+   * @deprecated Use `import.meta.filename`
+   */
   const filenameFromUrl: typeof paths.filenameFromUrl
 }
