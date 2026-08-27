@@ -1,7 +1,7 @@
 import { Files, resolve } from '@plugjs/plug'
 import { ERROR, NOTICE, WARN } from '@plugjs/plug/logging'
 import { assertRelativeChildPath, getCurrentWorkingDirectory, resolveAbsolutePath } from '@plugjs/plug/paths'
-import * as tsdLib from 'tsd'
+import tsdLib from 'tsd'
 
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
 import type { TsdOptions } from './index.ts'
