@@ -13,7 +13,7 @@ export interface FilterOptions extends MatchOptions {
   directory?: string
 }
 
-declare module '../index' {
+declare module '../index.ts' {
   export interface Pipe {
     /**
      * Filter the current {@link Files} using globs.

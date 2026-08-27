@@ -21,7 +21,7 @@ export interface ExecOptions extends ExecChildOptions {
   relativePaths?: boolean
 }
 
-declare module '../index' {
+declare module '../index.ts' {
   export interface Pipe {
     /**
      * Execute a shell command, adding to its _arguments_ the list of files

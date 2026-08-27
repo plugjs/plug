@@ -4,7 +4,7 @@ import { install } from '../pipe.ts'
 import type { Files } from '../files.ts'
 import type { Context, PipeParameters, Plug } from '../pipe.ts'
 
-declare module '../index' {
+declare module '../index.ts' {
   export interface Pipe {
     /** Log some info about the current {@link Files} being passed around. */
     debug(title?: string): Pipe

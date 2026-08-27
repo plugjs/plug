@@ -30,7 +30,7 @@ export interface ModuleToCommonJSOptions {
 export * from './esbuild/bundle-locals.ts'
 export * from './esbuild/fix-extensions.ts'
 
-declare module '../index' {
+declare module '../index.ts' {
   export interface Pipe {
     /**
      * Transpile and bundle with {@link https://esbuild.github.io/ esbuild}.

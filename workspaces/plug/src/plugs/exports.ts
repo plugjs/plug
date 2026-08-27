@@ -22,7 +22,7 @@ export interface ExportsOptions {
   esmExtension?: string
 }
 
-declare module '../index' {
+declare module '../index.ts' {
   export interface Pipe {
     /** Include the files piped into this task as `exports` in `package.json` */
     exports(options?: ExportsOptions): Pipe
