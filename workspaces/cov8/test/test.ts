@@ -1,10 +1,12 @@
-import { mkdir, realpath, symlink, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, realpath, symlink, unlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { mock } from 'node:test'
 import { pathToFileURL } from 'node:url'
 
 import { BuildFailure, exec, find, merge, mkdtemp, rmrf } from '@plugjs/plug'
 import { getLogger } from '@plugjs/plug/logging'
 import { resolveAbsolutePath } from '@plugjs/plug/paths'
+import { SourceMapGenerator } from 'source-map'
 import { createProgram, ModuleKind, ScriptTarget, transpileModule } from 'typescript'
 
 import { CombiningCoverageAnalyser, createAnalyser } from '../src/analysis.ts'
@@ -14,6 +16,43 @@ import { COVERAGE_SKIPPED, coverageReport } from '../src/report.ts'
 import type { AbsolutePath, Files } from '@plugjs/plug'
 import type { CoverageAnalyser } from '../src/analysis.ts'
 import type { CoverageResult } from '../src/report.ts'
+
+describe('Repeated source mappings', () => {
+  for (const [ calls, count ] of [ [ 'first()', 1 ], [ 'second()', 1 ], [ 'first(); second(); second()', 3 ], [ '', 0 ] ] as const) {
+    it(`should combine exact mappings when executing ${calls || 'neither copy'}`, async () => {
+      const directory = await realpath(mkdtemp()) as AbsolutePath
+      let analyser: CoverageAnalyser | undefined
+      try {
+        const source = resolveAbsolutePath(directory, 'source.ts')
+        const generated = resolveAbsolutePath(directory, 'generated.cjs')
+        const coverageDir = resolveAbsolutePath(directory, 'coverage')
+        const original = 'function original() { return 1 }'
+        const copies = [ 'function first() { return 1 }', 'function second() { return 1 }' ]
+        const map = new SourceMapGenerator()
+        for (const [ index, copy ] of copies.entries()) {
+          map.addMapping({
+            source: pathToFileURL(source).toString(),
+            original: { line: 1, column: original.indexOf('return') },
+            generated: { line: index + 1, column: copy.indexOf('return') },
+          })
+        }
+        const inlineMap = Buffer.from(map.toString()).toString('base64')
+        await writeFile(source, original)
+        await writeFile(generated, [ ...copies, calls, `//# sourceMappingURL=data:application/json;base64,${inlineMap}` ].join('\n'))
+        await exec(process.execPath, generated, { coverageDir })
+        const coverageFiles = await find('coverage-*.json', { directory: coverageDir })
+        analyser = await createAnalyser([ source ], [ ...coverageFiles.absolutePaths() ], 'none', getLogger())
+        const url = pathToFileURL(source).toString()
+        expect(analyser.hasMapping(url, 1, original.indexOf('return'))).toEqual(true)
+        expect(analyser.coverage(url, 1, original.indexOf('return'))).toEqual(count)
+        expect(analyser.coverage(url, 1, 0)).toEqual(0)
+      } finally {
+        analyser?.destroy()
+        await rmrf(directory)
+      }
+    })
+  }
+})
 
 describe('Runtime TypeScript declarations', () => {
   async function analyse(code: string, options: {
@@ -443,6 +482,35 @@ describe('Cov8 Plug', () => {
 
     afterEach(async () => {
       if (reportDir) await rmrf(reportDir)
+    })
+
+    it('should retain directory names that collide with Object prototype properties', async () => {
+      const directory = mkdtemp()
+      try {
+        const paths = [ join('constructor', '__proto__', 'one.cjs'), join('toString', 'two.cjs') ]
+        for (const relative of paths) {
+          const file = resolveAbsolutePath(directory, relative)
+          await mkdir(dirname(file), { recursive: true })
+          await writeFile(file, 'void 0;')
+        }
+        await find('**/*.cjs', { directory }).plug(new Coverage(coverageDataDir, {
+          reportDir,
+          minimumCoverage: 0,
+          optimalCoverage: 0,
+          optimalFileCoverage: 0,
+        }))
+        const jsonp = await readFile(resolveAbsolutePath(reportDir, 'report.js'), 'utf8')
+        const report = JSON.parse(jsonp.slice(jsonp.indexOf('(') + 1, -2))
+        expect(Object.keys(report.tree).sort()).toEqual([ 'constructor', 'toString' ])
+        expect(Object.hasOwn(report.tree.constructor, '__proto__')).toEqual(true)
+        expect(report.tree.constructor.__proto__['one.cjs']).toEqual(paths[0])
+        expect(report.tree.toString['two.cjs']).toEqual(paths[1])
+        expect(Object.keys(report.results).sort()).toEqual(paths)
+        expect(Object.hasOwn(Object.prototype, 'one.cjs')).toEqual(false)
+        expect(Object.hasOwn(Object, 'one.cjs')).toEqual(false)
+      } finally {
+        await rmrf(directory)
+      }
     })
 
     it('should pass with good coverage', async () => {
