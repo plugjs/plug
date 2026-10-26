@@ -139,7 +139,7 @@ export class Coverage implements Plug<Files | undefined> {
     const reportDir = context.resolve(this._options.reportDir)
     const builder = Files.builder(reportDir)
 
-    /* Thresholds to inject in the report */
+    /* Thresholds to include in the report */
     const date = new Date().toISOString()
     const thresholds = {
       minimumCoverage,
@@ -154,7 +154,7 @@ export class Coverage implements Plug<Files | undefined> {
     /* The HTML file rendering our report */
     await builder.write('index.html', html)
 
-    /* The JSONP file (for our HTML report) has relative files and a tree */
+    /* The HTML report data uses paths relative to the input file set and a directory tree */
     const results: Record<string, CoverageResult> = {}
     for (const [ rel, abs ] of files.pathMappings()) {
       results[rel] = report.results[abs]!

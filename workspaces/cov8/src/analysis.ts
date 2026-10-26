@@ -13,21 +13,21 @@ import type { RawSourceMap } from 'source-map'
  * V8 COVERAGE TYPES                                                          *
  * ========================================================================== */
 
-/** Coverage range */
+/** Coverage range. */
 export interface V8CoveredRange {
-  /** The offset in the script of the first character covered */
+  /** The inclusive start offset of the range, in UTF-16 code units. */
   startOffset: number,
-  /** The offset (exclusive) in the script of the last character covered */
+  /** The exclusive end offset of the range, in UTF-16 code units. */
   endOffset: number,
-  /** The number of times the specified offset was covered */
+  /** The execution count for this range. */
   count: number,
 }
 
-/** Coverage report per function as invoked by Node */
+/** Per-function coverage reported by V8. */
 export interface V8CoveredFunction {
-  /** The name of the function being covered */
+  /** The name of the function being covered. */
   functionName: string,
-  /** A flag indicating whether fine-grained (precise) coverage is available */
+  /** Whether the ranges include block-level coverage. */
   isBlockCoverage: boolean,
   /**
    * The ranges covered.
@@ -37,37 +37,33 @@ export interface V8CoveredFunction {
   ranges: V8CoveredRange[],
 }
 
-/** Coverage result for a particlar script as seen by Node */
+/** Coverage for a script as recorded by Node.js. */
 export interface V8CoverageResult {
-  /** The script ID, uniquely identifying the script within the Node process */
+  /** The script ID, uniquely identifying the script within the Node process. */
   scriptId: string,
-  /** The URL of the script (might not be unique, if the script is loaded multiple times) */
+  /** The URL of the script (might not be unique, if the script is loaded multiple times). */
   url: string,
-  /** Per-function report of coverage */
+  /** Per-function report of coverage. */
   functions: V8CoveredFunction[]
 }
 
-/** Cached source map for a coverage result */
+/** Cached source map for a coverage result. */
 export interface V8SourceMapCache {
-  /** The line lengths (sans EOL) in the transpiled code */
+  /** Line lengths in the generated code, as cached by Node.js. */
   lineLengths: number[],
-  /** The source map associated with the transpiled code */
+  /** The source map associated with the transpiled code. */
   data: RawSourceMap | null,
-  /** The url (if any) of the sourcemap, for resolving relative paths */
+  /** The source-map URL, or null for an inline source map. */
   url: string | null,
 }
 
-/** The RAW coverage data as emitted by Node, parsed from JSON */
+/** Coverage data emitted by Node.js and parsed from JSON. */
 export interface V8CoverageData {
-  /**
-   * Coverage results, per script.
-   *
-   * The first element in the array describes the coverage for the whole script.
-   */
+  /** Coverage results, with one entry per recorded script. */
   'result': V8CoverageResult[],
-  /** Timestamp when coverage was taken */
+  /** Timestamp when coverage was taken. */
   'timestamp'?: number,
-  /** Source maps caches keyed by `result[?].url` */
+  /** Source-map cache entries keyed by script URL. */
   'source-map-cache'?: Record<string, V8SourceMapCache>
 }
 
@@ -76,27 +72,32 @@ export interface V8CoverageData {
  * ========================================================================== */
 
 /**
- * The bias for source map analisys (defaults to `least_upper_bound`).
+ * Bias for mapping original source positions to generated code.
  *
- * We use `least_upper_bound` here, as it's the _opposite_ of the default
- * `greatest_lower_bound`, and we _reverse_ the lookup of the sourcemaps (from
- * source code to generated code).
+ * The Coverage plug defaults to `least_upper_bound`. Passing `undefined`
+ * directly to createAnalyser leaves the source-map library's default in effect.
+ * Use `none` to require exact original positions and sum the execution counts
+ * of all generated locations mapped to each position.
  */
 export type SourceMapBias = 'greatest_lower_bound' | 'least_upper_bound' | 'none' | undefined
 
-/** Interface providing coverage data */
+/** Interface providing coverage data. */
 export interface CoverageAnalyser {
-  /** Return the number of coverage passes for the given location */
+  /** Return the execution count for a source URL, one-based line, and zero-based column. */
   coverage(source: string, line: number, column: number): number
-  /** Whether this exact source location maps to generated code, even if unexecuted */
+  /**
+   * Whether a source URL has an exact mapping at the given one-based line and
+   * zero-based column, regardless of execution count. Direct script analysers
+   * treat every position in their source as mapped.
+   */
   hasMapping(source: string, line: number, column: number): boolean
-  /** Destroy this instance */
+  /** Release resources held by this analyser. */
   destroy(): void
 }
 
 /* ========================================================================== */
 
-/** Basic abstract class implementing the {@link CoverageAnalyser} class */
+/** Base class for coverage analysers with asynchronous initialization. */
 abstract class CoverageAnalyserImpl implements CoverageAnalyser {
   constructor(protected readonly _log: Logger) {}
 
@@ -109,11 +110,11 @@ abstract class CoverageAnalyserImpl implements CoverageAnalyser {
 
 /* ========================================================================== */
 
-/** Return coverage data from a V8 {@link V8CoverageResult} structure */
+/** Return coverage data from a V8 {@link V8CoverageResult} structure. */
 class CoverageResultAnalyser extends CoverageAnalyserImpl {
-  /** Number of passes at each character in the result */
+  /** Execution counts indexed by UTF-16 offset in the recorded script. */
   protected readonly _coverage: readonly (number | undefined)[]
-  /** Internal private field for init/_lineLengths getter */
+  /** Line lengths used to convert line and column positions to script offsets. */
   protected _lineLengths?: readonly number[]
 
   constructor(
@@ -150,7 +151,7 @@ class CoverageResultAnalyser extends CoverageAnalyserImpl {
     return source === this._result.url
   }
 
-  /** Return the number of coverage passes for the given location */
+  /** Return the execution count for a source URL, one-based line, and zero-based column. */
   coverage(source: string, line: number, column: number): number {
     assert(this._lineLengths, 'Analyser not initialized')
     assert(source === this._result.url, `Wrong source ${source} (should be ${this._result.url})`)
@@ -168,7 +169,7 @@ class CoverageResultAnalyser extends CoverageAnalyserImpl {
 
 /* ========================================================================== */
 
-/** Return coverage from a V8 {@link V8CoverageResult} with a sitemap */
+/** Map original source positions to coverage in a generated V8 script. */
 class CoverageSitemapAnalyser extends CoverageResultAnalyser {
   private _preciseMappings = new Map<string, { line: number, column: number }[]>()
   private _sourceMap?: SourceMapConsumer
@@ -264,7 +265,7 @@ function mapBias(bias?: 'greatest_lower_bound' | 'least_upper_bound'): number | 
   return undefined
 }
 
-/** Combine (add) all coverage data from all analysers */
+/** Combine (add) all coverage data from all analysers. */
 function combineCoverage(
     analysers: Set<CoverageAnalyser>,
     source: string,
@@ -282,7 +283,7 @@ function combineCoverage(
 
 /* ========================================================================== */
 
-/** Associate one or more {@link CoverageAnalyser} with different sources */
+/** Associate requested source URLs with analysers and their recorded source URLs. */
 export class SourcesCoverageAnalyser extends CoverageAnalyserImpl {
   private readonly _mappings = new Map<string, Map<CoverageAnalyserImpl, string>>()
   private readonly _analysers = new Set<CoverageAnalyserImpl>()
@@ -328,7 +329,7 @@ export class SourcesCoverageAnalyser extends CoverageAnalyserImpl {
   }
 }
 
-/** Combine multiple {@link CoverageAnalyser} instances together */
+/** Combine multiple {@link CoverageAnalyser} instances together. */
 export class CombiningCoverageAnalyser extends CoverageAnalyserImpl {
   private readonly _analysers = new Set<CoverageAnalyserImpl>()
 
@@ -365,7 +366,7 @@ export class CombiningCoverageAnalyser extends CoverageAnalyserImpl {
 
 /* ========================================================================== */
 
-/** Resolve file aliases without requiring every recorded source to still exist */
+/** Resolve file aliases without requiring every recorded source to still exist. */
 async function canonicalUrl(url: string): Promise<string> {
   if (! url.startsWith('file:')) return url
   try {
@@ -376,8 +377,8 @@ async function canonicalUrl(url: string): Promise<string> {
 }
 
 /**
- * Analyse coverage for the specified source files, using the data from the
- * specified coverage files and produce a {@link CoverageReport}.
+ * Create and initialize an analyser for the requested sources using the supplied
+ * V8 coverage files. The caller must destroy the analyser when finished.
  */
 export async function createAnalyser(
     sourceFiles: AbsolutePath[],
@@ -409,9 +410,9 @@ export async function createAnalyser(
   /* The coverage analyser combining all coverage files in the directory */
   const analyser = new CombiningCoverageAnalyser(log)
 
-  /* Resolve and walk the coverage directory, finding "coverage-*.json" files */
+  /* Read the coverage files supplied by the caller. */
   for await (const coverageFile of coverageFiles) {
-    /* The "SourceCoverageAnalyser" for this coverage file */
+    /* Collect source mappings for this coverage file. */
     const coverageFileAnalyser = new SourcesCoverageAnalyser(log, coverageFile)
 
     /* Parse our coverage file from JSON */
@@ -426,19 +427,14 @@ export async function createAnalyser(
       }
 
       /*
-        * Each coverage result (script) can be associated with a sitemap or
-        * not... Sometimes (as in with ts-node) the sitemap simply points to
-        * itself (same file), but embeds all the transformation information
-        * between the file on disk, and what's been used by Node.JS.
-        */
+       * A script may have a source map, including one that maps its URL back
+       * to itself after a loader has transformed the code.
+       */
       const mapping = coverage['source-map-cache']?.[result.url]
       if (mapping?.data) {
         log.debug('Found source mapping for', result.url, mapping.data)
 
-        /*
-          * If we have mapping, we want to see if any of the sourcemap's source
-          * files matches one of the sources we have to analyse.
-          */
+        /* Match source-map entries to requested sources, resolving aliases. */
         let sourceAnalyser: CoverageSitemapAnalyser | undefined
         for (const source of mapping.data.sources) {
           for (const match of await matches(source)) {
@@ -447,10 +443,7 @@ export async function createAnalyser(
           }
         }
 
-      /*
-        * If we have no source map for the file, but it matches one of the
-        * ones we have to analyse coverage for, we add that directly...
-        */
+      /* Without usable source-map data, match the recorded script directly. */
       } else {
         const aliases = await matches(result.url)
         if (aliases.size) {

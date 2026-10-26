@@ -32,81 +32,81 @@ import type { CoverageAnalyser } from './analysis.ts'
  * ========================================================================== */
 
 /**
- * A constant indicating that coverage was skipped (is irrelevant, for e.g.
- * comment or typescript definition nodes)
+ * Coverage is not applicable, for example to comments or erased TypeScript
+ * syntax. Skipped nodes do not contribute to coverage totals.
  */
 export const COVERAGE_SKIPPED = -2
 
 /**
- * A constant indicating that coverage was intentionally ignored because of a
- * specific "coverage ignore ..." comment
+ * Coverage was explicitly ignored by a `coverage ignore ...` or
+ * `istanbul ignore ...` comment.
  */
 export const COVERAGE_IGNORED = -1
 
-/** Node coverage summary */
+/** Node coverage summary. */
 export interface NodeCoverageResult {
-  /** Number of _covered_ nodes (good!) */
+  /** Number of nodes with a positive execution count. */
   coveredNodes: number,
-  /** Number of nodes with _no coverage_ (bad!) */
+  /** Number of nodes with a zero execution count. */
   missingNodes: number,
-  /** Number of nodes ignored by comments like `coverage ignore xxx` */
+  /** Number of nodes ignored by comments like `coverage ignore xxx`. */
   ignoredNodes: number,
-  /** Total number of nodes (sum of `covered`, `missing` and `ignored`) */
+  /** Sum of coveredNodes, missingNodes, and ignoredNodes; excludes skipped nodes. */
   totalNodes: number,
   /**
-   * Percentage of code coverage (covered as a % of total - ignored nodes)
+   * Node coverage percentage, rounded down: 100 * coveredNodes /
+   * (coveredNodes + missingNodes).
    *
-   * A `null` value for this field indicates that no coverage data was generated
-   * either because the source was all ignored or skipped (e.g. when using
-   * `coverage ignore file` or when covering a TS source only with types).
+   * Null when no nodes remain after excluding ignored and skipped nodes,
+   * including empty files, ignored files, and files containing only types.
    */
   coverage: number | null,
 }
 
-/** Per-file coverage result */
+/** Per-file coverage result. */
 export interface CoverageResult {
-  /** The actual code this coverage is for */
+  /** The original source text. */
   code: string,
   /**
-   * Per _character_ coverage report:
-   * - `-2`: coverage skipped (comments, typescript declarations, ...)
+   * Coverage for each UTF-16 code unit in the source, derived from AST node spans:
+   * - `-2`: coverage skipped (comments, erased TypeScript syntax, etc.)
    * - `-1`: coverage ignored (when using `coverage ignore xxx`)
-   * - `0`: no coverage collected for this character
-   * - _any number greater than zero_: number of times this was covered
+   * - `0`: uncovered code
+   * - positive values: execution counts assigned from the corresponding AST nodes
    */
   codeCoverage: number[],
-  /** One-based line numbers containing uncovered code, in ascending order */
+  /** Unique one-based line numbers containing any uncovered code, in ascending order. */
   uncoveredLines: number[],
-  /** Node coverage summary */
+  /** Node coverage summary. */
   nodeCoverage: NodeCoverageResult,
 }
 
-/** Aggregation of {@link CoverageResult} over all files */
+/** Aggregation of {@link CoverageResult} over all files. */
 export type CoverageResults = Record<AbsolutePath, CoverageResult>
 
-/** Our coverage report, per file */
+/** Per-file results and the aggregate node coverage summary. */
 export interface CoverageReport {
   results: CoverageResults,
   nodes: NodeCoverageResult,
 }
 
 /* ========================================================================== *
- * EXPORTED CONSTANTS AND TYPES                                               *
+ * IGNORE DIRECTIVES                                                          *
  * ========================================================================== */
 
-/** Tokens for `coverage ignore xxx`, this should be self-explanatory */
+/** Supported targets for coverage-ignore comments. */
 type IgnoreCoverage = 'test' | 'if' | 'else' | 'try' | 'catch' | 'finally' | 'next' | 'prev' | 'file'
 
-/** Regular expression matching strings like `coverage ignore xxx` */
+/** Match a leading `coverage ignore` or `istanbul ignore` directive in a comment. */
 const ignoreRegexp = /^\s+(coverage|istanbul)\s+ignore\s+(test|if|else|try|catch|finally|next|prev|file)(\s|$)/g
 
 /* ========================================================================== *
- * EXPORTED CONSTANTS AND TYPES                                               *
+ * REPORT GENERATION                                                          *
  * ========================================================================== */
 
 /**
- * Analyse coverage for the specified source files, using the data from the
- * specified coverage files and produce a {@link CoverageReport}.
+ * Analyse the original source files with the supplied coverage analyser and
+ * return character-level coverage and AST node summaries.
  */
 export async function coverageReport(
     analyser: CoverageAnalyser,
@@ -124,13 +124,11 @@ export async function coverageReport(
   }
 
   /*
-    * Here comes the interesting part: we need to parse the original soruces,
-    * walk their ASTs and see whether each node has been covered or not.
-    * We look up every node's position, (for sitemaps, map this to the position
-    * in the resulting file) then look at the coverage.
-    */
+   * Parse each original source and query coverage at each counted node's start.
+   * The analyser handles any mapping from original to generated positions.
+   */
   for (const file of sourceFiles) {
-    /* Read up the file and parse the tree in the most liberal way possible */
+    /* Read the source and parse it with permissive JavaScript and TypeScript options */
     const url = pathToFileURL(file).toString()
     const code = await readFile(file, 'utf-8')
 
@@ -240,16 +238,16 @@ export async function coverageReport(
 
     /* Visit a node and evaluate its coverage */
     const visitNode = (node: Node, depth: number): void => {
-      /* See what we're doing here... */
+      /* Trace the node type and source position */
       log.trace('-'.padStart((depth * 2) + 1, ' '), node.type, `${node.loc?.start.line}:${node.loc?.start.column}`)
 
       /* Root nodes (file and program) simply go to their children */
-      // coverage ignore if / we start visiting at file.program.body!
+      // coverage ignore if / traversal starts with the children of tree.program
       if (isFile(node)) return visitChildren(node, depth)
-      // coverage ignore if / we start visiting at file.program.body!
+      // coverage ignore if / traversal starts with the children of tree.program
       if (isProgram(node)) return visitChildren(node, depth)
 
-      /* Figure out if we have some "coverage ignore xxxx" in comments */
+      /* Read ignore directives from comments attached to this node */
       const ignores: IgnoreCoverage[] = []
       for (const comment of node.leadingComments || []) {
         for (const match of comment.value.matchAll(ignoreRegexp)) {
@@ -262,7 +260,7 @@ export async function coverageReport(
         }
       }
 
-      /* Skip this node if we have a "coverage ignore next" comment */
+      /* Ignore this subtree when a next or prev directive applies */
       if (ignores.includes('next')) return setCodeCoverage(node, COVERAGE_IGNORED, true)
       if (ignores.includes('prev')) return setCodeCoverage(node, COVERAGE_IGNORED, true)
 
@@ -292,15 +290,15 @@ export async function coverageReport(
         return
       }
 
-      /* Typescript nodes are skipped, but children aren't in some cases */
+      /* Skip TypeScript syntax while visiting runtime children where applicable */
       if (isTypeScript(node) && ! isTSEnumMember(node)) {
-        /* Functions/constructors overloads */
+        /* Method and constructor overload signatures */
         if (isTSDeclareMethod(node)) return setCodeCoverage(node, COVERAGE_SKIPPED, true)
 
-        /* References to imported types */
+        /* Type references and their type arguments */
         if (isTSTypeReference(node)) return setCodeCoverage(node, COVERAGE_SKIPPED, true)
 
-        /* Generic typescript declarations */
+        /* Skip remaining TypeScript declarations */
         if (isDeclaration(node)) return setCodeCoverage(node, COVERAGE_SKIPPED, true)
 
         /* For things like "X as Y": the "as" node wraps the expression */
@@ -308,7 +306,7 @@ export async function coverageReport(
         return visitChildren(node, depth) // visit all children normally...
       }
 
-      // Typescript "import type" or "export type" get skipped all together
+      // Skip declarations marked as "import type" or "export type".
       if (isExportDeclaration(node) && (node.exportKind === 'type')) {
         return setCodeCoverage(node, COVERAGE_SKIPPED, true)
       }
@@ -355,7 +353,7 @@ export async function coverageReport(
         return
       }
 
-      /* All other nodes simply gets visited recursively*/
+      /* Visit the children of all other nodes recursively*/
       visitChildren(node, depth)
     }
 
@@ -364,12 +362,12 @@ export async function coverageReport(
     setCodeCoverage(tree.program.directives, 0, true) // directives must be covered
     setCodeCoverage(tree.program.body, 0, true) // program body must be covered
 
-    /* Cleanup our node statistics */
+    /* Reset the counters accumulated while initializing character coverage. */
     nodeCoverage.coveredNodes = 0
     nodeCoverage.missingNodes = 0
     nodeCoverage.ignoredNodes = 0
 
-    /* Check if one of the first comments is "coverage ignore file" */
+    /* Check leading comments on the first directive or body statement for a file ignore. */
     let ignoreFileCoverage = false
     const firstNode = tree.program.directives[0] ?? tree.program.body[0]
     for (const comment of firstNode?.leadingComments || []) {
@@ -391,10 +389,8 @@ export async function coverageReport(
     }
 
     /*
-     * As comments are mixed within codes (and do not get visited in the
-     * tree) we force-skip them _AFTER_ the tree is visited, otherwise (for
-     * example) a comment within a block will be shown with the coverage of
-     * the block itself.
+     * Comments are not visited through VISITOR_KEYS. Mark them as skipped after
+     * traversing the AST so they do not retain coverage from enclosing nodes.
      */
     setCodeCoverage(tree.comments, COVERAGE_SKIPPED, false)
 
@@ -431,7 +427,7 @@ function updateNodeCoverageResult(result: NodeCoverageResult): void {
   const { coveredNodes, missingNodes, ignoredNodes } = result
   const totalNodes = result.totalNodes = coveredNodes + missingNodes + ignoredNodes
   if (totalNodes === 0) {
-    result.coverage = null // No "total" nodes, means all ignored
+    result.coverage = null // No counted nodes: the source is empty or entirely skipped.
   } else if (totalNodes === ignoredNodes) {
     result.coverage = null // All nodes were ignored (e.g. coverage ignore file)
   } else {
