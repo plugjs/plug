@@ -183,12 +183,13 @@ function setDiff<T>(
       values.push(diff)
       extra.delete(act)
       missing.delete(exp)
+      break
     }
   }
 
   // compare sets as "objects" (for extra properties)
   const result = objectDiff(actual, expected, remarks)
-  const diff = !! (missing.size || extra.size || result.diff)
+  const diff = (actual.size !== expected.size) || !! (missing.size || extra.size || result.diff)
 
   // inject all extra and missing properties
   extra.forEach((value) => values.push({ diff: true, extra: value }))

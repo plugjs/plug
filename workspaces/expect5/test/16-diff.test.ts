@@ -1080,6 +1080,49 @@ describe('Differences', () => {
       })
     })
 
+    it('should diff different-sized sets containing deeply equal objects', () => {
+      const actual = {}
+      const first = {}
+      const second = {}
+      const smaller = new Set([ actual ])
+      const larger = new Set([ first, second ])
+
+      deepEqual(diff(smaller, larger), {
+        diff: true,
+        value: smaller,
+        error: 'Expected [Set (1)] to have size 2 (size=1)',
+        values: [
+          { diff: false, value: actual },
+          { diff: true, missing: second },
+        ],
+      })
+      deepEqual(diff(larger, smaller), {
+        diff: true,
+        value: larger,
+        error: 'Expected [Set (2)] to have size 1 (size=2)',
+        values: [
+          { diff: false, value: first },
+          { diff: true, extra: second },
+        ],
+      })
+    })
+
+    it('should match deeply equal set entries one-to-one', () => {
+      const first = {}
+      const second = {}
+      const actual = new Set([ first, second ])
+      const expected = new Set([ {}, {} ])
+
+      deepEqual(diff(actual, expected), {
+        diff: false,
+        value: actual,
+        values: [
+          { diff: false, value: first },
+          { diff: false, value: second },
+        ],
+      })
+    })
+
     it('should diff sets with extra properties', () => {
       const act = Object.assign(new Set([ 1, true, 'foo', { hello: 'world' } ]), { foo: 'bar' })
       const exp = Object.assign(new Set([ 1, true, 'foo', { hello: 'world' } ]), { foo: 'baz' })
