@@ -4,6 +4,7 @@ import { parse } from '@babel/parser'
 import {
   isDeclaration,
   isExportDeclaration,
+  isExportNamedDeclaration,
   isFile,
   isIfStatement,
   isImportDeclaration,
@@ -265,6 +266,12 @@ export async function coverageReport(
       if (ignores.includes('next')) return setCodeCoverage(node, COVERAGE_IGNORED, true)
       if (ignores.includes('prev')) return setCodeCoverage(node, COVERAGE_IGNORED, true)
 
+      /* An enum's export wrapper must not count when the enum itself is erased */
+      if (isExportNamedDeclaration(node) && isTSEnumDeclaration(node.declaration)) {
+        setCodeCoverage(node, COVERAGE_SKIPPED, false)
+        return visitNode(node.declaration, depth + 1)
+      }
+
       /* Namespace syntax is skipped, but non-ambient bodies execute */
       if (isTSModuleDeclaration(node)) {
         setCodeCoverage(node, COVERAGE_SKIPPED, true)
@@ -276,6 +283,11 @@ export async function coverageReport(
       if (isTSEnumDeclaration(node)) {
         setCodeCoverage(node, COVERAGE_SKIPPED, true)
         if (node.declare) return
+        /* Const enums can be erased: only count them when members have generated code */
+        if (node.const && ! node.body.members.some((member) => {
+          const start = member.loc?.start
+          return start && analyser.hasMapping(url, start.line, start.column)
+        })) return
         for (const member of node.body.members) visitNode(member, depth + 1)
         return
       }

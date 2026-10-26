@@ -1,9 +1,10 @@
-import { realpath, writeFile } from 'node:fs/promises'
+import { mkdir, realpath, symlink, unlink, writeFile } from 'node:fs/promises'
+import { pathToFileURL } from 'node:url'
 
 import { BuildFailure, exec, find, merge, mkdtemp, rmrf } from '@plugjs/plug'
 import { getLogger } from '@plugjs/plug/logging'
 import { resolveAbsolutePath } from '@plugjs/plug/paths'
-import { ModuleKind, ScriptTarget, transpileModule } from 'typescript'
+import { createProgram, ModuleKind, ScriptTarget, transpileModule } from 'typescript'
 
 import { createAnalyser } from '../src/analysis.ts'
 import { Coverage } from '../src/coverage.ts'
@@ -14,7 +15,10 @@ import type { CoverageAnalyser } from '../src/analysis.ts'
 import type { CoverageResult } from '../src/report.ts'
 
 describe('Runtime TypeScript declarations', () => {
-  async function analyse(code: string): Promise<CoverageResult> {
+  async function analyse(code: string, options: {
+    preserveConstEnums?: boolean,
+    symlinkSource?: boolean,
+  } = {}): Promise<CoverageResult> {
     const directory = await realpath(mkdtemp()) as AbsolutePath
     let analyser: CoverageAnalyser | undefined
     try {
@@ -22,21 +26,34 @@ describe('Runtime TypeScript declarations', () => {
       const script = resolveAbsolutePath(directory, 'source.cjs')
       const coverageDir = resolveAbsolutePath(directory, 'coverage')
       await writeFile(file, code)
-      const { outputText } = transpileModule(code, {
-        fileName: file,
-        compilerOptions: {
-          module: ModuleKind.CommonJS,
-          target: ScriptTarget.ES2022,
-          inlineSourceMap: true,
-          inlineSources: true,
-        },
-      })
+      const compilerOptions = {
+        module: ModuleKind.CommonJS,
+        target: ScriptTarget.ES2022,
+        inlineSourceMap: true,
+        inlineSources: true,
+      }
+      let outputText: string
+      if (options.preserveConstEnums === undefined) {
+        outputText = transpileModule(code, { fileName: file, compilerOptions }).outputText
+      } else {
+        outputText = ''
+        createProgram([ file ], {
+          ...compilerOptions,
+          preserveConstEnums: options.preserveConstEnums,
+        }).emit(undefined, (name, contents) => {
+          if (name.endsWith('.js')) outputText = contents
+        })
+      }
       await writeFile(script, outputText)
       await exec(process.execPath, script, { coverageDir })
       const coverageFiles = await find('coverage-*.json', { directory: coverageDir })
-      analyser = await createAnalyser([ file ], [ ...coverageFiles.absolutePaths() ], 'least_upper_bound', getLogger())
-      const report = await coverageReport(analyser, [ file ], getLogger())
-      return report.results[file]!
+      const selected = options.symlinkSource ? resolveAbsolutePath(directory, 'linked.ts') : file
+      if (options.symlinkSource) await symlink(file, selected)
+      const sources = [ ...new Set([ file, selected ]) ]
+      analyser = await createAnalyser(sources, [ ...coverageFiles.absolutePaths() ], 'least_upper_bound', getLogger())
+      const report = await coverageReport(analyser, sources, getLogger())
+      expect(report.results[selected]).toEqual(report.results[file])
+      return report.results[selected]!
     } finally {
       analyser?.destroy()
       await rmrf(directory)
@@ -117,6 +134,152 @@ describe('Runtime TypeScript declarations', () => {
     expect(result.nodeCoverage.coverage).toEqual(null)
     expect(result.uncoveredLines).toEqual([])
   })
+
+  it('should skip const enums erased by the compiler', async () => {
+    for (const prefix of [ '', 'export ' ]) {
+      const result = await analyse(`${prefix}const enum Example { A, B }`, { preserveConstEnums: false })
+      expect(result.nodeCoverage.totalNodes).toEqual(0)
+      expect(result.nodeCoverage.coverage).toEqual(null)
+      expect(result.uncoveredLines).toEqual([])
+    }
+  })
+
+  it('should not borrow mappings from code after an erased const enum', async () => {
+    const result = await analyse([
+      'const enum Example {',
+      '  A,',
+      '  B,',
+      '}',
+      'function missed() { return 1 }',
+    ].join('\n'), { preserveConstEnums: false })
+    expect(result.uncoveredLines).toEqual([ 5 ])
+  })
+
+  it('should cover const enums preserved by the compiler or transpiler', async () => {
+    for (const options of [ {}, { preserveConstEnums: true } ]) {
+      const result = await analyse('export const enum Example { A, B }', options)
+      expect(result.nodeCoverage.coveredNodes).toEqual(2)
+      expect(result.nodeCoverage.coverage).toEqual(100)
+      expect(result.uncoveredLines).toEqual([])
+    }
+  })
+
+  it('should report preserved const enums as uncovered when they do not execute', async () => {
+    const result = await analyse([
+      'function missed() {',
+      '  const enum Example {',
+      '    A,',
+      '    B,',
+      '  }',
+      '}',
+    ].join('\n'), { preserveConstEnums: true })
+    expect(result.uncoveredLines.includes(3)).toEqual(true)
+    expect(result.uncoveredLines.includes(4)).toEqual(true)
+  })
+
+  it('should resolve source-map coverage through symlink aliases without duplicating counts', async () => {
+    const result = await analyse('const enum Example { A, B }', { symlinkSource: true })
+    expect(result.nodeCoverage.coverage).toEqual(100)
+    expect(result.uncoveredLines).toEqual([])
+    expect(Math.max(...result.codeCoverage)).toEqual(1)
+  })
+})
+
+describe('Coverage file matching', () => {
+  it('should distinguish unexecuted direct code from a source that was never loaded', async () => {
+    const directory = await realpath(mkdtemp()) as AbsolutePath
+    let analyser: CoverageAnalyser | undefined
+    try {
+      const loaded = resolveAbsolutePath(directory, 'loaded.cjs')
+      const unloaded = resolveAbsolutePath(directory, 'unloaded.cjs')
+      const coverageDir = resolveAbsolutePath(directory, 'coverage')
+      await writeFile(loaded, 'Math.abs(-1);\nfunction missed() { return 1 }\n')
+      await writeFile(unloaded, 'Math.abs(-2);\n')
+      await exec(process.execPath, loaded, { coverageDir })
+      const coverageFiles = await find('coverage-*.json', { directory: coverageDir })
+      analyser = await createAnalyser([ loaded, unloaded ], [ ...coverageFiles.absolutePaths() ], 'none', getLogger())
+      const loadedUrl = pathToFileURL(loaded).toString()
+      const unloadedUrl = pathToFileURL(unloaded).toString()
+
+      expect(analyser.hasMapping(loadedUrl, 1, 0)).toEqual(true)
+      expect(analyser.coverage(loadedUrl, 1, 0)).toEqual(1)
+      expect(analyser.hasMapping(loadedUrl, 2, 0)).toEqual(true)
+      expect(analyser.coverage(loadedUrl, 2, 0)).toEqual(0)
+      expect(analyser.hasMapping(unloadedUrl, 1, 0)).toEqual(false)
+      expect(analyser.coverage(unloadedUrl, 1, 0)).toEqual(0)
+    } finally {
+      analyser?.destroy()
+      await rmrf(directory)
+    }
+  })
+
+  it('should retain requested coverage when an unrelated recorded script has been deleted', async () => {
+    const directory = await realpath(mkdtemp()) as AbsolutePath
+    let analyser: CoverageAnalyser | undefined
+    try {
+      const file = resolveAbsolutePath(directory, 'source.cjs')
+      const temporary = resolveAbsolutePath(directory, 'temporary.cjs')
+      const coverageDir = resolveAbsolutePath(directory, 'coverage')
+      await writeFile(file, 'require("./temporary.cjs");\nMath.abs(-1);\n')
+      await writeFile(temporary, 'Math.abs(-2);\n')
+      await exec(process.execPath, file, { coverageDir })
+      await unlink(temporary)
+      const coverageFiles = await find('coverage-*.json', { directory: coverageDir })
+      analyser = await createAnalyser([ file ], [ ...coverageFiles.absolutePaths() ], 'none', getLogger())
+      const report = await coverageReport(analyser, [ file ], getLogger())
+      expect(report.results[file]!.nodeCoverage.coverage).toEqual(100)
+      expect(report.results[file]!.uncoveredLines).toEqual([])
+    } finally {
+      analyser?.destroy()
+      await rmrf(directory)
+    }
+  })
+
+  async function analyse(code: string, alias?: 'file' | 'directory'): Promise<CoverageResult> {
+    const directory = await realpath(mkdtemp()) as AbsolutePath
+    let analyser: CoverageAnalyser | undefined
+    try {
+      const sourceDir = resolveAbsolutePath(directory, 'sources')
+      await mkdir(sourceDir)
+      const file = resolveAbsolutePath(sourceDir, 'source.cjs')
+      await writeFile(file, code)
+      let selected = file
+      if (alias === 'file') {
+        selected = resolveAbsolutePath(directory, 'linked.cjs')
+        await symlink(file, selected)
+      } else if (alias === 'directory') {
+        const linkedDir = resolveAbsolutePath(directory, 'linked')
+        await symlink(sourceDir, linkedDir, 'dir')
+        selected = resolveAbsolutePath(linkedDir, 'source.cjs')
+      }
+      const coverageDir = resolveAbsolutePath(directory, 'coverage')
+      await exec(process.execPath, selected, { coverageDir })
+      const coverageFiles = await find('coverage-*.json', { directory: coverageDir })
+      const sources = [ ...new Set([ file, selected ]) ]
+      analyser = await createAnalyser(sources, [ ...coverageFiles.absolutePaths() ], 'least_upper_bound', getLogger())
+      const report = await coverageReport(analyser, sources, getLogger())
+      expect(report.results[selected]).toEqual(report.results[file])
+      return report.results[selected]!
+    } finally {
+      analyser?.destroy()
+      await rmrf(directory)
+    }
+  }
+
+  it('should retain direct coverage when the source map is missing', async () => {
+    const result = await analyse('Math.abs(-1);\n//# sourceMappingURL=missing.map\n')
+    expect(result.nodeCoverage.coverage).toEqual(100)
+    expect(result.uncoveredLines).toEqual([])
+  })
+
+  for (const alias of [ 'file', 'directory' ] as const) {
+    it(`should match coverage through a symlinked ${alias}`, async () => {
+      const result = await analyse('Math.abs(-1);\n', alias)
+      expect(result.nodeCoverage.coverage).toEqual(100)
+      expect(result.uncoveredLines).toEqual([])
+      expect(Math.max(...result.codeCoverage)).toEqual(1)
+    })
+  }
 })
 
 describe('Uncovered lines', () => {
@@ -125,7 +288,7 @@ describe('Uncovered lines', () => {
     try {
       const file = resolveAbsolutePath(directory, 'source.ts')
       await writeFile(file, code)
-      const report = await coverageReport({ coverage, destroy() {} }, [ file ], getLogger())
+      const report = await coverageReport({ coverage, hasMapping: () => true, destroy() {} }, [ file ], getLogger())
       return report.results[file]!.uncoveredLines
     } finally {
       await rmrf(directory)

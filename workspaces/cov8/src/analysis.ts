@@ -1,7 +1,7 @@
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { assert } from '@plugjs/plug/asserts'
-import { readFile } from '@plugjs/plug/fs'
+import { readFile, realpath } from '@plugjs/plug/fs'
 import { $gry, $p } from '@plugjs/plug/logging'
 import { SourceMapConsumer } from 'source-map'
 
@@ -88,6 +88,8 @@ export type SourceMapBias = 'greatest_lower_bound' | 'least_upper_bound' | 'none
 export interface CoverageAnalyser {
   /** Return the number of coverage passes for the given location */
   coverage(source: string, line: number, column: number): number
+  /** Whether this exact source location maps to generated code, even if unexecuted */
+  hasMapping(source: string, line: number, column: number): boolean
   /** Destroy this instance */
   destroy(): void
 }
@@ -101,6 +103,7 @@ abstract class CoverageAnalyserImpl implements CoverageAnalyser {
   abstract init(): Promise<this>
   abstract destroy(): void
   abstract coverage(source: string, line: number, column: number): number
+  abstract hasMapping(source: string, line: number, column: number): boolean
 }
 
 
@@ -141,6 +144,10 @@ class CoverageResultAnalyser extends CoverageAnalyserImpl {
 
   destroy(): void {
     // Nothing to do
+  }
+
+  hasMapping(source: string, _line: number, _column: number): boolean {
+    return source === this._result.url
   }
 
   /** Return the number of coverage passes for the given location */
@@ -185,19 +192,21 @@ class CoverageSitemapAnalyser extends CoverageResultAnalyser {
     assert(sourceMap, 'Missing source map data from cache')
     this._sourceMap = await new SourceMapConsumer(sourceMap)
 
-    if (this._sourceMapBias === 'none') {
-      this._sourceMap.eachMapping((m) => {
-        const location = { line: m.generatedLine, column: m.generatedColumn }
-        const key = this._key(m.source, m.originalLine, m.originalColumn)
-        this._preciseMappings.set(key, location)
-      })
-    }
+    this._sourceMap.eachMapping((m) => {
+      const location = { line: m.generatedLine, column: m.generatedColumn }
+      const key = this._key(m.source, m.originalLine, m.originalColumn)
+      this._preciseMappings.set(key, location)
+    })
 
     return this
   }
 
   override destroy(): void {
     this._sourceMap?.destroy()
+  }
+
+  override hasMapping(source: string, line: number, column: number): boolean {
+    return this._preciseMappings.has(this._key(source, line, column))
   }
 
   override coverage(source: string, line: number, column: number): number {
@@ -251,14 +260,12 @@ function mapBias(bias?: 'greatest_lower_bound' | 'least_upper_bound'): number | 
 
 /** Combine (add) all coverage data from all analysers */
 function combineCoverage(
-    analysers: Set<CoverageAnalyser> | undefined,
+    analysers: Set<CoverageAnalyser>,
     source: string,
     line: number,
     column: number,
 ): number {
   let coverage = 0
-
-  if (! analysers) return coverage
 
   for (const analyser of analysers) {
     coverage += analyser.coverage(source, line, column)
@@ -271,7 +278,8 @@ function combineCoverage(
 
 /** Associate one or more {@link CoverageAnalyser} with different sources */
 export class SourcesCoverageAnalyser extends CoverageAnalyserImpl {
-  private readonly _mappings = new Map<string, Set<CoverageAnalyserImpl>>()
+  private readonly _mappings = new Map<string, Map<CoverageAnalyserImpl, string>>()
+  private readonly _analysers = new Set<CoverageAnalyserImpl>()
 
   constructor(log: Logger, private readonly _filename: AbsolutePath) {
     super(log)
@@ -281,33 +289,36 @@ export class SourcesCoverageAnalyser extends CoverageAnalyserImpl {
     return this._mappings.size > 0
   }
 
-  add(source: string, analyser: CoverageAnalyserImpl): void {
-    const analysers = this._mappings.get(source) || new Set()
-    analysers.add(analyser)
+  add(source: string, analyser: CoverageAnalyserImpl, mappedSource = source): void {
+    const analysers = this._mappings.get(source) || new Map()
+    analysers.set(analyser, mappedSource)
     this._mappings.set(source, analysers)
+    this._analysers.add(analyser)
   }
 
   async init(): Promise<this> {
     this._log.debug('SourcesCoverageAnalyser', $p(this._filename), $gry(`(${this._mappings.size} mappings)`))
-    for (const analysers of this._mappings.values()) {
-      for (const analyser of analysers) {
-        await analyser.init()
-      }
-    }
+    for (const analyser of this._analysers) await analyser.init()
     return this
   }
 
   destroy(): void {
-    for (const analysers of this._mappings.values()) {
-      for (const analyser of analysers) {
-        analyser.destroy()
-      }
-    }
+    for (const analyser of this._analysers) analyser.destroy()
   }
 
   coverage(source: string, line: number, column: number): number {
-    const analysers = this._mappings.get(source)
-    return combineCoverage(analysers, source, line, column)
+    let coverage = 0
+    for (const [ analyser, mappedSource ] of this._mappings.get(source) || []) {
+      coverage += analyser.coverage(mappedSource, line, column)
+    }
+    return coverage
+  }
+
+  hasMapping(source: string, line: number, column: number): boolean {
+    for (const [ analyser, mappedSource ] of this._mappings.get(source) || []) {
+      if (analyser.hasMapping(mappedSource, line, column)) return true
+    }
+    return false
   }
 }
 
@@ -337,9 +348,26 @@ export class CombiningCoverageAnalyser extends CoverageAnalyserImpl {
   coverage(source: string, line: number, column: number): number {
     return combineCoverage(this._analysers, source, line, column)
   }
+
+  hasMapping(source: string, line: number, column: number): boolean {
+    for (const analyser of this._analysers) {
+      if (analyser.hasMapping(source, line, column)) return true
+    }
+    return false
+  }
 }
 
 /* ========================================================================== */
+
+/** Resolve file aliases without requiring every recorded source to still exist */
+async function canonicalUrl(url: string): Promise<string> {
+  if (! url.startsWith('file:')) return url
+  try {
+    return pathToFileURL(await realpath(fileURLToPath(url))).toString()
+  } catch {
+    return url
+  }
+}
 
 /**
  * Analyse coverage for the specified source files, using the data from the
@@ -352,7 +380,25 @@ export async function createAnalyser(
     log: Logger,
 ): Promise<CoverageAnalyser> {
   /* Internally V8 coverage uses URLs for everything */
-  const urls = sourceFiles.map((path) => pathToFileURL(path).toString())
+  const sources = new Map<string, Set<string>>()
+  const canonicalUrls = new Map<string, string>()
+  for (const path of sourceFiles) {
+    const url = pathToFileURL(path).toString()
+    const canonical = await canonicalUrl(url)
+    canonicalUrls.set(url, canonical)
+    const aliases = sources.get(canonical) || new Set<string>()
+    aliases.add(url)
+    sources.set(canonical, aliases)
+  }
+
+  const matches = async (url: string): Promise<Set<string>> => {
+    let canonical = canonicalUrls.get(url)
+    if (! canonical) {
+      canonical = await canonicalUrl(url)
+      canonicalUrls.set(url, canonical)
+    }
+    return sources.get(canonical) || new Set()
+  }
 
   /* The coverage analyser combining all coverage files in the directory */
   const analyser = new CombiningCoverageAnalyser(log)
@@ -380,29 +426,31 @@ export async function createAnalyser(
         * between the file on disk, and what's been used by Node.JS.
         */
       const mapping = coverage['source-map-cache']?.[result.url]
-      if (mapping) {
+      if (mapping?.data) {
         log.debug('Found source mapping for', result.url, mapping.data)
 
         /*
           * If we have mapping, we want to see if any of the sourcemap's source
           * files matches one of the sources we have to analyse.
           */
-        const matches = urls.filter((url) => mapping.data?.sources.includes(url))
-
-        /* If we map any file, we associate it with our source map analyser */
-        if (matches.length) {
-          log.debug('Found source mapping matches', matches)
-
-          const sourceAnalyser = new CoverageSitemapAnalyser(log, result, mapping, sourceMapBias)
-          for (const match of matches) coverageFileAnalyser.add(match, sourceAnalyser)
+        let sourceAnalyser: CoverageSitemapAnalyser | undefined
+        for (const source of mapping.data.sources) {
+          for (const match of await matches(source)) {
+            sourceAnalyser ||= new CoverageSitemapAnalyser(log, result, mapping, sourceMapBias)
+            coverageFileAnalyser.add(match, sourceAnalyser, source)
+          }
         }
 
       /*
         * If we have no source map for the file, but it matches one of the
         * ones we have to analyse coverage for, we add that directly...
         */
-      } else if (urls.includes(result.url)) {
-        coverageFileAnalyser.add(result.url, new CoverageResultAnalyser(log, result))
+      } else {
+        const aliases = await matches(result.url)
+        if (aliases.size) {
+          const sourceAnalyser = new CoverageResultAnalyser(log, result)
+          for (const alias of aliases) coverageFileAnalyser.add(alias, sourceAnalyser, result.url)
+        }
       }
     }
 
