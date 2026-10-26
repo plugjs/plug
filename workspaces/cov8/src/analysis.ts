@@ -170,7 +170,7 @@ class CoverageResultAnalyser extends CoverageAnalyserImpl {
 
 /** Return coverage from a V8 {@link V8CoverageResult} with a sitemap */
 class CoverageSitemapAnalyser extends CoverageResultAnalyser {
-  private _preciseMappings = new Map<string, { line: number, column: number }>()
+  private _preciseMappings = new Map<string, { line: number, column: number }[]>()
   private _sourceMap?: SourceMapConsumer
 
   constructor(
@@ -195,7 +195,9 @@ class CoverageSitemapAnalyser extends CoverageResultAnalyser {
     this._sourceMap.eachMapping((m) => {
       const location = { line: m.generatedLine, column: m.generatedColumn }
       const key = this._key(m.source, m.originalLine, m.originalColumn)
-      this._preciseMappings.set(key, location)
+      const locations = this._preciseMappings.get(key) || []
+      locations.push(location)
+      this._preciseMappings.set(key, locations)
     })
 
     return this
@@ -214,12 +216,16 @@ class CoverageSitemapAnalyser extends CoverageResultAnalyser {
 
     if (this._sourceMapBias === 'none') {
       const key = this._key(source, line, column)
-      const location = this._preciseMappings.get(key)
-      if (! location) {
+      const locations = this._preciseMappings.get(key)
+      if (! locations) {
         this._log.debug(`No precise mapping for ${source}:${line}:${column}`)
         return 0
       } else {
-        return super.coverage(this._result.url, location.line, location.column)
+        let coverage = 0
+        for (const location of locations) {
+          coverage += super.coverage(this._result.url, location.line, location.column)
+        }
+        return coverage
       }
     }
 
