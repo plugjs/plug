@@ -359,7 +359,8 @@ export async function coverageReport(
 
     /* Check if one of the first comments is "coverage ignore file" */
     let ignoreFileCoverage = false
-    for (const comment of tree.program.body[0]?.leadingComments || []) {
+    const firstNode = tree.program.directives[0] ?? tree.program.body[0]
+    for (const comment of firstNode?.leadingComments || []) {
       for (const match of comment.value.matchAll(ignoreRegexp)) {
         if (match[2] === 'file') {
           ignoreFileCoverage = true

@@ -154,6 +154,33 @@ describe('Uncovered lines', () => {
     expect(await uncoveredLines('', () => 0)).toEqual([])
   })
 
+  it('should honor file-ignore comments before directives', async () => {
+    for (const prefix of [ 'coverage', 'istanbul' ]) {
+      for (const body of [
+        '"use strict";\nfoo();\n',
+        '"use strict";\n',
+        '"use strict";\n"another directive";\nfoo();\n',
+      ]) {
+        const code = `/* ${prefix} ignore file */\n${body}`
+        const lines = await uncoveredLines(code, () => {
+          throw new Error('Ignored files must not query coverage')
+        })
+        expect(lines).toEqual([])
+      }
+    }
+  })
+
+  it('should measure directives without a file-ignore comment', async () => {
+    const code = '"use strict";\nfoo();\n'
+    expect(await uncoveredLines(code, () => 0)).toEqual([ 1, 2 ])
+    expect(await uncoveredLines(code, () => 1)).toEqual([])
+  })
+
+  it('should not treat comments after the first directive as file ignores', async () => {
+    const code = '"use strict";\n/* coverage ignore file */\nfoo();\n'
+    expect(await uncoveredLines(code, () => 0)).toEqual([ 1, 3 ])
+  })
+
   it('should handle CRLF, blank lines, and a trailing newline', async () => {
     const code = 'foo(); bar();\r\n\r\n// comment\r\nbaz();\r\n'
     expect(await uncoveredLines(code, () => 0)).toEqual([ 1, 4 ])
