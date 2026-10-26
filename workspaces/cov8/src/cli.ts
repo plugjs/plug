@@ -157,7 +157,7 @@ main(import.meta.url, async (args): Promise<void> => {
         optimalCoverage = value
         break
       case 'lines':
-        reportUncoveredLines = true
+        reportUncoveredLines = value
         break
       case 'help':
         return help()
