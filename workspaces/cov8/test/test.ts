@@ -1,4 +1,5 @@
 import { mkdir, realpath, symlink, unlink, writeFile } from 'node:fs/promises'
+import { mock } from 'node:test'
 import { pathToFileURL } from 'node:url'
 
 import { BuildFailure, exec, find, merge, mkdtemp, rmrf } from '@plugjs/plug'
@@ -6,7 +7,7 @@ import { getLogger } from '@plugjs/plug/logging'
 import { resolveAbsolutePath } from '@plugjs/plug/paths'
 import { createProgram, ModuleKind, ScriptTarget, transpileModule } from 'typescript'
 
-import { createAnalyser } from '../src/analysis.ts'
+import { CombiningCoverageAnalyser, createAnalyser } from '../src/analysis.ts'
 import { Coverage } from '../src/coverage.ts'
 import { COVERAGE_SKIPPED, coverageReport } from '../src/report.ts'
 
@@ -375,6 +376,21 @@ describe('Cov8 Plug', () => {
 
   afterAll(async () => {
     if (coverageDataDir) await rmrf(coverageDataDir)
+  })
+
+  it('should destroy the analyser when source parsing fails', async () => {
+    const directory = mkdtemp()
+    const destroy = mock.method(CombiningCoverageAnalyser.prototype, 'destroy')
+    try {
+      await writeFile(resolveAbsolutePath(directory, 'invalid.ts'), 'function {')
+      const invalid = await find('invalid.ts', { directory })
+      const promise = merge([ invalid ]).plug(new Coverage(coverageDataDir))
+      await expect(promise).toBeRejectedWithError(BuildFailure)
+      expect(destroy.mock.callCount()).toEqual(1)
+    } finally {
+      destroy.mock.restore()
+      await rmrf(directory)
+    }
   })
 
   it('should fail when no coverage files were found', async () => {
