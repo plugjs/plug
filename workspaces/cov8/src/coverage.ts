@@ -10,10 +10,32 @@ import { walk } from '@plugjs/plug/utils'
 import { createAnalyser } from './analysis.ts'
 import { coverageReport } from './report.ts'
 
+import type { Report, ReportLevel } from '@plugjs/plug/logging'
 import type { AbsolutePath } from '@plugjs/plug/paths'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
 import type { CoverageReportOptions } from './index.ts'
 import type { CoverageResult } from './report.ts'
+
+function reportUncovered(
+    report: Report,
+    level: ReportLevel,
+    file: AbsolutePath,
+    lines: number[],
+): void {
+  if (! lines.length) return
+
+  const ranges: string[] = []
+  for (let i = 0; i < lines.length; i++) {
+    const start = lines[i]!
+    let end = start
+    while (lines[i + 1] === end + 1) {
+      end = lines[++i]!
+    }
+    ranges.push(start === end ? `${start}` : `${start}\u2026${end}`)
+  }
+
+  report.add({ level, file, message: `Uncovered lines ${ranges.join(', ')}` })
+}
 
 export class Coverage implements Plug<Files | undefined> {
   constructor(...args: PipeParameters<'coverage'>)
@@ -52,6 +74,7 @@ export class Coverage implements Plug<Files | undefined> {
       minimumFileCoverage = minimumCoverage,
       optimalCoverage = Math.round((100 + minimumCoverage) / 2),
       optimalFileCoverage = Math.round((100 + minimumFileCoverage) / 2),
+      reportUncoveredLines = false,
     } = this._options
 
     let max = 0
@@ -69,19 +92,22 @@ export class Coverage implements Plug<Files | undefined> {
     const _report = context.log.report('Coverage report')
 
     for (const [ _file, result ] of Object.entries(report.results)) {
-      const { coverage } = result.nodeCoverage
+      const { nodeCoverage: { coverage }, uncoveredLines } = result
       const file = _file as AbsolutePath
 
       if (coverage == null) {
         _report.annotate(NOTICE, file, 'n/a')
       } else if (coverage < minimumFileCoverage) {
         _report.annotate(ERROR, file, `${coverage} %`)
+        if (reportUncoveredLines) reportUncovered(_report, ERROR, file, uncoveredLines)
         fileErrors ++
       } else if (coverage < optimalFileCoverage) {
         _report.annotate(WARN, file, `${coverage} %`)
+        if (reportUncoveredLines) reportUncovered(_report, WARN, file, uncoveredLines)
         fileWarnings ++
       } else {
         _report.annotate(NOTICE, file, `${coverage} %`)
+        if (reportUncoveredLines) reportUncovered(_report, NOTICE, file, uncoveredLines)
       }
     }
 

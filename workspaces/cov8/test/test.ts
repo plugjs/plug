@@ -1,8 +1,55 @@
+import { writeFile } from 'node:fs/promises'
+
 import { BuildFailure, exec, find, merge, mkdtemp, rmrf } from '@plugjs/plug'
+import { getLogger } from '@plugjs/plug/logging'
+import { resolveAbsolutePath } from '@plugjs/plug/paths'
 
 import { Coverage } from '../src/coverage.ts'
+import { coverageReport } from '../src/report.ts'
 
 import type { AbsolutePath, Files } from '@plugjs/plug'
+import type { CoverageAnalyser } from '../src/analysis.ts'
+
+describe('Uncovered lines', () => {
+  async function uncoveredLines(code: string, coverage: CoverageAnalyser['coverage']): Promise<number[]> {
+    const directory = mkdtemp()
+    try {
+      const file = resolveAbsolutePath(directory, 'source.ts')
+      await writeFile(file, code)
+      const report = await coverageReport({ coverage, destroy() {} }, [ file ], getLogger())
+      return report.results[file]!.uncoveredLines
+    } finally {
+      await rmrf(directory)
+    }
+  }
+
+  it('should include partially covered lines once and exclude covered lines', async () => {
+    const lines = await uncoveredLines('foo();\nfoo(); bar(); baz();\nfoo();\n', (_source, line, column) => {
+      return line === 2 && column >= 7 ? 0 : 1
+    })
+    expect(lines).toEqual([ 2 ])
+  })
+
+  it('should exclude skipped types, comments, and ignored code', async () => {
+    const code = [
+      'type Foo = string',
+      '// comment',
+      '/* coverage ignore next */',
+      'ignored();',
+      '/* istanbul ignore next */',
+      'alsoIgnored();',
+      'missing();',
+    ].join('\n')
+    expect(await uncoveredLines(code, () => 0)).toEqual([ 7 ])
+    expect(await uncoveredLines('/* coverage ignore file */\nfoo();\n', () => 0)).toEqual([])
+    expect(await uncoveredLines('', () => 0)).toEqual([])
+  })
+
+  it('should handle CRLF, blank lines, and a trailing newline', async () => {
+    const code = 'foo(); bar();\r\n\r\n// comment\r\nbaz();\r\n'
+    expect(await uncoveredLines(code, () => 0)).toEqual([ 1, 4 ])
+  })
+})
 
 describe('Cov8 Plug', () => {
   const sourceDir = '@/workspaces/cov8/test/sources'
@@ -83,6 +130,7 @@ describe('Cov8 Plug', () => {
           .plug(new Coverage(coverageDataDir, {
             optimalCoverage: 50,
             optimalFileCoverage: 50,
+            reportUncoveredLines: true,
             reportDir,
           }))
       expect(result).toHaveProperty('length', (e) => e.toBeGreaterThan(0))
@@ -96,6 +144,7 @@ describe('Cov8 Plug', () => {
           .plug(new Coverage(coverageDataDir, {
             optimalCoverage: 95,
             optimalFileCoverage: 95,
+            reportUncoveredLines: true,
             reportDir,
           }))
 
@@ -108,6 +157,7 @@ describe('Cov8 Plug', () => {
           .plug(new Coverage(coverageDataDir, {
             minimumCoverage: 100,
             minimumFileCoverage: 100,
+            reportUncoveredLines: true,
             reportDir,
           }))
       await expect(promise).toBeRejectedWithError(BuildFailure)

@@ -71,6 +71,8 @@ export interface CoverageResult {
    * - _any number greater than zero_: number of times this was covered
    */
   codeCoverage: number[],
+  /** One-based line numbers containing uncovered code, in ascending order */
+  uncoveredLines: number[],
   /** Node coverage summary */
   nodeCoverage: NodeCoverageResult,
 }
@@ -358,6 +360,18 @@ export async function coverageReport(
      */
     setCodeCoverage(tree.comments, COVERAGE_SKIPPED, false)
 
+    /* Collect uncovered lines after children and comments have finalized coverage */
+    const uncoveredLinesSet = new Set<number>()
+    let line = 1
+    for (let i = 0; i < code.length; i++) {
+      if (code[i] === '\n') {
+        line++
+      } else if (code[i] !== '\r' && codeCoverage[i] === 0) {
+        uncoveredLinesSet.add(line)
+      }
+    }
+    const uncoveredLines = [ ...uncoveredLinesSet ].toSorted()
+
     /* Update nodes coverage results */
     updateNodeCoverageResult(nodeCoverage)
 
@@ -367,7 +381,7 @@ export async function coverageReport(
     nodes.totalNodes += nodeCoverage.totalNodes
 
     /* This file is done, add it to the report */
-    results[file] = { code, codeCoverage, nodeCoverage }
+    results[file] = { code, codeCoverage, uncoveredLines, nodeCoverage }
   }
 
   /* All done, return the report */

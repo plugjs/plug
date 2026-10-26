@@ -46,7 +46,8 @@ function help(): void {
       ${$wht('-s --sources')} ${$gnd('glob')}        A glob for the sources to be reported upon
       ${$wht('-m --minimum')} ${$gnd('num')}         The desired minimum coverage level to achieve
       ${$wht('-o --optimal')} ${$gnd('num')}         The desired optimal coverage level to achieve
-      ${$wht('-h --help   ')}             Help! You're reading it now!
+      ${$wht('-l --lines')}               Report uncovered lines
+      ${$wht('-h --help')}                Help! You're reading it now!
       ${$wht('   --version')}             Version! This one: ${version()}!
 
 
@@ -103,6 +104,7 @@ main(import.meta.url, async (args): Promise<void> => {
   const globs: string[] = [] // empty globs list
   let minimumCoverage: number | undefined = undefined
   let optimalCoverage: number | undefined = undefined
+  let reportUncoveredLines: boolean = false
   let coverageDir: string | undefined
   let reportDir: string | undefined
   let sourceDir: string | undefined
@@ -122,6 +124,7 @@ main(import.meta.url, async (args): Promise<void> => {
       'minimum': [ 'm' ],
       'optimal': [ 'o' ],
       'sources': [ 's' ],
+      'lines': [ 'l' ],
       'help': [ 'h' ],
     },
 
@@ -152,6 +155,9 @@ main(import.meta.url, async (args): Promise<void> => {
         break
       case 'optimal':
         optimalCoverage = value
+        break
+      case 'lines':
+        reportUncoveredLines = true
         break
       case 'help':
         return help()
@@ -197,6 +203,7 @@ main(import.meta.url, async (args): Promise<void> => {
         await find(glob, ...globs, { directory: sourceDir || 'src', ignore })
             .plug(new Coverage(coverageDir, {
               reportDir: reportDir as string,
+              reportUncoveredLines,
               minimumCoverage,
               optimalCoverage,
             }))

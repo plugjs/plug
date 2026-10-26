@@ -16,6 +16,8 @@ export interface CoverageOptions {
   minimumFileCoverage?: number,
   /** Optimal _per-file_ coverage (as a percentage, defaults to 75) */
   optimalFileCoverage?: number,
+  /** Report the non-covered lines in the output (defaults to `false`) */
+  reportUncoveredLines?: boolean
 }
 
 export interface CoverageReportOptions extends CoverageOptions {
