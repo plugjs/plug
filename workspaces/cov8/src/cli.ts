@@ -130,7 +130,7 @@ main(import.meta.url, async (args): Promise<void> => {
 
     string: [ 'coverage-dir', 'report-dir', 'source-dir', 'sources' ],
     number: [ 'minimum', 'optimal' ],
-    boolean: [ 'help', 'version' ],
+    boolean: [ 'help', 'version', 'lines' ],
   })
 
   for (const [ key, value ] of Object.entries(parsed)) {

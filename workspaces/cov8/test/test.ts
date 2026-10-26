@@ -49,6 +49,11 @@ describe('Uncovered lines', () => {
     const code = 'foo(); bar();\r\n\r\n// comment\r\nbaz();\r\n'
     expect(await uncoveredLines(code, () => 0)).toEqual([ 1, 4 ])
   })
+
+  it('should preserve numeric order across single and double digit lines', async () => {
+    const code = new Array(12).fill('foo();').join('\n')
+    expect(await uncoveredLines(code, () => 0)).toEqual([ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ])
+  })
 })
 
 describe('Cov8 Plug', () => {

@@ -370,7 +370,7 @@ export async function coverageReport(
         uncoveredLinesSet.add(line)
       }
     }
-    const uncoveredLines = [ ...uncoveredLinesSet ].toSorted()
+    const uncoveredLines = [ ...uncoveredLinesSet ]
 
     /* Update nodes coverage results */
     updateNodeCoverageResult(nodeCoverage)
