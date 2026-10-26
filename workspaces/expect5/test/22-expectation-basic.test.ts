@@ -273,6 +273,41 @@ describe('Basic Expectations', () => {
     expectFail(() => expect(3).toBeWithinRange(3n, 3n), 'Expected 3 to be a <bigint>')
   })
 
+  it('should reject NaN in range expectations and matchers', () => {
+    for (const [ value, min, max ] of [
+      [ NaN, 1, 2 ],
+      [ 0, NaN, 2 ],
+      [ 3, NaN, 2 ],
+      [ 0, 1, NaN ],
+      [ 3, 1, NaN ],
+    ] as const) {
+      const positive = `Expected ${value} to be within ${min}...${max}`
+      const negative = `Expected ${value} not to be within ${min}...${max}`
+
+      expectFail(() => expect(value).toBeWithinRange(min, max), positive)
+      expectFail(() => expect(value).not.toBeWithinRange(min, max), negative)
+      expectFail(() => expect.toBeWithinRange(min, max).expect(value), positive)
+      expectFail(() => expect.not.toBeWithinRange(min, max).expect(value), negative)
+    }
+  })
+
+  it('should reject NaN in proximity expectations and matchers', () => {
+    for (const [ value, expected, delta ] of [
+      [ NaN, 2, 1 ],
+      [ 2, NaN, 1 ],
+      [ 2, 2, NaN ],
+    ] as const) {
+      const range = `${expected - delta}...${expected + delta}`
+      const positive = `Expected ${value} to be within ${range}`
+      const negative = `Expected ${value} not to be within ${range}`
+
+      expectFail(() => expect(value).toBeCloseTo(expected, delta), positive)
+      expectFail(() => expect(value).not.toBeCloseTo(expected, delta), negative)
+      expectFail(() => expect.toBeCloseTo(expected, delta).expect(value), positive)
+      expectFail(() => expect.not.toBeCloseTo(expected, delta).expect(value), negative)
+    }
+  })
+
   it('should expect "toEqual(...)"', () => {
     expectPass(() => expect('foo').toEqual('foo'))
     expectPass(() => expect({ foo: 'bar' }).toEqual({ foo: 'bar' }))

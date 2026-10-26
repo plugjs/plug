@@ -574,7 +574,8 @@ export class Expectations<T = unknown> {
 
     this.toBeA(typeof min)
 
-    if (((this.value as any) < min) || ((this.value as any) > max)) {
+    if (Number.isNaN(this.value) || Number.isNaN(min) || Number.isNaN(max) ||
+        ((this.value as any) < min) || ((this.value as any) > max)) {
       this._fail(`to be within ${stringifyValue(min)}...${stringifyValue(max)}`)
     }
 
@@ -1082,7 +1083,8 @@ export class NegativeExpectations<T = unknown> {
 
     this._expectations.toBeA(typeof min)
 
-    if (((this._value as any) >= min) && ((this._value as any) <= max)) {
+    if (Number.isNaN(this._value) || Number.isNaN(min) || Number.isNaN(max) ||
+        (((this._value as any) >= min) && ((this._value as any) <= max))) {
       this._fail(`not to be within ${stringifyValue(min)}...${stringifyValue(max)}`)
     }
 
