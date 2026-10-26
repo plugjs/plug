@@ -1,14 +1,123 @@
-import { writeFile } from 'node:fs/promises'
+import { realpath, writeFile } from 'node:fs/promises'
 
 import { BuildFailure, exec, find, merge, mkdtemp, rmrf } from '@plugjs/plug'
 import { getLogger } from '@plugjs/plug/logging'
 import { resolveAbsolutePath } from '@plugjs/plug/paths'
+import { ModuleKind, ScriptTarget, transpileModule } from 'typescript'
 
+import { createAnalyser } from '../src/analysis.ts'
 import { Coverage } from '../src/coverage.ts'
-import { coverageReport } from '../src/report.ts'
+import { COVERAGE_SKIPPED, coverageReport } from '../src/report.ts'
 
 import type { AbsolutePath, Files } from '@plugjs/plug'
 import type { CoverageAnalyser } from '../src/analysis.ts'
+import type { CoverageResult } from '../src/report.ts'
+
+describe('Runtime TypeScript declarations', () => {
+  async function analyse(code: string): Promise<CoverageResult> {
+    const directory = await realpath(mkdtemp()) as AbsolutePath
+    let analyser: CoverageAnalyser | undefined
+    try {
+      const file = resolveAbsolutePath(directory, 'source.ts')
+      const script = resolveAbsolutePath(directory, 'source.cjs')
+      const coverageDir = resolveAbsolutePath(directory, 'coverage')
+      await writeFile(file, code)
+      const { outputText } = transpileModule(code, {
+        fileName: file,
+        compilerOptions: {
+          module: ModuleKind.CommonJS,
+          target: ScriptTarget.ES2022,
+          inlineSourceMap: true,
+          inlineSources: true,
+        },
+      })
+      await writeFile(script, outputText)
+      await exec(process.execPath, script, { coverageDir })
+      const coverageFiles = await find('coverage-*.json', { directory: coverageDir })
+      analyser = await createAnalyser([ file ], [ ...coverageFiles.absolutePaths() ], 'least_upper_bound', getLogger())
+      const report = await coverageReport(analyser, [ file ], getLogger())
+      return report.results[file]!
+    } finally {
+      analyser?.destroy()
+      await rmrf(directory)
+    }
+  }
+
+  it('should distinguish called and uncalled namespace functions', async () => {
+    const code = [
+      'namespace Example {',
+      '  export function missed() {',
+      '    return 1',
+      '  }',
+      '  export function called() {',
+      '    return 2',
+      '  }',
+      '}',
+      'Example.called()',
+    ].join('\n')
+    const result = await analyse(code)
+    expect(result.uncoveredLines.includes(3)).toEqual(true)
+    expect(result.uncoveredLines.includes(6)).toEqual(false)
+    expect(result.nodeCoverage.missingNodes).toBeGreaterThan(0)
+    expect(result.nodeCoverage.coveredNodes).toBeGreaterThan(0)
+    expect(result.codeCoverage[code.indexOf('Example')]).toEqual(COVERAGE_SKIPPED)
+  })
+
+  it('should traverse nested and dotted namespaces', async () => {
+    const result = await analyse([
+      'namespace Outer.Inner {',
+      '  export namespace Nested {',
+      '    export function missed() {',
+      '      return 1',
+      '    }',
+      '    export const value = 2',
+      '  }',
+      '}',
+    ].join('\n'))
+    expect(result.uncoveredLines.includes(4)).toEqual(true)
+    expect(result.uncoveredLines.includes(6)).toEqual(false)
+  })
+
+  it('should cover executed enum members and initializers', async () => {
+    const code = 'enum Example {\n  Auto,\n  Explicit = Math.abs(-2),\n  Text = "text",\n}\n'
+    const result = await analyse(code)
+    expect(result.nodeCoverage.coveredNodes).toBeGreaterThan(0)
+    expect(result.nodeCoverage.coverage).toEqual(100)
+    expect(result.uncoveredLines).toEqual([])
+    expect(result.codeCoverage[code.indexOf('Example')]).toEqual(COVERAGE_SKIPPED)
+  })
+
+  it('should report enum members inside an uncalled function as uncovered', async () => {
+    const result = await analyse([
+      'function missed() {',
+      '  enum Example {',
+      '    Auto,',
+      '    Explicit = Math.abs(-2),',
+      '    Text = "text",',
+      '  }',
+      '}',
+    ].join('\n'))
+    expect(result.uncoveredLines.includes(3)).toEqual(true)
+    expect(result.uncoveredLines.includes(4)).toEqual(true)
+    expect(result.uncoveredLines.includes(5)).toEqual(true)
+  })
+
+  it('should keep ambient namespaces, modules, and enums skipped', async () => {
+    const result = await analyse([
+      'declare namespace Example {',
+      '  function missed(): number',
+      '  enum Nested { First, Second }',
+      '}',
+      'declare module "external" { export function missed(): number }',
+      'declare enum Other { First, Second }',
+      'interface Shape { value: number }',
+      'type Name = string',
+    ].join('\n'))
+    expect(result.nodeCoverage.totalNodes).toEqual(0)
+    expect(result.nodeCoverage.coverage).toEqual(null)
+    expect(result.uncoveredLines).toEqual([])
+  })
+})
 
 describe('Uncovered lines', () => {
   async function uncoveredLines(code: string, coverage: CoverageAnalyser['coverage']): Promise<number[]> {

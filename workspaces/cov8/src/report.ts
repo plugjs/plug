@@ -10,6 +10,9 @@ import {
   isProgram,
   isTryStatement,
   isTSDeclareMethod,
+  isTSEnumDeclaration,
+  isTSEnumMember,
+  isTSModuleDeclaration,
   isTSTypeReference,
   isTypeScript,
   VISITOR_KEYS,
@@ -131,6 +134,7 @@ export async function coverageReport(
     const code = await readFile(file, 'utf-8')
 
     let tree: ParseResult<File>
+    /* coverage ignore catch */
     try {
       tree = parse(code, {
         allowImportExportEverywhere: true,
@@ -261,8 +265,23 @@ export async function coverageReport(
       if (ignores.includes('next')) return setCodeCoverage(node, COVERAGE_IGNORED, true)
       if (ignores.includes('prev')) return setCodeCoverage(node, COVERAGE_IGNORED, true)
 
+      /* Namespace syntax is skipped, but non-ambient bodies execute */
+      if (isTSModuleDeclaration(node)) {
+        setCodeCoverage(node, COVERAGE_SKIPPED, true)
+        if (node.declare || node.kind === 'global' || node.id.type === 'StringLiteral') return
+        return visitNode(node.body, depth + 1)
+      }
+
+      /* Enum members execute; the declaration wrapper and name do not */
+      if (isTSEnumDeclaration(node)) {
+        setCodeCoverage(node, COVERAGE_SKIPPED, true)
+        if (node.declare) return
+        for (const member of node.body.members) visitNode(member, depth + 1)
+        return
+      }
+
       /* Typescript nodes are skipped, but children aren't in some cases */
-      if (isTypeScript(node)) {
+      if (isTypeScript(node) && ! isTSEnumMember(node)) {
         /* Functions/constructors overloads */
         if (isTSDeclareMethod(node)) return setCodeCoverage(node, COVERAGE_SKIPPED, true)
 
@@ -301,6 +320,12 @@ export async function coverageReport(
 
       /* Record the code coverage, and set up our variables */
       setCodeCoverage(node, coverage, false)
+
+      /* Count each enum member once, then analyse any initializer expression */
+      if (isTSEnumMember(node)) {
+        if (node.initializer) visitNode(node.initializer, depth + 1)
+        return
+      }
 
       /* The "if" node might have some ignores... */
       if (isIfStatement(node)) {
