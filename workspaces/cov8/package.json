@@ -34,6 +34,7 @@
   },
   "files": [
     "*.md",
+    "!AGENTS.md",
     "dist/",
     "src/"
   ],
