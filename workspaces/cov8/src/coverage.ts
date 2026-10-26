@@ -14,7 +14,7 @@ import type { Report, ReportLevel } from '@plugjs/plug/logging'
 import type { AbsolutePath } from '@plugjs/plug/paths'
 import type { Context, PipeParameters, Plug } from '@plugjs/plug/pipe'
 import type { CoverageReportOptions } from './index.ts'
-import type { CoverageResult } from './report.ts'
+import type { CoverageReport, CoverageResult } from './report.ts'
 
 function reportUncovered(
     report: Report,
@@ -64,10 +64,13 @@ export class Coverage implements Plug<Files | undefined> {
     context.log.info('Parsed', coverageFiles.length, 'coverage files', $ms(Date.now() - ms1))
 
     const ms2 = Date.now()
-    const report = await coverageReport(analyser, sourceFiles, context.log)
+    let report: CoverageReport
+    try {
+      report = await coverageReport(analyser, sourceFiles, context.log)
+    } finally {
+      analyser.destroy()
+    }
     context.log.info('Analysed', sourceFiles.length, 'source files', $ms(Date.now() - ms2))
-
-    analyser.destroy()
 
     const {
       minimumCoverage = 50,
@@ -76,16 +79,6 @@ export class Coverage implements Plug<Files | undefined> {
       optimalFileCoverage = Math.round((100 + minimumFileCoverage) / 2),
       reportUncoveredLines = false,
     } = this._options
-
-    let max = 0
-    for (const file in report) {
-      if (file.length > max) max = file.length
-    }
-
-    let maxLength = 0
-    for (const file in report.results) {
-      if (file.length > maxLength) maxLength = file.length
-    }
 
     let fileErrors = 0
     let fileWarnings = 0
@@ -136,8 +129,11 @@ export class Coverage implements Plug<Files | undefined> {
       _report.add({ level: WARN, message })
     }
 
-    /* If we don't have to write a report, pass-through the coverage files */
-    if (this._options.reportDir == null) return _report.done(false) as any
+    /* Finish console reporting when no report files were requested */
+    if (this._options.reportDir == null) {
+      _report.done(false)
+      return
+    }
 
     /* Create a builder to emit our reports */
     const reportDir = context.resolve(this._options.reportDir)
@@ -184,6 +180,6 @@ export class Coverage implements Plug<Files | undefined> {
     _report.done(false)
 
     /* Return emitted files */
-    return builder.build() as any
+    return builder.build()
   }
 }
