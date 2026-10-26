@@ -40,6 +40,16 @@ expectType<Matchers<Error>>(expect.toBeError())
 expectType<Matchers<Error>>(expect.toBeError('message'))
 expectType<Matchers<TestError>>(expect.toBeError(TestError))
 expectType<Matchers<TestError>>(expect.toBeError(TestError, 'message'))
+expectType<Matchers<Error>>(expect.toBeError('message', true))
+expectType<Matchers<Error>>(expect.toBeError('message', false))
+expectType<Matchers<Error>>(expect.toBeError(/message/, true))
+expectType<Matchers<Error>>(expect.toBeError(undefined, true))
+expectType<Matchers<TestError>>(expect.toBeError(TestError, 'message', true))
+expectType<Matchers<TestError>>(expect.toBeError(TestError, 'message', false))
+expectType<Matchers<TestError>>(expect.toBeError(TestError, /message/, true))
+expectType<Matchers<TestError>>(expect.toBeError(TestError, undefined, true))
+expectError(expect.toBeError('message', 'substring'))
+expectError(expect.toBeError(TestError, 'message', 'substring'))
 
 /* === TO BE FALSE ========================================================== */
 

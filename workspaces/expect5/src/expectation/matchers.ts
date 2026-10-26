@@ -199,32 +199,48 @@ export class Matcher<T = unknown> {
    *
    * If specified, the {@link Error}'s own message will be further expected to
    * either match the specified {@link RegExp}, or equal the specified `string`.
+   * When `substring` is `true` (defaults to `false`), a string is matched as
+   * a literal substring instead. This option does not affect regular expressions.
+   *
+   * ```ts
+   * expect.toBeError('failed', true).expect(new Error('Request failed')) // passes
+   * expect.toBeError('failed').expect(new Error('Request failed')) // fails
+   * ```
    */
   toBeError(
-    message?: string | RegExp
+    message?: string | RegExp,
+    substring?: boolean,
   ): Matcher<Error>
 
   /**
    * Expect the value to be an instance of {@link Error} and further asserts
-   * it to be an instance of the specifed {@link Error} {@link Constructor}.
+   * it to be an instance of the specified {@link Error} {@link Constructor}.
    *
    * If specified, the {@link Error}'s own message will be further expected to
    * either match the specified {@link RegExp}, or equal the specified `string`.
+   * When `substring` is `true` (defaults to `false`), a string is matched as
+   * a literal substring instead. This option does not affect regular expressions.
+   *
+   * ```ts
+   * expect.toBeError(TypeError, 'failed', true).expect(new TypeError('Request failed')) // passes
+   * ```
    */
   toBeError<Class extends Constructor<Error>>(
     constructor: Class,
     message?: string | RegExp,
+    substring?: boolean,
   ): Matcher<InstanceType<Class>>
 
   toBeError(
       constructorOrMessage?: string | RegExp | Constructor,
-      maybeMessage?: string | RegExp,
+      maybeMessageOrSubstring?: string | RegExp | boolean,
+      maybeSubstring?: boolean,
   ): Matcher {
-    const [ constructor, message ] =
+    const [ constructor, message, substring = false ] =
       typeof constructorOrMessage === 'function' ?
-        [ constructorOrMessage, maybeMessage ] :
-        [ Error, constructorOrMessage ]
-    return this._push((e) => e.toBeError(constructor, message))
+        [ constructorOrMessage, maybeMessageOrSubstring as string | RegExp, maybeSubstring ] :
+        [ Error, constructorOrMessage as string | RegExp, maybeMessageOrSubstring as boolean ]
+    return this._push((e) => e.toBeError(constructor, message, substring))
   }
 
   /* ------------------------------------------------------------------------ */

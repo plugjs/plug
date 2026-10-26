@@ -210,6 +210,44 @@ describe('Expectation Matchers', () => {
     expectFail(() => first.expect('foo'), 'Expected "foo" to be a <number>')
   })
 
+  it('should support substring matching in error matchers', () => {
+    const error = new TypeError('Request failed [retry]')
+    const factories = [
+      (message?: string | RegExp, substring?: boolean) => expect.toBeError(message, substring),
+      (message?: string | RegExp, substring?: boolean) => expect.toBeError(TypeError, message, substring),
+    ]
+
+    for (const matcher of factories) {
+      expectPass(() => matcher(error.message).expect(error))
+      expectPass(() => matcher(error.message, false).expect(error))
+      expectPass(() => matcher('[retry]', true).expect(error))
+      expectPass(() => matcher('[', true).expect(error))
+      expectPass(() => matcher('', true).expect(error))
+      expectPass(() => matcher(undefined, true).expect(error))
+      assert.throws(() => matcher('[retry]').expect(error), ExpectationError)
+      assert.throws(() => matcher('[retry]', false).expect(error), ExpectationError)
+      assert.throws(() => matcher('[other]', true).expect(error), ExpectationError)
+
+      for (const substring of [ undefined, false, true ]) {
+        expectPass(() => matcher(/failed \[retry\]/, substring).expect(error))
+        assert.throws(() => matcher(/^failed$/, substring).expect(error), ExpectationError)
+      }
+    }
+
+    assert.throws(() => expect.toBeError(SyntaxError, '[retry]', true).expect(error), ExpectationError)
+    assert.throws(() => expect.toBeError('[retry]', true).expect({ message: error.message }), ExpectationError)
+  })
+
+  it('should reuse substring error matchers for thrown and rejected errors', async () => {
+    const matcher = expect.toBeError(TypeError, '[retry]', true)
+    const error = new TypeError('Request failed [retry]')
+
+    expect(() => {
+      throw error
+    }).toThrow(matcher)
+    await expect(Promise.reject(error)).toBeRejected(matcher)
+  })
+
   it('should support strict equality matchers', () => {
     for (const [ actual, expected ] of [
       [ {}, { foo: undefined } ],
