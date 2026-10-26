@@ -160,14 +160,14 @@ export class Coverage implements Plug<Files | undefined> {
       results[rel] = report.results[abs]!
     }
 
-    const tree: Record<string, any> = {}
+    const tree: Record<string, any> = Object.create(null)
     for (const relative of Object.keys(results)) {
       const directories = relative.split(sep)
       const file = directories.pop()!
 
       let node = tree
       for (const dir of directories) {
-        node = node[dir] = node[dir] || {}
+        node = node[dir] = node[dir] || Object.create(null)
       }
 
       node[file] = relative
