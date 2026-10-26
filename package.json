@@ -17,7 +17,7 @@
     "dev": "npm run clean ; ls -1d workspaces/*/src workspaces/*/test | sed 's|^|-w |g' | xargs tsrun ./workspaces/plug/src/cli.ts dev -w test-d",
     "build": "tsrun ./workspaces/plug/src/cli.ts",
     "lint": "tsrun ./workspaces/plug/src/cli.ts lint",
-    "test": "tsrun ./workspaces/plug/src/cli.ts transpile test",
+    "test": "tsrun ./workspaces/plug/src/cli.ts transpile test coverage",
     "transpile": "tsrun ./workspaces/plug/src/cli.ts transpile",
     "updates": "check-updates package.json workspaces/*/package.json"
   },

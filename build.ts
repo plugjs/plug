@@ -129,6 +129,7 @@ const ForkingTsd = class extends ForkingPlug {
 export default plugjs({
   workspace: '',
   watchmode: 'false',
+  reportUncovered: 'false',
 
   /* ======================================================================== *
    * CLEANUP                                                                  *
@@ -224,6 +225,7 @@ export default plugjs({
     banner('Test Coverage')
 
     const selection = this.workspace ? [ `workspaces/${this.workspace}` ] : workspaces
+    const reportUncoveredLines = this.reportUncovered === 'true'
 
     const sources = merge(selection.map((workspace) => {
       return find('src/**/*.([cm])?ts', {
@@ -238,6 +240,7 @@ export default plugjs({
       minimumCoverage: 80,
       optimalFileCoverage: 100,
       minimumFileCoverage: 0,
+      reportUncoveredLines,
     }))
   },
 
