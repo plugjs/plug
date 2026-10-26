@@ -1229,7 +1229,11 @@ export class NegativeExpectations<T = unknown> {
   toMatch(matcher: string | RegExp): Expectations<string> {
     const expectations = this._expectations.toBeA('string')
 
-    if (! expectations.value.match(matcher)) return expectations
+    if (typeof matcher === 'string') {
+      if (! expectations.value.includes(matcher)) return expectations
+    } else {
+      if (! expectations.value.match(matcher)) return expectations
+    }
 
     this._fail(`not to match ${stringifyValue(matcher)}`)
   }

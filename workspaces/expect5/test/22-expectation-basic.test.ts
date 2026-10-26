@@ -513,7 +513,12 @@ describe('Basic Expectations', () => {
     expectFail(() => expect('foo').toMatch('f+o'), 'Expected "foo" to match "f+o"')
 
     expectFail(() => expect('foo').not.toMatch(/^foo$/), 'Expected "foo" not to match /^foo$/')
-    expectFail(() => expect('xfoox').not.toMatch('f.o'), 'Expected "xfoox" not to match "f.o"')
+    expectFail(() => expect('xf.ox').not.toMatch('f.o'), 'Expected "xf.ox" not to match "f.o"')
+    expectFail(() => expect('xf+ox').not.toMatch('f+o'), 'Expected "xf+ox" not to match "f+o"')
+    expectFail(() => expect('foo').not.toMatch(''), 'Expected "foo" not to match ""')
+    expectPass(() => expect('xfoox').not.toMatch('f.o'))
+    expectPass(() => expect('foo').not.toMatch('f+o'))
+    expectPass(() => expect('foo').not.toMatch('['))
     expectPass(() => expect('foo').not.toMatch(/^bar$/))
 
     expectFail(() => expect({}).toMatch(/^.*$/), 'Expected [Object] to be a <string>')
