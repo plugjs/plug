@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 
 import { expect } from '../src/expectation/expect.ts'
-import { isMatcher } from '../src/expectation/types.ts'
+import { ExpectationError, isMatcher } from '../src/expectation/types.ts'
 import { expectFail, expectPass } from './utils.ts'
 
 describe('Expectation Matchers', () => {
@@ -208,6 +208,29 @@ describe('Expectation Matchers', () => {
     expectFail(() => extended.expect(3), 'Expected 3 not to strictly equal 3')
     expectFail(() => extended.expect(0), 'Expected 0 to be greater than 0')
     expectFail(() => first.expect('foo'), 'Expected "foo" to be a <number>')
+  })
+
+  it('should support strict equality matchers', () => {
+    for (const [ actual, expected ] of [
+      [ {}, { foo: undefined } ],
+      [ { foo: undefined }, {} ],
+    ]) {
+      expectPass(() => expect.toEqual(expected).expect(actual))
+      expectPass(() => expect.toEqual(expected, false).expect(actual))
+      assert.throws(() => expect.toEqual(expected, true).expect(actual), ExpectationError)
+
+      assert.throws(() => expect.not.toEqual(expected).expect(actual), ExpectationError)
+      assert.throws(() => expect.not.toEqual(expected, false).expect(actual), ExpectationError)
+      expectPass(() => expect.not.toEqual(expected, true).expect(actual))
+    }
+
+    expectPass(() => expect.toEqual({ foo: undefined }, true).expect({ foo: undefined }))
+    assert.throws(() => expect.not.toEqual({ foo: undefined }, true).expect({ foo: undefined }), ExpectationError)
+
+    const actual = { data: { foo: undefined } }
+    expectPass(() => expect(actual).toEqual({ data: expect.toEqual({}) }, true))
+    assert.throws(() => expect(actual).toEqual({ data: expect.toEqual({}, true) }), ExpectationError)
+    expectPass(() => expect(actual).toEqual({ data: expect.not.toEqual({}, true) }))
   })
 
   it('should be recognized as a matcher', () => {

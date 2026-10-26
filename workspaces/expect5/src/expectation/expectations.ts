@@ -587,9 +587,8 @@ export class Expectations<T = unknown> {
   /**
    * Expects the value to be _deep equal to_ the specified expected one.
    *
-   * When `strict` is `true` (defaults to `false`) enumerable keys associated
-   * with an `undefined` value found in the _actual_ object will have to be
-   * also defined in the _expected_ object.
+   * When `strict` is `true` (defaults to `false`), missing enumerable object
+   * properties differ from properties whose value is `undefined`.
    *
    * For example:
    *
@@ -602,7 +601,6 @@ export class Expectations<T = unknown> {
    * // strict mode
    * expect({ foo: undefined }).toEqual({}, true) // will fail
    * expect({}).toEqual({ foo: undefined }, true) // will fail
-   * expect({}).toEqual({ foo: undefined }) // will fail ("foo" is missing, whether "strict" is true or false)
    * ```
    *
    * Negation: {@link NegativeExpectations.toEqual `not.toEqual(...)`}

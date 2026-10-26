@@ -46,6 +46,10 @@ expectError(expect.not.toBeWithinRange(10n, 10))
 /* === TO EQUAL ============================================================= */
 
 expectType<Matchers<unknown>>(expect.not.toEqual(123))
+expectType<Matchers<unknown>>(expect.not.toEqual(123, true))
+expectType<Matchers<unknown>>(expect.not.toEqual(123, false))
+expectType<Matchers<number>>(expect.toBeA('number').not.toEqual(123, true))
+expectError(expect.not.toEqual(123, 'strict'))
 expectType<Matchers<unknown>>(expect.not.toEqual(true as unknown))
 expectType<Matchers<unknown>>(expect.not.toEqual([ 123 ]))
 expectType<Matchers<unknown>>(expect.not.toEqual({

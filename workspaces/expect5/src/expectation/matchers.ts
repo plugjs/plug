@@ -450,10 +450,20 @@ export class Matcher<T = unknown> {
   /**
    * Expects the value to be _deep equal to_ the specified expected one.
    *
+   * When `strict` is `true` (defaults to `false`), missing enumerable object
+   * properties differ from properties whose value is `undefined`.
+   * This option applies to this matcher's comparison independently of any
+   * enclosing {@link Expectations.toEqual `toEqual(...)`} assertion.
+   *
+   * ```ts
+   * expect.toEqual({}).expect({ foo: undefined }) // passes
+   * expect.toEqual({}, true).expect({ foo: undefined }) // fails
+   * ```
+   *
    * Negation: {@link NegativeMatchers.toEqual `not.toEqual(...)`}
    */
-  toEqual<Type>(expected: Type): Matcher<InferToEqual<Type>> {
-    return this._push((e) => e.toEqual(expected))
+  toEqual<Type>(expected: Type, strict: boolean = false): Matcher<InferToEqual<Type>> {
+    return this._push((e) => e.toEqual(expected, strict))
   }
 
   /* ------------------------------------------------------------------------ */
@@ -720,10 +730,20 @@ export class NegativeMatchers<T = unknown> {
    * Expects the value _**NOT**_ to be _deep equal to_ the specified expected
    * one.
    *
+   * When `strict` is `true` (defaults to `false`), missing enumerable object
+   * properties differ from properties whose value is `undefined`.
+   * As with {@link Matcher.toEqual `toEqual(...)`}, this option applies
+   * independently of any enclosing equality assertion.
+   *
+   * ```ts
+   * expect.not.toEqual({}).expect({ foo: undefined }) // fails
+   * expect.not.toEqual({}, true).expect({ foo: undefined }) // passes
+   * ```
+   *
    * Negates: {@link Matcher.toEqual `toEqual(...)`}
    */
-  toEqual(expected: any): Matcher<T> {
-    return this._push((e) => e.toEqual(expected))
+  toEqual(expected: any, strict: boolean = false): Matcher<T> {
+    return this._push((e) => e.toEqual(expected, strict))
   }
 
   /* ------------------------------------------------------------------------ */
