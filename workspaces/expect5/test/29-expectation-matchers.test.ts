@@ -187,6 +187,27 @@ describe('Expectation Matchers', () => {
     expectFail(() => second.expect(200), 'Expected 200 to be less than 200')
   })
 
+  it('should allow independent negative extensions of matcher chains', () => {
+    const base = expect.toBeA('number')
+    const first = base.not.toStrictlyEqual(1)
+    const second = base.not.toStrictlyEqual(2)
+    const extended = first.not.toStrictlyEqual(3).toBeGreaterThan(0)
+
+    expectPass(() => base.expect(1))
+    expectPass(() => base.expect(2))
+    expectPass(() => first.expect(2))
+    expectPass(() => first.expect(3))
+    expectPass(() => second.expect(1))
+    expectPass(() => extended.expect(2))
+
+    expectFail(() => first.expect(1), 'Expected 1 not to strictly equal 1')
+    expectFail(() => second.expect(2), 'Expected 2 not to strictly equal 2')
+    expectFail(() => extended.expect(1), 'Expected 1 not to strictly equal 1')
+    expectFail(() => extended.expect(3), 'Expected 3 not to strictly equal 3')
+    expectFail(() => extended.expect(0), 'Expected 0 to be greater than 0')
+    expectFail(() => first.expect('foo'), 'Expected "foo" to be a <number>')
+  })
+
   it('should be recognized as a matcher', () => {
     const positive1 = expect.toBeA('number')
     const negative1 = positive1.not

@@ -27,9 +27,8 @@ export class Matcher<T = unknown> {
   readonly not: NegativeMatchers<T>
 
   constructor() {
-    const matchers: PositiveMatcherFunction[] = []
-    this.not = new NegativeMatchers(this, matchers)
-    this._matchers = matchers
+    this._matchers = []
+    this.not = new NegativeMatchers((matcher) => this._push(matcher))
   }
 
   expect(value: unknown, parent?: ExpectationsParent): T {
@@ -618,13 +617,11 @@ export class Matcher<T = unknown> {
 
 export class NegativeMatchers<T = unknown> {
   constructor(
-      private readonly _instance: Matcher<T>,
-      private readonly _matchers: PositiveMatcherFunction[],
+      private readonly _pushMatcher: (matcher: PositiveMatcherFunction) => Matcher<T>,
   ) {}
 
   private _push(matcher: NegativeMatcherFunction): Matcher<any> {
-    this._matchers.push((expectations) => matcher(expectations.not))
-    return this._instance
+    return this._pushMatcher((expectations) => matcher(expectations.not))
   }
 
   /* ------------------------------------------------------------------------ */
