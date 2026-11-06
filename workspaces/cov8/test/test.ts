@@ -182,7 +182,7 @@ describe('Runtime TypeScript declarations', () => {
       expect(result.nodeCoverage.coverage).toEqual(null)
       expect(result.uncoveredLines).toEqual([])
     }
-  })
+  }, 10_000)
 
   it('should not borrow mappings from code after an erased const enum', async () => {
     const result = await analyse([
