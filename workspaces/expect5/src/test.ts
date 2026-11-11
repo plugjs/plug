@@ -37,6 +37,7 @@ export class Test implements Plug<void> {
       genericErrorDiffs = true,
       maxFailures = Number.POSITIVE_INFINITY,
       summary = false,
+      preload = undefined,
     } = this._options
 
     // Inject globals if we were told to do so...
@@ -66,6 +67,14 @@ export class Test implements Plug<void> {
 
     // Create our _root_ Suite
     const suite = new Suite(undefined, '', async () => {
+      // Before anything else, preload the specified file if provided
+      if (preload) {
+        const resolved = context.resolve(preload)
+        log.debug('Preloading', $p(resolved))
+        await import(resolved)
+      }
+
+      // Then, import each test file in order
       let count = 0
       for (const file of files.absolutePaths()) {
         log.debug('Importing', $p(file), 'in suite', $gry(`(${++ count}/${files.length})`))

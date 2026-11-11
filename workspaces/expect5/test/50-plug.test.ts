@@ -11,6 +11,12 @@ describe('Expect5 Plug', async () => {
     await merge([ find('simple.ts', { directory } ) ]).plug(new Test())
   })
 
+  it('should run a suite with preloaded setup', async () => {
+    await merge([ find('preload-test.ts', { directory } ) ]).plug(new Test({
+      preload: '@/workspaces/expect5/test/data/preload-setup.ts',
+    }))
+  })
+
   it('should run a suite with skipped specs', async () => {
     await merge([ find('skips.ts', { directory } ) ]).plug(new Test())
   })

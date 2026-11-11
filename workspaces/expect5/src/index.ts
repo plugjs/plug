@@ -33,6 +33,8 @@ export * from './expectation/expect.ts'
 
 /** Options to construct our {@link Jasmine} plug. */
 export interface TestOptions extends ForkOptions {
+  /** A file to _pre-load_ before running the tests (e.g., setup file) */
+  preload?: string,
   /** Report up to the specified amount of failures (default: `+Infinity`) */
   maxFailures?: number,
   /**
