@@ -293,7 +293,7 @@ if ((process.argv[1] === requireFilename(import.meta.filename)) && (process.send
       originalConsole.error('\n\nError sending message back to parent process', error)
       process.exitCode = 1
     }).finally(() => {
-      process.disconnect()
+      process.disconnect?.()
       process.exit(process.exitCode)
     })
   })
